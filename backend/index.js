@@ -1,0 +1,173 @@
+const express = require('express');
+const cors = require('cors');
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const prisma = new PrismaClient();
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const JWT_SECRET = process.env.JWT_SECRET || 'zomp_super_secret_key_2026_change_in_production';
+
+// --- AUTHENTICATION & USERS ---
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, role, referrerQrCode } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Create base user
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: role || 'PASSENGER',
+        qrCode: role === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null
+      }
+    });
+
+    // Check for referral logic
+    if (referrerQrCode && role === 'PASSENGER') {
+      const referrer = await prisma.user.findFirst({
+        where: { qrCode: referrerQrCode, role: 'DRIVER' }
+      });
+      if (referrer) {
+        // Link Passenger to Driver permanently
+        await prisma.referral.create({
+          data: {
+            referrerId: referrer.id,
+            referredId: user.id
+          }
+        });
+      }
+    }
+
+    res.status(201).json({ message: 'User created successfully', user: { id: user.id, email: user.email, role: user.role } });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Error creating user' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance } });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal error login' });
+  }
+});
+
+// Middleware for auth
+const authenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) return res.sendStatus(403);
+      req.user = user;
+      next();
+    });
+  } else {
+    res.sendStatus(401);
+  }
+};
+
+// --- RIDES & ROYALTIES ---
+
+app.post('/api/rides/request', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'PASSENGER') return res.status(403).json({ error: 'Only passengers can request a ride' });
+
+    const ride = await prisma.ride.create({
+      data: {
+        passengerId: req.user.id,
+        status: 'PENDING'
+      }
+    });
+    res.json(ride);
+  } catch (error) {
+    res.status(500).json({ error: 'Error requesting ride' });
+  }
+});
+
+app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers can complete a ride' });
+
+    const rideId = req.params.id;
+    const ride = await prisma.ride.update({
+      where: { id: rideId },
+      data: { status: 'COMPLETED' },
+      include: { passenger: { include: { referredBy: true } } }
+    });
+
+    // Check if the passenger was referred by someone
+    const referral = ride.passenger.referredBy;
+    if (referral) {
+      // Add R$ 0.10 to the referrer's balance
+      await prisma.user.update({
+        where: { id: referral.referrerId },
+        data: { balance: { increment: 0.10 } }
+      });
+    }
+
+    res.json({ message: 'Ride completed, royalties processed if applicable', ride });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error completing ride' });
+  }
+});
+
+// --- WALLET / ROYALTIES ---
+
+app.get('/api/wallet', authenticate, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ balance: user.balance });
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching wallet' });
+  }
+});
+
+app.post('/api/wallet/withdraw', authenticate, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (user.balance < 1.0) {
+       return res.status(400).json({ error: 'Minimum withdrawal is R$ 1.00' });
+    }
+
+    // Process Withdrawal Request
+    const withdrawal = await prisma.withdrawal.create({
+      data: {
+        userId: user.id,
+        amount: user.balance,
+        status: 'PENDING'
+      }
+    });
+
+    // Reset Balance
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { balance: 0 }
+    });
+
+    res.json({ message: 'Withdrawal requested successfully', withdrawal });
+  } catch (error) {
+    res.status(500).json({ error: 'Error processing withdrawal' });
+  }
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`Backend server running on http://localhost:${PORT}`));
