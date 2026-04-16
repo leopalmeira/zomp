@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUser, getWallet, requestRide, logout } from '../services/api'
+import logoImage from '../assets/logo.png'
 import './Dashboard.css'
 
 export default function PassengerDashboard() {
@@ -50,7 +51,7 @@ export default function PassengerDashboard() {
       <header className="dash-header">
         <div className="dash-header-inner">
           <div className="dash-brand">
-            <div className="logo-icon-sm">Z</div>
+            <img src={logoImage} alt="Zomp" className="logo-image-sm" />
             <span>Zomp</span>
           </div>
           <div className="dash-user-info">

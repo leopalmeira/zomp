@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../services/api'
+import logoImage from '../assets/logo.png'
 import './Auth.css'
 
 export default function LoginPage() {
@@ -8,6 +9,8 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // To visually differentiate login, let's allow user to select context before submission if we wanted, 
+  // but it's simpler here. The backend detects it automatically.
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -28,13 +31,16 @@ export default function LoginPage() {
       <div className="auth-bg-glow" />
       <div className="auth-container animate-fade-in-up">
         <div className="auth-logo">
-          <div className="logo-icon">Z</div>
+          <img src={logoImage} alt="Zomp Logo" className="logo-image" />
           <h1>Zomp</h1>
-          <p className="auth-subtitle">Mobilidade Inteligente</p>
+          <p className="auth-subtitle">A Mobilidade Inteligente</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
-          <h2>Entrar</h2>
+          <div className="auth-form-header">
+            <h2>Fazer Login</h2>
+            <p className="auth-link">Bem-vindo de volta!</p>
+          </div>
 
           {error && <div className="auth-error">{error}</div>}
 
@@ -70,11 +76,11 @@ export default function LoginPage() {
             className="btn btn-primary btn-block"
             disabled={loading}
           >
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? 'Acessando...' : 'Entrar'}
           </button>
 
-          <p className="auth-link">
-            Não tem conta? <Link to="/register">Criar conta</Link>
+          <p className="auth-link" style={{marginTop: '16px'}}>
+            Ainda não tem conta? <Link to="/register">Cadastre-se</Link>
           </p>
         </form>
       </div>

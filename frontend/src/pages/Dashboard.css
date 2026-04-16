@@ -1,5 +1,5 @@
 /* ========================================
-   Dashboard Shared Styles
+   Dashboard Shared Styles (Stitch Style)
    ======================================== */
 
 .dashboard-page {
@@ -12,10 +12,11 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(10, 14, 23, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .dash-header-inner {
@@ -36,17 +37,11 @@
   color: var(--text-primary);
 }
 
-.logo-icon-sm {
+.logo-image-sm {
   width: 32px;
   height: 32px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--bg-primary);
-  font-size: 16px;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .dash-user-info {
@@ -57,15 +52,15 @@
 }
 
 .dash-user-name {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .dash-user-role {
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary-dark);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -73,9 +68,9 @@
 .btn-icon {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   border: 1px solid var(--border-color);
-  background: transparent;
+  background: var(--bg-card);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -85,9 +80,9 @@
 }
 
 .btn-icon:hover {
-  background: var(--bg-card);
+  background: #fef2f2;
   color: var(--danger);
-  border-color: rgba(255, 77, 106, 0.3);
+  border-color: #fecaca;
 }
 
 /* Main */
@@ -96,38 +91,40 @@
   padding-bottom: 40px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 /* Greeting */
 .dash-greeting h1 {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   margin-bottom: 4px;
+  color: var(--text-primary);
 }
 
 .dash-greeting p {
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
-/* Wallet Card */
+/* Wallet Card (Driver) - Green Minimalist */
 .wallet-card {
-  background: linear-gradient(135deg, #132a1e 0%, #0d1f2d 50%, #1a1f2e 100%);
-  border: 1px solid rgba(0, 230, 118, 0.15);
+  background: linear-gradient(135deg, #0ceb84 0%, #00c853 100%);
   border-radius: var(--radius-xl);
-  padding: 28px;
+  padding: 32px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 12px 30px rgba(0, 230, 118, 0.25);
+  color: #ffffff;
 }
 
 .wallet-card::before {
   content: '';
   position: absolute;
-  top: -50%;
-  right: -30%;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(0, 230, 118, 0.08) 0%, transparent 70%);
+  top: -20%;
+  right: -10%;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -135,64 +132,67 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .wallet-label {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  opacity: 0.9;
 }
 
 .wallet-badge {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--primary);
-  background: rgba(0, 230, 118, 0.1);
-  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #00c853;
+  background: #ffffff;
+  padding: 6px 14px;
   border-radius: var(--radius-full);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .pulse-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--primary);
+  background: #00c853;
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
 .wallet-balance {
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  margin-bottom: 16px;
+  gap: 6px;
+  margin-bottom: 20px;
 }
 
 .wallet-balance .currency {
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
 .wallet-balance .amount {
-  font-size: 2.8rem;
+  font-size: 3.5rem;
   font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
 }
 
 .wallet-info {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  line-height: 1.4;
+  gap: 10px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  background: rgba(255,255,255,0.15);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
 }
 
 .wallet-info svg {
@@ -205,39 +205,41 @@
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
-  padding: 28px;
+  padding: 32px 24px;
   text-align: center;
+  box-shadow: var(--shadow-md);
 }
 
 .qr-card h2 {
-  font-size: 1.2rem;
-  margin-bottom: 8px;
+  font-size: 1.4rem;
+  margin-bottom: 12px;
 }
 
 .qr-desc {
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   line-height: 1.5;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .qr-display {
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .qr-image-wrapper {
   position: relative;
   padding: 16px;
-  background: var(--bg-input);
+  background: #ffffff;
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .qr-image {
-  width: 180px;
-  height: 180px;
+  width: 200px;
+  height: 200px;
   border-radius: 8px;
   display: block;
 }
@@ -247,26 +249,26 @@
   inset: -2px;
   border-radius: var(--radius-lg);
   background: linear-gradient(135deg, var(--primary), transparent, var(--primary));
-  opacity: 0.1;
+  opacity: 0.05;
   z-index: -1;
-  animation: pulse-glow 3s ease-in-out infinite;
+  animation: pulse-glow 4s ease-in-out infinite;
 }
 
 .qr-code-text {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .qr-code-text code {
   background: var(--bg-input);
-  padding: 10px 20px;
-  border-radius: var(--radius-md);
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--primary);
-  letter-spacing: 0.08em;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.1em;
   border: 1px solid var(--border-color);
   font-family: 'Inter', monospace;
 }
@@ -275,75 +277,69 @@
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 16px;
 }
 
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 20px 16px;
+  padding: 24px 16px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
   transition: all var(--transition-base);
 }
 
 .stat-card:hover {
   border-color: var(--border-active);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
 }
 
 .stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .stat-value {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 800;
   color: var(--text-primary);
 }
 
 .stat-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-weight: 500;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
-/* Ride Card (Passenger) */
+/* Ride Card (Passenger) - Floating Clean Map Style */
 .ride-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
   overflow: hidden;
+  box-shadow: var(--shadow-lg);
 }
 
 .ride-map-area {
-  height: 200px;
-  background: linear-gradient(180deg, #0d1520 0%, #111827 100%);
+  height: 240px;
+  background: #e5e7eb; /* Light map background */
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
-}
-
-.ride-map-area::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 30% 50%, rgba(0, 230, 118, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 70% 30%, rgba(56, 189, 248, 0.04) 0%, transparent 40%);
 }
 
 /* Map grid lines */
@@ -352,101 +348,86 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(#ffffff 2px, transparent 2px),
+    linear-gradient(90deg, #ffffff 2px, transparent 2px);
+  background-size: 60px 60px;
+  opacity: 0.5;
 }
 
 .map-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   z-index: 1;
 }
 
 .map-pin {
   animation: float 3s ease-in-out infinite;
-  filter: drop-shadow(0 4px 12px rgba(0, 230, 118, 0.3));
+  filter: drop-shadow(0 8px 16px rgba(0, 230, 118, 0.4));
 }
 
 .map-ripple {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  border: 2px solid rgba(0, 230, 118, 0.2);
+  border: 3px solid rgba(0, 230, 118, 0.4);
+  background: rgba(0, 230, 118, 0.1);
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  animation: pulse-glow 2s ease-in-out infinite;
+  animation: pulse-glow 2s ease-in-out infinite alternate;
 }
 
 .map-text {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 500;
+  font-size: 0.95rem;
+  background: #ffffff;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .ride-actions {
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .ride-status-msg {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 16px 20px;
   border-radius: var(--radius-md);
-  background: rgba(0, 230, 118, 0.08);
-  border: 1px solid rgba(0, 230, 118, 0.2);
-  font-size: 0.85rem;
-  color: var(--primary);
+  background: var(--primary-subtle);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  font-size: 0.95rem;
+  color: var(--primary-dark);
+  font-weight: 600;
 }
 
 .ride-status-msg.error {
-  background: rgba(255, 77, 106, 0.08);
-  border-color: rgba(255, 77, 106, 0.2);
+  background: #fef2f2;
+  border-color: #fca5a5;
   color: var(--danger);
 }
 
 .ride-status-msg code {
-  background: rgba(0, 230, 118, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.8rem;
+  background: #ffffff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.9rem;
   font-family: 'Inter', monospace;
-  color: var(--primary);
+  color: var(--text-primary);
+  border: 1px solid #d1d5db;
 }
-
-.status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.status-indicator.active {
-  background: var(--primary);
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.loading-dots span {
-  animation: fadeIn 0.6s ease-in-out infinite alternate;
-}
-.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
 
 @media (max-width: 400px) {
   .stats-grid {
     grid-template-columns: 1fr;
-  }
-
-  .wallet-balance .amount {
-    font-size: 2.2rem;
   }
 }
