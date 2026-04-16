@@ -7,8 +7,23 @@
   flex-direction: column;
   min-height: 100vh;
   position: relative;
-  /* Ensure backgrounds are transparent to see the root map */
   background: transparent;
+}
+
+/* 
+  Top white gradient mask: 
+  This ensures the top area where the logo sits is PURE WHITE.
+  Because the top is pure white, the white square of the logo image vanishes naturally.
+  The map smoothly fades in towards the bottom.
+*/
+.auth-page::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50vh;
+  background: linear-gradient(to bottom, rgba(255,255,255,1) 35%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .auth-container {
@@ -21,24 +36,26 @@
 }
 
 .auth-header {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   margin-top: 10px;
   text-align: center;
+  position: relative;
+  z-index: 10;
 }
 
 /* 
-  MAGIC FIX FOR LOGO:
-  MIX-BLEND-MODE: MULTIPLY 
-  Makes pure white pixels 100% transparent. The logo floats seamlessly over the map!
+  LOGO FIX:
+  Using contrast and brightness to blow out any subtle grey noise in the white background of the image,
+  and mix-blend-mode: multiply to perfectly fuse it with the white gradient behind it.
+  The square is completely gone.
 */
 .logo-image {
-  width: 150px; 
+  width: 140px; 
   height: auto;
   margin-bottom: 8px;
-  mix-blend-mode: multiply;
-  /* To give the logo priority context */
+  mix-blend-mode: darken;
+  filter: contrast(1.15) brightness(1.05); /* Kills the grey artifact */
   position: relative;
-  z-index: 10;
 }
 
 .auth-header h1 {
@@ -60,14 +77,13 @@
   margin-top: auto; 
   margin-bottom: 20px;
   
-  /* Give the form a subtle glassmorphism card so it is readable over the bright map */
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   padding: 32px 24px;
   border-radius: var(--radius-xl);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.06);
 }
 
 .auth-error {

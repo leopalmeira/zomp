@@ -86,14 +86,14 @@ html, body {
 }
 
 /* Horizontal Traffic */
-.car-dot:nth-child(1) { top: 20%; left: -10px; animation: driveRight 6s linear infinite; }
-.car-dot:nth-child(2) { top: 45%; right: -10px; animation: driveLeft 8s linear infinite 2s; }
-.car-dot:nth-child(3) { top: 70%; left: -10px; animation: driveRight 5s linear infinite 1s; }
+.car-dot:nth-child(1) { top: 25%; left: -10px; animation: driveRight 8.5s linear infinite; }
+.car-dot:nth-child(2) { top: 48%; right: -10px; animation: driveLeft 11.5s linear infinite 2s; }
+.car-dot:nth-child(3) { top: 75%; left: -10px; animation: driveRight 7.5s linear infinite 1s; }
 
 /* Vertical Traffic */
-.car-dot:nth-child(4) { left: 30%; top: -10px; animation: driveDown 7s linear infinite 3s; }
-.car-dot:nth-child(5) { left: 65%; bottom: -10px; animation: driveUp 9s linear infinite 0.5s; }
-.car-dot:nth-child(6) { left: 85%; top: -10px; animation: driveDown 6s linear infinite 4s; }
+.car-dot:nth-child(4) { left: 40%; top: -10px; animation: driveDown 10s linear infinite 3s; }
+.car-dot:nth-child(5) { left: 70%; bottom: -10px; animation: driveUp 13s linear infinite 0.5s; }
+.car-dot:nth-child(6) { left: 88%; top: -10px; animation: driveDown 8.5s linear infinite 4s; }
 
 @keyframes driveRight {
   0% { transform: translateX(0); opacity: 0; }
