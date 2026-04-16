@@ -37,6 +37,16 @@ export default function RegisterPage({ forceRole }) {
 
   return (
     <div className={`auth-page ${isDriver ? 'driver-theme' : ''}`}>
+      {/* Animated Traffic Effect */}
+      <div className="traffic-layer">
+        <div className="car-dot"></div>
+        <div className="car-dot"></div>
+        <div className="car-dot"></div>
+        <div className="car-dot"></div>
+        <div className="car-dot"></div>
+        <div className="car-dot"></div>
+      </div>
+
       <div className="auth-container animate-fade-in">
         
         <div className="auth-header">

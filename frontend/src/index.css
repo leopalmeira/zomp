@@ -1,5 +1,5 @@
 /* ========================================
-   ZOMP UI - LUXURY LIGHT THEME (PWA)
+   ZOMP UI - LUXURY ANIMATED MAP THEME
    ======================================== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
@@ -15,12 +15,11 @@
   --primary-hover: #00C853;
   --primary-subtle: #e8fbed;
   
-  /* Stark Contrast Palette */
-  --bg-app: #ffffff;
-  --bg-input: #f4f4f5;
+  --bg-app: #f8f9fa;
+  --bg-input: rgba(255, 255, 255, 0.9);
   --text-dark: #09090b;
-  --text-muted: #71717a;
-  --border-subtle: #e4e4e7;
+  --text-muted: #52525b;
+  --border-subtle: rgba(0,0,0,0.08);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -37,24 +36,88 @@
 
 html, body {
   font-family: var(--font);
-  background-color: #000000; /* Desktop background is solid black, makes phone pop */
+  background-color: #000000; 
   color: var(--text-dark);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
 
-/* Base PWA frame without cheesy borders */
+/* The PWA Container */
 #root {
   width: 100%;
-  max-width: 440px; 
+  max-width: 480px; 
   min-height: 100vh;
   margin: 0 auto;
   position: relative;
-  background-color: var(--bg-app);
+  background-color: #ffffff;
+  
+  /* Bright, vibrant map background */
+  background-image: url('./assets/map_bg.png');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  
   box-shadow: 0 0 80px rgba(255,255,255,0.05); 
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+}
+
+/* 
+  Animated Traffic System
+  Creates moving dots traversing the screen to simulate cars on the map
+*/
+.traffic-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.car-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: var(--primary);
+  border-radius: 50%;
+  box-shadow: 0 0 8px 2px rgba(0, 230, 118, 0.6);
+  opacity: 0;
+}
+
+/* Horizontal Traffic */
+.car-dot:nth-child(1) { top: 20%; left: -10px; animation: driveRight 6s linear infinite; }
+.car-dot:nth-child(2) { top: 45%; right: -10px; animation: driveLeft 8s linear infinite 2s; }
+.car-dot:nth-child(3) { top: 70%; left: -10px; animation: driveRight 5s linear infinite 1s; }
+
+/* Vertical Traffic */
+.car-dot:nth-child(4) { left: 30%; top: -10px; animation: driveDown 7s linear infinite 3s; }
+.car-dot:nth-child(5) { left: 65%; bottom: -10px; animation: driveUp 9s linear infinite 0.5s; }
+.car-dot:nth-child(6) { left: 85%; top: -10px; animation: driveDown 6s linear infinite 4s; }
+
+@keyframes driveRight {
+  0% { transform: translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(500px); opacity: 0; }
+}
+@keyframes driveLeft {
+  0% { transform: translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(-500px); opacity: 0; }
+}
+@keyframes driveDown {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+@keyframes driveUp {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-100vh); opacity: 0; }
 }
 
 /* Typography */
@@ -78,39 +141,23 @@ a:hover { color: var(--primary); text-decoration-color: var(--primary); }
   font-family: var(--font);
   cursor: pointer;
   transition: var(--transition);
+  position: relative;
+  z-index: 10;
 }
 
 .btn-primary {
   background-color: var(--primary);
-  color: #000; /* High contrast text on green */
+  color: #000;
+  box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
 }
 
 .btn-primary:hover {
   background-color: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 230, 118, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 230, 118, 0.4);
 }
 
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-.btn-dark {
-  background-color: var(--text-dark);
-  color: #fff;
-}
-
-.btn-dark:hover {
-  background-color: #000;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
-}
+.btn-primary:active { transform: translateY(0); }
 
 /* Inputs */
 .input-group {
@@ -119,36 +166,19 @@ a:hover { color: var(--primary); text-decoration-color: var(--primary); }
   gap: 8px;
   text-align: left;
 }
-
 .input-group label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-dark);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.85rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.05em;
 }
-
 .input {
-  width: 100%;
-  padding: 16px;
-  background-color: var(--bg-input);
-  border: 2px solid transparent;
-  border-radius: var(--radius-md);
-  font-family: var(--font);
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-dark);
+  width: 100%; padding: 16px; background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  font-family: var(--font); font-size: 1rem; font-weight: 500; color: var(--text-dark);
   transition: var(--transition);
+  backdrop-filter: blur(8px);
 }
-
-.input::placeholder {
-  color: #a1a1aa;
-}
-
+.input::placeholder { color: #9ca3af; }
 .input:focus {
-  outline: none;
-  border-color: var(--primary);
-  background-color: #ffffff;
+  outline: none; border-color: var(--primary); background-color: #ffffff;
   box-shadow: 0 4px 12px rgba(0, 230, 118, 0.1);
 }
 
@@ -156,7 +186,6 @@ a:hover { color: var(--primary); text-decoration-color: var(--primary); }
 .animate-fade-in { animation: fadeIn 0.4s ease forwards; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
