@@ -18,7 +18,6 @@ export default function LoginPage({ forceRole }) {
     setLoading(true)
     try {
       const data = await login(form)
-      // For security, if they log in via driver app, insure they go to correct dashboard
       if (data.user.role === 'DRIVER') {
         navigate('/motorista/dashboard')
       } else {
@@ -35,31 +34,27 @@ export default function LoginPage({ forceRole }) {
 
   return (
     <div className={`auth-page ${isDriver ? 'driver-theme' : ''}`}>
-      <div className="auth-bg-glow" />
-      <div className="auth-container animate-fade-in-up">
-        <div className="auth-logo">
+      <div className="auth-container animate-fade-in">
+        
+        <div className="auth-header">
           <img src={logoImage} alt="Zomp Logo" className="logo-image" />
-          <h1>Zomp</h1>
+          <h1>{isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
           <p className="auth-subtitle">
-            {isDriver ? 'Acesso para Parceiros Motoristas' : 'Acesso para Passageiros'}
+            {isDriver ? 'Acesse o portal do motorista.' : 'Acesse para pedir sua viagem.'}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-accent' : ''}`}>
-          <div className="auth-form-header">
-            <h2>Fazer Login</h2>
-            <p className="auth-link">Bem-vindo de volta!</p>
-          </div>
-
-          {error && <div className="auth-error">{error}</div>}
+          
+          {error && <div className="auth-error">⚠ {error}</div>}
 
           <div className="input-group">
-            <label htmlFor="login-email">E-mail</label>
+            <label htmlFor="login-email">Endereço de E-mail</label>
             <input
               id="login-email"
               className="input"
               type="email"
-              placeholder="seu@email.com"
+              placeholder="nome@email.com.br"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
@@ -67,7 +62,7 @@ export default function LoginPage({ forceRole }) {
           </div>
 
           <div className="input-group">
-            <label htmlFor="login-password">Senha</label>
+            <label htmlFor="login-password">Senha de Acesso</label>
             <input
               id="login-password"
               className="input"
@@ -82,17 +77,18 @@ export default function LoginPage({ forceRole }) {
           <button
             id="login-submit"
             type="submit"
-            className="btn btn-block"
-            style={isDriver ? { backgroundColor: 'var(--text-primary)', color: 'white' } : { backgroundColor: 'var(--primary)', color: 'white' }}
+            className="btn btn-primary btn-submit"
             disabled={loading}
+            style={{ marginTop: '16px' }}
           >
-            {loading ? 'Acessando...' : 'Entrar'}
+            {loading ? 'Acessando...' : 'Entrar na Conta'}
           </button>
 
-          <p className="auth-link" style={{marginTop: '16px'}}>
-            Ainda não tem conta? <Link to={registerLink}>Cadastre-se</Link>
+          <p className="auth-link">
+            Novo na Zomp? <Link to={registerLink}>Criar uma conta</Link>
           </p>
         </form>
+
       </div>
     </div>
   )

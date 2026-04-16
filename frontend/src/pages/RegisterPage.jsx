@@ -37,31 +37,27 @@ export default function RegisterPage({ forceRole }) {
 
   return (
     <div className={`auth-page ${isDriver ? 'driver-theme' : ''}`}>
-      <div className="auth-bg-glow" />
-      <div className="auth-container animate-fade-in-up">
+      <div className="auth-container animate-fade-in">
         
-        <div className="auth-logo">
+        <div className="auth-header">
           <img src={logoImage} alt="Zomp Logo" className="logo-image" />
-          <h1>Zomp</h1>
+          <h1>{isDriver ? 'Dirija.' : 'Viaje.'}</h1>
           <p className="auth-subtitle">
-            Crie sua conta como {isDriver ? 'Parceiro' : 'Passageiro'}
+            Crie sua conta como {isDriver ? 'motorista parceiro' : 'passageiro'}.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-accent' : ''}`}>
-          <div className="auth-form-header">
-            <h2>Cadastro de {isDriver ? 'Parceiro' : 'Passageiro'}</h2>
-          </div>
-
-          {error && <div className="auth-error">{error}</div>}
+          
+          {error && <div className="auth-error">⚠ {error}</div>}
 
           <div className="input-group">
-            <label htmlFor="reg-name">Nome completo</label>
+            <label htmlFor="reg-name">Nome e Sobrenome</label>
             <input
               id="reg-name"
               className="input"
               type="text"
-              placeholder="João Silva"
+              placeholder="Como quer ser chamado?"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
@@ -69,12 +65,12 @@ export default function RegisterPage({ forceRole }) {
           </div>
 
           <div className="input-group">
-            <label htmlFor="reg-email">E-mail</label>
+            <label htmlFor="reg-email">Endereço de E-mail</label>
             <input
               id="reg-email"
               className="input"
               type="email"
-              placeholder="seu@email.com"
+              placeholder="nome@email.com.br"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
@@ -82,12 +78,12 @@ export default function RegisterPage({ forceRole }) {
           </div>
 
           <div className="input-group">
-            <label htmlFor="reg-password">Senha</label>
+            <label htmlFor="reg-password">Criar Senha</label>
             <input
               id="reg-password"
               className="input"
               type="password"
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo de 6 caracteres"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               required
@@ -96,16 +92,14 @@ export default function RegisterPage({ forceRole }) {
           </div>
 
           {!isDriver && (
-            <div className="input-group animate-fade-in">
-              <label htmlFor="reg-referral" style={{display: 'flex', justifyContent: 'space-between'}}>
-                <span>Código de convite (Opcional)</span>
-              </label>
+            <div className="input-group" style={{ marginTop: '8px' }}>
+              <label htmlFor="reg-referral" style={{color: 'var(--primary-hover)'}}>Código Promocional (Opcional)</label>
               <input
                 id="reg-referral"
                 className="input"
-                style={{ backgroundColor: '#e8fbed', borderColor: '#00E676' }}
+                style={{ backgroundColor: 'var(--primary-subtle)', borderColor: 'transparent' }}
                 type="text"
-                placeholder="Código do motorista que indicou"
+                placeholder="Código do motorista"
                 value={form.referrerQrCode}
                 onChange={(e) => setForm({ ...form, referrerQrCode: e.target.value })}
               />
@@ -115,15 +109,15 @@ export default function RegisterPage({ forceRole }) {
           <button
             id="register-submit"
             type="submit"
-            className="btn btn-block"
-            style={isDriver ? { backgroundColor: 'var(--text-primary)', color: 'white' } : { backgroundColor: 'var(--primary)', color: 'white' }}
+            className="btn btn-primary btn-submit"
             disabled={loading}
+            style={{ marginTop: '16px' }}
           >
-            {loading ? 'Criando...' : (isDriver ? 'Cadastrar para Dirigir' : 'Criar conta')}
+            {loading ? 'Processando...' : 'Finalizar Cadastro'}
           </button>
           
-          <p className="auth-link" style={{marginTop: '16px'}}>
-            Já tem conta? <Link to={loginLink}>Entrar</Link>
+          <p className="auth-link">
+            Já possui uma conta Zomp? <Link to={loginLink}>Entrar</Link>
           </p>
         </form>
       </div>

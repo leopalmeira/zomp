@@ -1,193 +1,104 @@
 /* ========================================
-   Auth Pages (Login + Register)
+   ZOMP UI - Premium Auth Flow
    ======================================== */
 
 .auth-page {
-  min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-app);
   position: relative;
-  overflow: hidden;
-  padding: 20px;
-  background: transparent;
 }
 
-.auth-bg-glow {
+/* Optional subtle background image applied only at the very bottom, fading out */
+.auth-page::after {
+  content: '';
   position: absolute;
-  top: -20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(circle, var(--primary-subtle) 0%, transparent 70%);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40vh;
+  background-image: url('../assets/auth_bg.png');
+  background-size: cover;
+  background-position: center bottom;
+  mask-image: linear-gradient(to top, rgba(0,0,0,0.15) 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.15) 0%, transparent 100%);
   pointer-events: none;
-  animation: pulse-glow 8s ease-in-out infinite alternate;
+  z-index: 0;
 }
 
 .auth-container {
-  width: 100%;
-  max-width: 440px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 32px;
   position: relative;
   z-index: 1;
 }
 
-.auth-logo {
-  text-align: center;
-  margin-bottom: 32px;
+.auth-header {
+  margin-bottom: 40px;
+  margin-top: 20px;
 }
 
+/* Natively fixing the white-background logo issue: */
+/* Because .auth-page is pure #ffffff, the logo blends flawlessly. */
 .logo-image {
-  width: 120px;
+  width: 140px; /* Properly scaled down so it's not overwhelmingly huge */
   height: auto;
-  margin-bottom: 24px;
+  margin-left: -8px; /* Optical alignment depending on the badge */
+  margin-bottom: 16px;
+  /* NO borders, NO shadows, NO background colors! Let it sit raw on the white app. */
 }
 
-.auth-logo h1 {
-  font-size: 2.2rem;
+.auth-header h1 {
+  font-size: 2.8rem;
+  line-height: 1.1;
   margin-bottom: 8px;
-  color: var(--text-primary);
 }
 
 .auth-subtitle {
-  color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 .auth-form {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl);
-  padding: 40px;
-  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   gap: 24px;
-}
-
-.auth-form-header {
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.auth-form-header h2 {
-  color: var(--text-primary);
+  margin-top: auto; /* Pushes the form down slightly if needed, or keeps it natural */
+  margin-bottom: 40px;
 }
 
 .auth-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: var(--danger);
-  padding: 14px 16px;
+  background-color: #000;
+  color: #fff;
+  padding: 16px;
   border-radius: var(--radius-md);
   font-size: 0.9rem;
-  text-align: center;
-  font-weight: 500;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .auth-link {
   text-align: center;
-  color: var(--text-secondary);
+  margin-top: 16px;
   font-size: 0.95rem;
-  margin-top: 8px;
+  color: var(--text-muted);
 }
 
-.auth-link a {
-  color: var(--primary-dark);
-  font-weight: 600;
+/* Driver Theme Specific Overrides */
+/* The layout knows it's the driver app logically, but visually keeps the same premium structure, 
+   just changing text and button colors. */
+.driver-accent .btn-submit {
+  background-color: var(--text-dark);
+  color: #fff;
 }
 
-/* Role Selector - Enhanced for differentiation */
-.role-tabs {
-  display: flex;
-  background: var(--bg-input);
-  border-radius: var(--radius-full);
-  padding: 6px;
-  margin-bottom: 24px;
-}
-
-.role-tab {
-  flex: 1;
-  padding: 12px;
-  border-radius: var(--radius-full);
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.role-tab.active {
-  background: #ffffff;
-  color: var(--primary-dark);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.role-tab.active-driver {
-  background: #ffffff;
-  color: var(--text-primary);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-/* The actual selectors used before - keeping class just in case but modifying visual */
-.role-selector {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 8px;
-}
-
-.role-option {
-  padding: 20px 16px;
-  border-radius: var(--radius-lg);
-  border: 2px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-base);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.role-option:hover {
-  border-color: var(--primary-glow);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-
-.role-option.active {
-  border-color: var(--primary);
-  background: var(--primary-subtle);
-  color: var(--primary-dark);
-}
-
-.role-emoji {
-  font-size: 2rem;
-  background: #ffffff;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  box-shadow: var(--shadow-sm);
-}
-
-/* Appears only for Driver login/reg to differentiate */
-.driver-accent {
-  border-top: 4px solid var(--text-primary);
-}
-
-@media (max-width: 480px) {
-  .auth-form {
-    padding: 32px 24px;
-    border-radius: var(--radius-lg);
-  }
+.driver-accent .btn-submit:hover {
+  background-color: #000;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
