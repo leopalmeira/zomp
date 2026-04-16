@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../services/api'
 import logoImage from '../assets/logo.png'
+import AuthMapBg from '../components/AuthMapBg'
 import './Auth.css'
 
 export default function LoginPage({ forceRole }) {
@@ -34,15 +35,7 @@ export default function LoginPage({ forceRole }) {
 
   return (
     <div className={`auth-page ${isDriver ? 'driver-theme' : ''}`}>
-      {/* Animated Traffic Effect */}
-      <div className="traffic-layer">
-        <div className="car-dot"></div>
-        <div className="car-dot"></div>
-        <div className="car-dot"></div>
-        <div className="car-dot"></div>
-        <div className="car-dot"></div>
-        <div className="car-dot"></div>
-      </div>
+      <AuthMapBg />
 
       <div className="auth-container animate-fade-in">
         

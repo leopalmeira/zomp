@@ -51,73 +51,11 @@ html, body {
   position: relative;
   background-color: #ffffff;
   
-  /* Bright, vibrant map background */
-  background-image: url('./assets/map_bg.png');
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  
+  /* Removed background image to keep a purely clean canvas for AuthMapBg */
   box-shadow: 0 0 80px rgba(255,255,255,0.05); 
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-}
-
-/* 
-  Animated Traffic System
-  Creates moving dots traversing the screen to simulate cars on the map
-*/
-.traffic-layer {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.car-dot {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background-color: var(--primary);
-  border-radius: 50%;
-  box-shadow: 0 0 8px 2px rgba(0, 230, 118, 0.6);
-  opacity: 0;
-}
-
-/* Horizontal Traffic */
-.car-dot:nth-child(1) { top: 25%; left: -10px; animation: driveRight 8.5s linear infinite; }
-.car-dot:nth-child(2) { top: 48%; right: -10px; animation: driveLeft 11.5s linear infinite 2s; }
-.car-dot:nth-child(3) { top: 75%; left: -10px; animation: driveRight 7.5s linear infinite 1s; }
-
-/* Vertical Traffic */
-.car-dot:nth-child(4) { left: 40%; top: -10px; animation: driveDown 10s linear infinite 3s; }
-.car-dot:nth-child(5) { left: 70%; bottom: -10px; animation: driveUp 13s linear infinite 0.5s; }
-.car-dot:nth-child(6) { left: 88%; top: -10px; animation: driveDown 8.5s linear infinite 4s; }
-
-@keyframes driveRight {
-  0% { transform: translateX(0); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateX(500px); opacity: 0; }
-}
-@keyframes driveLeft {
-  0% { transform: translateX(0); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateX(-500px); opacity: 0; }
-}
-@keyframes driveDown {
-  0% { transform: translateY(0); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(100vh); opacity: 0; }
-}
-@keyframes driveUp {
-  0% { transform: translateY(0); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(-100vh); opacity: 0; }
 }
 
 /* Typography */
