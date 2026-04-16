@@ -61,19 +61,47 @@ html {
 
 body {
   font-family: var(--font);
-  background: var(--bg-primary);
+  background: url('./assets/app_background.png') center/cover no-repeat fixed;
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  background: var(--bg-primary); /* Solid background for the app area itself */
   display: flex;
   flex-direction: column;
+}
+
+/* Smartphone mockup sizing for larger screens */
+@media (min-width: 481px) {
+  #root {
+    height: 850px;
+    max-height: 95vh;
+    min-height: auto;
+    border-radius: 40px;
+    border: 14px solid #111; /* Phone frame aesthetics */
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6); /* Ambient shadow */
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  
+  /* Make the inner scrollbar slightly cleaner for desktop view of phone */
+  #root::-webkit-scrollbar {
+    width: 4px;
+    background: transparent;
+  }
 }
 
 /* ========== Typography ========== */
@@ -98,8 +126,6 @@ a:hover { color: var(--primary); }
 /* ========== Utility Classes ========== */
 .container {
   width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
   padding: 0 20px;
 }
 
@@ -118,7 +144,7 @@ a:hover { color: var(--primary); }
   gap: 8px;
   padding: 14px 28px;
   border: none;
-  border-radius: var(--radius-full); /* More pill-shaped like modern mobile apps */
+  border-radius: var(--radius-full); 
   font-family: var(--font);
   font-size: 1rem;
   font-weight: 600;

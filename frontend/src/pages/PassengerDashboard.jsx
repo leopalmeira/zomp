@@ -42,7 +42,7 @@ export default function PassengerDashboard() {
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
+    navigate('/passageiro')
   }
 
   return (

@@ -4,13 +4,13 @@ import { login } from '../services/api'
 import logoImage from '../assets/logo.png'
 import './Auth.css'
 
-export default function LoginPage() {
+export default function LoginPage({ forceRole }) {
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  // To visually differentiate login, let's allow user to select context before submission if we wanted, 
-  // but it's simpler here. The backend detects it automatically.
+
+  const isDriver = forceRole === 'DRIVER'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -18,7 +18,12 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const data = await login(form)
-      navigate(data.user.role === 'DRIVER' ? '/driver' : '/passenger')
+      // For security, if they log in via driver app, insure they go to correct dashboard
+      if (data.user.role === 'DRIVER') {
+        navigate('/motorista/dashboard')
+      } else {
+        navigate('/passageiro/dashboard')
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -26,17 +31,21 @@ export default function LoginPage() {
     }
   }
 
+  const registerLink = isDriver ? '/motorista/cadastro' : '/passageiro/cadastro'
+
   return (
-    <div className="auth-page">
+    <div className={`auth-page ${isDriver ? 'driver-theme' : ''}`}>
       <div className="auth-bg-glow" />
       <div className="auth-container animate-fade-in-up">
         <div className="auth-logo">
           <img src={logoImage} alt="Zomp Logo" className="logo-image" />
           <h1>Zomp</h1>
-          <p className="auth-subtitle">A Mobilidade Inteligente</p>
+          <p className="auth-subtitle">
+            {isDriver ? 'Acesso para Parceiros Motoristas' : 'Acesso para Passageiros'}
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-accent' : ''}`}>
           <div className="auth-form-header">
             <h2>Fazer Login</h2>
             <p className="auth-link">Bem-vindo de volta!</p>
@@ -73,14 +82,15 @@ export default function LoginPage() {
           <button
             id="login-submit"
             type="submit"
-            className="btn btn-primary btn-block"
+            className="btn btn-block"
+            style={isDriver ? { backgroundColor: 'var(--text-primary)', color: 'white' } : { backgroundColor: 'var(--primary)', color: 'white' }}
             disabled={loading}
           >
             {loading ? 'Acessando...' : 'Entrar'}
           </button>
 
           <p className="auth-link" style={{marginTop: '16px'}}>
-            Ainda não tem conta? <Link to="/register">Cadastre-se</Link>
+            Ainda não tem conta? <Link to={registerLink}>Cadastre-se</Link>
           </p>
         </form>
       </div>

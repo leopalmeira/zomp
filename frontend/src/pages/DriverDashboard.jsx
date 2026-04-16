@@ -37,7 +37,7 @@ export default function DriverDashboard() {
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
+    navigate('/motorista')
   }
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(user?.qrCode || '')}&bgcolor=1a1f2e&color=00E676`
