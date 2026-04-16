@@ -10,14 +10,26 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementação e
 
 ## Log de Modificações
 
-### [15/04/2026] - Inicialização do Projeto e Definição de Arquitetura
+### [15/04/2026] - Implementação da Camada de Dados e API do Backend
 **Feito:**
-- Inicializado o repositório Git no diretório raiz do projeto.
-- Criados os arquivos de modelo de agente `@frontend-specialist.md` e `@backend-specialist.md`.
-- Estabelecido este arquivo (`diario_de_bordo.md`) para rastreamento centralizado de atividades.
-- Definida as premissas de regras de negócio estritas sobre o vínculo vitalício de indicação (Motorista -> Passageiro via QRCode) e comissão por viagem concluída (R$ 0,10 por corrida, sacável a cada 3 meses).
+- **Backend Initialized:** Servidor Node.js com Express e Prisma configurados.
+- **Modelagem de Banco de Dados (SQLite):**
+    - `User`: Suporte a Papéis (Motorista/Passageiro), QR Code para indicação e Saldo de Royalties.
+    - `Referral`: Vínculo permanente entre passageiro e motorista indicador.
+    - `Ride`: Registro de viagens com processamento automático de comissão.
+    - `Withdrawal`: Gestão de solicitações de saque.
+- **Lógica de Royalties:** Implementado o gatilho no endpoint `/api/rides/:id/complete` que credita R$ 0,10 ao motorista que indicou o passageiro da viagem.
+- **Autenticação:** Sistema de Registro e Login com JWT e Hash de senha (bcrypt).
+- **Referral QR System:** Geração automática de QR Code para motoristas e vinculação no registro de novos passageiros.
+
+### [15/04/2026] - Inicialização do Frontend Premium
+**Feito:**
+- **Vite + React:** Setup inicial do frontend em `frontend/`.
+- **Design System:** Implementação da base visual "Premium Stitch-style" em `index.css` e `App.css`.
 
 **A Fazer / Próximos Passos:**
-- Inicializar a infraestrutura do Backend (Node/Express, Banco de dados Prisma) com a modelagem do sistema de Referrals.
-- Inicializar a aplicação Frontend (React / Vite) para seguir referencial do layout (Stitch).
-- Configuração do Git para commit automático de cada fase de modificação.
+- Implementar telas de Dashboard para Motorista (QR Code de Indicação) e Passageiro.
+- Integrar Frontend com a API de Carteira (Wallet) para visualização de saldo e extrato.
+- Adicionar mapa interativo para simulação de corridas.
+- Configurar rotas protegidas (Private Routes) baseadas no papel do usuário.
+
