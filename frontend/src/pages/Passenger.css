@@ -185,6 +185,24 @@
   gap: 12px;
 }
 
+.search-field-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.inline-search-btn {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  padding: 8px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+.inline-search-btn:hover { opacity: 1; }
+
 .route-input {
   width: 100%;
   padding: 12px 0;
@@ -226,7 +244,75 @@
   border-bottom: 1px solid #f4f4f5;
 }
 .suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:last-child { border-bottom: none; }
 .suggestion-item:hover { background: #fdfdfd; color: var(--primary-hover); }
+
+/* Favorites Section RESTORED */
+.favorites-section {
+  margin-top: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.badge-nearby {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--primary-hover);
+  background: var(--primary-subtle);
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.favorites-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scrollbar-width: none;
+}
+.favorites-scroll::-webkit-scrollbar { display: none; }
+
+.fav-driver-card {
+  min-width: 95px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  padding: 12px 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.fav-img {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f4f4f5;
+}
+
+.fav-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.fav-name { font-size: 0.9rem; font-weight: 700; }
+.fav-dist { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
 
 /* Priced State & Booking */
 .mt-4 { margin-top: 16px; }

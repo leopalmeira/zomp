@@ -131,7 +131,7 @@ export default function PassengerDashboard() {
   }
 
   const selectSuggestion = (sug) => {
-    const coords = [sug.lat, sug.lon]
+    const coords = [parseFloat(sug.lat), parseFloat(sug.lon)]
     const shortName = sug.display_name.split(',')[0]
     
     if (activeInput === 'origin') {
@@ -144,6 +144,26 @@ export default function PassengerDashboard() {
     setSuggestions([])
     setSearchInput('')
     setActiveInput(null)
+  }
+
+  // Fallback search if no suggestion clicked
+  const handleManualSearch = async (type) => {
+    const query = type === 'origin' ? origin.address : destination.address;
+    if (query.length < 5) return;
+    
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=1`)
+      const data = await res.json()
+      if (data && data.length > 0) {
+        selectSuggestion({
+          display_name: data[0].display_name,
+          lat: data[0].lat,
+          lon: data[0].lon
+        })
+      }
+    } catch (err) {
+      console.error("Manual search failed", err)
+    }
   }
 
   // --- ACTIONS ---
@@ -238,19 +258,35 @@ export default function PassengerDashboard() {
                   <div className="dot-start"></div><div className="timeline-line"></div><div className="dot-end"></div>
                 </div>
                 <div className="route-fields">
-                  <input 
-                    type="text" className="route-input start-input" 
-                    value={origin.address} onChange={(e) => handleTyping(e.target.value, 'origin')} 
-                    placeholder="Local de partida" 
-                  />
-                  <input 
-                    type="text" className="route-input end-input" 
-                    value={destination.address} onChange={(e) => handleTyping(e.target.value, 'dest')} 
-                    placeholder="Buscar destino..." 
-                  />
+                  <div className="search-field-wrapper">
+                    <input 
+                      type="text" className="route-input start-input" 
+                      value={origin.address} 
+                      onChange={(e) => handleTyping(e.target.value, 'origin')} 
+                      onBlur={() => !origin.coords && handleManualSearch('origin')}
+                      onKeyDown={(e) => e.key === 'Enter' && handleManualSearch('origin')}
+                      placeholder="Local de partida" 
+                    />
+                    <button className="inline-search-btn" onClick={() => handleManualSearch('origin')}>
+                      🔍
+                    </button>
+                  </div>
+                  <div className="search-field-wrapper">
+                    <input 
+                      type="text" className="route-input end-input" 
+                      value={destination.address} 
+                      onChange={(e) => handleTyping(e.target.value, 'dest')} 
+                      onBlur={() => !destination.coords && handleManualSearch('dest')}
+                      onKeyDown={(e) => e.key === 'Enter' && handleManualSearch('dest')}
+                      placeholder="Buscar destino..." 
+                    />
+                    <button className="inline-search-btn" onClick={() => handleManualSearch('dest')}>
+                      🔍
+                    </button>
+                  </div>
+                </div>
                 </div>
                 
-                {/* Autocomplete Dropdown */}
                 {suggestions.length > 0 && (
                    <div className="autocomplete-dropdown">
                      {suggestions.map((sug, idx) => (
@@ -262,6 +298,27 @@ export default function PassengerDashboard() {
                    </div>
                 )}
               </div>
+
+              {/* RESTORED: Favorites selection in IDLE state */}
+              <div className="favorites-section">
+                <div className="section-header">
+                  <h3>Motoristas Favoritos</h3>
+                  <span className="badge-nearby">Prioridade</span>
+                </div>
+                <div className="favorites-scroll">
+                  {favoriteDrivers.map(driver => (
+                    <div key={driver.id} className="fav-driver-card">
+                      <img src={driver.img} alt={driver.name} className="fav-img" />
+                      <div className="fav-info">
+                        <span className="fav-name">{driver.name}</span>
+                        <span className="fav-dist">Até 10 min</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="hint-text">Eles serão notificados primeiro para a sua corrida.</p>
+              </div>
+
             </div>
           )}
 
