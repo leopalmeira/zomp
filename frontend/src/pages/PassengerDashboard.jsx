@@ -87,11 +87,23 @@ export default function PassengerDashboard() {
   // Route
   const [routeGeometry, setRouteGeometry] = useState([])
   const [routeKm, setRouteKm] = useState('0')
-  const [routePrice, setRoutePrice] = useState('0.00')
+  const [vehicleType, setVehicleType] = useState('car') // 'car' | 'moto'
 
-  // State machine: IDLE -> PRICED -> SEARCHING -> ACCEPTED
+  // Pricing constants
+  const PRICE_PER_KM = { car: 2.00, moto: 1.50 }
+  const MIN_PRICE = { car: 8.40, moto: 7.20 }
+
+  // Compute price based on vehicle type and distance
+  const getPrice = (km, type) => {
+    const calculated = parseFloat(km) * PRICE_PER_KM[type]
+    const minimum = MIN_PRICE[type]
+    return Math.max(calculated, minimum).toFixed(2)
+  }
+
+  // State machine: IDLE -> PRICED -> SCHEDULING | SEARCHING -> ACCEPTED
   const [rideState, setRideState] = useState('IDLE')
   const [isLoading, setIsLoading] = useState(false)
+  const [scheduleData, setScheduleData] = useState({ date: '', time: '' })
 
   // UI
   const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
@@ -193,7 +205,6 @@ export default function PassengerDashboard() {
       if (result) {
         setRouteGeometry(result.geometry)
         setRouteKm(result.km)
-        setRoutePrice((parseFloat(result.km) * 2.00).toFixed(2))
         setRideState('PRICED')
         setIsSheetCollapsed(false)
       } else {
@@ -259,7 +270,8 @@ export default function PassengerDashboard() {
     setDestCoords(null)
     setRouteGeometry([])
     setRouteKm('0')
-    setRoutePrice('0.00')
+    setVehicleType('car')
+    setScheduleData({ date: '', time: '' })
     setRideState('IDLE')
     setIsSheetCollapsed(false)
   }
@@ -388,12 +400,44 @@ export default function PassengerDashboard() {
               <h2 className="sheet-title" style={{marginBottom:'8px'}}>Resumo da Viagem</h2>
               <p className="route-desc">{originAddr} → {destAddr}</p>
 
+              {/* Vehicle Type Selector */}
+              <div className="vehicle-selector">
+                <div
+                  className={`vehicle-option ${vehicleType === 'car' ? 'active' : ''}`}
+                  onClick={() => setVehicleType('car')}
+                >
+                  <span className="vehicle-icon">🚗</span>
+                  <div className="vehicle-details">
+                    <span className="vehicle-name">Carro</span>
+                    <span className="vehicle-price">R$ {getPrice(routeKm, 'car')}</span>
+                  </div>
+                  <span className="vehicle-info">Conforto</span>
+                </div>
+                <div
+                  className={`vehicle-option ${vehicleType === 'moto' ? 'active' : ''}`}
+                  onClick={() => setVehicleType('moto')}
+                >
+                  <span className="vehicle-icon">🏍️</span>
+                  <div className="vehicle-details">
+                    <span className="vehicle-name">Moto</span>
+                    <span className="vehicle-price">R$ {getPrice(routeKm, 'moto')}</span>
+                  </div>
+                  <span className="vehicle-info">Econômico</span>
+                </div>
+              </div>
+
               <div className="price-box">
                 <div className="price-val">
-                  <span className="currency">R$</span> {routePrice}
+                  <span className="currency">R$</span> {getPrice(routeKm, vehicleType)}
                 </div>
                 <div className="dist-val">{routeKm} km estimado</div>
               </div>
+
+              {parseFloat(routeKm) * PRICE_PER_KM[vehicleType] < MIN_PRICE[vehicleType] && (
+                <p className="hint-text" style={{marginBottom:'12px', color:'#f59e0b'}}>
+                  ⚠️ Tarifa mínima aplicada ({vehicleType === 'car' ? 'Carro: R$ 8,40' : 'Moto: R$ 7,20'})
+                </p>
+              )}
 
               <div className="prioritize-toggle">
                 <div>
@@ -407,7 +451,7 @@ export default function PassengerDashboard() {
               </div>
 
               <div className="action-buttons mt-4">
-                <button className="btn btn-schedule" onClick={() => alert('Agendamento em breve!')}>
+                <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   {' '}Agendar
                 </button>
@@ -423,6 +467,67 @@ export default function PassengerDashboard() {
               >
                 ← Alterar endereços
               </button>
+            </div>
+          )}
+
+          {/* ---- STATE: SCHEDULING ---- */}
+          {rideState === 'SCHEDULING' && (
+            <div className="state-scheduling animate-fade-in">
+              <h2 className="sheet-title">Agendar Partida</h2>
+              <p className="route-desc">{originAddr} → {destAddr}</p>
+
+              <div className="vehicle-selector" style={{marginBottom:'16px'}}>
+                <div className={`vehicle-option ${vehicleType === 'car' ? 'active' : ''}`} onClick={() => setVehicleType('car')}>
+                  <span className="vehicle-icon">🚗</span>
+                  <div className="vehicle-details"><span className="vehicle-name">Carro</span><span className="vehicle-price">R$ {getPrice(routeKm, 'car')}</span></div>
+                </div>
+                <div className={`vehicle-option ${vehicleType === 'moto' ? 'active' : ''}`} onClick={() => setVehicleType('moto')}>
+                  <span className="vehicle-icon">🏍️</span>
+                  <div className="vehicle-details"><span className="vehicle-name">Moto</span><span className="vehicle-price">R$ {getPrice(routeKm, 'moto')}</span></div>
+                </div>
+              </div>
+
+              <p className="hint-text" style={{marginBottom:'16px'}}>Escolha a data e hora da partida. Corridas com +2h de antecedência pré-acionam seus favoritos.</p>
+
+              <div className="scheduling-inputs">
+                <input
+                  type="date"
+                  className="schedule-input"
+                  value={scheduleData.date}
+                  onChange={(e) => setScheduleData({...scheduleData, date: e.target.value})}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+                <input
+                  type="time"
+                  className="schedule-input"
+                  value={scheduleData.time}
+                  onChange={(e) => setScheduleData({...scheduleData, time: e.target.value})}
+                />
+              </div>
+
+              <div className="price-box" style={{marginTop:'16px'}}>
+                <div className="price-val">
+                  <span className="currency">R$</span> {getPrice(routeKm, vehicleType)}
+                </div>
+                <div className="dist-val">{routeKm} km • {vehicleType === 'car' ? 'Carro' : 'Moto'}</div>
+              </div>
+
+              <div className="action-buttons mt-4">
+                <button className="btn btn-secondary" style={{flex:1}} onClick={() => setRideState('PRICED')}>
+                  ← Voltar
+                </button>
+                <button
+                  className="btn btn-primary"
+                  style={{flex:2}}
+                  disabled={!scheduleData.date || !scheduleData.time}
+                  onClick={() => {
+                    alert(`✅ Viagem agendada!\n\n📅 ${scheduleData.date}\n🕐 ${scheduleData.time}\n${vehicleType === 'car' ? '🚗 Carro' : '🏍️ Moto'} — R$ ${getPrice(routeKm, vehicleType)}`)
+                    resetFlow()
+                  }}
+                >
+                  Confirmar Agendamento
+                </button>
+              </div>
             </div>
           )}
 
