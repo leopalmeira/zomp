@@ -1,16 +1,34 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser } from '../services/api'
-import { MapContainer, TileLayer, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, useMap, Marker, Polyline } from 'react-leaflet'
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Passenger.css'
 
-// Helper component to bind map center dynamically
-function MapController({ center }) {
+// Custom Map Icons
+const createIcon = (color) => L.divIcon({
+  className: 'custom-pin-icon',
+  html: `<div style="background-color: ${color}; width: 22px; height: 22px; border-radius: 50%; border: 4px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.3);"></div>`,
+  iconSize: [22, 22],
+  iconAnchor: [11, 11]
+})
+const originIcon = createIcon('#00E676') // Green
+const destIcon = createIcon('#EF4444') // Red
+
+// Helper to center and bounds
+function MapController({ center, markers }) {
   const map = useMap()
+  
   useEffect(() => {
-    map.flyTo(center, 16)
-  }, [center, map])
+    if (markers && markers.length === 2 && markers[0] && markers[1]) {
+      const bounds = L.latLngBounds([markers[0], markers[1]])
+      map.flyToBounds(bounds, { padding: [50, 50], animate: true })
+    } else if (center) {
+      map.flyTo(center, 16)
+    }
+  }, [center, markers, map])
+  
   return null
 }
 
@@ -18,314 +36,312 @@ export default function PassengerDashboard() {
   const navigate = useNavigate()
   const user = getCurrentUser()
   
-  // Real GPS State
-  const defaultLocation = [-22.9068, -43.1729] // Rio center fallback
+  // Base Maps GPS
+  const defaultLocation = [-22.9068, -43.1729]
   const [mapCenter, setMapCenter] = useState(defaultLocation)
-  const [isLocating, setIsLocating] = useState(true)
 
-  // Booking States
-  const [origin, setOrigin] = useState('Buscando seu local...')
-  const [destination, setDestination] = useState('')
-  const [isScheduling, setIsScheduling] = useState(false)
-  const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
+  // Booking / Routing states
+  const [origin, setOrigin] = useState({ address: 'Buscando seu local...', coords: null })
+  const [destination, setDestination] = useState({ address: '', coords: null })
   
-  // Menu & Sub-Menu States
+  const [activeInput, setActiveInput] = useState(null)
+  const [suggestions, setSuggestions] = useState([])
+  const [searchInput, setSearchInput] = useState('')
+  
+  const [routeParams, setRouteParams] = useState({ km: 0, total: 0 })
+  const [prioritizeFavs, setPrioritizeFavs] = useState(true)
+
+  // Flow State: IDLE -> PRICED -> SCHEDULING | SEARCHING -> ACCEPTED
+  const [rideState, setRideState] = useState('IDLE')
+  const [matchedDriver, setMatchedDriver] = useState(null)
+  
+  // UI States
+  const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [activeScreen, setActiveScreen] = useState('MAIN') 
+  const [activeScreen, setActiveScreen] = useState('MAIN')
+  const [scheduleData, setScheduleData] = useState({ date: '', time: '' })
 
-  // Profile Edit States
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [editName, setEditName] = useState(user?.name || '')
-  const [editEmail, setEditEmail] = useState(user?.email || '')
-
-  // Mock list of favorite drivers
   const [favoriteDrivers, setFavoriteDrivers] = useState([
-    { id: 1, name: 'Carlos', car: 'Onix', rating: '4.9', distance: '3 min', img: 'https://i.pravatar.cc/150?img=11' },
-    { id: 2, name: 'Ana', car: 'HB20', rating: '5.0', distance: '7 min', img: 'https://i.pravatar.cc/150?img=5' },
-    { id: 3, name: 'Marcos', car: 'Argo', rating: '4.8', distance: '12 min', img: 'https://i.pravatar.cc/150?img=12' },
+    { id: 1, name: 'Carlos', car: 'Chevrolet Onix', plate: 'BRA-2031', rating: '4.9', img: 'https://i.pravatar.cc/150?img=11' },
+    { id: 2, name: 'Ana', car: 'Hyundai HB20', plate: 'XPT-9988', rating: '5.0', img: 'https://i.pravatar.cc/150?img=5' }
   ])
 
-  // Get User GPS on load
+  // System get GPS on load
   useEffect(() => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setMapCenter([position.coords.latitude, position.coords.longitude])
-          setOrigin('Rua Atual (Modificado pelo Mapa)')
-          setIsLocating(false)
-        },
-        (error) => {
-          console.warn("GPS bloqueado ou não disponível, usando padrão.", error)
-          setOrigin('Local Padrão (GPS não permitido)')
-          setIsLocating(false)
-        },
-        { enableHighAccuracy: true }
-      )
-    } else {
-      setIsLocating(false)
+      navigator.geolocation.getCurrentPosition((position) => {
+        const coords = [position.coords.latitude, position.coords.longitude]
+        setMapCenter(coords)
+        setOrigin({ address: 'Meu Local Atual (GPS)', coords: coords })
+      }, () => {
+        setOrigin({ address: 'Local Padrão', coords: defaultLocation })
+      }, { enableHighAccuracy: true })
     }
   }, [])
 
-  const handleLogout = () => {
-    logout()
-    navigate('/passageiro')
-  }
+  // Calculate pricing when both addresses are defined
+  useEffect(() => {
+    if (origin.coords && destination.coords && rideState === 'IDLE') {
+      // Mock tracking math
+      const mockKm = (Math.random() * 8 + 2).toFixed(1) // Example: 2.0 to 10.0 Km
+      const mockTotal = (parseFloat(mockKm) * 2.00).toFixed(2)
+      setRouteParams({ km: mockKm, total: mockTotal })
+      setRideState('PRICED')
+      // Collapse sheet slightly so map is visible
+      setIsSheetCollapsed(false) 
+    }
+  }, [origin.coords, destination.coords, rideState])
 
-  const toggleSheet = () => {
-    setIsSheetCollapsed(!isSheetCollapsed)
-  }
+  const handleTyping = (value, type) => {
+    setActiveInput(type)
+    setSearchInput(value)
+    
+    if (type === 'origin') setOrigin({ ...origin, address: value })
+    if (type === 'dest') setDestination({ ...destination, address: value })
 
-  const handleRemoveFav = (id) => {
-    setFavoriteDrivers(favoriteDrivers.filter(d => d.id !== id))
-  }
-
-  const handleSaveProfile = () => {
-    // Save to local storage mock to make it functional without backend endpoint
-    const updatedUser = { ...user, name: editName, email: editEmail }
-    localStorage.setItem('zomp_user', JSON.stringify(updatedUser))
-    setIsEditingProfile(false)
-    // Reload instantly propagates the new name to the top components
-    window.location.reload()
-  }
-
-  // ============== MENU SCREENS ==============
-  const renderMenuContent = () => {
-    switch (activeScreen) {
-      case 'PROFILE':
-        return (
-          <div className="menu-sub-screen">
-            <h3>Meu Perfil</h3>
-            <div className="profile-details">
-              <div className="user-avatar-large">{editName.charAt(0).toUpperCase()}</div>
-              
-              {!isEditingProfile ? (
-                <>
-                  <p><strong>Nome Completo:</strong> {user?.name}</p>
-                  <p><strong>Endereço de E-mail:</strong> {user?.email}</p>
-                  <p><strong>Cargo Atual:</strong> {user?.role}</p>
-                  <button className="btn btn-primary" onClick={() => setIsEditingProfile(true)} style={{marginTop: '24px'}}>Editar Dados</button>
-                </>
-              ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px'}}>
-                  <div>
-                    <label style={{fontSize: '0.8rem', fontWeight: 600}}>Seu Nome</label>
-                    <input className="input" value={editName} onChange={(e) => setEditName(e.target.value)} />
-                  </div>
-                  <div>
-                    <label style={{fontSize: '0.8rem', fontWeight: 600}}>Seu E-mail</label>
-                    <input className="input" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
-                  </div>
-                  <div style={{display: 'flex', gap: '8px', marginTop: '16px'}}>
-                    <button className="btn btn-primary" onClick={handleSaveProfile} style={{flex: 1}}>Salvar</button>
-                    <button className="btn btn-secondary" onClick={() => setIsEditingProfile(false)} style={{backgroundColor: '#e5e7eb'}}>Cancelar</button>
-                  </div>
-                </div>
-              )}
-            </div>
-            {!isEditingProfile && (
-              <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto', backgroundColor: '#e5e7eb'}}>Voltar</button>
-            )}
-          </div>
-        )
-      case 'HISTORY':
-        return (
-          <div className="menu-sub-screen">
-            <h3>Histórico de Viagens</h3>
-            <div className="history-list">
-              <p className="hint-text text-center" style={{marginTop: '40px'}}>Você ainda não realizou viagens.</p>
-            </div>
-            <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto', backgroundColor: '#e5e7eb'}}>Voltar</button>
-          </div>
-        )
-      case 'DELIVERIES':
-        return (
-          <div className="menu-sub-screen">
-            <h3>Pedidos de Entrega</h3>
-            <div className="history-list">
-              <p className="hint-text text-center" style={{marginTop: '40px'}}>Nenhuma entrega solicitada.</p>
-            </div>
-            <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto', backgroundColor: '#e5e7eb'}}>Voltar</button>
-          </div>
-        )
-      case 'FAVORITES':
-        return (
-          <div className="menu-sub-screen">
-            <h3>Gerenciar Favoritos</h3>
-            <p className="hint-text">Limite de até 5 favoritos cadastrados.</p>
-            <div className="fav-manage-list">
-              {favoriteDrivers.map(d => (
-                <div key={d.id} className="fav-manage-item">
-                  <img src={d.img} alt={d.name} />
-                  <span>{d.name}</span>
-                  <button className="btn-remove-fav" onClick={() => handleRemoveFav(d.id)}>Remover</button>
-                </div>
-              ))}
-              {favoriteDrivers.length === 0 && (
-                <p className="hint-text text-center">Sua lista de favoritos está vazia.</p>
-              )}
-            </div>
-            {favoriteDrivers.length < 5 && (
-              <button className="btn btn-primary" style={{marginTop: '24px'}}>+ Adicionar Novo Motorista</button>
-            )}
-            <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto', backgroundColor: '#e5e7eb'}}>Voltar</button>
-          </div>
-        )
-      default:
-        return (
-          <div className="menu-nav-list">
-            <div className="menu-user-header">
-              <div className="user-avatar-large">{user?.name?.charAt(0).toUpperCase() || 'P'}</div>
-              <div>
-                <h3 style={{margin: 0}}>{user?.name}</h3>
-                <span className="badge-nearby">Passageiro</span>
-              </div>
-            </div>
-            <hr />
-            <button className="menu-nav-btn" onClick={() => setActiveScreen('PROFILE')}>Meu Perfil</button>
-            <button className="menu-nav-btn" onClick={() => setActiveScreen('HISTORY')}>Histórico de Viagens</button>
-            <button className="menu-nav-btn" onClick={() => setActiveScreen('DELIVERIES')}>Pedidos de Entrega</button>
-            <button className="menu-nav-btn" onClick={() => setActiveScreen('FAVORITES')}>Motoristas Favoritos</button>
-            <div className="menu-spacer"></div>
-            <hr />
-            <button className="menu-nav-btn text-danger" onClick={handleLogout}>Sair do Aplicativo</button>
-          </div>
-        )
+    // Build mock suggestions
+    if (value.length > 2) {
+      setSuggestions([
+        `${value}, Centro`,
+        `${value}, Bairro Principal`,
+        `${value}, Zona Leste`
+      ])
+    } else {
+      setSuggestions([])
     }
   }
 
-  // Force map to re-render properly if drawer animated over it
-  useEffect(() => {
-     window.dispatchEvent(new Event('resize'));
-  }, [isSheetCollapsed])
+  const selectSuggestion = (address) => {
+    // Generate a random map coordinate near map center for prototyping
+    const offset = () => (Math.random() - 0.5) * 0.03
+    const newCoords = [mapCenter[0] + offset(), mapCenter[1] + offset()]
+    
+    if (activeInput === 'origin') {
+      setOrigin({ address, coords: newCoords })
+    } else {
+      setDestination({ address, coords: newCoords })
+    }
+    
+    setSuggestions([])
+    setSearchInput('')
+    setActiveInput(null)
+  }
+
+  // --- ACTIONS ---
+  const handleCallNow = () => {
+    setRideState('SEARCHING')
+    // Simulates searching delay
+    setTimeout(() => {
+      // Simulate finding a driver
+      const drv = prioritizeFavs && favoriteDrivers.length > 0 
+        ? favoriteDrivers[0] 
+        : { id: 99, name: 'Roberto', car: 'Fiat Argo', plate: 'ABC-1234', rating: '4.8', img: 'https://i.pravatar.cc/150?img=33' };
+      
+      setMatchedDriver({ ...drv, eta: '4 min' })
+      setRideState('ACCEPTED')
+    }, prioritizeFavs ? 4000 : 2000) // "Ping favorites for 15s (simulated as 4s here) vs faster regular search"
+  }
+
+  const resetFlow = () => {
+    setDestination({ address: '', coords: null })
+    setRideState('IDLE')
+    setMatchedDriver(null)
+  }
+
+  // --- MENU RENDERER --- (Profile edit logic stays generic for now)
+  const renderMenuContent = () => (
+    <div className="menu-nav-list">
+      <div className="menu-user-header">
+         <div className="user-avatar-large">{user?.name?.charAt(0) || 'P'}</div>
+         <div>
+            <h3 style={{margin: 0}}>{user?.name}</h3>
+            <span className="badge-nearby">Passageiro</span>
+         </div>
+      </div>
+      <hr />
+      <button className="menu-nav-btn" onClick={resetFlow}>Nova Viagem</button>
+      <button className="menu-nav-btn" onClick={() => {}}>Meu Perfil</button>
+      <button className="menu-nav-btn text-danger" onClick={() => { logout(); navigate('/passageiro') }}>Sair</button>
+    </div>
+  )
 
   return (
     <div className="passenger-app">
       
-      {/* 
-        Fully Interactive Draggable Map!
-        The CSS overrides Leaflet defaults so it fits our white styling.
-      */}
       <div className="passenger-map-bg interactive">
         <MapContainer center={mapCenter} zoom={16} zoomControl={false} style={{ width: '100%', height: '100%' }}>
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://carto.com/">CART</a>'
+          <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+          <MapController 
+            center={mapCenter} 
+            markers={origin.coords && destination.coords ? [origin.coords, destination.coords] : null} 
           />
-          <MapController center={mapCenter} />
+          
+          {/* Real Green/Red Pins logic */}
+          {origin.coords && <Marker position={origin.coords} icon={originIcon} />}
+          {destination.coords && <Marker position={destination.coords} icon={destIcon} />}
+          
+          {/* Connecting line */}
+          {origin.coords && destination.coords && (
+            <Polyline positions={[origin.coords, destination.coords]} color="#000000" weight={4} dashArray="8 8" opacity={0.5} />
+          )}
         </MapContainer>
         
-        {/* Floating Pin overlay that stays centered while map is dragged underneath */}
-        <div className="absolute-center-pin-wrapper">
-          <div className="center-pin modern-dynamic">
-            <div className="pin-head"></div>
-            <div className="pin-shadow"></div>
-          </div>
-        </div>
+        {/* Fallback pin if no origin coords exist yet */}
+        {!origin.coords && (
+           <div className="absolute-center-pin-wrapper">
+             <div className="center-pin modern-dynamic">
+               <div className="pin-head"></div><div className="pin-shadow"></div>
+             </div>
+           </div>
+        )}
       </div>
 
-      {/* Floating Top Nav */}
       <div className="passenger-top-header">
         <div className="menu-btn" onClick={() => setIsMenuOpen(true)}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </div>
-        
-        <div className="user-profile">
-          <span className="greeting">Olá, {user?.name?.split(' ')[0] || 'Passageiro'}</span>
-          <div className="user-avatar">
-            {user?.name?.charAt(0).toUpperCase() || 'P'}
-          </div>
-        </div>
       </div>
 
-      {/* Bottom Sheet Drawer */}
+      {/* Main Bottom Sheet */}
       <div className={`passenger-bottom-sheet ${isSheetCollapsed ? 'collapsed' : ''}`}>
-        
-        <div className="sheet-drag-area" onClick={toggleSheet}>
+        <div className="sheet-drag-area" onClick={() => setIsSheetCollapsed(!isSheetCollapsed)}>
           <div className="sheet-handle"></div>
         </div>
         
         <div className="sheet-content-wrapper">
-          <h2 className="sheet-title">Para onde vamos?</h2>
+          
+          {rideState === 'IDLE' && (
+            <div className="state-idle animate-fade-in">
+              <h2 className="sheet-title">Para onde vamos?</h2>
 
-          <div className="route-inputs">
-            <div className="route-timeline">
-              <div className="dot-start"></div>
-              <div className="timeline-line"></div>
-              <div className="dot-end"></div>
-            </div>
-            <div className="route-fields">
-              <input 
-                type="text" 
-                className="route-input start-input" 
-                value={isLocating ? 'Obtendo GPS...' : origin} 
-                onChange={(e) => setOrigin(e.target.value)} 
-                placeholder="Local de partida" 
-              />
-              <input 
-                type="text" 
-                className="route-input end-input" 
-                value={destination} 
-                onChange={(e) => setDestination(e.target.value)} 
-                placeholder="Buscar destino..." 
-              />
-            </div>
-          </div>
-
-          <div className="favorites-section">
-            <div className="section-header">
-              <h3>Motoristas Favoritos</h3>
-              <span className="badge-nearby">Prioridade</span>
-            </div>
-            <div className="favorites-scroll">
-              {favoriteDrivers.map(driver => (
-                <div key={driver.id} className="fav-driver-card">
-                  <img src={driver.img} alt={driver.name} className="fav-img" />
-                  <div className="fav-info">
-                    <span className="fav-name">{driver.name}</span>
-                    <span className="fav-dist">{driver.distance}</span>
-                  </div>
+              <div className="route-inputs" style={{position: 'relative'}}>
+                <div className="route-timeline">
+                  <div className="dot-start"></div><div className="timeline-line"></div><div className="dot-end"></div>
                 </div>
-              ))}
-              {favoriteDrivers.length === 0 && (
-                <p className="hint-text" style={{marginTop: 'auto', marginBottom: 'auto'}}>Sem favoritos.</p>
-              )}
-            </div>
-            <p className="hint-text">Receberão o pedido primeiro se estiverem a até 10 min de distância.</p>
-          </div>
-
-          <div className="action-buttons">
-            <button className="btn btn-schedule" onClick={() => setIsScheduling(!isScheduling)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              Agendar
-            </button>
-            <button className="btn btn-primary btn-request">
-              Confirmar Viagem
-            </button>
-          </div>
-
-          {isScheduling && (
-            <div className="scheduling-panel animate-slide-up">
-              <h4>Agendar Partida</h4>
-              <div className="scheduling-inputs">
-                <input type="date" className="schedule-input" />
-                <input type="time" className="schedule-input" />
+                <div className="route-fields">
+                  <input 
+                    type="text" className="route-input start-input" 
+                    value={origin.address} onChange={(e) => handleTyping(e.target.value, 'origin')} 
+                    placeholder="Local de partida" 
+                  />
+                  <input 
+                    type="text" className="route-input end-input" 
+                    value={destination.address} onChange={(e) => handleTyping(e.target.value, 'dest')} 
+                    placeholder="Buscar destino..." 
+                  />
+                </div>
+                
+                {/* Autocomplete Dropdown */}
+                {suggestions.length > 0 && (
+                   <div className="autocomplete-dropdown">
+                     {suggestions.map((sug, idx) => (
+                       <div key={idx} className="suggestion-item" onClick={() => selectSuggestion(sug)}>
+                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                         {sug}
+                       </div>
+                     ))}
+                   </div>
+                )}
               </div>
-              <p className="hint-text">Corridas agendadas ativam associados primeiro na data escolhida.</p>
             </div>
           )}
+
+          {rideState === 'PRICED' && (
+            <div className="state-priced animate-fade-in-up">
+              <h2 className="sheet-title" style={{marginBottom: '8px'}}>Resumo da Viagem</h2>
+              <p className="route-desc">{origin.address.split(',')[0]} → {destination.address.split(',')[0]}</p>
+              
+              <div className="price-box">
+                <div className="price-val">
+                  <span className="currency">R$</span> {routeParams.total}
+                </div>
+                <div className="dist-val">{routeParams.km} km estimado</div>
+              </div>
+
+              <div className="prioritize-toggle">
+                <div>
+                  <label>Priorizar Favoritos</label>
+                  <p>Toca para favoritos por 15s</p>
+                </div>
+                <label className="switch">
+                  <input type="checkbox" checked={prioritizeFavs} onChange={(e) => setPrioritizeFavs(e.target.checked)} />
+                  <span className="slider round"></span>
+                </label>
+              </div>
+
+              <div className="action-buttons mt-4">
+                <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Agendar
+                </button>
+                <button className="btn btn-primary btn-request" onClick={handleCallNow}>
+                  Chamar Agora
+                </button>
+              </div>
+            </div>
+          )}
+
+          {rideState === 'SCHEDULING' && (
+            <div className="state-scheduling animate-fade-in">
+              <h2 className="sheet-title">Agendar Partida</h2>
+              <p className="hint-text mb-4">Escolha a data e hora. Corridas com mais de 2h de antecedência pre-acionam seus favoritos disponíveis.</p>
+              
+              <div className="scheduling-inputs">
+                <input type="date" className="schedule-input" value={scheduleData.date} onChange={e=>setScheduleData({...scheduleData, date: e.target.value})} />
+                <input type="time" className="schedule-input" value={scheduleData.time} onChange={e=>setScheduleData({...scheduleData, time: e.target.value})} />
+              </div>
+              
+              <div className="action-buttons mt-4">
+                <button className="btn btn-secondary" style={{flex: 1}} onClick={() => setRideState('PRICED')}>Voltar</button>
+                <button className="btn btn-primary" style={{flex: 2}} onClick={() => { alert('Viagem Agendada com Sucesso!'); resetFlow(); }}>Confirmar Agendamento</button>
+              </div>
+            </div>
+          )}
+
+          {rideState === 'SEARCHING' && (
+            <div className="state-searching animate-fade-in text-center">
+              <div className="search-radar"></div>
+              <h3 style={{marginTop: '24px'}}>{prioritizeFavs ? 'Notificando favoritos...' : 'Buscando motoristas...'}</h3>
+              <p className="hint-text">Aguarde enquanto conectamos você ao melhor parceiro próximo.</p>
+              <button className="btn btn-secondary mt-4 w-full" onClick={() => setRideState('PRICED')}>Cancelar Busca</button>
+            </div>
+          )}
+
+          {rideState === 'ACCEPTED' && matchedDriver && (
+            <div className="state-accepted animate-slide-up">
+              <div className="match-header">
+                <div className="badge-nearby">Motorista a Caminho</div>
+                <h3>{matchedDriver.eta}</h3>
+              </div>
+              
+              <div className="driver-card-large">
+                <img src={matchedDriver.img} alt={matchedDriver.name} className="drv-avatar" />
+                <div className="drv-info">
+                  <h4>{matchedDriver.name}</h4>
+                  <div className="drv-rating">⭐ {matchedDriver.rating}</div>
+                </div>
+                <div className="drv-car">
+                  <span className="car-model">{matchedDriver.car}</span>
+                  <span className="car-plate">{matchedDriver.plate}</span>
+                </div>
+              </div>
+              
+              <div className="action-buttons mt-4">
+                <button className="btn btn-secondary" style={{flex:1}}>Mensagem</button>
+                <button className="btn btn-secondary text-danger" style={{flex:1}} onClick={resetFlow}>Cancelar</button>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
 
-      {/* Side Menu Drawer Overlay */}
       {isMenuOpen && (
         <div className="side-menu-overlay" onClick={() => setIsMenuOpen(false)}>
           <div className="side-menu-drawer animate-slide-right" onClick={e => e.stopPropagation()}>
             <div className="drawer-close" onClick={() => setIsMenuOpen(false)}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              X
             </div>
-            
             {renderMenuContent()}
-            
           </div>
         </div>
       )}
