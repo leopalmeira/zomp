@@ -16,34 +16,27 @@ const createIcon = (color) => L.divIcon({
 const originIcon = createIcon('#00E676') // Green
 const destIcon = createIcon('#EF4444') // Red
 
-// Haversine formula to calculate distance in KM
+// Haversine fallback
 const getDistance = (coords1, coords2) => {
   const [lat1, lon1] = coords1;
   const [lat2, lon2] = coords2;
-  const R = 6371; // Earth's radius in km
+  const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Helper to center and bounds
 function MapController({ center, markers }) {
   const map = useMap()
-  
   useEffect(() => {
     if (markers && markers.length === 2 && markers[0] && markers[1]) {
       const bounds = L.latLngBounds([markers[0], markers[1]])
-      map.flyToBounds(bounds, { padding: [50, 50], animate: true })
+      map.flyToBounds(bounds, { padding: [50, 150], animate: true })
     } else if (center) {
       map.flyTo(center, 16)
     }
   }, [center, markers, map])
-  
   return null
 }
 
@@ -51,406 +44,180 @@ export default function PassengerDashboard() {
   const navigate = useNavigate()
   const user = getCurrentUser()
   
-  // Base Maps GPS
-  const defaultLocation = [-22.9068, -43.1729]
-  const [mapCenter, setMapCenter] = useState(defaultLocation)
-
-  // Booking / Routing states
+  const [mapCenter, setMapCenter] = useState([-22.9068, -43.1729])
   const [origin, setOrigin] = useState({ address: 'Buscando seu local...', coords: null })
   const [destination, setDestination] = useState({ address: '', coords: null })
   
   const [activeInput, setActiveInput] = useState(null)
   const [suggestions, setSuggestions] = useState([])
-  const [searchInput, setSearchInput] = useState('')
   
   const [routeGeometry, setRouteGeometry] = useState([])
   const [routeParams, setRouteParams] = useState({ km: 0, total: 0 })
-  const [prioritizeFavs, setPrioritizeFavs] = useState(true)
-
-  // Flow State: IDLE -> PRICED -> SCHEDULING | SEARCHING -> ACCEPTED
-  const [rideState, setRideState] = useState('IDLE')
-  const [matchedDriver, setMatchedDriver] = useState(null)
+  const [rideState, setRideState] = useState('IDLE') // IDLE, PRICED, SEARCHING, ACCEPTED, SCHEDULING
   
-  // UI States
   const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [activeScreen, setActiveScreen] = useState('MAIN')
-  const [scheduleData, setScheduleData] = useState({ date: '', time: '' })
-
-  const [favoriteDrivers, setFavoriteDrivers] = useState([
+  const [prioritizeFavs, setPrioritizeFavs] = useState(true)
+  const [matchedDriver, setMatchedDriver] = useState(null)
+  
+  const [favoriteDrivers] = useState([
     { id: 1, name: 'Carlos', car: 'Chevrolet Onix', plate: 'BRA-2031', rating: '4.9', img: 'https://i.pravatar.cc/150?img=11' },
     { id: 2, name: 'Ana', car: 'Hyundai HB20', plate: 'XPT-9988', rating: '5.0', img: 'https://i.pravatar.cc/150?img=5' }
   ])
 
-  // System get GPS on load
+  // GPS Init
   useEffect(() => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const coords = [position.coords.latitude, position.coords.longitude]
-        setMapCenter(coords)
-        setOrigin({ address: 'Meu Local Atual (GPS)', coords: coords })
-      }, () => {
-        setOrigin({ address: 'Local Padrão', coords: defaultLocation })
-      }, { enableHighAccuracy: true })
+      navigator.geolocation.getCurrentPosition(pos => {
+        const c = [pos.coords.latitude, pos.coords.longitude]
+        setMapCenter(c)
+        setOrigin({ address: 'Local Atual (GPS)', coords: c })
+      })
     }
   }, [])
 
-  // Calculate real road routing when both addresses are defined
+  // Routing Logic
   useEffect(() => {
     const fetchRoute = async () => {
       if (origin.coords && destination.coords && rideState === 'IDLE') {
         try {
-          const [startLat, startLon] = origin.coords
-          const [endLat, endLon] = destination.coords
-          
-          // Fetch route from OSRM
-          const url = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson`
+          const url = `https://router.project-osrm.org/route/v1/driving/${origin.coords[1]},${origin.coords[0]};${destination.coords[1]},${destination.coords[0]}?overview=full&geometries=geojson`
           const res = await fetch(url)
           const data = await res.json()
-          
-          if (data.routes && data.routes.length > 0) {
-            const route = data.routes[0]
-            const distanceKm = (route.distance / 1000).toFixed(1)
-            const totalPrice = (parseFloat(distanceKm) * 2.00).toFixed(2)
-            
-            // Format coords for Leaflet Polyline (Lat, Lon)
-            const coordsFound = route.geometry.coordinates.map(c => [c[1], c[0]])
-            
-            setRouteGeometry(coordsFound)
-            setRouteParams({ km: distanceKm, total: totalPrice })
+          if (data.routes?.[0]) {
+            const r = data.routes[0]
+            const km = (r.distance / 1000).toFixed(1)
+            setRouteGeometry(r.geometry.coordinates.map(c => [c[1], c[0]]))
+            setRouteParams({ km, total: (km * 2).toFixed(2) })
             setRideState('PRICED')
-            setIsSheetCollapsed(false)
           }
-        } catch (err) {
-          console.error("Erro ao calcular rota real", err)
-          // Fallback to straight line if API fails
-          const dist = getDistance(origin.coords, destination.coords)
-          setRouteParams({ km: dist.toFixed(1), total: (dist * 2).toFixed(2) })
+        } catch (e) {
+          const km = getDistance(origin.coords, destination.coords).toFixed(1)
+          setRouteParams({ km, total: (km * 2).toFixed(2) })
           setRideState('PRICED')
         }
       }
     }
-
     fetchRoute()
   }, [origin.coords, destination.coords, rideState])
 
-  const handleTyping = async (value, type) => {
+  const handleTyping = async (val, type) => {
     setActiveInput(type)
-    setSearchInput(value)
+    if (type === 'origin') setOrigin({ ...origin, address: val })
+    else setDestination({ ...destination, address: val })
     
-    if (type === 'origin') setOrigin({ ...origin, address: value })
-    if (type === 'dest') setDestination({ ...destination, address: value })
-
-    if (value.length > 3) {
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&countrycodes=br&limit=5`)
-        const data = await res.json()
-        setSuggestions(data.map(item => ({
-          display_name: item.display_name,
-          lat: parseFloat(item.lat),
-          lon: parseFloat(item.lon)
-        })))
-      } catch (err) {
-        console.error("Erro ao buscar sugestões", err)
-      }
-    } else {
-      setSuggestions([])
-    }
+    if (val.length > 3) {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=br&limit=5`)
+      const d = await resp.json()
+      setSuggestions(d)
+    } else setSuggestions([])
   }
 
-  const selectSuggestion = (sug) => {
-    const coords = [parseFloat(sug.lat), parseFloat(sug.lon)]
-    const shortName = sug.display_name.split(',')[0]
-    
-    if (activeInput === 'origin') {
-      setOrigin({ address: shortName, coords: coords })
-      setMapCenter(coords)
-    } else {
-      setDestination({ address: shortName, coords: coords })
-    }
-    
+  const selectSuggestion = (s) => {
+    const c = [parseFloat(s.lat), parseFloat(s.lon)]
+    if (activeInput === 'origin') { setOrigin({ address: s.display_name.split(',')[0], coords: c }); setMapCenter(c); }
+    else setDestination({ address: s.display_name.split(',')[0], coords: c });
     setSuggestions([])
-    setSearchInput('')
     setActiveInput(null)
   }
 
-  // Fallback search if no suggestion clicked
-  const handleManualSearch = async (type) => {
-    const query = type === 'origin' ? origin.address : destination.address;
-    if (query.length < 5) return;
-    
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=br&limit=1`)
-      const data = await res.json()
-      if (data && data.length > 0) {
-        selectSuggestion({
-          display_name: data[0].display_name,
-          lat: data[0].lat,
-          lon: data[0].lon
-        })
-      }
-    } catch (err) {
-      console.error("Manual search failed", err)
-    }
-  }
-
-  // --- ACTIONS ---
-  const handleCallNow = () => {
+  const handleCall = () => {
     setRideState('SEARCHING')
-    // Simulates searching delay
     setTimeout(() => {
-      // Simulate finding a driver
-      const drv = prioritizeFavs && favoriteDrivers.length > 0 
-        ? favoriteDrivers[0] 
-        : { id: 99, name: 'Roberto', car: 'Fiat Argo', plate: 'ABC-1234', rating: '4.8', img: 'https://i.pravatar.cc/150?img=33' };
-      
-      setMatchedDriver({ ...drv, eta: '4 min' })
+      setMatchedDriver({ ...favoriteDrivers[0], eta: '3 min' })
       setRideState('ACCEPTED')
-    }, prioritizeFavs ? 4000 : 2000) // "Ping favorites for 15s (simulated as 4s here) vs faster regular search"
+    }, 3000)
   }
-
-  const resetFlow = () => {
-    setDestination({ address: '', coords: null })
-    setRouteGeometry([])
-    setRideState('IDLE')
-    setMatchedDriver(null)
-  }
-
-  // --- MENU RENDERER --- (Profile edit logic stays generic for now)
-  const renderMenuContent = () => (
-    <div className="menu-nav-list">
-      <div className="menu-user-header">
-         <div className="user-avatar-large">{user?.name?.charAt(0) || 'P'}</div>
-         <div>
-            <h3 style={{margin: 0}}>{user?.name}</h3>
-            <span className="badge-nearby">Passageiro</span>
-         </div>
-      </div>
-      <hr />
-      <button className="menu-nav-btn" onClick={resetFlow}>Nova Viagem</button>
-      <button className="menu-nav-btn" onClick={() => {}}>Meu Perfil</button>
-      <button className="menu-nav-btn text-danger" onClick={() => { logout(); navigate('/passageiro') }}>Sair</button>
-    </div>
-  )
 
   return (
     <div className="passenger-app">
-      
-      <div className="passenger-map-bg interactive">
-        <MapContainer center={mapCenter} zoom={16} zoomControl={false} style={{ width: '100%', height: '100%' }}>
+      <div className="passenger-map-bg">
+        <MapContainer center={mapCenter} zoom={16} zoomControl={false} style={{width:'100%', height:'100%'}}>
           <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
-          <MapController 
-            center={mapCenter} 
-            markers={origin.coords && destination.coords ? [origin.coords, destination.coords] : null} 
-          />
-          
-          {/* Real Green/Red Pins logic */}
+          <MapController center={mapCenter} markers={origin.coords && destination.coords ? [origin.coords, destination.coords] : null} />
           {origin.coords && <Marker position={origin.coords} icon={originIcon} />}
           {destination.coords && <Marker position={destination.coords} icon={destIcon} />}
-          
-          {/* Connecting line - NOW FOLLOWING STREETS */}
-          {routeGeometry.length > 0 && (
-            <Polyline positions={routeGeometry} color="#000000" weight={5} opacity={0.7} />
-          )}
+          {routeGeometry.length > 0 && <Polyline positions={routeGeometry} color="#000" weight={5} opacity={0.7} />}
         </MapContainer>
-        
-        {/* Fallback pin if no origin coords exist yet */}
-        {!origin.coords && (
-           <div className="absolute-center-pin-wrapper">
-             <div className="center-pin modern-dynamic">
-               <div className="pin-head"></div><div className="pin-shadow"></div>
-             </div>
-           </div>
-        )}
+        {!origin.coords && <div className="absolute-center-pin-wrapper"><div className="center-pin modern-dynamic"><div className="pin-head"></div><div className="pin-shadow"></div></div></div>}
       </div>
 
       <div className="passenger-top-header">
-        <div className="menu-btn" onClick={() => setIsMenuOpen(true)}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </div>
+        <div className="menu-btn" onClick={() => setIsMenuOpen(true)}>☰</div>
       </div>
 
-      {/* Main Bottom Sheet */}
       <div className={`passenger-bottom-sheet ${isSheetCollapsed ? 'collapsed' : ''}`}>
-        <div className="sheet-drag-area" onClick={() => setIsSheetCollapsed(!isSheetCollapsed)}>
-          <div className="sheet-handle"></div>
-        </div>
+        <div className="sheet-drag-area" onClick={() => setIsSheetCollapsed(!isSheetCollapsed)}><div className="sheet-handle"></div></div>
         
         <div className="sheet-content-wrapper">
-          
           {rideState === 'IDLE' && (
-            <div className="state-idle animate-fade-in">
+            <div className="state-idle">
               <h2 className="sheet-title">Para onde vamos?</h2>
-
-              <div className="route-inputs" style={{position: 'relative'}}>
-                <div className="route-timeline">
-                  <div className="dot-start"></div><div className="timeline-line"></div><div className="dot-end"></div>
-                </div>
+              <div className="route-inputs" style={{position:'relative'}}>
+                <div className="route-timeline"><div className="dot-start"></div><div className="timeline-line"></div><div className="dot-end"></div></div>
                 <div className="route-fields">
                   <div className="search-field-wrapper">
-                    <input 
-                      type="text" className="route-input start-input" 
-                      value={origin.address} 
-                      onChange={(e) => handleTyping(e.target.value, 'origin')} 
-                      onBlur={() => !origin.coords && handleManualSearch('origin')}
-                      onKeyDown={(e) => e.key === 'Enter' && handleManualSearch('origin')}
-                      placeholder="Local de partida" 
-                    />
-                    <button className="inline-search-btn" onClick={() => handleManualSearch('origin')}>
-                      🔍
-                    </button>
+                    <input className="route-input" value={origin.address} onChange={e=>handleTyping(e.target.value,'origin')} placeholder="Origem" />
+                    <button className="inline-search-btn">🔍</button>
                   </div>
                   <div className="search-field-wrapper">
-                    <input 
-                      type="text" className="route-input end-input" 
-                      value={destination.address} 
-                      onChange={(e) => handleTyping(e.target.value, 'dest')} 
-                      onBlur={() => !destination.coords && handleManualSearch('dest')}
-                      onKeyDown={(e) => e.key === 'Enter' && handleManualSearch('dest')}
-                      placeholder="Buscar destino..." 
-                    />
-                    <button className="inline-search-btn" onClick={() => handleManualSearch('dest')}>
-                      🔍
-                    </button>
+                    <input className="route-input" value={destination.address} onChange={e=>handleTyping(e.target.value,'dest')} placeholder="Destino" />
+                    <button className="inline-search-btn">🔍</button>
                   </div>
                 </div>
-                </div>
-                
                 {suggestions.length > 0 && (
-                   <div className="autocomplete-dropdown">
-                     {suggestions.map((sug, idx) => (
-                       <div key={idx} className="suggestion-item" onClick={() => selectSuggestion(sug)}>
-                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                         {sug.display_name.split(',').slice(0, 2).join(',')}
-                       </div>
-                     ))}
-                   </div>
+                  <div className="autocomplete-dropdown">
+                    {suggestions.map((s,i) => <div key={i} className="suggestion-item" onClick={()=>selectSuggestion(s)}>{s.display_name.split(',').slice(0,2).join(',')}</div>)}
+                  </div>
                 )}
               </div>
-
-              {/* RESTORED: Favorites selection in IDLE state */}
               <div className="favorites-section">
-                <div className="section-header">
-                  <h3>Motoristas Favoritos</h3>
-                  <span className="badge-nearby">Prioridade</span>
-                </div>
+                <div className="section-header"><h3>Motoristas Favoritos</h3><span className="badge-nearby">Prioridade</span></div>
                 <div className="favorites-scroll">
-                  {favoriteDrivers.map(driver => (
-                    <div key={driver.id} className="fav-driver-card">
-                      <img src={driver.img} alt={driver.name} className="fav-img" />
-                      <div className="fav-info">
-                        <span className="fav-name">{driver.name}</span>
-                        <span className="fav-dist">Até 10 min</span>
-                      </div>
-                    </div>
-                  ))}
+                  {favoriteDrivers.map(d => <div key={d.id} className="fav-driver-card"><img src={d.img} className="fav-img" /><span>{d.name}</span></div>)}
                 </div>
-                <p className="hint-text">Eles serão notificados primeiro para a sua corrida.</p>
               </div>
-
             </div>
           )}
 
           {rideState === 'PRICED' && (
             <div className="state-priced animate-fade-in-up">
-              <h2 className="sheet-title" style={{marginBottom: '8px'}}>Resumo da Viagem</h2>
-              <p className="route-desc">{origin.address.split(',')[0]} → {destination.address.split(',')[0]}</p>
-              
+              <h2 className="sheet-title">Resumo da Viagem</h2>
+              <p className="route-desc">{origin.address} → {destination.address}</p>
               <div className="price-box">
-                <div className="price-val">
-                  <span className="currency">R$</span> {routeParams.total}
-                </div>
-                <div className="dist-val">{routeParams.km} km estimado</div>
+                <div className="price-val">R$ {routeParams.total}</div>
+                <div className="dist-val">{routeParams.km} km</div>
               </div>
-
               <div className="prioritize-toggle">
-                <div>
-                  <label>Priorizar Favoritos</label>
-                  <p>Toca para favoritos por 15s</p>
-                </div>
-                <label className="switch">
-                  <input type="checkbox" checked={prioritizeFavs} onChange={(e) => setPrioritizeFavs(e.target.checked)} />
-                  <span className="slider round"></span>
-                </label>
+                <div><label>Priorizar Favoritos</label><p>Busca dedicada por 15s</p></div>
+                <label className="switch"><input type="checkbox" checked={prioritizeFavs} onChange={e=>setPrioritizeFavs(e.target.checked)} /><span className="slider round"></span></label>
               </div>
-
               <div className="action-buttons mt-4">
-                <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Agendar
-                </button>
-                <button className="btn btn-primary btn-request" onClick={handleCallNow}>
-                  Chamar Agora
-                </button>
+                <button className="btn btn-schedule">Agendar</button>
+                <button className="btn btn-primary btn-request" onClick={handleCall}>Chamar Agora</button>
               </div>
             </div>
           )}
 
-          {rideState === 'SCHEDULING' && (
-            <div className="state-scheduling animate-fade-in">
-              <h2 className="sheet-title">Agendar Partida</h2>
-              <p className="hint-text mb-4">Escolha a data e hora. Corridas com mais de 2h de antecedência pre-acionam seus favoritos disponíveis.</p>
-              
-              <div className="scheduling-inputs">
-                <input type="date" className="schedule-input" value={scheduleData.date} onChange={e=>setScheduleData({...scheduleData, date: e.target.value})} />
-                <input type="time" className="schedule-input" value={scheduleData.time} onChange={e=>setScheduleData({...scheduleData, time: e.target.value})} />
-              </div>
-              
-              <div className="action-buttons mt-4">
-                <button className="btn btn-secondary" style={{flex: 1}} onClick={() => setRideState('PRICED')}>Voltar</button>
-                <button className="btn btn-primary" style={{flex: 2}} onClick={() => { alert('Viagem Agendada com Sucesso!'); resetFlow(); }}>Confirmar Agendamento</button>
-              </div>
-            </div>
-          )}
-
-          {rideState === 'SEARCHING' && (
-            <div className="state-searching animate-fade-in text-center">
-              <div className="search-radar"></div>
-              <h3 style={{marginTop: '24px'}}>{prioritizeFavs ? 'Notificando favoritos...' : 'Buscando motoristas...'}</h3>
-              <p className="hint-text">Aguarde enquanto conectamos você ao melhor parceiro próximo.</p>
-              <button className="btn btn-secondary mt-4 w-full" onClick={() => setRideState('PRICED')}>Cancelar Busca</button>
-            </div>
-          )}
+          {rideState === 'SEARCHING' && <div className="text-center"><div className="search-radar"></div><h3>Buscando...</h3><button className="btn btn-secondary mt-4 w-full" onClick={()=>setRideState('PRICED')}>Cancelar</button></div>}
 
           {rideState === 'ACCEPTED' && matchedDriver && (
-            <div className="state-accepted animate-slide-up">
-              <div className="match-header">
-                <div className="badge-nearby">Motorista a Caminho</div>
-                <h3>{matchedDriver.eta}</h3>
-              </div>
-              
+            <div className="state-accepted">
+              <div className="match-header"><div className="badge-nearby">A Caminho</div><h3>{matchedDriver.eta}</h3></div>
               <div className="driver-card-large">
-                <img src={matchedDriver.img} alt={matchedDriver.name} className="drv-avatar" />
-                <div className="drv-info">
-                  <h4>{matchedDriver.name}</h4>
-                  <div className="drv-rating">⭐ {matchedDriver.rating}</div>
-                </div>
-                <div className="drv-car">
-                  <span className="car-model">{matchedDriver.car}</span>
-                  <span className="car-plate">{matchedDriver.plate}</span>
-                </div>
+                <img src={matchedDriver.img} className="drv-avatar" />
+                <div className="drv-info"><h4>{matchedDriver.name}</h4><span>⭐ {matchedDriver.rating}</span></div>
+                <div className="drv-car"><span>{matchedDriver.car}</span><span className="car-plate">{matchedDriver.plate}</span></div>
               </div>
-              
               <div className="action-buttons mt-4">
-                <button className="btn btn-secondary" style={{flex:1}}>Mensagem</button>
-                <button className="btn btn-secondary text-danger" style={{flex:1}} onClick={resetFlow}>Cancelar</button>
+                <button className="btn btn-secondary" style={{flex:1}} onClick={()=>{setRideState('IDLE'); setDestination({address:'', coords:null}); setRouteGeometry([]);}}>Nova Viagem</button>
               </div>
             </div>
           )}
-
         </div>
       </div>
 
-      {isMenuOpen && (
-        <div className="side-menu-overlay" onClick={() => setIsMenuOpen(false)}>
-          <div className="side-menu-drawer animate-slide-right" onClick={e => e.stopPropagation()}>
-            <div className="drawer-close" onClick={() => setIsMenuOpen(false)}>
-              X
-            </div>
-            {renderMenuContent()}
-          </div>
-        </div>
-      )}
-
+      {isMenuOpen && <div className="side-menu-overlay" onClick={()=>setIsMenuOpen(false)}><div className="side-menu-drawer animate-slide-right" onClick={e=>e.stopPropagation()}><div className="drawer-close" onClick={()=>setIsMenuOpen(false)}>X</div><div className="menu-nav-list"><h3>Menu Zomp</h3><button onClick={()=>{logout();navigate('/passageiro')}}>Sair</button></div></div></div>}
     </div>
   )
 }
