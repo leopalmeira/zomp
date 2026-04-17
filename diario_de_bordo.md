@@ -62,3 +62,13 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã£o e
     - Backend ativo em `http://localhost:3001`.
     - Frontend (Vite) ativo em `http://localhost:5173/` (com `--host` habilitado).
 - **ValidaÃ§Ã£o:** Ambiente local totalmente operacional para desenvolvimento simultÃ¢neo.
+
+### [17/04/2026] - Integração do Passageiro ao Backend
+**Feito:**
+- **Schema Prisma Atualizado:** Adicionado suporte a origin, destination, price, distanceKm e vehicleType na tabela Ride.
+- **API GET /api/rides:** Endpoint para buscar histórico real sincronizado com o banco.
+- **API PUT /api/rides/:id/cancel:** Integração da cobrança e mudança de status de cancelamentos virtuais (CANCELED_FREE e CANCELED_FEE).
+- **Frontend (PassengerDashboard):**
+  - Integração do botão Chamar Agora disparando payload rico para a base.
+  - Sidebar substitui histórico mockado via localStorage por busca assíncrona.
+  - Lógica de cancelamento reativa repassando o ID da viagem pro servidor.
