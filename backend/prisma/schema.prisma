@@ -15,6 +15,7 @@ model User {
   role      String   @default("PASSENGER") // "PASSENGER" or "DRIVER"
   qrCode    String?  @unique               // URL or ID for referrals (mainly for drivers)
   balance   Float    @default(0.0)         // Royalty balance in BRL
+  credits   Int      @default(0)           // Ride credits (drivers start with 10)
 
   // Relationships
   ridesAsPassenger Ride[] @relation("PassengerRides")

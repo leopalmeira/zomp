@@ -25,7 +25,8 @@ app.post('/api/auth/register', async (req, res) => {
         email,
         password: hashedPassword,
         role: role || 'PASSENGER',
-        qrCode: role === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null
+        qrCode: role === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null,
+        credits: role === 'DRIVER' ? 10 : 0  // Motoristas ganham 10 créditos grátis
       }
     });
 
@@ -62,7 +63,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance } });
+    res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance, credits: user.credits } });
   } catch (error) {
     res.status(500).json({ error: 'Internal error login' });
   }
@@ -148,11 +149,23 @@ app.post('/api/rides/:id/accept', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers can accept rides' });
 
+    // Check credits
+    const driver = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (driver.credits <= 0) {
+      return res.status(400).json({ error: 'Sem créditos! Compre um pacote para aceitar corridas.' });
+    }
+
     // Ensure the ride is still pending
     const existing = await prisma.ride.findUnique({ where: { id: req.params.id }});
     if(!existing || existing.status !== 'PENDING') {
       return res.status(400).json({ error: 'Ride is no longer available' });
     }
+
+    // Deduct 1 credit
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { credits: { decrement: 1 } }
+    });
 
     const ride = await prisma.ride.update({
       where: { id: req.params.id },
@@ -258,6 +271,44 @@ app.post('/api/wallet/withdraw', authenticate, async (req, res) => {
     res.json({ message: 'Withdrawal requested successfully', withdrawal });
   } catch (error) {
     res.status(500).json({ error: 'Error processing withdrawal' });
+  }
+});
+// --- CREDITS ---
+
+app.get('/api/credits', authenticate, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    res.json({ credits: user.credits });
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching credits' });
+  }
+});
+
+app.post('/api/credits/purchase', authenticate, async (req, res) => {
+  try {
+    const { quantity } = req.body; // 10, 20 or 30
+    const validPackages = [10, 20, 30];
+    if (!validPackages.includes(quantity)) {
+      return res.status(400).json({ error: 'Pacote inválido. Escolha 10, 20 ou 30 créditos.' });
+    }
+
+    const pricePerCredit = 1.50;
+    const totalPrice = quantity * pricePerCredit;
+
+    // Add credits to user
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { credits: { increment: quantity } }
+    });
+
+    res.json({
+      message: `${quantity} créditos adicionados com sucesso!`,
+      credits: user.credits,
+      charged: totalPrice
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error purchasing credits' });
   }
 });
 
