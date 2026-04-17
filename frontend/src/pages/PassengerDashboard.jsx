@@ -113,6 +113,23 @@ export default function PassengerDashboard() {
   const [isLoading, setIsLoading] = useState(false)
   const [scheduleData, setScheduleData] = useState({ date: '', time: '' })
 
+  // Active Ride Extra States
+  const [cancelCountdown, setCancelCountdown] = useState(59)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatInput, setChatInput] = useState('')
+
+  // Manage 60-second countdown when ACCEPTED
+  useEffect(() => {
+    let timer;
+    if (rideState === 'ACCEPTED' && cancelCountdown > 0) {
+      timer = setInterval(() => {
+        setCancelCountdown(prev => prev - 1)
+      }, 1000)
+    }
+    return () => clearInterval(timer)
+  }, [rideState, cancelCountdown])
+
   // UI
   const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -292,6 +309,7 @@ export default function PassengerDashboard() {
     const delay = prioritizeFavs ? 4000 : 2000
     setTimeout(() => {
       setRideState('ACCEPTED')
+      setCancelCountdown(59) // Starts the cancel grace period
     }, delay)
   }
 
@@ -305,6 +323,9 @@ export default function PassengerDashboard() {
     setScheduleData({ date: '', time: '' })
     setRideState('IDLE')
     setIsSheetCollapsed(false)
+    setCancelCountdown(59)
+    setIsChatOpen(false)
+    setChatMessages([])
   }
 
   // ============= Markers for map =============
@@ -630,8 +651,31 @@ export default function PassengerDashboard() {
               )}
 
               <div className="action-buttons mt-4">
-                <button className="btn btn-secondary" style={{flex:1}}>Mensagem</button>
-                <button className="btn btn-secondary" style={{flex:1, color:'#ef4444'}} onClick={resetFlow}>Cancelar</button>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{flex:1}}
+                  onClick={() => setIsChatOpen(true)}
+                >
+                  💬 Mensagem
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{flex:1, color:'#ef4444', display:'flex', flexDirection:'column', alignItems:'center', gap:'2px'}} 
+                  onClick={() => {
+                    if (cancelCountdown > 0) {
+                      if (confirm('Deseja realmente cancelar gratuitamente a corrida?')) resetFlow()
+                    } else {
+                      if (confirm('O período de cancelamento grátis expirou. Uma taxa de deslocamento será cobrada na sua próxima corrida. Deseja cancelar mesmo assim?')) resetFlow()
+                    }
+                  }}
+                >
+                  <span style={{fontWeight: 800}}>Cancelar</span>
+                  {cancelCountdown > 0 ? (
+                    <span style={{fontSize: '0.7rem', color: '#f59e0b', fontWeight: 700}}>Grátis (0:{cancelCountdown.toString().padStart(2, '0')})</span>
+                  ) : (
+                    <span style={{fontSize: '0.7rem', color: '#ef4444', fontWeight: 700}}>Taxa Aplicável</span>
+                  )}
+                </button>
               </div>
             </div>
           )}
@@ -958,6 +1002,97 @@ export default function PassengerDashboard() {
                 </div>
               )}
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== CHAT OVERLAY ===== */}
+      {isChatOpen && (
+        <div className="side-menu-overlay" style={{zIndex: 9999}}>
+          <div className="side-menu-drawer animate-slide-up" style={{
+            width: '100%', 
+            height: '85vh', 
+            top: 'auto', 
+            bottom: 0, 
+            borderRadius: '24px 24px 0 0',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div style={{padding: '16px 20px', borderBottom: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                <img src={favoriteDriversState[0].img} style={{width:'40px', height:'40px', borderRadius:'50%'}} alt="" />
+                <div>
+                  <h4 style={{margin:0, fontSize:'1rem'}}>{favoriteDriversState[0].name}</h4>
+                  <span style={{fontSize:'0.8rem', color:'#059669', fontWeight:700}}>Online</span>
+                </div>
+              </div>
+              <button onClick={() => setIsChatOpen(false)} style={{background:'none', border:'none', fontSize:'1.5rem', cursor:'pointer', color:'#a1a1aa'}}>✕</button>
+            </div>
+            
+            <div style={{flex: 1, padding: '20px', overflowY: 'auto', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '12px'}}>
+              <div style={{textAlign: 'center', fontSize: '0.8rem', color: '#a1a1aa', margin: '10px 0'}}>As mensagens são monitoradas por segurança</div>
+              {chatMessages.map(msg => (
+                <div key={msg.id} style={{
+                  alignSelf: msg.sender === 'me' ? 'flex-end' : 'flex-start',
+                  background: msg.sender === 'me' ? 'var(--primary)' : '#e4e4e7',
+                  color: msg.sender === 'me' ? '#000' : '#18181b',
+                  padding: '10px 16px',
+                  borderRadius: msg.sender === 'me' ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                  maxWidth: '80%',
+                  fontWeight: 600,
+                  fontSize: '0.95rem'
+                }}>
+                  {msg.text}
+                </div>
+              ))}
+            </div>
+
+            <div style={{padding: '16px', borderTop: '1px solid #e4e4e7', background: '#fff', display: 'flex', gap: '10px'}}>
+              <input 
+                type="text" 
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Envie uma mensagem..."
+                onKeyDown={(e) => {
+                  if(e.key === 'Enter' && chatInput.trim()) {
+                    const newMsg = {id: Date.now(), sender: 'me', text: chatInput.trim()}
+                    setChatMessages(prev => [...prev, newMsg])
+                    setChatInput('')
+
+                    // Auto-reply mock
+                    setTimeout(() => {
+                      setChatMessages(prev => [...prev, {id: Date.now()+1, sender: 'driver', text: 'Entendido, já estou a caminho!'}])
+                    }, 2000)
+                  }
+                }}
+                style={{
+                  flex: 1, padding: '14px 16px', borderRadius: '100px', 
+                  border: '1px solid #d4d4d8', background: '#f4f4f5', 
+                  outline: 'none', fontWeight: 600, fontSize: '0.95rem'
+                }} 
+              />
+              <button 
+                disabled={!chatInput.trim()}
+                onClick={() => {
+                  const newMsg = {id: Date.now(), sender: 'me', text: chatInput.trim()}
+                  setChatMessages(prev => [...prev, newMsg])
+                  setChatInput('')
+
+                  setTimeout(() => {
+                    setChatMessages(prev => [...prev, {id: Date.now()+1, sender: 'driver', text: 'Tudo bem! Estou chegando.'}])
+                  }, 2000)
+                }}
+                style={{
+                  background: chatInput.trim() ? '#18181b' : '#a1a1aa', color: '#fff', 
+                  border: 'none', borderRadius: '50%', width: '48px', height: '48px', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                  cursor: chatInput.trim() ? 'pointer' : 'not-allowed',
+                  transition: 'background 0.2s'
+                }}
+              >
+                ➤
+              </button>
             </div>
           </div>
         </div>
