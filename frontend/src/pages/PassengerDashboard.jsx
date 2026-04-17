@@ -16,6 +16,21 @@ const createIcon = (color) => L.divIcon({
 const originIcon = createIcon('#00E676') // Green
 const destIcon = createIcon('#EF4444') // Red
 
+// Haversine formula to calculate distance in KM
+const getDistance = (coords1, coords2) => {
+  const [lat1, lon1] = coords1;
+  const [lat2, lon2] = coords2;
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 // Helper to center and bounds
 function MapController({ center, markers }) {
   const map = useMap()
@@ -82,44 +97,48 @@ export default function PassengerDashboard() {
   // Calculate pricing when both addresses are defined
   useEffect(() => {
     if (origin.coords && destination.coords && rideState === 'IDLE') {
-      // Mock tracking math
-      const mockKm = (Math.random() * 8 + 2).toFixed(1) // Example: 2.0 to 10.0 Km
+      const dist = getDistance(origin.coords, destination.coords)
+      const mockKm = dist.toFixed(1)
       const mockTotal = (parseFloat(mockKm) * 2.00).toFixed(2)
       setRouteParams({ km: mockKm, total: mockTotal })
       setRideState('PRICED')
-      // Collapse sheet slightly so map is visible
       setIsSheetCollapsed(false) 
     }
   }, [origin.coords, destination.coords, rideState])
 
-  const handleTyping = (value, type) => {
+  const handleTyping = async (value, type) => {
     setActiveInput(type)
     setSearchInput(value)
     
     if (type === 'origin') setOrigin({ ...origin, address: value })
     if (type === 'dest') setDestination({ ...destination, address: value })
 
-    // Build mock suggestions
-    if (value.length > 2) {
-      setSuggestions([
-        `${value}, Centro`,
-        `${value}, Bairro Principal`,
-        `${value}, Zona Leste`
-      ])
+    if (value.length > 3) {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&countrycodes=br&limit=5`)
+        const data = await res.json()
+        setSuggestions(data.map(item => ({
+          display_name: item.display_name,
+          lat: parseFloat(item.lat),
+          lon: parseFloat(item.lon)
+        })))
+      } catch (err) {
+        console.error("Erro ao buscar sugestões", err)
+      }
     } else {
       setSuggestions([])
     }
   }
 
-  const selectSuggestion = (address) => {
-    // Generate a random map coordinate near map center for prototyping
-    const offset = () => (Math.random() - 0.5) * 0.03
-    const newCoords = [mapCenter[0] + offset(), mapCenter[1] + offset()]
+  const selectSuggestion = (sug) => {
+    const coords = [sug.lat, sug.lon]
+    const shortName = sug.display_name.split(',')[0]
     
     if (activeInput === 'origin') {
-      setOrigin({ address, coords: newCoords })
+      setOrigin({ address: shortName, coords: coords })
+      setMapCenter(coords)
     } else {
-      setDestination({ address, coords: newCoords })
+      setDestination({ address: shortName, coords: coords })
     }
     
     setSuggestions([])
@@ -237,7 +256,7 @@ export default function PassengerDashboard() {
                      {suggestions.map((sug, idx) => (
                        <div key={idx} className="suggestion-item" onClick={() => selectSuggestion(sug)}>
                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                         {sug}
+                         {sug.display_name.split(',').slice(0, 2).join(',')}
                        </div>
                      ))}
                    </div>
