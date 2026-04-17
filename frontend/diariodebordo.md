@@ -25,9 +25,14 @@
    - **Inteligência de Rotas Avançada:** Substituí sugestões mockadas por busca real via **Nominatim API (OpenStreetMap)**, permitindo que o usuário encontre ruas reais no Brasil enquanto digita.
    
 5. **Máquina de Estados de Viagem (Booking Flow State Machine):**
-   - Transição dinâmica de interface na Bottom Sheet sem recarregar tela: `IDLE` (Busca de rua) -> `PRICED` (Mostra valor final, toggle de favoritos, botões Agendar / Chamar Agora) -> `SEARCHING` (Radar pulsante UI) -> `ACCEPTED` (Card detalhado do Motorista a Caminho).
+   - Transição dinâmica de interface na Bottom Sheet sem recarregar tela: `IDLE` (Busca de rua) -> `PRICED` (Seletor de veículo, valor final, toggle de favoritos, botões Agendar / Chamar Agora) -> `SCHEDULING` (Date/Time Picker) -> `SEARCHING` (Radar pulsante UI) -> `ACCEPTED` (Card detalhado do Motorista a Caminho).
    - **Toggle Priorizar Favoritos:** Uma engine visual no painel `PRICED` onde motoristas favoritos recebem preferência simulando os 15s iniciais de busca dedicada (Ping Priority), ou desligamento para matching imediato de radio abrangente.
-   - Agendamento de Partidas: Formulário em-linha (Time/Date picker) caso o usuário escolha Agendar.
+   - **Agendamento Real:** Clicar em "Agendar" abre uma tela dedicada com inputs de Data e Hora, seletor de veículo e valor final. O botão "Confirmar Agendamento" só habilita quando data e hora são preenchidos.
+
+7. **Seletor de Veículo e Precificação Inteligente:**
+   - **Tipos:** Carro (🚗 Conforto) e Moto (🏍️ Econômico) com cards visuais clicáveis.
+   - **Precificação:** Carro = R$ 2,00/km | Moto = R$ 1,50/km.
+   - **Tarifa Mínima:** Carro nunca abaixo de R$ 8,40 | Moto nunca abaixo de R$ 7,20. Quando a tarifa mínima é aplicada, um aviso amarelo ⚠️ aparece informando o passageiro.
 
 6. **Sidebar e Gerenciador de Facilidades (Hamburguer Menu):**
    - O botão `☰` de sanduíche no topo do mapa foi codificado em React State (`isMenuOpen` e `activeScreen`), acionando um Drawer Lateral (Sidebar) em vez de um logout imediato. 
