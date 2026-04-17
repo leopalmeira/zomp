@@ -100,6 +100,12 @@ export default function PassengerDashboard() {
     return Math.max(calculated, minimum).toFixed(2)
   }
 
+  // Profile data
+  const [profileData, setProfileData] = useState({
+    name: user?.name || 'Leandro Palmeira',
+    email: user?.email || 'leandro@exemplo.com'
+  })
+
   // State machine: IDLE -> PRICED -> SCHEDULING | SEARCHING -> ACCEPTED
   const [rideState, setRideState] = useState('IDLE')
   const [isLoading, setIsLoading] = useState(false)
@@ -125,11 +131,18 @@ export default function PassengerDashboard() {
     localStorage.setItem('zomp_scheduled_rides', JSON.stringify(scheduledRides))
   }, [scheduledRides])
 
-  // Favorite drivers (mock)
-  const favoriteDrivers = [
-    { id: 1, name: 'Carlos', car: 'Chevrolet Onix', plate: 'BRA-2031', rating: '4.9', img: 'https://i.pravatar.cc/150?img=11' },
-    { id: 2, name: 'Ana', car: 'Hyundai HB20', plate: 'XPT-9988', rating: '5.0', img: 'https://i.pravatar.cc/150?img=5' }
-  ]
+  // Favorite drivers state
+  const [favoriteDriversState, setFavoriteDriversState] = useState([
+    { id: 1, name: 'Carlos Santos', car: 'Chevrolet Onix', plate: 'BRA-2031', rating: '4.9', img: 'https://i.pravatar.cc/150?img=11' },
+    { id: 2, name: 'Ana Silva', car: 'Hyundai HB20', plate: 'XPT-9988', rating: '5.0', img: 'https://i.pravatar.cc/150?img=5' }
+  ])
+
+  // Mock History
+  const [rideHistory] = useState([
+    { id: 101, date: '16/04/2026', origin: 'Rua São José, Centro', dest: 'Botafogo Praia Shopping', price: '24.50', vehicle: 'Carro' },
+    { id: 102, date: '14/04/2026', origin: 'Av. Paulista, 1000', dest: 'Aeroporto Congonhas', price: '45.00', vehicle: 'Carro' },
+    { id: 103, date: '10/04/2026', origin: 'Terminal Madureira', dest: 'Rua Dona Clara 35', price: '12.00', vehicle: 'Moto' }
+  ])
 
   // ============= GPS on load =============
   useEffect(() => {
@@ -393,17 +406,21 @@ export default function PassengerDashboard() {
                   <h3>Motoristas Favoritos</h3>
                   <span className="badge-nearby">PRIORIDADE</span>
                 </div>
-                <div className="favorites-scroll">
-                  {favoriteDrivers.map(d => (
-                    <div key={d.id} className="fav-driver-card">
-                      <img src={d.img} className="fav-img" alt={d.name} />
-                      <div className="fav-info">
-                        <span className="fav-name">{d.name}</span>
-                        <span className="fav-dist">Até 10min</span>
+                {favoriteDriversState.length === 0 ? (
+                  <p className="hint-text" style={{marginTop: '8px'}}>Nenhum motorista favorito no momento.</p>
+                ) : (
+                  <div className="favorites-scroll">
+                    {favoriteDriversState.map(d => (
+                      <div key={d.id} className="fav-driver-card">
+                        <img src={d.img} className="fav-img" alt={d.name} />
+                        <div className="fav-info">
+                          <span className="fav-name">{d.name.split(' ')[0]}</span>
+                          <span className="fav-dist">Até 10min</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
                 <p className="hint-text">Serão notificados primeiro para sua corrida.</p>
               </div>
             </div>
@@ -572,21 +589,21 @@ export default function PassengerDashboard() {
           )}
 
           {/* ---- STATE: ACCEPTED ---- */}
-          {rideState === 'ACCEPTED' && (
+          {rideState === 'ACCEPTED' && favoriteDriversState.length > 0 && (
             <div className="state-accepted animate-fade-in-up">
               <div className="match-header">
                 <span className="badge-nearby">MOTORISTA A CAMINHO</span>
                 <h3>4 min</h3>
               </div>
               <div className="driver-card-large">
-                <img src={favoriteDrivers[0].img} alt={favoriteDrivers[0].name} className="drv-avatar" />
+                <img src={favoriteDriversState[0].img} alt={favoriteDriversState[0].name} className="drv-avatar" />
                 <div className="drv-info">
-                  <h4>{favoriteDrivers[0].name}</h4>
-                  <div className="drv-rating">⭐ {favoriteDrivers[0].rating}</div>
+                  <h4>{favoriteDriversState[0].name}</h4>
+                  <div className="drv-rating">⭐ {favoriteDriversState[0].rating}</div>
                 </div>
                 <div className="drv-car">
-                  <span className="car-model">{favoriteDrivers[0].car}</span>
-                  <span className="car-plate">{favoriteDrivers[0].plate}</span>
+                  <span className="car-model">{favoriteDriversState[0].car}</span>
+                  <span className="car-plate">{favoriteDriversState[0].plate}</span>
                 </div>
               </div>
               <div className="action-buttons mt-4">
@@ -635,9 +652,9 @@ export default function PassengerDashboard() {
                       }}>{scheduledRides.length}</span>
                     )}
                   </button>
-                  <button className="menu-nav-btn">Meu Perfil</button>
-                  <button className="menu-nav-btn">Histórico</button>
-                  <button className="menu-nav-btn">Favoritos</button>
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('PROFILE')}>👤 Meu Perfil</button>
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('HISTORY')}>🕒 Histórico</button>
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('FAVORITES')}>⭐ Favoritos</button>
                   <div className="menu-spacer"></div>
                   <button className="menu-nav-btn text-danger" onClick={() => { logout(); navigate('/passageiro') }}>
                     Sair do App
@@ -670,7 +687,7 @@ export default function PassengerDashboard() {
 
                         // Simulated driver acceptance (after 30min from creation)
                         const isAccepted = (Date.now() - ride.id) > 1800000
-                        const acceptedDriver = isAccepted ? favoriteDrivers[0] : null
+                        const acceptedDriver = isAccepted ? favoriteDriversState[0] : null
 
                         return (
                           <div
@@ -806,6 +823,116 @@ export default function PassengerDashboard() {
                     </div>
                   )}
                 </>
+              )}
+
+              {menuScreen === 'PROFILE' && (
+                <div className="animate-fade-in">
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
+                    ← Voltar
+                  </button>
+                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '24px'}}>Meu Perfil</h3>
+                  
+                  <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px'}}>
+                    <div style={{width: '90px', height: '90px', borderRadius: '50%', background: 'var(--primary)', color: '#000', fontSize: '2.5rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px'}}>
+                      {profileData.name.charAt(0)}
+                    </div>
+                  </div>
+
+                  <div style={{marginBottom: '16px'}}>
+                    <label style={{display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#a1a1aa', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px'}}>Nome Completo</label>
+                    <input 
+                      type="text" 
+                      className="route-input" 
+                      style={{background: '#f4f4f5', padding: '12px', borderRadius: '8px', border: '1px solid #e4e4e7'}}
+                      value={profileData.name} 
+                      onChange={(e) => setProfileData({...profileData, name: e.target.value})} 
+                    />
+                  </div>
+
+                  <div style={{marginBottom: '24px'}}>
+                    <label style={{display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#a1a1aa', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px'}}>E-mail</label>
+                    <input 
+                      type="email" 
+                      className="route-input" 
+                      style={{background: '#f4f4f5', padding: '12px', borderRadius: '8px', border: '1px solid #e4e4e7'}}
+                      value={profileData.email} 
+                      onChange={(e) => setProfileData({...profileData, email: e.target.value})} 
+                    />
+                  </div>
+
+                  <button className="btn btn-primary" style={{width: '100%'}} onClick={() => {
+                    alert('Perfil atualizado localmente com sucesso!')
+                    setMenuScreen('MAIN')
+                  }}>
+                    Salvar Alterações
+                  </button>
+                </div>
+              )}
+
+              {menuScreen === 'HISTORY' && (
+                <div className="animate-fade-in">
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
+                    ← Voltar
+                  </button>
+                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>Histórico de Corridas</h3>
+                  
+                  <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                    {rideHistory.map(ride => (
+                      <div key={ride.id} className="scheduled-ride-card" style={{cursor: 'default'}}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
+                          <div style={{fontWeight: 800}}>📅 {ride.date}</div>
+                          <div style={{fontWeight: 800, color: '#065f46'}}>R$ {ride.price}</div>
+                        </div>
+                        <div style={{fontSize: '0.85rem', color: '#71717a', marginBottom: '4px'}}>📍 <b>De:</b> {ride.origin}</div>
+                        <div style={{fontSize: '0.85rem', color: '#71717a'}}>🏁 <b>Para:</b> {ride.dest}</div>
+                        <div style={{marginTop: '12px', display: 'inline-block', padding: '4px 8px', background: '#e4e4e7', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase'}}>
+                          {ride.vehicle}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {menuScreen === 'FAVORITES' && (
+                <div className="animate-fade-in">
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
+                    ← Voltar
+                  </button>
+                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>Motoristas Favoritos</h3>
+                  <p className="hint-text" style={{marginBottom: '20px'}}>Sua lista de motoristas indicados e selecionados como favoritos.</p>
+                  
+                  {favoriteDriversState.length === 0 ? (
+                    <div style={{textAlign: 'center', padding: '32px 0'}}>
+                      <p style={{fontSize: '3rem', marginBottom: '12px'}}>⭐</p>
+                      <p style={{color: '#71717a', fontWeight: 600}}>Você não tem favoritos</p>
+                    </div>
+                  ) : (
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                      {favoriteDriversState.map(driver => (
+                        <div key={driver.id} style={{display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', background: '#f8fafc', border: '1px solid #e4e4e7', borderRadius: '12px'}}>
+                          <img src={driver.img} alt={driver.name} style={{width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover'}} />
+                          <div style={{flex: 1}}>
+                            <div style={{fontWeight: 800, color: 'var(--text-dark)'}}>{driver.name}</div>
+                            <div style={{fontSize: '0.85rem', color: '#f59e0b', fontWeight: 700}}>⭐ {driver.rating}</div>
+                            <div style={{fontSize: '0.8rem', color: '#71717a', marginTop: '2px'}}>{driver.car}</div>
+                          </div>
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{padding: '8px', fontSize: '0.85rem', color: '#ef4444', borderColor: '#fecaca', background: '#fef2f2'}}
+                            onClick={() => {
+                              if (confirm(`Tem clareza em remover ${driver.name} dos seus favoritos?`)) {
+                                setFavoriteDriversState(prev => prev.filter(d => d.id !== driver.id))
+                              }
+                            }}
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
             </div>
