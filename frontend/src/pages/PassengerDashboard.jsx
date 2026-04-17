@@ -108,7 +108,21 @@ export default function PassengerDashboard() {
   // UI
   const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [menuScreen, setMenuScreen] = useState('MAIN') // 'MAIN' | 'SCHEDULED'
   const [prioritizeFavs, setPrioritizeFavs] = useState(true)
+
+  // Scheduled rides list
+  const [scheduledRides, setScheduledRides] = useState(() => {
+    try {
+      const saved = localStorage.getItem('zomp_scheduled_rides')
+      return saved ? JSON.parse(saved) : []
+    } catch { return [] }
+  })
+
+  // Persist scheduled rides to localStorage
+  useEffect(() => {
+    localStorage.setItem('zomp_scheduled_rides', JSON.stringify(scheduledRides))
+  }, [scheduledRides])
 
   // Favorite drivers (mock)
   const favoriteDrivers = [
@@ -521,7 +535,18 @@ export default function PassengerDashboard() {
                   style={{flex:2}}
                   disabled={!scheduleData.date || !scheduleData.time}
                   onClick={() => {
-                    alert(`✅ Viagem agendada!\n\n📅 ${scheduleData.date}\n🕐 ${scheduleData.time}\n${vehicleType === 'car' ? '🚗 Carro' : '🏍️ Moto'} — R$ ${getPrice(routeKm, vehicleType)}`)
+                    const newRide = {
+                      id: Date.now(),
+                      origin: originAddr,
+                      dest: destAddr,
+                      date: scheduleData.date,
+                      time: scheduleData.time,
+                      vehicle: vehicleType,
+                      price: getPrice(routeKm, vehicleType),
+                      km: routeKm
+                    }
+                    setScheduledRides(prev => [...prev, newRide])
+                    alert(`✅ Viagem agendada com sucesso!\n\n📅 ${scheduleData.date} às ${scheduleData.time}\n${vehicleType === 'car' ? '🚗 Carro' : '🏍️ Moto'} — R$ ${getPrice(routeKm, vehicleType)}`)
                     resetFlow()
                   }}
                 >
@@ -575,26 +600,102 @@ export default function PassengerDashboard() {
 
       {/* ===== SIDE MENU ===== */}
       {isMenuOpen && (
-        <div className="side-menu-overlay" onClick={() => setIsMenuOpen(false)}>
+        <div className="side-menu-overlay" onClick={() => { setIsMenuOpen(false); setMenuScreen('MAIN') }}>
           <div className="side-menu-drawer animate-slide-right" onClick={(e) => e.stopPropagation()}>
-            <div className="drawer-close" onClick={() => setIsMenuOpen(false)}>✕</div>
+            <div className="drawer-close" onClick={() => { setIsMenuOpen(false); setMenuScreen('MAIN') }}>✕</div>
             <div className="menu-nav-list">
-              <div className="menu-user-header">
-                <div className="user-avatar-large">{user?.name?.charAt(0) || 'P'}</div>
-                <div>
-                  <h3 style={{margin:0}}>{user?.name || 'Passageiro'}</h3>
-                  <span className="badge-nearby">Passageiro</span>
-                </div>
-              </div>
-              <hr />
-              <button className="menu-nav-btn" onClick={resetFlow}>Nova Viagem</button>
-              <button className="menu-nav-btn">Meu Perfil</button>
-              <button className="menu-nav-btn">Histórico</button>
-              <button className="menu-nav-btn">Favoritos</button>
-              <div className="menu-spacer"></div>
-              <button className="menu-nav-btn text-danger" onClick={() => { logout(); navigate('/passageiro') }}>
-                Sair do App
-              </button>
+
+              {menuScreen === 'MAIN' && (
+                <>
+                  <div className="menu-user-header">
+                    <div className="user-avatar-large">{user?.name?.charAt(0) || 'P'}</div>
+                    <div>
+                      <h3 style={{margin:0}}>{user?.name || 'Passageiro'}</h3>
+                      <span className="badge-nearby">Passageiro</span>
+                    </div>
+                  </div>
+                  <hr />
+                  <button className="menu-nav-btn" onClick={() => { resetFlow(); setIsMenuOpen(false) }}>Nova Viagem</button>
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('SCHEDULED')}>
+                    📅 Corridas Agendadas
+                    {scheduledRides.length > 0 && (
+                      <span style={{
+                        marginLeft: '8px',
+                        background: 'var(--primary)',
+                        color: '#000',
+                        borderRadius: '50%',
+                        width: '22px',
+                        height: '22px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.75rem',
+                        fontWeight: 800
+                      }}>{scheduledRides.length}</span>
+                    )}
+                  </button>
+                  <button className="menu-nav-btn">Meu Perfil</button>
+                  <button className="menu-nav-btn">Histórico</button>
+                  <button className="menu-nav-btn">Favoritos</button>
+                  <div className="menu-spacer"></div>
+                  <button className="menu-nav-btn text-danger" onClick={() => { logout(); navigate('/passageiro') }}>
+                    Sair do App
+                  </button>
+                </>
+              )}
+
+              {menuScreen === 'SCHEDULED' && (
+                <>
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '12px'}}>
+                    ← Voltar ao Menu
+                  </button>
+                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>📅 Corridas Agendadas</h3>
+
+                  {scheduledRides.length === 0 ? (
+                    <div style={{textAlign: 'center', padding: '32px 0'}}>
+                      <p style={{fontSize: '3rem', marginBottom: '12px'}}>📅</p>
+                      <p style={{color: '#71717a', fontWeight: 600}}>Nenhuma corrida agendada</p>
+                      <p className="hint-text">Agende uma corrida e ela aparecerá aqui.</p>
+                    </div>
+                  ) : (
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                      {scheduledRides.map((ride) => (
+                        <div key={ride.id} className="scheduled-ride-card">
+                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px'}}>
+                            <div>
+                              <div style={{fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-dark)'}}>
+                                {ride.vehicle === 'car' ? '🚗' : '🏍️'} {ride.vehicle === 'car' ? 'Carro' : 'Moto'}
+                              </div>
+                              <div style={{fontSize: '0.85rem', fontWeight: 700, color: '#065f46', marginTop: '2px'}}>
+                                R$ {ride.price} • {ride.km} km
+                              </div>
+                            </div>
+                            <div style={{textAlign: 'right'}}>
+                              <div style={{fontWeight: 800, fontSize: '0.9rem'}}>📅 {ride.date}</div>
+                              <div style={{fontWeight: 700, fontSize: '0.85rem', color: '#71717a'}}>🕐 {ride.time}</div>
+                            </div>
+                          </div>
+                          <div style={{fontSize: '0.8rem', color: '#71717a', fontWeight: 600, marginBottom: '8px'}}>
+                            {ride.origin} → {ride.dest}
+                          </div>
+                          <button
+                            className="btn btn-secondary"
+                            style={{width: '100%', padding: '8px', fontSize: '0.85rem', color: '#ef4444', fontWeight: 700}}
+                            onClick={() => {
+                              if (confirm('Deseja cancelar esta corrida agendada?')) {
+                                setScheduledRides(prev => prev.filter(r => r.id !== ride.id))
+                              }
+                            }}
+                          >
+                            Cancelar Agendamento
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
             </div>
           </div>
         </div>

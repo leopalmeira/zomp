@@ -627,3 +627,16 @@ input:checked + .slider:before { transform: translateX(22px); }
 .menu-spacer {
   flex: 1;
 }
+
+/* Scheduled Ride Cards */
+.scheduled-ride-card {
+  background: #f8fafc;
+  border: 1px solid #e4e4e7;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  transition: box-shadow 0.2s;
+}
+
+.scheduled-ride-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
