@@ -156,12 +156,23 @@ export default function PassengerDashboard() {
     { id: 2, name: 'Ana Silva', car: 'Hyundai HB20', plate: 'XPT-9988', rating: '5.0', img: 'https://i.pravatar.cc/150?img=5' }
   ])
 
-  // Mock History
-  const [rideHistory] = useState([
-    { id: 101, date: '16/04/2026', origin: 'Rua São José, Centro', dest: 'Botafogo Praia Shopping', price: '24.50', vehicle: 'Carro' },
-    { id: 102, date: '14/04/2026', origin: 'Av. Paulista, 1000', dest: 'Aeroporto Congonhas', price: '45.00', vehicle: 'Carro' },
-    { id: 103, date: '10/04/2026', origin: 'Terminal Madureira', dest: 'Rua Dona Clara 35', price: '12.00', vehicle: 'Moto' }
-  ])
+  // History state
+  const [rideHistory, setRideHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('zomp_ride_history')
+      if (saved) return JSON.parse(saved)
+    } catch { /* empty */ }
+    return [
+      { id: 101, date: '16/04/2026', origin: 'Rua São José, Centro', dest: 'Botafogo Praia Shopping', price: '24.50', vehicle: 'Carro', status: 'COMPLETED' },
+      { id: 102, date: '14/04/2026', origin: 'Av. Paulista, 1000', dest: 'Aeroporto Congonhas', price: '45.00', vehicle: 'Carro', status: 'COMPLETED' },
+      { id: 103, date: '10/04/2026', origin: 'Terminal Madureira', dest: 'Rua Dona Clara 35', price: '12.00', vehicle: 'Moto', status: 'COMPLETED' }
+    ]
+  })
+
+  // Persist history to localStorage
+  useEffect(() => {
+    localStorage.setItem('zomp_ride_history', JSON.stringify(rideHistory))
+  }, [rideHistory])
 
   // ============= GPS on load =============
   useEffect(() => {
@@ -662,10 +673,19 @@ export default function PassengerDashboard() {
                   className="btn btn-secondary" 
                   style={{flex:1, color:'#ef4444', display:'flex', flexDirection:'column', alignItems:'center', gap:'2px'}} 
                   onClick={() => {
+                    const d = new Date()
+                    const today = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+                    
                     if (cancelCountdown > 0) {
-                      if (confirm('Deseja realmente cancelar gratuitamente a corrida?')) resetFlow()
+                      if (confirm('Deseja realmente cancelar gratuitamente a corrida?')) {
+                        setRideHistory(prev => [{ id: Date.now(), date: today, origin: originAddr, dest: destAddr, price: '0.00', vehicle: vehicleType === 'car' ? 'Carro' : 'Moto', status: 'CANCELED_FREE' }, ...prev])
+                        resetFlow()
+                      }
                     } else {
-                      if (confirm('O período de cancelamento grátis expirou. Uma taxa de deslocamento será cobrada na sua próxima corrida. Deseja cancelar mesmo assim?')) resetFlow()
+                      if (confirm('O período de cancelamento grátis expirou. Uma taxa de deslocamento será cobrada na sua próxima corrida. Deseja cancelar mesmo assim?')) {
+                        setRideHistory(prev => [{ id: Date.now(), date: today, origin: originAddr, dest: destAddr, price: '3.40', vehicle: vehicleType === 'car' ? 'Carro' : 'Moto', status: 'CANCELED_FEE' }, ...prev])
+                        resetFlow()
+                      }
                     }
                   }}
                 >
@@ -943,21 +963,44 @@ export default function PassengerDashboard() {
                   </button>
                   <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>Histórico de Corridas</h3>
                   
-                  <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
-                    {rideHistory.map(ride => (
-                      <div key={ride.id} className="scheduled-ride-card" style={{cursor: 'default'}}>
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
-                          <div style={{fontWeight: 800}}>📅 {ride.date}</div>
-                          <div style={{fontWeight: 800, color: '#065f46'}}>R$ {ride.price}</div>
+                  {rideHistory.length === 0 ? (
+                    <div style={{textAlign: 'center', padding: '32px 0'}}>
+                      <p style={{color: '#71717a', fontWeight: 600}}>Nenhum histórico encontrado.</p>
+                    </div>
+                  ) : (
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                      {rideHistory.map(ride => (
+                        <div key={ride.id} className="scheduled-ride-card" style={{cursor: 'default', opacity: (ride.status === 'CANCELED_FEE' || ride.status === 'CANCELED_FREE') ? 0.75 : 1}}>
+                          
+                          {ride.status === 'CANCELED_FEE' && (
+                            <div style={{background: '#fef2f2', color: '#b91c1c', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, marginBottom: '12px', border: '1px solid #fecaca'}}>
+                              ⚠️ Cancelada (Taxa de deslocamento de R$ 3,40 a ser cobrada na próxima corrida)
+                            </div>
+                          )}
+                          {ride.status === 'CANCELED_FREE' && (
+                            <div style={{background: '#f4f4f5', color: '#52525b', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, marginBottom: '12px', border: '1px solid #e4e4e7'}}>
+                              ✕ Cancelada gratuitamente
+                            </div>
+                          )}
+
+                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
+                            <div style={{fontWeight: 800}}>📅 {ride.date}</div>
+                            <div style={{
+                              fontWeight: 800, 
+                              color: ride.status === 'CANCELED_FEE' ? '#b91c1c' : (ride.status === 'CANCELED_FREE' ? '#a1a1aa' : '#065f46')
+                            }}>
+                              R$ {ride.price}
+                            </div>
+                          </div>
+                          <div style={{fontSize: '0.85rem', color: '#71717a', marginBottom: '4px'}}>📍 <b>De:</b> {ride.origin}</div>
+                          <div style={{fontSize: '0.85rem', color: '#71717a'}}>🏁 <b>Para:</b> {ride.dest}</div>
+                          <div style={{marginTop: '12px', display: 'inline-block', padding: '4px 8px', background: '#e4e4e7', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase'}}>
+                            {ride.vehicle}
+                          </div>
                         </div>
-                        <div style={{fontSize: '0.85rem', color: '#71717a', marginBottom: '4px'}}>📍 <b>De:</b> {ride.origin}</div>
-                        <div style={{fontSize: '0.85rem', color: '#71717a'}}>🏁 <b>Para:</b> {ride.dest}</div>
-                        <div style={{marginTop: '12px', display: 'inline-block', padding: '4px 8px', background: '#e4e4e7', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase'}}>
-                          {ride.vehicle}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

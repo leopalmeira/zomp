@@ -28,6 +28,9 @@
    - Transição dinâmica de interface na Bottom Sheet sem recarregar tela: `IDLE` (Busca de rua) -> `PRICED` (Seletor de veículo, valor final, toggle de favoritos, botões Agendar / Chamar Agora) -> `SCHEDULING` (Date/Time Picker) -> `SEARCHING` (Radar pulsante UI) -> `ACCEPTED` (Card detalhado do Motorista a Caminho).
    - **Toggle Priorizar Favoritos:** Uma engine visual no painel `PRICED` onde motoristas favoritos recebem preferência simulando os 15s iniciais de busca dedicada (Ping Priority), ou desligamento para matching imediato de radio abrangente.
    - **Agendamento Real:** Clicar em "Agendar" abre uma tela dedicada com inputs de Data e Hora, seletor de veículo e valor final. O botão "Confirmar Agendamento" só habilita quando data e hora são preenchidos.
+   - **Chat Integrado ao Passageiro:** Sobreposição visual na tela em casos de viagens aceitas onde é possível estabelecer uma conversa síncrona com o motorista online em trânsito.
+   - **Tempo Estimado (ETA):** Em "viagem ativa" o passageiro agora verá um painel indicando a quantos minutos restam a estimativa de distância do destino. A minutagem é calculada em tempo real com dados retornado pelo roteamento OSRM.
+   - **Contagem Regressiva para Cancelamento Gratuito:** Motorista a caminho gera um contador decrescente de 60 segundos ao botão "*Cancelar*", indicando cancelamento gratuito. Expirado o tempo (0:00), o sistema injetará no próprio **Histórico do Passageiro** um status de `CANCELED_FEE` avisando que uma taxa de deslocamento de R$ 3,40 seria somada à sua próxima viagem, garantindo o resguardo financeiro do motorista. Paralelamente, corridas canceladas em tempo viável assumem um status limpo de `CANCELED_FREE`.
 
 7. **Seletor de Veículo e Precificação Inteligente:**
    - **Tipos:** Carro (🚗 Conforto) e Moto (🏍️ Econômico) com cards visuais clicáveis.
