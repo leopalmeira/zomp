@@ -18,10 +18,15 @@
 
 4. **Novo App de Passageiro Modernizado (Uber-Likeness):**
    - Construção completa do `Passenger.css` e reescritura do componente `PassengerDashboard.jsx`.
-   - Adicionado mapa rodoviário flutuando por toda extensão da viewport simulando API (com pin luminoso animado saltitando no ar).
-   - "Bottom Sheet" retrátil engajada fixada à borda inferior incluindo sistema dual de barra cronológica para origem `Local de Partida` visivelmente separada do campo de `Buscar Destino`.
-   - Rolagem X do eixo para o "Carrossel de Motoristas Prioritários / Favoritados" em cima da escolha de partida onde usuários visualizam avatares em cards customizados dos motoristas distantes à < 10 minutos para prioridade e rápida associação.
+   - Adicionado mapa em Raster HD realista (Google-Maps like top-down styling) no background do passageiro utilizando `real_map_bg.png` fixando o pino central de localização como interface de GPS tangível.
+   - "Bottom Sheet" retrátil engajada fixada à borda inferior incluindo sistema dual de barra cronológica para origem/destino.
+   - **Interação Recolhível:** Agora é possível clicar na aba da haste (Drag Handle) no topo do painel branco para colapsá-lo `isSheetCollapsed`, permitindo visão desobstruída do grande mapa atrás.
    - Inclusão do submenu de Data/Tempo para acionamento na intenção de "Agendamento" acionando a regra de intervalo configurável (+2 hotas).
+   
+5. **Sidebar e Gerenciador de Facilidades (Hamburguer Menu):**
+   - O botão `☰` de sanduíche no topo do mapa foi codificado em React State (`isMenuOpen` e `activeScreen`), acionando um Drawer Lateral (Sidebar) em vez de um logout imediato. 
+   - A sub-navegação agora inclui o Perfil (`Meu Perfil` listando e-mail, foto e cargo), um esqueleto visual para listagem de `Histórico` e `Pedidos de Entregas`.
+   - **Módulo de Edição de Favoritos:** A aba "Motoristas Favoritos" agora possui um painel próprio onde os usuários conseguem ver a listagem em lista corrida e clicar no botão vermelho "Remover" de seus indicados ou adicionar novos, com a regra base clara descrita na UX (Limite: 5). O Logout foi movido com segurança para dentro desta Sidebar.
 
-5. **Ações Registradas de Versionamento e Controles:**
-   - Commit frequente (com Push integrado via console CLI) enviando atualizações sequencialmente para a master do GitHub (`leopalmeira/zomp.git`), certificando que qualquer mudança de layout pudesse ser consultada online.
+6. **Ações Registradas de Versionamento e Controles:**
+   - Commit frequente (com Push integrado via console CLI) enviando atualizações sequencialmente para a master do GitHub (`leopalmeira/zomp.git`).
