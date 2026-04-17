@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser } from '../services/api'
+import { logout, getCurrentUser, requestRide, getRideHistory } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -107,6 +107,7 @@ export default function PassengerDashboard() {
   const [rideState, setRideState] = useState('IDLE')
   const [isLoading, setIsLoading] = useState(false)
   const [scheduleData, setScheduleData] = useState({ date: '', time: '' })
+  const [activeRideId, setActiveRideId] = useState(null)
 
   // Active Ride Extra States
   const [cancelCountdown, setCancelCountdown] = useState(119)
@@ -151,23 +152,38 @@ export default function PassengerDashboard() {
     { id: 2, name: 'Ana Silva', car: 'Hyundai HB20', plate: 'XPT-9988', rating: '5.0', img: 'https://i.pravatar.cc/150?img=5' }
   ])
 
-  // History state
-  const [rideHistory, setRideHistory] = useState(() => {
-    try {
-      const saved = localStorage.getItem('zomp_ride_history')
-      if (saved) return JSON.parse(saved)
-    } catch { /* empty */ }
-    return [
-      { id: 101, date: '16/04/2026', origin: 'Rua São José, Centro', dest: 'Botafogo Praia Shopping', price: '24.50', vehicle: 'Carro', status: 'COMPLETED' },
-      { id: 102, date: '14/04/2026', origin: 'Av. Paulista, 1000', dest: 'Aeroporto Congonhas', price: '45.00', vehicle: 'Carro', status: 'COMPLETED' },
-      { id: 103, date: '10/04/2026', origin: 'Terminal Madureira', dest: 'Rua Dona Clara 35', price: '12.00', vehicle: 'Moto', status: 'COMPLETED' }
-    ]
-  })
+  // History state from API
+  const [rideHistory, setRideHistory] = useState([]);
 
-  // Persist history to localStorage
   useEffect(() => {
-    localStorage.setItem('zomp_ride_history', JSON.stringify(rideHistory))
-  }, [rideHistory])
+    async function loadHistory() {
+      try {
+        const history = await getRideHistory();
+        // format history dynamically if needed
+        const formatted = history.map(h => {
+          const datePart = h.createdAt.split('T')[0];
+          const dp = datePart.split('-');
+          return {
+            id: h.id,
+            rawDate: new Date(h.createdAt),
+            date: dp.length === 3 ? `${dp[2]}/${dp[1]}/${dp[0]}` : datePart,
+            origin: h.origin || '-',
+            dest: h.destination || '-',
+            price: h.price?.toFixed(2) || '0.00',
+            vehicle: h.vehicleType === 'car' ? 'Carro' : 'Moto',
+            status: h.status
+          };
+        });
+        
+        // Let's add any local mock fees as well from our previous localStorage logic if we wanted, 
+        // but it's better to fetch pure DB history.
+        setRideHistory(formatted);
+      } catch (err) {
+        console.error('Failed to load history', err);
+      }
+    }
+    loadHistory();
+  }, [rideState]); // re-fetch history when ride state changes (e.g. after ride ends)
 
   const pendingFeeAmount = rideHistory
     .filter(h => h.status === 'CANCELED_FEE' && !h.feePaid)
@@ -323,17 +339,38 @@ export default function PassengerDashboard() {
   }
 
   // ============= Call now =============
-  const handleCallNow = () => {
-    // Clear pending fees since they were applied to this ride
-    if (pendingFeeAmount > 0) {
-      setRideHistory(prev => prev.map(h => h.status === 'CANCELED_FEE' ? { ...h, feePaid: true } : h))
+  const handleCallNow = async () => {
+    setIsLoading(true);
+    try {
+      // Clear pending fees since they were applied to this ride (locally mocked for now or could be stored in DB)
+      if (pendingFeeAmount > 0) {
+        setRideHistory(prev => prev.map(h => h.status === 'CANCELED_FEE' ? { ...h, feePaid: true } : h))
+      }
+
+      const ridePayload = {
+        origin: originAddr,
+        destination: destAddr,
+        price: parseFloat(getPrice(routeKm, vehicleType, true)),
+        distanceKm: parseFloat(routeKm),
+        vehicleType
+      };
+
+      const newRide = await requestRide(ridePayload);
+      console.log('Ride created via API:', newRide);
+      setActiveRideId(newRide.id);
+
+      setRideState('SEARCHING')
+      const delay = prioritizeFavs ? 4000 : 2000
+      setTimeout(() => {
+        setRideState('ACCEPTED')
+        setCancelCountdown(119) // Starts the cancel grace period
+      }, delay)
+    } catch (e) {
+      console.error(e)
+      alert("Falha ao chamar motorista. Tente novamente.")
+    } finally {
+      setIsLoading(false);
     }
-    setRideState('SEARCHING')
-    const delay = prioritizeFavs ? 4000 : 2000
-    setTimeout(() => {
-      setRideState('ACCEPTED')
-      setCancelCountdown(119) // Starts the cancel grace period
-    }, delay)
   }
 
   // ============= Reset =============
@@ -349,6 +386,7 @@ export default function PassengerDashboard() {
     setCancelCountdown(119)
     setIsChatOpen(false)
     setChatMessages([])
+    setActiveRideId(null)
   }
 
   // ============= Markers for map =============
@@ -692,20 +730,32 @@ export default function PassengerDashboard() {
                 <button 
                   className="btn btn-secondary" 
                   style={{flex:1, color:'#ef4444', display:'flex', flexDirection:'column', alignItems:'center', gap:'2px'}} 
-                  onClick={() => {
-                    const d = new Date()
-                    const today = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
-                    
-                    if (cancelCountdown > 0) {
-                      if (confirm('Deseja realmente cancelar gratuitamente a corrida?')) {
-                        setRideHistory(prev => [{ id: Date.now(), date: today, origin: originAddr, dest: destAddr, price: '0.00', vehicle: vehicleType === 'car' ? 'Carro' : 'Moto', status: 'CANCELED_FREE' }, ...prev])
-                        resetFlow()
+                  onClick={async () => {
+                    const statusVal = cancelCountdown > 0 ? 'CANCELED_FREE' : 'CANCELED_FEE';
+                    const msg = cancelCountdown > 0 
+                      ? 'Deseja realmente cancelar gratuitamente a corrida?' 
+                      : 'O período de cancelamento grátis expirou. Uma taxa de deslocamento será cobrada na sua próxima corrida. Deseja cancelar mesmo assim?';
+
+                    if (confirm(msg)) {
+                      if (activeRideId) {
+                        try {
+                           await fetch(`http://localhost:3001/api/rides/${activeRideId}/cancel`, {
+                             method: 'PUT',
+                             headers: {
+                               'Content-Type': 'application/json',
+                               'Authorization': `Bearer ${localStorage.getItem('zomp_token')}`
+                             },
+                             body: JSON.stringify({ status: statusVal })
+                           });
+                        } catch (e) {
+                           console.error('Erro ao cancelar ride no backend', e);
+                        }
                       }
-                    } else {
-                      if (confirm('O período de cancelamento grátis expirou. Uma taxa de deslocamento será cobrada na sua próxima corrida. Deseja cancelar mesmo assim?')) {
-                        setRideHistory(prev => [{ id: Date.now(), date: today, origin: originAddr, dest: destAddr, price: '2.60', vehicle: vehicleType === 'car' ? 'Carro' : 'Moto', status: 'CANCELED_FEE' }, ...prev])
-                        resetFlow()
-                      }
+                      
+                      const d = new Date()
+                      const today = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+                      setRideHistory(prev => [{ id: Date.now(), date: today, origin: originAddr, dest: destAddr, price: statusVal === 'CANCELED_FREE' ? '0.00' : '2.60', vehicle: vehicleType === 'car' ? 'Carro' : 'Moto', status: statusVal }, ...prev])
+                      resetFlow()
                     }
                   }}
                 >

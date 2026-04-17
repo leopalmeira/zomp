@@ -89,17 +89,44 @@ app.post('/api/rides/request', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'PASSENGER') return res.status(403).json({ error: 'Only passengers can request a ride' });
 
+    const { origin, destination, price, distanceKm, vehicleType } = req.body;
+
     const ride = await prisma.ride.create({
       data: {
         passengerId: req.user.id,
+        origin,
+        destination,
+        price: parseFloat(price),
+        distanceKm: parseFloat(distanceKm),
+        vehicleType,
         status: 'PENDING'
       }
     });
     res.json(ride);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Error requesting ride' });
   }
 });
+
+app.get('/api/rides', authenticate, async (req, res) => {
+  try {
+    // If passenger, return their rides. If driver, return rides they drove
+    const whereClause = req.user.role === 'PASSENGER' 
+      ? { passengerId: req.user.id } 
+      : { driverId: req.user.id };
+
+    const rides = await prisma.ride.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(rides);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching rides' });
+  }
+});
+
 
 app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
   try {
@@ -126,6 +153,20 @@ app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error completing ride' });
+  }
+});
+
+app.put('/api/rides/:id/cancel', authenticate, async (req, res) => {
+  try {
+    const { status } = req.body; // CANCELED_FREE or CANCELED_FEE
+    const ride = await prisma.ride.update({
+      where: { id: req.params.id },
+      data: { status: status || 'CANCELLED' }
+    });
+    res.json({ message: 'Ride cancelled successfully', ride });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error cancelling ride' });
   }
 });
 

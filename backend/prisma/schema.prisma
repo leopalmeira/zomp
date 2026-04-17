@@ -50,6 +50,12 @@ model Ride {
   driverId    String?
   driver      User?    @relation("DriverRides", fields: [driverId], references: [id])
 
+  origin      String?
+  destination String?
+  price       Float?
+  distanceKm  Float?
+  vehicleType String?
+
   status      String   @default("PENDING") // PENDING, ACCEPTED, IN_PROGRESS, COMPLETED, CANCELLED
 
   createdAt   DateTime @default(now())
