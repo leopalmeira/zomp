@@ -95,12 +95,7 @@ export default function PassengerDashboard() {
   const PRICE_PER_KM = { car: 2.00, moto: 1.50 }
   const MIN_PRICE = { car: 8.40, moto: 7.20 }
 
-  // Compute price based on vehicle type and distance
-  const getPrice = (km, type) => {
-    const calculated = parseFloat(km) * PRICE_PER_KM[type]
-    const minimum = MIN_PRICE[type]
-    return Math.max(calculated, minimum).toFixed(2)
-  }
+  // We will define getPrice below, after rideHistory is loaded
 
   // Profile data
   const [profileData, setProfileData] = useState({
@@ -114,7 +109,7 @@ export default function PassengerDashboard() {
   const [scheduleData, setScheduleData] = useState({ date: '', time: '' })
 
   // Active Ride Extra States
-  const [cancelCountdown, setCancelCountdown] = useState(59)
+  const [cancelCountdown, setCancelCountdown] = useState(119)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
@@ -173,6 +168,19 @@ export default function PassengerDashboard() {
   useEffect(() => {
     localStorage.setItem('zomp_ride_history', JSON.stringify(rideHistory))
   }, [rideHistory])
+
+  const pendingFeeAmount = rideHistory
+    .filter(h => h.status === 'CANCELED_FEE' && !h.feePaid)
+    .reduce((sum, h) => sum + parseFloat(h.price || 0), 0)
+
+  // Compute price based on vehicle type and distance
+  const getPrice = (km, type, includeFee = false) => {
+    const calculated = parseFloat(km) * PRICE_PER_KM[type]
+    const minimum = MIN_PRICE[type]
+    const basePrice = Math.max(calculated, minimum)
+    const finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
+    return finalPrice.toFixed(2)
+  }
 
   // ============= GPS on load =============
   useEffect(() => {
@@ -316,11 +324,15 @@ export default function PassengerDashboard() {
 
   // ============= Call now =============
   const handleCallNow = () => {
+    // Clear pending fees since they were applied to this ride
+    if (pendingFeeAmount > 0) {
+      setRideHistory(prev => prev.map(h => h.status === 'CANCELED_FEE' ? { ...h, feePaid: true } : h))
+    }
     setRideState('SEARCHING')
     const delay = prioritizeFavs ? 4000 : 2000
     setTimeout(() => {
       setRideState('ACCEPTED')
-      setCancelCountdown(59) // Starts the cancel grace period
+      setCancelCountdown(119) // Starts the cancel grace period
     }, delay)
   }
 
@@ -334,7 +346,7 @@ export default function PassengerDashboard() {
     setScheduleData({ date: '', time: '' })
     setRideState('IDLE')
     setIsSheetCollapsed(false)
-    setCancelCountdown(59)
+    setCancelCountdown(119)
     setIsChatOpen(false)
     setChatMessages([])
   }
@@ -476,7 +488,7 @@ export default function PassengerDashboard() {
                   <span className="vehicle-icon">🚗</span>
                   <div className="vehicle-details">
                     <span className="vehicle-name">Carro</span>
-                    <span className="vehicle-price">R$ {getPrice(routeKm, 'car')}</span>
+                    <span className="vehicle-price">R$ {getPrice(routeKm, 'car', true)}</span>
                   </div>
                   <span className="vehicle-info">Conforto</span>
                 </div>
@@ -487,7 +499,7 @@ export default function PassengerDashboard() {
                   <span className="vehicle-icon">🏍️</span>
                   <div className="vehicle-details">
                     <span className="vehicle-name">Moto</span>
-                    <span className="vehicle-price">R$ {getPrice(routeKm, 'moto')}</span>
+                    <span className="vehicle-price">R$ {getPrice(routeKm, 'moto', true)}</span>
                   </div>
                   <span className="vehicle-info">Econômico</span>
                 </div>
@@ -495,7 +507,7 @@ export default function PassengerDashboard() {
 
               <div className="price-box">
                 <div className="price-val">
-                  <span className="currency">R$</span> {getPrice(routeKm, vehicleType)}
+                  <span className="currency">R$</span> {getPrice(routeKm, vehicleType, true)}
                 </div>
                 <div className="dist-val">{routeKm} km estimado</div>
               </div>
@@ -504,6 +516,14 @@ export default function PassengerDashboard() {
                 <p className="hint-text" style={{marginBottom:'12px', color:'#f59e0b'}}>
                   ⚠️ Tarifa mínima aplicada ({vehicleType === 'car' ? 'Carro: R$ 8,40' : 'Moto: R$ 7,20'})
                 </p>
+              )}
+
+              {pendingFeeAmount > 0 && (
+                <div style={{background: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '8px', marginBottom: '16px'}}>
+                  <p style={{fontSize: '0.85rem', color: '#b91c1c', margin: 0, fontWeight: 700}}>
+                    ⚠️ Seu último cancelamento gerou uma taxa de deslocamento pendente de R$ {pendingFeeAmount.toFixed(2)}. Este valor foi adicionado ao total desta corrida.
+                  </p>
+                </div>
               )}
 
               <div className="prioritize-toggle">
@@ -683,7 +703,7 @@ export default function PassengerDashboard() {
                       }
                     } else {
                       if (confirm('O período de cancelamento grátis expirou. Uma taxa de deslocamento será cobrada na sua próxima corrida. Deseja cancelar mesmo assim?')) {
-                        setRideHistory(prev => [{ id: Date.now(), date: today, origin: originAddr, dest: destAddr, price: '3.40', vehicle: vehicleType === 'car' ? 'Carro' : 'Moto', status: 'CANCELED_FEE' }, ...prev])
+                        setRideHistory(prev => [{ id: Date.now(), date: today, origin: originAddr, dest: destAddr, price: '2.60', vehicle: vehicleType === 'car' ? 'Carro' : 'Moto', status: 'CANCELED_FEE' }, ...prev])
                         resetFlow()
                       }
                     }
@@ -691,7 +711,7 @@ export default function PassengerDashboard() {
                 >
                   <span style={{fontWeight: 800}}>Cancelar</span>
                   {cancelCountdown > 0 ? (
-                    <span style={{fontSize: '0.7rem', color: '#f59e0b', fontWeight: 700}}>Grátis (0:{cancelCountdown.toString().padStart(2, '0')})</span>
+                    <span style={{fontSize: '0.7rem', color: '#f59e0b', fontWeight: 700}}>Grátis ({Math.floor(cancelCountdown / 60)}:{(cancelCountdown % 60).toString().padStart(2, '0')})</span>
                   ) : (
                     <span style={{fontSize: '0.7rem', color: '#ef4444', fontWeight: 700}}>Taxa Aplicável</span>
                   )}
@@ -974,7 +994,7 @@ export default function PassengerDashboard() {
                           
                           {ride.status === 'CANCELED_FEE' && (
                             <div style={{background: '#fef2f2', color: '#b91c1c', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, marginBottom: '12px', border: '1px solid #fecaca'}}>
-                              ⚠️ Cancelada (Taxa de deslocamento de R$ 3,40 a ser cobrada na próxima corrida)
+                              ⚠️ Cancelada (Taxa de deslocamento de R$ 2,60 a ser cobrada na próxima corrida)
                             </div>
                           )}
                           {ride.status === 'CANCELED_FREE' && (
