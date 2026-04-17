@@ -1,21 +1,42 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser } from '../services/api'
+import { MapContainer, TileLayer, useMap } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 import './Passenger.css'
-import realMapBg from '../assets/real_map_bg.png'
+
+// Helper component to bind map center dynamically
+function MapController({ center }) {
+  const map = useMap()
+  useEffect(() => {
+    map.flyTo(center, 16)
+  }, [center, map])
+  return null
+}
 
 export default function PassengerDashboard() {
   const navigate = useNavigate()
   const user = getCurrentUser()
   
-  const [origin, setOrigin] = useState('Local atual')
+  // Real GPS State
+  const defaultLocation = [-22.9068, -43.1729] // Rio center fallback
+  const [mapCenter, setMapCenter] = useState(defaultLocation)
+  const [isLocating, setIsLocating] = useState(true)
+
+  // Booking States
+  const [origin, setOrigin] = useState('Buscando seu local...')
   const [destination, setDestination] = useState('')
   const [isScheduling, setIsScheduling] = useState(false)
   const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
   
-  // Menu State
+  // Menu & Sub-Menu States
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [activeScreen, setActiveScreen] = useState('MAIN') // MAIN, PROFILE, HISTORY, DELIVERIES, FAVORITES
+  const [activeScreen, setActiveScreen] = useState('MAIN') 
+
+  // Profile Edit States
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [editName, setEditName] = useState(user?.name || '')
+  const [editEmail, setEditEmail] = useState(user?.email || '')
 
   // Mock list of favorite drivers
   const [favoriteDrivers, setFavoriteDrivers] = useState([
@@ -23,6 +44,27 @@ export default function PassengerDashboard() {
     { id: 2, name: 'Ana', car: 'HB20', rating: '5.0', distance: '7 min', img: 'https://i.pravatar.cc/150?img=5' },
     { id: 3, name: 'Marcos', car: 'Argo', rating: '4.8', distance: '12 min', img: 'https://i.pravatar.cc/150?img=12' },
   ])
+
+  // Get User GPS on load
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setMapCenter([position.coords.latitude, position.coords.longitude])
+          setOrigin('Rua Atual (Modificado pelo Mapa)')
+          setIsLocating(false)
+        },
+        (error) => {
+          console.warn("GPS bloqueado ou não disponível, usando padrão.", error)
+          setOrigin('Local Padrão (GPS não permitido)')
+          setIsLocating(false)
+        },
+        { enableHighAccuracy: true }
+      )
+    } else {
+      setIsLocating(false)
+    }
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -33,6 +75,19 @@ export default function PassengerDashboard() {
     setIsSheetCollapsed(!isSheetCollapsed)
   }
 
+  const handleRemoveFav = (id) => {
+    setFavoriteDrivers(favoriteDrivers.filter(d => d.id !== id))
+  }
+
+  const handleSaveProfile = () => {
+    // Save to local storage mock to make it functional without backend endpoint
+    const updatedUser = { ...user, name: editName, email: editEmail }
+    localStorage.setItem('zomp_user', JSON.stringify(updatedUser))
+    setIsEditingProfile(false)
+    // Reload instantly propagates the new name to the top components
+    window.location.reload()
+  }
+
   // ============== MENU SCREENS ==============
   const renderMenuContent = () => {
     switch (activeScreen) {
@@ -41,12 +96,35 @@ export default function PassengerDashboard() {
           <div className="menu-sub-screen">
             <h3>Meu Perfil</h3>
             <div className="profile-details">
-              <div className="user-avatar-large">{user?.name?.charAt(0) || 'P'}</div>
-              <p><strong>Nome:</strong> {user?.name}</p>
-              <p><strong>E-mail:</strong> {user?.email}</p>
-              <p><strong>Cargo:</strong> {user?.role}</p>
+              <div className="user-avatar-large">{editName.charAt(0).toUpperCase()}</div>
+              
+              {!isEditingProfile ? (
+                <>
+                  <p><strong>Nome Completo:</strong> {user?.name}</p>
+                  <p><strong>Endereço de E-mail:</strong> {user?.email}</p>
+                  <p><strong>Cargo Atual:</strong> {user?.role}</p>
+                  <button className="btn btn-primary" onClick={() => setIsEditingProfile(true)} style={{marginTop: '24px'}}>Editar Dados</button>
+                </>
+              ) : (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px'}}>
+                  <div>
+                    <label style={{fontSize: '0.8rem', fontWeight: 600}}>Seu Nome</label>
+                    <input className="input" value={editName} onChange={(e) => setEditName(e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={{fontSize: '0.8rem', fontWeight: 600}}>Seu E-mail</label>
+                    <input className="input" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+                  </div>
+                  <div style={{display: 'flex', gap: '8px', marginTop: '16px'}}>
+                    <button className="btn btn-primary" onClick={handleSaveProfile} style={{flex: 1}}>Salvar</button>
+                    <button className="btn btn-secondary" onClick={() => setIsEditingProfile(false)} style={{backgroundColor: '#e5e7eb'}}>Cancelar</button>
+                  </div>
+                </div>
+              )}
             </div>
-            <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')}>Voltar</button>
+            {!isEditingProfile && (
+              <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto', backgroundColor: '#e5e7eb'}}>Voltar</button>
+            )}
           </div>
         )
       case 'HISTORY':
@@ -54,9 +132,9 @@ export default function PassengerDashboard() {
           <div className="menu-sub-screen">
             <h3>Histórico de Viagens</h3>
             <div className="history-list">
-              <p className="hint-text text-center" style={{marginTop: '40px'}}>Nenhuma viagem recente.</p>
+              <p className="hint-text text-center" style={{marginTop: '40px'}}>Você ainda não realizou viagens.</p>
             </div>
-            <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto'}}>Voltar</button>
+            <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto', backgroundColor: '#e5e7eb'}}>Voltar</button>
           </div>
         )
       case 'DELIVERIES':
@@ -66,7 +144,7 @@ export default function PassengerDashboard() {
             <div className="history-list">
               <p className="hint-text text-center" style={{marginTop: '40px'}}>Nenhuma entrega solicitada.</p>
             </div>
-            <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto'}}>Voltar</button>
+            <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto', backgroundColor: '#e5e7eb'}}>Voltar</button>
           </div>
         )
       case 'FAVORITES':
@@ -79,22 +157,24 @@ export default function PassengerDashboard() {
                 <div key={d.id} className="fav-manage-item">
                   <img src={d.img} alt={d.name} />
                   <span>{d.name}</span>
-                  <button className="btn-remove-fav">Remover</button>
+                  <button className="btn-remove-fav" onClick={() => handleRemoveFav(d.id)}>Remover</button>
                 </div>
               ))}
+              {favoriteDrivers.length === 0 && (
+                <p className="hint-text text-center">Sua lista de favoritos está vazia.</p>
+              )}
             </div>
             {favoriteDrivers.length < 5 && (
               <button className="btn btn-primary" style={{marginTop: '24px'}}>+ Adicionar Novo Motorista</button>
             )}
-            <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto'}}>Voltar</button>
+            <button className="btn btn-secondary" onClick={() => setActiveScreen('MAIN')} style={{marginTop: 'auto', backgroundColor: '#e5e7eb'}}>Voltar</button>
           </div>
         )
       default:
-        // MAIN MENU LIST
         return (
           <div className="menu-nav-list">
             <div className="menu-user-header">
-              <div className="user-avatar-large">{user?.name?.charAt(0) || 'P'}</div>
+              <div className="user-avatar-large">{user?.name?.charAt(0).toUpperCase() || 'P'}</div>
               <div>
                 <h3 style={{margin: 0}}>{user?.name}</h3>
                 <span className="badge-nearby">Passageiro</span>
@@ -113,16 +193,33 @@ export default function PassengerDashboard() {
     }
   }
 
+  // Force map to re-render properly if drawer animated over it
+  useEffect(() => {
+     window.dispatchEvent(new Event('resize'));
+  }, [isSheetCollapsed])
+
   return (
     <div className="passenger-app">
       
-      {/* Absolute Full Screen Realistic Map Background */}
-      <div className="passenger-map-bg" style={{backgroundImage: `url(${realMapBg})`}}>
-        <div className="map-overlay-layer"></div>
-        {/* Animated Central Pin */}
-        <div className="center-pin">
-          <div className="pin-head"></div>
-          <div className="pin-shadow"></div>
+      {/* 
+        Fully Interactive Draggable Map!
+        The CSS overrides Leaflet defaults so it fits our white styling.
+      */}
+      <div className="passenger-map-bg interactive">
+        <MapContainer center={mapCenter} zoom={16} zoomControl={false} style={{ width: '100%', height: '100%' }}>
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://carto.com/">CART</a>'
+          />
+          <MapController center={mapCenter} />
+        </MapContainer>
+        
+        {/* Floating Pin overlay that stays centered while map is dragged underneath */}
+        <div className="absolute-center-pin-wrapper">
+          <div className="center-pin modern-dynamic">
+            <div className="pin-head"></div>
+            <div className="pin-shadow"></div>
+          </div>
         </div>
       </div>
 
@@ -135,7 +232,7 @@ export default function PassengerDashboard() {
         <div className="user-profile">
           <span className="greeting">Olá, {user?.name?.split(' ')[0] || 'Passageiro'}</span>
           <div className="user-avatar">
-            {user?.name?.charAt(0) || 'P'}
+            {user?.name?.charAt(0).toUpperCase() || 'P'}
           </div>
         </div>
       </div>
@@ -143,7 +240,6 @@ export default function PassengerDashboard() {
       {/* Bottom Sheet Drawer */}
       <div className={`passenger-bottom-sheet ${isSheetCollapsed ? 'collapsed' : ''}`}>
         
-        {/* Touchable Drag Handle to collapse/expand */}
         <div className="sheet-drag-area" onClick={toggleSheet}>
           <div className="sheet-handle"></div>
         </div>
@@ -161,7 +257,7 @@ export default function PassengerDashboard() {
               <input 
                 type="text" 
                 className="route-input start-input" 
-                value={origin} 
+                value={isLocating ? 'Obtendo GPS...' : origin} 
                 onChange={(e) => setOrigin(e.target.value)} 
                 placeholder="Local de partida" 
               />
@@ -171,7 +267,6 @@ export default function PassengerDashboard() {
                 value={destination} 
                 onChange={(e) => setDestination(e.target.value)} 
                 placeholder="Buscar destino..." 
-                autoFocus={!isSheetCollapsed}
               />
             </div>
           </div>
@@ -191,8 +286,11 @@ export default function PassengerDashboard() {
                   </div>
                 </div>
               ))}
+              {favoriteDrivers.length === 0 && (
+                <p className="hint-text" style={{marginTop: 'auto', marginBottom: 'auto'}}>Sem favoritos.</p>
+              )}
             </div>
-            <p className="hint-text">Eles receberão seu pedido primeiro se estiverem a até 10 min de distância.</p>
+            <p className="hint-text">Receberão o pedido primeiro se estiverem a até 10 min de distância.</p>
           </div>
 
           <div className="action-buttons">
@@ -212,7 +310,7 @@ export default function PassengerDashboard() {
                 <input type="date" className="schedule-input" />
                 <input type="time" className="schedule-input" />
               </div>
-              <p className="hint-text">Corridas agendadas aparecem para os favoritos associados primeiro na data.</p>
+              <p className="hint-text">Corridas agendadas ativam associados primeiro na data escolhida.</p>
             </div>
           )}
         </div>

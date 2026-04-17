@@ -11,33 +11,38 @@
   background-color: #f3f4f6;
 }
 
-/* 1. Full Screen Map Background */
+/* 1. Full Screen Interactive Map */
 .passenger-map-bg {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #f0f0f0;
-  background-size: cover;
-  background-position: center;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: filter 0.3s ease;
 }
 
-.map-overlay-layer {
+/* Override weird leaflet default bg */
+.leaflet-container {
+  background: #eef2eb !important;
+}
+
+/* 
+  Absolute Center Pin:
+  This sits naturally perfectly centered over the MapContainer. 
+  When the user drags the map beneath it, the pin stays exactly in the middle!
+*/
+.absolute-center-pin-wrapper {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  /* Very light gradient to make UI elements pop over map */
-  background: radial-gradient(circle at center, transparent 40%, rgba(255,255,255,0.4) 100%);
-  pointer-events: none;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 900; /* Leaflet tiles are ~400, this guarantees it stays on top */
+  pointer-events: none; /* Let clicks pass through to the map */
 }
 
 /* Map Pin */
 .center-pin {
-  position: relative;
-  z-index: 2;
-  margin-top: -160px; /* Pin sits perfectly in visual center when sheet is up */
+  margin-top: -60px; /* Offset the pin vertically so the point is exactly at coordinates */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .pin-head {
@@ -66,14 +71,13 @@
   background-color: rgba(0,0,0,0.2);
   border-radius: 50%;
   margin-top: 4px;
-  margin-left: 5px;
 }
 
 /* 2. Top Navigation */
 .passenger-top-header {
   position: absolute;
   top: 0; left: 0; right: 0;
-  z-index: 10;
+  z-index: 1000;
   padding: 16px 20px;
   display: flex;
   justify-content: space-between;
@@ -124,7 +128,7 @@
   position: absolute;
   bottom: 0; left: 0; right: 0;
   background-color: #ffffff;
-  z-index: 20;
+  z-index: 1000;
   border-radius: 28px 28px 0 0;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.08);
   display: flex;
@@ -134,7 +138,6 @@
 }
 
 .passenger-bottom-sheet.collapsed {
-  /* Only show the top part of the sheet when collapsed */
   transform: translateY(calc(100% - 110px));
 }
 
@@ -351,14 +354,14 @@
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background-color: rgba(0,0,0,0.6);
-  z-index: 100;
+  z-index: 2000;
 }
 
 .side-menu-drawer {
   position: absolute;
   top: 0; bottom: 0; left: 0;
   width: 85%;
-  max-width: 320px;
+  max-width: 380px;
   background-color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -386,6 +389,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  overflow-y: auto;
 }
 
 .menu-user-header {
