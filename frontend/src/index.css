@@ -1,0 +1,129 @@
+/* ========================================
+   ZOMP UI - LUXURY ANIMATED MAP THEME
+   ======================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Zomp Green */
+  --primary: #00E676;
+  --primary-hover: #00C853;
+  --primary-subtle: #e8fbed;
+  
+  --bg-app: #f8f9fa;
+  --bg-input: rgba(255, 255, 255, 0.9);
+  --text-dark: #09090b;
+  --text-muted: #52525b;
+  --border-subtle: rgba(0,0,0,0.08);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+
+  --shadow-input: 0 0 0 1px rgba(0,0,0,0.05);
+  --shadow-float: 0 20px 40px rgba(0,0,0,0.08);
+
+  --font: 'Inter', -apple-system, sans-serif;
+  --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html, body {
+  font-family: var(--font);
+  background-color: #000000; 
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* The PWA Container */
+#root {
+  width: 100%;
+  max-width: 480px; 
+  min-height: 100vh;
+  margin: 0 auto;
+  position: relative;
+  background-color: #ffffff;
+  
+  /* Removed background image to keep a purely clean canvas for AuthMapBg */
+  box-shadow: 0 0 80px rgba(255,255,255,0.05); 
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* Typography */
+h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--text-dark); }
+h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; color: var(--text-dark); }
+p { font-size: 0.95rem; line-height: 1.5; color: var(--text-muted); }
+a { color: var(--text-dark); text-decoration: underline; font-weight: 600; text-underline-offset: 4px; }
+a:hover { color: var(--primary); text-decoration-color: var(--primary); }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  z-index: 10;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: #000;
+  box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 230, 118, 0.4);
+}
+
+.btn-primary:active { transform: translateY(0); }
+
+/* Inputs */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+.input-group label {
+  font-size: 0.85rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.05em;
+}
+.input {
+  width: 100%; padding: 16px; background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  font-family: var(--font); font-size: 1rem; font-weight: 500; color: var(--text-dark);
+  transition: var(--transition);
+  backdrop-filter: blur(8px);
+}
+.input::placeholder { color: #9ca3af; }
+.input:focus {
+  outline: none; border-color: var(--primary); background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 230, 118, 0.1);
+}
+
+/* Animations */
+.animate-fade-in { animation: fadeIn 0.4s ease forwards; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
