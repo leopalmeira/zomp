@@ -72,3 +72,12 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã£o e
   - Integração do botão Chamar Agora disparando payload rico para a base.
   - Sidebar substitui histórico mockado via localStorage por busca assíncrona.
   - Lógica de cancelamento reativa repassando o ID da viagem pro servidor.
+
+### [17/04/2026] - Integração do Motorista Parceiro
+**Feito:**
+- **API GET /api/rides/pending:** Endpoint no backend para os motoristas escutarem chamados em tempo real.
+- **API POST /api/rides/:id/accept:** Endpoint permitindo travar um pedido pendente para o motorista.
+- **Frontend (DriverDashboard):**
+  - Adicionado Toggle (Online / Offline) em tempo real que executa polling das novas corridas.
+  - Cartão detalhado informando o preço da corrida, origem, destino, km e nome do passageiro.
+  - Botões para 'Aceitar Corrida' e 'Finalizar Corrida', que automaticamente recalcula os Royalties (via api completeRide) se o passageiro foi indicado.

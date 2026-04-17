@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getCurrentUser, getWallet, logout } from '../services/api'
+import { getCurrentUser, getWallet, logout, getPendingRides, acceptRide, completeRide } from '../services/api'
 import logoImage from '../assets/logo.png'
 import './Dashboard.css'
 
@@ -38,6 +38,48 @@ export default function DriverDashboard() {
   const handleLogout = () => {
     logout()
     navigate('/motorista')
+  }
+
+  const [isOnline, setIsOnline] = useState(false)
+  const [pendingRides, setPendingRides] = useState([])
+  const [activeRide, setActiveRide] = useState(null)
+
+  useEffect(() => {
+    let interval;
+    if (isOnline && !activeRide) {
+      interval = setInterval(async () => {
+        try {
+          const rides = await getPendingRides()
+          setPendingRides(rides)
+        } catch(e) {}
+      }, 3000) // poll every 3 seconds
+    } else {
+      setPendingRides([])
+    }
+    return () => clearInterval(interval)
+  }, [isOnline, activeRide])
+
+  const handleAcceptRide = async (rideId) => {
+    try {
+      const accepted = await acceptRide(rideId)
+      setActiveRide(accepted)
+      setPendingRides([])
+    } catch(e) {
+      alert("Erro ao aceitar corrida. Talvez já tenha sido chamada.")
+    }
+  }
+
+  const handleCompleteRide = async () => {
+    try {
+      if(activeRide) {
+        await completeRide(activeRide.id)
+        setActiveRide(null)
+        alert('Corrida finalizada! Bônus de royalty computado se aplicável.')
+        fetchWallet() // reload balance
+      }
+    } catch(e) {
+      alert('Erro ao finalizar corrida.')
+    }
   }
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(user?.qrCode || '')}&bgcolor=1a1f2e&color=00E676`
@@ -124,40 +166,88 @@ export default function DriverDashboard() {
         </section>
 
         {/* Stats */}
-        <section className="stats-grid animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-          <div className="stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(0, 230, 118, 0.1)', color: 'var(--primary)' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
+        {!activeRide && (
+          <section className="stats-grid animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            {/* Same stats */}
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: 'rgba(0, 230, 118, 0.1)', color: 'var(--primary)' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+              </div>
+              <div className="stat-value">—</div>
+              <div className="stat-label">Indicados</div>
             </div>
-            <div className="stat-value">—</div>
-            <div className="stat-label">Indicados</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(56, 189, 248, 0.1)', color: 'var(--info)' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="16" />
-                <line x1="8" y1="12" x2="16" y2="12" />
-              </svg>
+            <div className="stat-card">
+              <div className="stat-icon" style={{ background: 'rgba(56, 189, 248, 0.1)', color: 'var(--info)' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
+              </div>
+              <div className="stat-value">R$ 0,10</div>
+              <div className="stat-label">Por corrida</div>
             </div>
-            <div className="stat-value">R$ 0,10</div>
-            <div className="stat-label">Por corrida</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon" style={{ background: 'rgba(255, 181, 71, 0.1)', color: 'var(--warning)' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-              </svg>
+          </section>
+        )}
+
+        {/* Driver Online Toggle & Rides */}
+        <section className="animate-fade-in-up" style={{ animationDelay: '0.4s', marginTop: '16px' }}>
+          {!activeRide ? (
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '1.2rem', margin: 0 }}>Modo Motorista</h2>
+              <label className="switch" style={{ alignSelf: 'center' }}>
+                <input type="checkbox" checked={isOnline} onChange={(e) => setIsOnline(e.target.checked)} />
+                <span className="slider round" style={{ background: isOnline ? 'var(--primary)' : '#ccc' }}></span>
+              </label>
+              <p style={{ color: isOnline ? 'var(--primary)' : '#9ca3af', fontWeight: 'bold' }}>
+                {isOnline ? 'Online - Buscando Corridas...' : 'Offline'}
+              </p>
+
+              {isOnline && pendingRides.length > 0 && (
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h3 style={{ fontSize: '1rem', marginTop: '16px' }}>Novas Solicitações:</h3>
+                  {pendingRides.map(ride => (
+                    <div key={ride.id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e4e4e7', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <strong>{ride.origin} → {ride.dest || ride.destination}</strong>
+                        <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>R$ {ride.price?.toFixed(2)}</span>
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                        Passageiro: {ride.passenger?.name} • Distância: {ride.distanceKm} km
+                      </div>
+                      <button className="btn btn-primary" style={{ marginTop: '8px' }} onClick={() => handleAcceptRide(ride.id)}>
+                        Aceitar Corrida
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="stat-value">3 meses</div>
-            <div className="stat-label">Ciclo de saque</div>
-          </div>
+          ) : (
+            <div className="glass-card" style={{ border: '2px solid var(--primary)', background: '#ecfdf5' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h2 style={{ margin: 0, color: 'var(--primary)', fontSize: '1.4rem' }}>Viagem em Progresso</h2>
+                <span style={{ fontSize: '1.5rem' }}>📍</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', textTransform: 'uppercase' }}>Passageiro</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{activeRide.passenger?.name}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', textTransform: 'uppercase' }}>Origem</div>
+                  <div style={{ fontWeight: 'bold' }}>{activeRide.origin}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', textTransform: 'uppercase' }}>Destino</div>
+                  <div style={{ fontWeight: 'bold' }}>{activeRide.destination || activeRide.dest}</div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', background: '#d1fae5', padding: '12px', borderRadius: '8px' }}>
+                  <div style={{ fontWeight: 'bold', color: '#065f46' }}>Ganhos</div>
+                  <div style={{ fontWeight: 'bold', color: '#065f46', fontSize: '1.2rem' }}>R$ {activeRide.price?.toFixed(2)}</div>
+                </div>
+              </div>
+              <button className="btn btn-primary" style={{ width: '100%', padding: '16px' }} onClick={handleCompleteRide}>
+                Finalizar Corrida
+              </button>
+            </div>
+          )}
         </section>
       </main>
     </div>

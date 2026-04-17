@@ -127,6 +127,44 @@ app.get('/api/rides', authenticate, async (req, res) => {
   }
 });
 
+app.get('/api/rides/pending', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers can view pending rides' });
+    
+    // Fetch pending rides that haven't been picked up
+    const pendingRides = await prisma.ride.findMany({
+      where: { status: 'PENDING' },
+      include: { passenger: { select: { name: true, email: true, role: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(pendingRides);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching pending rides' });
+  }
+});
+
+app.post('/api/rides/:id/accept', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers can accept rides' });
+
+    // Ensure the ride is still pending
+    const existing = await prisma.ride.findUnique({ where: { id: req.params.id }});
+    if(!existing || existing.status !== 'PENDING') {
+      return res.status(400).json({ error: 'Ride is no longer available' });
+    }
+
+    const ride = await prisma.ride.update({
+      where: { id: req.params.id },
+      data: { status: 'ACCEPTED', driverId: req.user.id },
+      include: { passenger: { select: { name: true } } }
+    });
+    res.json(ride);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error accepting ride' });
+  }
+});
 
 app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
   try {
