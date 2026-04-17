@@ -109,6 +109,7 @@ export default function PassengerDashboard() {
   const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [menuScreen, setMenuScreen] = useState('MAIN') // 'MAIN' | 'SCHEDULED'
+  const [expandedRide, setExpandedRide] = useState(null) // id of expanded ride
   const [prioritizeFavs, setPrioritizeFavs] = useState(true)
 
   // Scheduled rides list
@@ -646,51 +647,162 @@ export default function PassengerDashboard() {
 
               {menuScreen === 'SCHEDULED' && (
                 <>
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '12px'}}>
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
                     ← Voltar ao Menu
                   </button>
-                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>📅 Corridas Agendadas</h3>
+                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '6px'}}>Corridas Agendadas</h3>
+                  <p className="hint-text" style={{marginBottom: '16px'}}>Toque em uma corrida para ver os detalhes</p>
 
                   {scheduledRides.length === 0 ? (
-                    <div style={{textAlign: 'center', padding: '32px 0'}}>
-                      <p style={{fontSize: '3rem', marginBottom: '12px'}}>📅</p>
-                      <p style={{color: '#71717a', fontWeight: 600}}>Nenhuma corrida agendada</p>
-                      <p className="hint-text">Agende uma corrida e ela aparecerá aqui.</p>
+                    <div style={{textAlign: 'center', padding: '40px 0'}}>
+                      <div style={{fontSize: '3.5rem', marginBottom: '16px'}}>📋</div>
+                      <p style={{color: '#3f3f46', fontWeight: 700, fontSize: '1.05rem'}}>Nenhuma corrida agendada</p>
+                      <p className="hint-text" style={{marginTop: '8px'}}>Agende uma viagem para vê-la aqui.</p>
                     </div>
                   ) : (
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
-                      {scheduledRides.map((ride) => (
-                        <div key={ride.id} className="scheduled-ride-card">
-                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px'}}>
-                            <div>
-                              <div style={{fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-dark)'}}>
-                                {ride.vehicle === 'car' ? '🚗' : '🏍️'} {ride.vehicle === 'car' ? 'Carro' : 'Moto'}
-                              </div>
-                              <div style={{fontSize: '0.85rem', fontWeight: 700, color: '#065f46', marginTop: '2px'}}>
-                                R$ {ride.price} • {ride.km} km
-                              </div>
-                            </div>
-                            <div style={{textAlign: 'right'}}>
-                              <div style={{fontWeight: 800, fontSize: '0.9rem'}}>📅 {ride.date}</div>
-                              <div style={{fontWeight: 700, fontSize: '0.85rem', color: '#71717a'}}>🕐 {ride.time}</div>
-                            </div>
-                          </div>
-                          <div style={{fontSize: '0.8rem', color: '#71717a', fontWeight: 600, marginBottom: '8px'}}>
-                            {ride.origin} → {ride.dest}
-                          </div>
-                          <button
-                            className="btn btn-secondary"
-                            style={{width: '100%', padding: '8px', fontSize: '0.85rem', color: '#ef4444', fontWeight: 700}}
-                            onClick={() => {
-                              if (confirm('Deseja cancelar esta corrida agendada?')) {
-                                setScheduledRides(prev => prev.filter(r => r.id !== ride.id))
-                              }
-                            }}
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '14px'}}>
+                      {scheduledRides.map((ride) => {
+                        // Format date to Brazilian (DD/MM/YYYY)
+                        const dateParts = ride.date.split('-')
+                        const dateBR = dateParts.length === 3
+                          ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`
+                          : ride.date
+
+                        // Simulated driver acceptance (after 30min from creation)
+                        const isAccepted = (Date.now() - ride.id) > 1800000
+                        const acceptedDriver = isAccepted ? favoriteDrivers[0] : null
+
+                        return (
+                          <div
+                            key={ride.id}
+                            className="scheduled-ride-card"
+                            onClick={() => setExpandedRide(expandedRide === ride.id ? null : ride.id)}
                           >
-                            Cancelar Agendamento
-                          </button>
-                        </div>
-                      ))}
+                            {/* Card Header */}
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                              <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                <div style={{
+                                  fontSize: '1.8rem',
+                                  width: '48px', height: '48px',
+                                  background: ride.vehicle === 'car' ? '#ecfdf5' : '#fef3c7',
+                                  borderRadius: '14px',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>
+                                  {ride.vehicle === 'car' ? '🚗' : '🏍️'}
+                                </div>
+                                <div>
+                                  <div style={{fontWeight: 800, fontSize: '1rem', color: 'var(--text-dark)'}}>
+                                    {dateBR} às {ride.time}
+                                  </div>
+                                  <div style={{fontWeight: 700, fontSize: '1.1rem', color: '#065f46'}}>
+                                    R$ {ride.price}
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{textAlign: 'right'}}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '4px 10px',
+                                  borderRadius: '20px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 800,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px',
+                                  background: isAccepted ? '#dcfce7' : '#fef9c3',
+                                  color: isAccepted ? '#166534' : '#854d0e'
+                                }}>
+                                  {isAccepted ? '✓ Confirmada' : '⏳ Aguardando'}
+                                </span>
+                                <div style={{fontSize: '0.75rem', color: '#a1a1aa', marginTop: '4px', fontWeight: 600}}>
+                                  {ride.vehicle === 'car' ? 'Carro' : 'Moto'} • {ride.km} km
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Expanded Details */}
+                            {expandedRide === ride.id && (
+                              <div style={{marginTop: '14px', borderTop: '1px solid #e4e4e7', paddingTop: '14px'}}>
+                                {/* Route */}
+                                <div style={{marginBottom: '14px'}}>
+                                  <div style={{fontSize: '0.75rem', fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px'}}>Trajeto</div>
+                                  <div style={{display: 'flex', gap: '10px', alignItems: 'flex-start'}}>
+                                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '2px'}}>
+                                      <div style={{width: '8px', height: '8px', borderRadius: '50%', background: '#00E676'}}></div>
+                                      <div style={{width: '2px', height: '20px', background: '#d4d4d8'}}></div>
+                                      <div style={{width: '8px', height: '8px', borderRadius: '50%', background: '#EF4444'}}></div>
+                                    </div>
+                                    <div>
+                                      <div style={{fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '8px'}}>
+                                        {ride.origin}
+                                      </div>
+                                      <div style={{fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-dark)'}}>
+                                        {ride.dest}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Driver Info */}
+                                {isAccepted && acceptedDriver && (
+                                  <div style={{marginBottom: '14px'}}>
+                                    <div style={{fontSize: '0.75rem', fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px'}}>Motorista Confirmado</div>
+                                    <div style={{
+                                      display: 'flex', alignItems: 'center', gap: '12px',
+                                      background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0'
+                                    }}>
+                                      <img src={acceptedDriver.img} alt={acceptedDriver.name} style={{width:'44px', height:'44px', borderRadius:'50%', objectFit:'cover', border:'2px solid #fff'}} />
+                                      <div style={{flex: 1}}>
+                                        <div style={{fontWeight: 800, fontSize: '0.95rem'}}>{acceptedDriver.name}</div>
+                                        <div style={{fontSize: '0.8rem', fontWeight: 600, color: '#f59e0b'}}>⭐ {acceptedDriver.rating}</div>
+                                      </div>
+                                      <div style={{textAlign: 'right'}}>
+                                        <div style={{fontWeight: 700, fontSize: '0.8rem'}}>{acceptedDriver.car}</div>
+                                        <div style={{
+                                          fontSize: '0.75rem', fontWeight: 700,
+                                          background: '#e4e4e7', padding: '2px 8px', borderRadius: '4px',
+                                          marginTop: '2px', fontFamily: 'monospace'
+                                        }}>{acceptedDriver.plate}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {!isAccepted && (
+                                  <div style={{
+                                    background: '#fefce8', border: '1px solid #fde68a',
+                                    borderRadius: '12px', padding: '12px', marginBottom: '14px',
+                                    display: 'flex', alignItems: 'center', gap: '10px'
+                                  }}>
+                                    <span style={{fontSize: '1.3rem'}}>⏳</span>
+                                    <div>
+                                      <div style={{fontWeight: 700, fontSize: '0.85rem', color: '#92400e'}}>Aguardando motorista</div>
+                                      <div style={{fontSize: '0.75rem', color: '#a16207'}}>Notificaremos quando alguém aceitar sua corrida.</div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Cancel Button */}
+                                <button
+                                  className="btn btn-secondary"
+                                  style={{
+                                    width: '100%', padding: '12px',
+                                    fontSize: '0.85rem', color: '#ef4444',
+                                    fontWeight: 700, borderColor: '#fecaca'
+                                  }}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (confirm('Deseja cancelar esta corrida agendada?')) {
+                                      setScheduledRides(prev => prev.filter(r => r.id !== ride.id))
+                                    }
+                                  }}
+                                >
+                                  ✕ Cancelar Agendamento
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
                 </>

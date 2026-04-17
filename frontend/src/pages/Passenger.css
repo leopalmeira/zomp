@@ -632,11 +632,17 @@ input:checked + .slider:before { transform: translateX(22px); }
 .scheduled-ride-card {
   background: #f8fafc;
   border: 1px solid #e4e4e7;
-  border-radius: var(--radius-lg);
+  border-radius: 16px;
   padding: 16px;
-  transition: box-shadow 0.2s;
+  cursor: pointer;
+  transition: all 0.25s ease;
 }
 
 .scheduled-ride-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border-color: #d4d4d8;
+}
+
+.scheduled-ride-card:active {
+  transform: scale(0.99);
 }
