@@ -40,8 +40,9 @@ async function fetchOSRMRoute(originCoords, destCoords) {
   if (data.routes && data.routes.length > 0) {
     const route = data.routes[0]
     const km = (route.distance / 1000).toFixed(1)
+    const durationMin = Math.ceil(route.duration / 60) // Convert seconds to minutes
     const geometry = route.geometry.coordinates.map(c => [c[1], c[0]])
-    return { km, geometry }
+    return { km, geometry, durationMin }
   }
   return null
 }
@@ -87,6 +88,7 @@ export default function PassengerDashboard() {
   // Route
   const [routeGeometry, setRouteGeometry] = useState([])
   const [routeKm, setRouteKm] = useState('0')
+  const [routeDuration, setRouteDuration] = useState(0)
   const [vehicleType, setVehicleType] = useState('car') // 'car' | 'moto'
 
   // Pricing constants
@@ -233,6 +235,7 @@ export default function PassengerDashboard() {
       if (result) {
         setRouteGeometry(result.geometry)
         setRouteKm(result.km)
+        setRouteDuration(result.durationMin)
         setRideState('PRICED')
         setIsSheetCollapsed(false)
       } else {
@@ -595,7 +598,7 @@ export default function PassengerDashboard() {
                 <span className="badge-nearby">MOTORISTA A CAMINHO</span>
                 <h3>4 min</h3>
               </div>
-              <div className="driver-card-large">
+              <div className="driver-card-large" style={{marginBottom: '12px'}}>
                 <img src={favoriteDriversState[0].img} alt={favoriteDriversState[0].name} className="drv-avatar" />
                 <div className="drv-info">
                   <h4>{favoriteDriversState[0].name}</h4>
@@ -606,6 +609,26 @@ export default function PassengerDashboard() {
                   <span className="car-plate">{favoriteDriversState[0].plate}</span>
                 </div>
               </div>
+
+              {routeDuration > 0 && (
+                <div style={{
+                  background: '#f0fdf4', border: '1px solid #bbf7d0', 
+                  borderRadius: '12px', padding: '12px', marginBottom: '16px',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                }}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                    <span style={{fontSize: '1.2rem'}}>📍</span>
+                    <div>
+                      <div style={{fontSize: '0.75rem', fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Chegada ao destino em</div>
+                      <div style={{fontWeight: 800, color: '#065f46'}}>Aprox. {routeDuration} min</div>
+                    </div>
+                  </div>
+                  <div style={{fontWeight: 800, fontSize: '1.1rem', color: '#166534'}}>
+                    ~ {routeKm} km
+                  </div>
+                </div>
+              )}
+
               <div className="action-buttons mt-4">
                 <button className="btn btn-secondary" style={{flex:1}}>Mensagem</button>
                 <button className="btn btn-secondary" style={{flex:1, color:'#ef4444'}} onClick={resetFlow}>Cancelar</button>
