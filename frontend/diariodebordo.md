@@ -20,8 +20,9 @@
    - Construção completa do `Passenger.css` e reescritura do componente `PassengerDashboard.jsx`.
    - **Módulo de Mapeamento Interativo (Leaflet):** Adicionado `react-leaflet` para geração de um mapa real e arrastável. O usuário agora pode mover livremente as ruas da interface baseada em open-street-maps (Carto Voyager Styles).
    - **Geolocalização Ativa Constante:** Integrado hook no ciclo inicial buscando via hardware a API `navigator.geolocation` que detecta nativamente o GPS do passageiro, movendo o centro do mapa automaticamente e preenchendo o Local de Partida.
-   - **Inteligência de Rotas (Sugestão Autocomplete):** A digitação nos inputs aciona sugestões instantâneas. Ao selecionar Origem, renderiza-se um **Pin Verde** no mapa físico; no Destino selecionado, surge o **Pin Vermelho** e uma *Polyline Tracejada* conecta ambos.
-   - Ações automáticas calculam a quilometragem e o valor final instantaneamente (`R$ 2.00 por KM`) com base nesses dois pinos.
+   - **Inteligência de Rotas Avançada:** Substituí sugestões mockadas por busca real via **Nominatim API (OpenStreetMap)**, permitindo que o usuário encontre ruas reais no Brasil enquanto digita.
+   - **Cálculo Geográfico de Precisão:** Implementação da fórmula de **Haversine** para calcular a distância real em KM entre as coordenadas da Origem e do Destino.
+   - **Precificação Automática Exata:** O sistema agora calcula o valor da corrida instantaneamente (R$ 2,00 por KM real) assim que os dois pontos são definidos, exibindo o Pin Verde (Partida) e o Pin Vermelho (Destino) no mapa.
    
 5. **Máquina de Estados de Viagem (Booking Flow State Machine):**
    - Transição dinâmica de interface na Bottom Sheet sem recarregar tela: `IDLE` (Busca de rua) -> `PRICED` (Mostra valor final, toggle de favoritos, botões Agendar / Chamar Agora) -> `SEARCHING` (Radar pulsante UI) -> `ACCEPTED` (Card detalhado do Motorista a Caminho).
