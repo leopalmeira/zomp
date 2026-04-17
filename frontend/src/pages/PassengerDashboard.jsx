@@ -150,9 +150,20 @@ export default function PassengerDashboard() {
   // ============= Select suggestion =============
   const handleSelectSuggestion = async (s) => {
     const coords = [parseFloat(s.lat), parseFloat(s.lon)]
-    // Show neighborhood + city in the address (first 2-3 parts)
+
+    // Extract house number from what user typed
+    const typedText = sugTarget === 'origin' ? originAddr : destAddr
+    const numberMatch = typedText.match(/\d+/)
+    const houseNumber = numberMatch ? numberMatch[0] : ''
+
+    // Build address: street name + number + bairro + cidade
     const parts = s.display_name.split(',')
-    const shortAddr = parts.slice(0, 3).join(',').trim()
+    const streetName = parts[0]?.trim() || ''
+    const bairro = parts.length > 2 ? parts[parts.length - 4]?.trim() || parts[1]?.trim() : parts[1]?.trim() || ''
+    const cidade = parts.length > 3 ? parts[parts.length - 3]?.trim() || '' : ''
+    const shortAddr = houseNumber
+      ? `${streetName} ${houseNumber}, ${bairro}${cidade ? ', ' + cidade : ''}`
+      : `${streetName}, ${bairro}${cidade ? ', ' + cidade : ''}`
 
     if (sugTarget === 'origin') {
       setOriginAddr(shortAddr)
@@ -292,7 +303,7 @@ export default function PassengerDashboard() {
             <div className="state-idle animate-fade-in">
               <h2 className="sheet-title">Para onde vamos?</h2>
 
-              <div className="route-inputs" style={{position:'relative'}}>
+              <div className="route-inputs">
                 <div className="route-timeline">
                   <div className="dot-start"></div>
                   <div className="timeline-line"></div>
@@ -327,7 +338,7 @@ export default function PassengerDashboard() {
                 {suggestions.length > 0 && (
                   <div className="autocomplete-dropdown">
                     {suggestions.map((s, i) => (
-                      <div key={i} className="suggestion-item" onClick={() => handleSelectSuggestion(s)}>
+                      <div key={i} className="suggestion-item" onMouseDown={(e) => { e.preventDefault(); handleSelectSuggestion(s) }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
                           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                           <circle cx="12" cy="10" r="3"/>
