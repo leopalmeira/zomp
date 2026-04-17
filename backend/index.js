@@ -185,6 +185,19 @@ app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
         where: { id: referral.referrerId },
         data: { balance: { increment: 0.10 } }
       });
+    } else {
+      // Passenger has no referrer. Auto-bind to this driver!
+      await prisma.referral.create({
+        data: {
+          referrerId: req.user.id,
+          referredId: ride.passengerId
+        }
+      });
+      // Add the first R$ 0.10 to this driver
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: { balance: { increment: 0.10 } }
+      });
     }
 
     res.json({ message: 'Ride completed, royalties processed if applicable', ride });
