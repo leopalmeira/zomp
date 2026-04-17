@@ -63,6 +63,7 @@ export default function PassengerDashboard() {
   const [suggestions, setSuggestions] = useState([])
   const [searchInput, setSearchInput] = useState('')
   
+  const [routeGeometry, setRouteGeometry] = useState([])
   const [routeParams, setRouteParams] = useState({ km: 0, total: 0 })
   const [prioritizeFavs, setPrioritizeFavs] = useState(true)
 
@@ -94,16 +95,43 @@ export default function PassengerDashboard() {
     }
   }, [])
 
-  // Calculate pricing when both addresses are defined
+  // Calculate real road routing when both addresses are defined
   useEffect(() => {
-    if (origin.coords && destination.coords && rideState === 'IDLE') {
-      const dist = getDistance(origin.coords, destination.coords)
-      const mockKm = dist.toFixed(1)
-      const mockTotal = (parseFloat(mockKm) * 2.00).toFixed(2)
-      setRouteParams({ km: mockKm, total: mockTotal })
-      setRideState('PRICED')
-      setIsSheetCollapsed(false) 
+    const fetchRoute = async () => {
+      if (origin.coords && destination.coords && rideState === 'IDLE') {
+        try {
+          const [startLat, startLon] = origin.coords
+          const [endLat, endLon] = destination.coords
+          
+          // Fetch route from OSRM
+          const url = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson`
+          const res = await fetch(url)
+          const data = await res.json()
+          
+          if (data.routes && data.routes.length > 0) {
+            const route = data.routes[0]
+            const distanceKm = (route.distance / 1000).toFixed(1)
+            const totalPrice = (parseFloat(distanceKm) * 2.00).toFixed(2)
+            
+            // Format coords for Leaflet Polyline (Lat, Lon)
+            const coordsFound = route.geometry.coordinates.map(c => [c[1], c[0]])
+            
+            setRouteGeometry(coordsFound)
+            setRouteParams({ km: distanceKm, total: totalPrice })
+            setRideState('PRICED')
+            setIsSheetCollapsed(false)
+          }
+        } catch (err) {
+          console.error("Erro ao calcular rota real", err)
+          // Fallback to straight line if API fails
+          const dist = getDistance(origin.coords, destination.coords)
+          setRouteParams({ km: dist.toFixed(1), total: (dist * 2).toFixed(2) })
+          setRideState('PRICED')
+        }
+      }
     }
+
+    fetchRoute()
   }, [origin.coords, destination.coords, rideState])
 
   const handleTyping = async (value, type) => {
@@ -183,6 +211,7 @@ export default function PassengerDashboard() {
 
   const resetFlow = () => {
     setDestination({ address: '', coords: null })
+    setRouteGeometry([])
     setRideState('IDLE')
     setMatchedDriver(null)
   }
@@ -219,9 +248,9 @@ export default function PassengerDashboard() {
           {origin.coords && <Marker position={origin.coords} icon={originIcon} />}
           {destination.coords && <Marker position={destination.coords} icon={destIcon} />}
           
-          {/* Connecting line */}
-          {origin.coords && destination.coords && (
-            <Polyline positions={[origin.coords, destination.coords]} color="#000000" weight={4} dashArray="8 8" opacity={0.5} />
+          {/* Connecting line - NOW FOLLOWING STREETS */}
+          {routeGeometry.length > 0 && (
+            <Polyline positions={routeGeometry} color="#000000" weight={5} opacity={0.7} />
           )}
         </MapContainer>
         
