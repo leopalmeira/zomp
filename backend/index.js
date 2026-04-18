@@ -37,10 +37,13 @@ app.post('/api/auth/register', async (req, res) => {
       });
       if (referrer) {
         // Link Passenger to Driver permanently
+        const expiresAt = new Date();
+        expiresAt.setFullYear(expiresAt.getFullYear() + 5); // 5 anos
         await prisma.referral.create({
           data: {
             referrerId: referrer.id,
-            referredId: user.id
+            referredId: user.id,
+            expiresAt
           }
         });
       }
@@ -213,20 +216,33 @@ app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
       include: { passenger: { include: { referredBy: true } } }
     });
 
-    // Check if the passenger was referred by someone
+    // Check if the passenger was referred by someone and if it's still valid
     const referral = ride.passenger.referredBy;
-    if (referral) {
+    const now = new Date();
+    const isExpired = referral ? new Date(referral.expiresAt) < now : true;
+
+    if (referral && !isExpired) {
       // Add R$ 0.10 to the referrer's balance
       await prisma.user.update({
         where: { id: referral.referrerId },
         data: { balance: { increment: 0.10 } }
       });
     } else {
-      // Passenger has no referrer. Auto-bind to this driver!
+      if (referral) {
+        // Exclui vínculo expirado para dar lugar ao novo motorista
+        await prisma.referral.delete({ where: { referredId: ride.passengerId } });
+      }
+
+      // Passenger has no valid referrer. Auto-bind to this driver!
+      const expiresAt = new Date();
+      expiresAt.setFullYear(expiresAt.getFullYear() + 3); // Voltou a se vincular, agora por 3 anos
+
       await prisma.referral.create({
         data: {
           referrerId: req.user.id,
-          referredId: ride.passengerId
+          referredId: ride.passengerId,
+          expiresAt,
+          isRenewed: !!referral
         }
       });
       // Add the first R$ 0.10 to this driver

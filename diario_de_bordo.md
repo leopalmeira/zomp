@@ -94,3 +94,14 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementação e
 - Frontend: Drawer Menu lateral com design mais profissional, cards e espacamentos ajustados.
 - Adicionado Tela de 'Documentos e Veículo' para insercao de CNH, CRLV, Placa, Modelo, Cor e upload mockado de fotos.
 - Backend: Atualizacao do Prisma (cnh, crlv, etc) e novo endpoint PUT /api/user/profile.
+
+### [17/04/2026] - Regras de Royalties e Vinculo (5 Anos / 3 Anos)
+**Feito:**
+- Passageiro indicado (qr/link) ou na sua primeira corrida passa a ter um vinculo com o Motorista com duracao de **5 ANOS**.
+- Apos a expiracao dos 5 anos, o passageiro fica 'livre'. Na proxima vez que ele concluir uma corrida, ele e imediatamente vinculado ao novo motorista daquela corrida, desta vez com duracao de **3 ANOS**.
+- Vínculo gerencia o split de Royalties (0.10 por corrida) automaticamente.
+
+### [17/04/2026] - GPS Tracking
+**Feito:**
+- Substituído getCurrentPosition por watchPosition().
+- Ambos os apps (Passageiro e Motorista) agora vao atualizar a localizacao nativa (pino verde) em tempo real conforme andam com o dispositivo na rua.

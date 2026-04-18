@@ -31,14 +31,19 @@ export default function DriverDashboard() {
     if (!user || user.role !== 'DRIVER') { navigate('/motorista'); return }
   }, [])
 
-  // GPS
+  // GPS Tracking
   const [myPos, setMyPos] = useState([-22.9068, -43.1729])
   useEffect(() => {
+    let watchId;
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      watchId = navigator.geolocation.watchPosition(
         (pos) => setMyPos([pos.coords.latitude, pos.coords.longitude]),
-        () => {}, { enableHighAccuracy: true }
+        (err) => console.error(err), 
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
       )
+    }
+    return () => {
+      if (watchId) navigator.geolocation.clearWatch(watchId);
     }
   }, [])
 

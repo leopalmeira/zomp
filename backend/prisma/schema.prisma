@@ -46,8 +46,9 @@ model Referral {
   
   referredId String   @unique // The passenger who was referred (1:1 with user for being referred)
   referred   User     @relation("Referred", fields: [referredId], references: [id])
-
   createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  isRenewed  Boolean  @default(false)
 }
 
 model Ride {

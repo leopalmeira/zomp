@@ -198,25 +198,32 @@ export default function PassengerDashboard() {
     return finalPrice.toFixed(2)
   }
 
-  // ============= GPS on load =============
+  // ============= GPS tracking =============
   useEffect(() => {
+    let watchId;
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      watchId = navigator.geolocation.watchPosition(
         (pos) => {
           const c = [pos.coords.latitude, pos.coords.longitude]
           setMapCenter(c)
           setOriginCoords(c)
-          setOriginAddr('Meu Local Atual (GPS)')
+          if(originAddr === 'Rio de Janeiro, RJ' || originAddr === '') {
+            setOriginAddr('Meu Local Atual (GPS)')
+          }
         },
-        () => {
-          // Fallback
-          setOriginCoords([-22.9068, -43.1729])
-          setOriginAddr('Rio de Janeiro, RJ')
+        (err) => {
+          console.error('GPS error:', err)
+          if(originCoords[0] === -22.9068) { // Only set string if fallback is still active
+             setOriginAddr('Rio de Janeiro, RJ')
+          }
         },
-        { enableHighAccuracy: true }
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
       )
     }
-  }, [])
+    return () => {
+      if(watchId) navigator.geolocation.clearWatch(watchId);
+    }
+  }, [originAddr])
 
   // ============= Address search with debounce =============
   const searchAddress = useCallback((text, target) => {
