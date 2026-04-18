@@ -113,6 +113,11 @@ export default function PassengerDashboard() {
   const [isIntercity, setIsIntercity] = useState(false)
   const [passengersCount, setPassengersCount] = useState(1)
 
+  // Freight State
+  const [freightType, setFreightType] = useState(null) // 'caixas' | 'sacos'
+  const [freightDescription, setFreightDescription] = useState('')
+  const FREIGHT_PRICE_PER_KM = 2.70
+
   // Active Ride Extra States
   const [cancelCountdown, setCancelCountdown] = useState(119)
   const [isChatOpen, setIsChatOpen] = useState(false)
@@ -667,12 +672,14 @@ export default function PassengerDashboard() {
                     onMouseEnter={(e) => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)'; e.currentTarget.style.borderColor='#10b981'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor='#e4e4e7'; }}
                     onClick={() => {
+                      setFreightType(item.id);
+                      setFreightDescription('');
                       setDestAddr('');
                       setDestCoords(null);
                       setRouteGeometry([]);
                       setRouteKm('0');
                       setVehicleType('car');
-                      alert(`🚚 Frete: ${item.title}\n\nDigite o endereço de coleta (origem) e entrega (destino) nos campos acima para calcular o valor do frete.`);
+                      setRideState('FREIGHT');
                     }}
                     >
                       <span style={{fontSize:'2.2rem'}}>{item.icon}</span>
@@ -686,6 +693,131 @@ export default function PassengerDashboard() {
             </div>
           )}
 
+          {/* ---- STATE: FREIGHT ---- */}
+          {rideState === 'FREIGHT' && (
+            <div className="state-freight animate-fade-in-up">
+              <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'20px'}}>
+                <button onClick={() => { setRideState('IDLE'); setFreightType(null); setFreightDescription(''); setRouteGeometry([]); setRouteKm('0'); }} style={{background:'none',border:'none',cursor:'pointer',fontSize:'1.4rem',padding:'4px'}}>←</button>
+                <h2 className="sheet-title" style={{margin:0}}>🚚 Frete: {freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}</h2>
+              </div>
+
+              {/* Freight Address Inputs */}
+              <div className="route-inputs" style={{marginBottom:'16px'}}>
+                <div className="route-timeline">
+                  <div className="dot-start"></div>
+                  <div className="timeline-line"></div>
+                  <div className="dot-end"></div>
+                </div>
+                <div className="route-fields">
+                  <input
+                    className="route-input start-input"
+                    value={originAddr}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setOriginAddr(v)
+                      setOriginCoords(null)
+                      searchAddress(v, 'origin')
+                    }}
+                    placeholder="Endereço de coleta"
+                  />
+                  <input
+                    className="route-input end-input"
+                    value={destAddr}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setDestAddr(v)
+                      setDestCoords(null)
+                      searchAddress(v, 'dest')
+                    }}
+                    placeholder="Endereço de entrega"
+                  />
+                </div>
+                {suggestions.length > 0 && (
+                  <div className="autocomplete-dropdown">
+                    {suggestions.map((s, i) => (
+                      <div key={i} className="suggestion-item" onMouseDown={(e) => { e.preventDefault(); handleSelectSuggestion(s) }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                          <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        <span>{s.display_name.split(',').slice(0, 3).join(',')}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Product Description */}
+              <div style={{marginBottom:'16px'}}>
+                <label style={{fontSize:'0.85rem',fontWeight:700,color:'#374151',display:'block',marginBottom:'8px'}}>Descrição do Produto</label>
+                <textarea
+                  value={freightDescription}
+                  onChange={(e) => setFreightDescription(e.target.value)}
+                  placeholder={freightType === 'caixas' ? 'Ex: 3 caixas de mudança, peso aprox. 20kg cada...' : 'Ex: 5 sacolas de compras do supermercado...'}
+                  style={{
+                    width:'100%',
+                    minHeight:'80px',
+                    padding:'14px',
+                    borderRadius:'14px',
+                    border:'1px solid #d1d5db',
+                    fontSize:'0.9rem',
+                    fontFamily:'inherit',
+                    resize:'vertical',
+                    outline:'none',
+                    transition:'border-color 0.2s',
+                    boxSizing:'border-box'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor='#10b981'}
+                  onBlur={(e) => e.target.style.borderColor='#d1d5db'}
+                />
+              </div>
+
+              {/* Calculate Freight Route */}
+              <button
+                className="btn btn-primary"
+                style={{width:'100%', padding:'14px', fontWeight:700, fontSize:'0.95rem', borderRadius:'14px', marginBottom:'16px'}}
+                onClick={handleForceCalculate}
+                disabled={isLoading || destAddr.length < 4}
+              >
+                {isLoading ? '⏳ Calculando frete...' : '📦 CALCULAR FRETE'}
+              </button>
+
+              {/* Freight Price Result */}
+              {parseFloat(routeKm) > 0 && (
+                <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'16px',padding:'20px',marginBottom:'16px'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+                    <span style={{fontSize:'0.85rem',fontWeight:700,color:'#166534'}}>Distância</span>
+                    <span style={{fontSize:'0.95rem',fontWeight:800,color:'#166534'}}>{routeKm} km</span>
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <span style={{fontSize:'1rem',fontWeight:800,color:'#166534'}}>Valor do Frete</span>
+                    <span style={{fontSize:'1.4rem',fontWeight:900,color:'#059669'}}>R$ {Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}</span>
+                  </div>
+                  <p style={{margin:'12px 0 0',fontSize:'0.75rem',color:'#6b7280',fontWeight:600}}>Valor final calculado pela distância da rota</p>
+                </div>
+              )}
+
+              {/* Confirm Freight */}
+              {parseFloat(routeKm) > 0 && (
+                <button
+                  className="btn btn-primary btn-request"
+                  style={{width:'100%', padding:'16px', fontWeight:800, fontSize:'1rem', borderRadius:'14px', background:'#059669'}}
+                  disabled={!freightDescription.trim()}
+                  onClick={() => {
+                    if (!freightDescription.trim()) {
+                      alert('Por favor, descreva o que será transportado.');
+                      return;
+                    }
+                    // Simulate sending freight request (like ride request)
+                    alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}\n\nProcurando motorista...`);
+                    setRideState('SEARCHING');
+                  }}
+                >
+                  🚚 SOLICITAR FRETE — R$ {Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}
+                </button>
+              )}
+            </div>
+          )}
 
           {/* ---- STATE: PRICED ---- */}
           {rideState === 'PRICED' && (
