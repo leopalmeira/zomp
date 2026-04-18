@@ -71,7 +71,9 @@ A interface responde dinamicamente à mudança de status sem recarregar a tela:
    npm run dev
    ```
 
-4. **Acesse:**  `http://localhost:5173/`
+4. **Acesse as interfaces (PWA) de navegação em seu navegador local:**
+   - **App do Passageiro:** [http://localhost:5173/passageiro](http://localhost:5173/passageiro)
+   - **App do Motorista:** [http://localhost:5173/motorista](http://localhost:5173/motorista)
 
 ## 📖 Documentação Adicional
 Consulte os arquivos na raiz e dependências, e as atualizações descritas em `diario_de_bordo.md` (no frontend e raiz) para o histórico das decisões de arquitetura e registros do desenvolvimento ativo.
