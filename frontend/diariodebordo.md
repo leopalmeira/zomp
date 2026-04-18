@@ -51,3 +51,24 @@
     - Frontend: http://localhost:5173/
     - Backend: http://localhost:3001
 - **Status:** Dispon�vel para acesso local e testes de integra��o.
+
+
+## Sessão de Atualização: Formulário de Fretes, Endereços Fixos e Sistema de Avaliação (18/04/2026)
+
+### 1. Novo Motor de UX de Endereços
+As caixas e opções de input de Endereços (Origem e Destino) foram transportadas com sucesso para a barra estática superior (`fixed-address-bar`), libertando o passageiro do comportamento invasivo do `bottom-sheet`. Permitindo agora fluxo interativo nativo sem precisar rolar os menus.
+
+### 2. Tratamento Placeholder e Imagens
+As cidades de rotas longas que estavam com redundância de praia (como Nova Friburgo e Valença, já que são localizadas em regiões de montanha/interior) tiveram seus designs adaptados usando endpoints estáticos nativos (Unsplash placeholder templates), aguardando asset definitivo para esticar.
+
+### 3. Tela Exclusiva para Fluxo de Fretes
+- Foi construída uma state block completamente nova no passenger dashboard: state `FREIGHT`.
+- Adição visual na triagem do frete: novas UI inputs para descrições precisas das "Caixas/Sacos", inputs para nome e contatos do destinatário/remetente.
+- Tarifa customizada interna setada localmente. Total estimado na base da quilometragem da OSRM (Min() R$ 15,00 ou Km * R$ 2.70). O cliente vê apenas o total cheio pre-calculado.
+- Botões duplos obsoletos removidos devido à automatização limpa da validação de rota via Nominatim com o botão focado único.
+- **PIN Code anti-fraude em Frete**: Adoção de um código gerado aleatoriamente (ex: `8390`), notificado na visualização do passageiro e necessário para obrigar formalmente aos motoristas parceiros executarem 2 fotos protocolares do envio/recebimento nas duas portas do trajeto para confirmação monetária final.
+
+### 4. Flow de Encerramento e Interface 'Star-Rating'
+- Extensão lógica da Máquina de Estados agregando `RATING`.
+- Implantação da clássica UX interativa de pontuação em `5 Estrelas` e validação com agradecimento via Modal no pós-chegada.
+- Função atrelada com `handleFavorites` diretamente embutida na tela de avaliações: o passageiro já pode salvar ou remover o condutor logado da sua lista de Favoritos do sistema com a macro "Favoritar Motorista" ou mesmo avaliar os motoristas no botão estrela antes disso.
