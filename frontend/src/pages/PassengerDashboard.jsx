@@ -163,8 +163,8 @@ export default function PassengerDashboard() {
 
   // Favorite drivers state
   const [favoriteDriversState, setFavoriteDriversState] = useState([
-    { id: 1, name: 'Carlos Santos', car: 'Chevrolet Onix', plate: 'BRA-2031', rating: '4.9', img: 'https://i.pravatar.cc/150?img=11' },
-    { id: 2, name: 'Ana Silva', car: 'Hyundai HB20', plate: 'XPT-9988', rating: '5.0', img: 'https://i.pravatar.cc/150?img=5' }
+    { id: 1, name: 'Carlos Santos', car: 'Chevrolet Onix', plate: 'BRA-2031', rating: '4.9', img: 'https://i.pravatar.cc/150?img=11', pixKey: '(21) 98888-7777' },
+    { id: 2, name: 'Ana Silva', car: 'Hyundai HB20', plate: 'XPT-9988', rating: '5.0', img: 'https://i.pravatar.cc/150?img=5', pixKey: 'anasilva@pix.com' }
   ])
 
   // History state from API
@@ -1230,10 +1230,10 @@ export default function PassengerDashboard() {
                     <span style={{fontWeight: 900, color: '#b45309', fontSize: '1.2rem'}}>R$ {freightType ? Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2) : getPrice(routeKm, vehicleType)}</span>
                   </div>
                   <div style={{background: '#fef3c7', padding: '12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <span style={{fontFamily: 'monospace', fontWeight: 600, color: '#d97706'}}>chavetestemotorista@pix.com</span>
+                    <span style={{fontFamily: 'monospace', fontWeight: 600, color: '#d97706'}}>{favoriteDriversState[0].pixKey || 'Chave não cadastrada'}</span>
                     <button 
                       onClick={() => {
-                        navigator.clipboard.writeText('chavetestemotorista@pix.com');
+                        navigator.clipboard.writeText(favoriteDriversState[0].pixKey || '');
                         alert('Chave PIX copiada com sucesso!');
                       }}
                       style={{background: '#f59e0b', border: 'none', padding: '6px 12px', borderRadius: '6px', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem'}}

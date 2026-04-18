@@ -175,6 +175,7 @@ export default function DriverDashboard() {
     carPlate: user?.carPlate || '',
     carModel: user?.carModel || '',
     carColor: user?.carColor || '',
+    pixKey: user?.pixKey || '',
   })
 
   // FAQ
@@ -388,6 +389,7 @@ export default function DriverDashboard() {
             <div className="form-field"><label className="form-label">Nome Completo</label><input className="form-input" value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} /></div>
             <div className="form-field"><label className="form-label">E-mail</label><input className="form-input" type="email" value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} /></div>
             <div className="form-field"><label className="form-label">Telefone</label><input className="form-input" type="tel" placeholder="(00) 00000-0000" value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} /></div>
+            <div className="form-field"><label className="form-label">Chave PIX (Para Recebimento)</label><input className="form-input" placeholder="CPF, E-mail, ou Celular" value={profileData.pixKey} onChange={e => setProfileData({...profileData, pixKey: e.target.value})} /></div>
             <button className="btn-premium btn-dark" style={{marginTop:'8px'}} onClick={async () => { 
                 try {
                   const res = await fetch(`${API}/user/profile`, {
