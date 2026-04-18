@@ -8,10 +8,22 @@
   height: 100vh;
   position: relative;
   overflow: hidden;
-  background-color: #0a0a0a;
+  background-color: #f3f4f6;
 }
 
-/* MAP */
+.driver-menu-btn {
+  width: 48px; height: 48px;
+  background: #ffffff;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  cursor: pointer;
+  color: #18181b;
+  border: 1px solid rgba(0,0,0,0.06);
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+.driver-menu-btn:active { transform: scale(0.93); }
 .driver-map-bg {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -207,6 +219,47 @@
   margin: 0 auto 12px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Slide Online Bar */
+.slide-online-container {
+  background: #fff; border-radius: 20px;
+  box-shadow: 0 -6px 40px rgba(0,0,0,0.15);
+  padding: 24px;
+}
+.slide-track {
+  height: 60px;
+  background: #f4f4f5;
+  border-radius: 100px;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slide-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #a1a1aa;
+  pointer-events: none;
+}
+.slide-thumb {
+  position: absolute;
+  left: 5px;
+  top: 5px; bottom: 5px;
+  width: 50px;
+  background: linear-gradient(135deg, #059669, #00E676);
+  border-radius: 100px;
+  display: flex; align-items: center; justify-content: center;
+  color: #000;
+  cursor: grab;
+  box-shadow: 0 4px 12px rgba(0,230,118,0.3);
+  transition: transform 0.1s ease-out; /* snap back if needed */
+}
+.slide-thumb:active { cursor: grabbing; }
+.slide-thumb span {
+  font-size: 1.2rem;
+  font-weight: 900;
+}
 
 /* =============================================
    SIDE MENU + INNER SCREENS (ALL ABSOLUTE)

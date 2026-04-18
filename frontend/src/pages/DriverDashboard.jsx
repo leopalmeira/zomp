@@ -45,6 +45,41 @@ export default function DriverDashboard() {
   // Online
   const [isOnline, setIsOnline] = useState(false)
 
+  // Map Theme
+  const [darkMap, setDarkMap] = useState(false)
+  const lightTile = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+  const darkTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+
+  // Slide to go online
+  const [slideX, setSlideX] = useState(0)
+  const [isSwiping, setIsSwiping] = useState(false)
+  const slideTrackWidth = 280
+  const slideThumbWidth = 60
+  const slideThreshold = slideTrackWidth - slideThumbWidth - 10
+
+  const handleSlideStart = (e) => {
+    setIsSwiping(true)
+  }
+  const handleSlideMove = (e) => {
+    if (!isSwiping) return
+    const touch = e.touches ? e.touches[0] : e
+    const track = e.currentTarget.closest('.slide-track')
+    if (!track) return
+    const rect = track.getBoundingClientRect()
+    let x = touch.clientX - rect.left - slideThumbWidth / 2
+    x = Math.max(0, Math.min(x, slideTrackWidth - slideThumbWidth))
+    setSlideX(x)
+  }
+  const handleSlideEnd = () => {
+    setIsSwiping(false)
+    if (slideX >= slideThreshold) {
+      setIsOnline(true)
+      setSlideX(0)
+    } else {
+      setSlideX(0)
+    }
+  }
+
   // Wallet & Credits
   const [wallet, setWallet] = useState({ balance: 0 })
   const [credits, setCredits] = useState(0)
@@ -166,7 +201,7 @@ export default function DriverDashboard() {
       {/* MAP */}
       <div className="driver-map-bg">
         <MapContainer center={myPos} zoom={15} zoomControl={false} attributionControl={false} style={{ width: '100%', height: '100%' }}>
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer url={darkMap ? darkTile : lightTile} />
           <MapController center={myPos} />
           <Marker position={myPos} icon={driverIcon} />
         </MapContainer>
@@ -175,10 +210,12 @@ export default function DriverDashboard() {
       {/* TOP */}
       <div className="driver-top-header">
         <button className="driver-menu-btn" onClick={() => setMenuOpen(true)}>☰</button>
-        <button className={`driver-status-pill ${isOnline ? 'online' : ''}`} onClick={() => setIsOnline(!isOnline)}>
-          <span className="status-dot"></span>
-          {isOnline ? 'Online' : 'Offline'}
-        </button>
+        {isOnline && (
+          <button className="driver-status-pill online" onClick={() => setIsOnline(false)}>
+            <span className="status-dot"></span>
+            Online
+          </button>
+        )}
       </div>
 
       {/* BOTTOM */}
@@ -234,10 +271,39 @@ export default function DriverDashboard() {
             </div>
           </div>
         ) : (
-          <div className={`driver-idle-msg ${isOnline ? 'online-msg' : 'offline-msg'}`}>
-            {isOnline ? (<><div className="spinner-ring"></div><h3>Conectado</h3><p>Buscando corridas na sua região...</p><p style={{marginTop:'8px',fontSize:'0.8rem',color:'#059669',fontWeight:700}}>🎫 {credits} créditos restantes</p></>)
-            : (<><h3>Você está offline</h3><p>Fique online para começar a receber corridas.</p></>)}
-          </div>
+          /* Offline = slide to go online */
+          !isOnline ? (
+            <div className="slide-online-container">
+              <div
+                className="slide-track"
+                onMouseMove={handleSlideMove}
+                onMouseUp={handleSlideEnd}
+                onMouseLeave={handleSlideEnd}
+                onTouchMove={handleSlideMove}
+                onTouchEnd={handleSlideEnd}
+                style={{width: slideTrackWidth}}
+              >
+                <div className="slide-label">Deslize para ficar online →</div>
+                <div
+                  className="slide-thumb"
+                  onMouseDown={handleSlideStart}
+                  onTouchStart={handleSlideStart}
+                  style={{transform: `translateX(${slideX}px)`}}
+                >
+                  <span>▶</span>
+                </div>
+              </div>
+              <p style={{textAlign:'center',marginTop:'10px',fontSize:'0.8rem',color:'#71717a',fontWeight:600}}>🎫 {credits} créditos</p>
+            </div>
+          ) : (
+            /* Online + no rides available = searching */
+            <div className="driver-idle-msg online-msg">
+              <div className="spinner-ring"></div>
+              <h3>Conectado</h3>
+              <p>Buscando corridas na sua região...</p>
+              <p style={{marginTop:'8px',fontSize:'0.8rem',color:'#059669',fontWeight:700}}>🎫 {credits} créditos restantes</p>
+            </div>
+          )
         )}
       </div>
 
@@ -261,6 +327,10 @@ export default function DriverDashboard() {
               <div className="drawer-nav-separator"></div>
               <button className="drawer-nav-item" onClick={() => openScreen('SUPPORT')}><span className="nav-icon">🎧</span>Suporte</button>
               <button className="drawer-nav-item" onClick={() => openScreen('FAQ')}><span className="nav-icon">❓</span>FAQ</button>
+              <div className="drawer-nav-separator"></div>
+              <button className="drawer-nav-item" onClick={() => { setDarkMap(!darkMap); setMenuOpen(false) }}>
+                <span className="nav-icon">{darkMap ? '☀️' : '🌙'}</span>{darkMap ? 'Mapa Claro' : 'Mapa Escuro'}
+              </button>
             </nav>
             <div className="drawer-footer">
               <button className="drawer-nav-item" style={{color:'#ef4444'}} onClick={handleLogout}><span className="nav-icon">🚪</span>Sair</button>
