@@ -15,6 +15,7 @@ const createIcon = (color) => L.divIcon({
 })
 const originIcon = createIcon('#00E676')
 const destIcon = createIcon('#EF4444')
+const stopIcon = createIcon('#F59E0B')
 
 // Helper: resolve address text to coordinates via Nominatim
 async function resolveAddress(text) {
@@ -461,7 +462,7 @@ export default function PassengerDashboard() {
   }
 
   // ============= Markers for map =============
-  const allMarkers = originCoords && destCoords ? [originCoords, destCoords] : null
+  const allMarkers = [originCoords, ...stops.map(s => s.coords), destCoords].filter(Boolean)
 
   return (
     <div className="passenger-app">
@@ -472,6 +473,9 @@ export default function PassengerDashboard() {
           <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
           <MapController center={mapCenter} markers={allMarkers} />
           {originCoords && <Marker position={originCoords} icon={originIcon} />}
+          {stops.filter(s => s.coords).map((stop, i) => (
+             <Marker key={`stop-marker-${i}`} position={stop.coords} icon={stopIcon} />
+          ))}
           {destCoords && <Marker position={destCoords} icon={destIcon} />}
           {routeGeometry.length > 0 && (
             <Polyline positions={routeGeometry} color="#1a1a2e" weight={5} opacity={0.85} />
@@ -1065,6 +1069,7 @@ export default function PassengerDashboard() {
                 </label>
               </div>
 
+              {vehicleType !== 'moto' && (
                 <div style={{marginTop:'16px',background:'#f8fafc',border:'1px solid #e2e8f0',padding:'16px',borderRadius:'16px'}}>
                   <h4 style={{margin:0,fontSize:'0.9rem',fontWeight:800,color:'#1e293b',marginBottom:'12px'}}>Quantidade de Pessoas</h4>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -1076,6 +1081,7 @@ export default function PassengerDashboard() {
                     </div>
                   </div>
                 </div>
+              )}
 
               <div className="action-buttons mt-4">
                 <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>

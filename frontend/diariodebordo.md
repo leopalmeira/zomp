@@ -72,3 +72,13 @@ As cidades de rotas longas que estavam com redundância de praia (como Nova Frib
 - Extensão lógica da Máquina de Estados agregando `RATING`.
 - Implantação da clássica UX interativa de pontuação em `5 Estrelas` e validação com agradecimento via Modal no pós-chegada.
 - Função atrelada com `handleFavorites` diretamente embutida na tela de avaliações: o passageiro já pode salvar ou remover o condutor logado da sua lista de Favoritos do sistema com a macro "Favoritar Motorista" ou mesmo avaliar os motoristas no botão estrela antes disso.
+
+### 5. Pagamento via PIX Descentralizado (P2P Integrado)
+- Incluída tela de métodos de pagamento
+- Motorista adiciona Chave no Perfil.
+- Passageiro visualiza a Chave ao avaliar.
+
+### 6. Múltiplas Paradas Intermediárias em Corridas
+- Roteamento nativo e UI estendida para suportar paradas entre rota (Multi-Stop).
+- Ocultação inteligente veicular (Ex: Quantidade de pessoas é oculto para Motos).
+- Incremento progressivo na tarifa (+2 BRL flat-fee base).
