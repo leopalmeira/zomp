@@ -119,6 +119,7 @@ export default function PassengerDashboard() {
   const [freightContactName, setFreightContactName] = useState('')
   const [freightContactPhone, setFreightContactPhone] = useState('')
   const [freightSecurityCode, setFreightSecurityCode] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('PIX') // 'PIX' | 'DINHEIRO'
   const FREIGHT_PRICE_PER_KM = 2.70
 
   // Active Ride Extra States
@@ -817,6 +818,37 @@ export default function PassengerDashboard() {
                 </div>
               )}
 
+              {/* Payment Method Selector */}
+              {parseFloat(routeKm) > 0 && (
+                <div style={{marginBottom:'16px'}}>
+                  <label style={{fontSize:'0.85rem',fontWeight:700,color:'#374151',display:'block',marginBottom:'8px'}}>Forma de Pagamento</label>
+                  <div style={{display:'flex', gap:'12px'}}>
+                    <button
+                      onClick={() => setPaymentMethod('PIX')}
+                      style={{
+                        flex:1, padding:'14px', borderRadius:'12px', fontWeight:800, cursor:'pointer', transition:'all 0.2s',
+                        border: paymentMethod === 'PIX' ? '2px solid #10b981' : '1px solid #d1d5db',
+                        background: paymentMethod === 'PIX' ? '#ecfdf5' : '#fff',
+                        color: paymentMethod === 'PIX' ? '#059669' : '#4b5563'
+                      }}
+                    >
+                      <span style={{fontSize:'1.1rem', marginRight:'4px'}}>❖</span> PIX
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod('DINHEIRO')}
+                      style={{
+                        flex:1, padding:'14px', borderRadius:'12px', fontWeight:800, cursor:'pointer', transition:'all 0.2s',
+                        border: paymentMethod === 'DINHEIRO' ? '2px solid #10b981' : '1px solid #d1d5db',
+                        background: paymentMethod === 'DINHEIRO' ? '#ecfdf5' : '#fff',
+                        color: paymentMethod === 'DINHEIRO' ? '#059669' : '#4b5563'
+                      }}
+                    >
+                      <span style={{fontSize:'1.1rem', marginRight:'4px'}}>💵</span> Dinheiro
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Confirm Freight */}
               <button
                 className="btn btn-primary btn-request"
@@ -835,7 +867,7 @@ export default function PassengerDashboard() {
                   setFreightSecurityCode(newCode);
 
                   // Simulate sending freight request (like ride request)
-                  alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nContato: ${freightContactName || 'Não informado'} ${freightContactPhone ? `(${freightContactPhone})` : ''}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}\n\nCódigo Temporário: ${newCode}\n\nProcurando motorista...`);
+                  alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nContato: ${freightContactName || 'Não informado'} ${freightContactPhone ? `(${freightContactPhone})` : ''}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}\nPagamento: ${paymentMethod === 'PIX' ? 'PIX ❖' : 'Dinheiro 💵'}\n\nCódigo Temporário: ${newCode}\n\nProcurando motorista...`);
                   setRideState('SEARCHING');
                 }}
               >
