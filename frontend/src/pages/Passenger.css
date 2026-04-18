@@ -11,6 +11,19 @@
   background-color: #f3f4f6;
 }
 
+/* Fixed Address Bar - Always visible at top */
+.fixed-address-bar {
+  position: absolute;
+  top: 72px;
+  left: 12px;
+  right: 12px;
+  z-index: 1100;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
 /* 1. Full Screen Interactive Map */
 .passenger-map-bg {
   position: absolute;

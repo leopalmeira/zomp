@@ -437,12 +437,73 @@ export default function PassengerDashboard() {
         </MapContainer>
       </div>
 
-      {/* ===== TOP HEADER ===== */}
+      {/* ===== TOP HEADER + ADDRESS INPUTS (always visible) ===== */}
       <div className="passenger-top-header">
         <div className="menu-btn" onClick={() => setIsMenuOpen(true)}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </div>
       </div>
+
+      {/* ===== FIXED ADDRESS BAR (always on top) ===== */}
+      {rideState === 'IDLE' && (
+        <div className="fixed-address-bar">
+          <div className="route-inputs">
+            <div className="route-timeline">
+              <div className="dot-start"></div>
+              <div className="timeline-line"></div>
+              <div className="dot-end"></div>
+            </div>
+            <div className="route-fields">
+              <input
+                className="route-input start-input"
+                value={originAddr}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setOriginAddr(v)
+                  setOriginCoords(null)
+                  searchAddress(v, 'origin')
+                }}
+                placeholder="Local de partida"
+              />
+              <input
+                className="route-input end-input"
+                value={destAddr}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setDestAddr(v)
+                  setDestCoords(null)
+                  searchAddress(v, 'dest')
+                }}
+                placeholder="Para onde vai?"
+              />
+            </div>
+
+            {/* Suggestions dropdown */}
+            {suggestions.length > 0 && (
+              <div className="autocomplete-dropdown">
+                {suggestions.map((s, i) => (
+                  <div key={i} className="suggestion-item" onMouseDown={(e) => { e.preventDefault(); handleSelectSuggestion(s) }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    <span>{s.display_name.split(',').slice(0, 3).join(',')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            className="btn btn-primary"
+            style={{width:'100%', marginTop:'12px', padding:'14px', fontWeight:700, fontSize:'0.95rem', borderRadius:'14px'}}
+            onClick={handleForceCalculate}
+            disabled={isLoading || destAddr.length < 4}
+          >
+            {isLoading ? '⏳ Calculando rota...' : '🚗 VER PREÇO E ROTA'}
+          </button>
+        </div>
+      )}
 
       {/* ===== BOTTOM SHEET ===== */}
       <div className={`passenger-bottom-sheet ${isSheetCollapsed ? 'collapsed' : ''}`}>
@@ -455,64 +516,6 @@ export default function PassengerDashboard() {
           {/* ---- STATE: IDLE ---- */}
           {rideState === 'IDLE' && (
             <div className="state-idle animate-fade-in">
-              <h2 className="sheet-title">Para onde vamos?</h2>
-
-              <div className="route-inputs">
-                <div className="route-timeline">
-                  <div className="dot-start"></div>
-                  <div className="timeline-line"></div>
-                  <div className="dot-end"></div>
-                </div>
-                <div className="route-fields">
-                  <input
-                    className="route-input start-input"
-                    value={originAddr}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      setOriginAddr(v)
-                      setOriginCoords(null)
-                      searchAddress(v, 'origin')
-                    }}
-                    placeholder="Local de partida"
-                  />
-                  <input
-                    className="route-input end-input"
-                    value={destAddr}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      setDestAddr(v)
-                      setDestCoords(null)
-                      searchAddress(v, 'dest')
-                    }}
-                    placeholder="Para onde vai?"
-                  />
-                </div>
-
-                {/* Suggestions dropdown */}
-                {suggestions.length > 0 && (
-                  <div className="autocomplete-dropdown">
-                    {suggestions.map((s, i) => (
-                      <div key={i} className="suggestion-item" onMouseDown={(e) => { e.preventDefault(); handleSelectSuggestion(s) }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                          <circle cx="12" cy="10" r="3"/>
-                        </svg>
-                        <span>{s.display_name.split(',').slice(0, 3).join(',')}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Force calculate button */}
-              <button
-                className="btn btn-primary"
-                style={{width:'100%', marginTop:'16px', padding:'16px', fontWeight:700, fontSize:'1rem'}}
-                onClick={handleForceCalculate}
-                disabled={isLoading || destAddr.length < 4}
-              >
-                {isLoading ? '⏳ Calculando rota...' : '🚗 VER PREÇO E ROTA'}
-              </button>
 
               {/* Favorites */}
               <div className="favorites-section" style={{marginTop:'20px'}}>
@@ -555,10 +558,10 @@ export default function PassengerDashboard() {
                     { id: 'ostras', title: 'Rio das Ostras', label: 'Praia', img: '/ostras.png' },
                     { id: 'petropolis', title: 'Petrópolis', label: 'Montanha', img: '/petropolis.png' },
                     { id: 'teresopolis', title: 'Teresópolis', label: 'Montanha', img: '/teresopolis.png' },
-                    { id: 'friburgo', title: 'Nova Friburgo', label: 'Montanha', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
-                    { id: 'vassouras', title: 'Vassouras', label: 'Interior', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
-                    { id: 'valenca', title: 'Valença', label: 'Interior', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
-                    { id: 'barra_pirai', title: 'Barra do Piraí', label: 'Interior', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'friburgo', title: 'Nova Friburgo', label: 'Montanha', img: '/petropolis.png' },
+                    { id: 'vassouras', title: 'Vassouras', label: 'Interior', img: '/campos.png' },
+                    { id: 'valenca', title: 'Valença', label: 'Interior', img: '/resende.png' },
+                    { id: 'barra_pirai', title: 'Barra do Piraí', label: 'Interior', img: '/mangaratiba.png' },
                     { id: 'resende', title: 'Resende', label: 'Interior', img: '/resende.png' },
                     { id: 'campos', title: 'Campos', label: 'Interior', img: '/campos.png' }
                   ].map(dest => (
@@ -643,9 +646,6 @@ export default function PassengerDashboard() {
                   {[
                     { id: 'caixas', icon: '📦', title: 'Caixas', desc: 'Mudanças e volumes' },
                     { id: 'sacos', icon: '🛍️', title: 'Sacos & Sacolas', desc: 'Compras e materiais' },
-                    { id: 'moveis', icon: '🪑', title: 'Móveis', desc: 'Itens grandes' },
-                    { id: 'entregas', icon: '🚚', title: 'Entregas em Geral', desc: 'Documentos, encomendas' },
-                    { id: 'construcao', icon: '🧱', title: 'Material de Obra', desc: 'Cimento, tijolos, etc.' },
                   ].map(item => (
                     <div key={item.id} style={{
                       minWidth: '140px',
