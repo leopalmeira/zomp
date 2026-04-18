@@ -116,6 +116,8 @@ export default function PassengerDashboard() {
   // Freight State
   const [freightType, setFreightType] = useState(null) // 'caixas' | 'sacos'
   const [freightDescription, setFreightDescription] = useState('')
+  const [freightContactName, setFreightContactName] = useState('')
+  const [freightContactPhone, setFreightContactPhone] = useState('')
   const FREIGHT_PRICE_PER_KM = 2.70
 
   // Active Ride Extra States
@@ -308,7 +310,8 @@ export default function PassengerDashboard() {
         setRouteGeometry(result.geometry)
         setRouteKm(result.km)
         setRouteDuration(result.durationMin)
-        setRideState('PRICED')
+        // Somente vai para PRICED se não estiver na tela de FRETE
+        setRideState(prev => prev === 'FREIGHT' ? 'FREIGHT' : 'PRICED')
         setIsSheetCollapsed(false)
       } else {
         alert('Não foi possível calcular a rota. Tente endereços mais específicos.')
@@ -767,11 +770,34 @@ export default function PassengerDashboard() {
                     resize:'vertical',
                     outline:'none',
                     transition:'border-color 0.2s',
-                    boxSizing:'border-box'
+                    boxSizing:'border-box',
+                    marginBottom:'12px'
                   }}
                   onFocus={(e) => e.target.style.borderColor='#10b981'}
                   onBlur={(e) => e.target.style.borderColor='#d1d5db'}
                 />
+
+                <div style={{display:'flex', gap:'12px', flexWrap:'wrap'}}>
+                  <div style={{flex:1, minWidth:'150px'}}>
+                    <label style={{fontSize:'0.75rem',fontWeight:700,color:'#374151',display:'block',marginBottom:'6px'}}>Quem receberá? (Opcional)</label>
+                    <input
+                      value={freightContactName}
+                      onChange={(e) => setFreightContactName(e.target.value)}
+                      placeholder="Nome de quem recebe"
+                      style={{width:'100%',padding:'12px',borderRadius:'10px',border:'1px solid #d1d5db',fontSize:'0.9rem',outline:'none'}}
+                    />
+                  </div>
+                  <div style={{flex:1, minWidth:'150px'}}>
+                    <label style={{fontSize:'0.75rem',fontWeight:700,color:'#374151',display:'block',marginBottom:'6px'}}>Telefone de Contato (Opcional)</label>
+                    <input
+                      type="tel"
+                      value={freightContactPhone}
+                      onChange={(e) => setFreightContactPhone(e.target.value)}
+                      placeholder="(21) 99999-9999"
+                      style={{width:'100%',padding:'12px',borderRadius:'10px',border:'1px solid #d1d5db',fontSize:'0.9rem',outline:'none'}}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Calculate Freight Route */}
@@ -811,7 +837,7 @@ export default function PassengerDashboard() {
                       return;
                     }
                     // Simulate sending freight request (like ride request)
-                    alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}\n\nProcurando motorista...`);
+                    alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nContato: ${freightContactName || 'Não informado'} ${freightContactPhone ? `(${freightContactPhone})` : ''}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}\n\nProcurando motorista...`);
                     setRideState('SEARCHING');
                   }}
                 >
