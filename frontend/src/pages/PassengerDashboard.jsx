@@ -123,6 +123,8 @@ export default function PassengerDashboard() {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
+  const [ratingStars, setRatingStars] = useState(0)
+  const [tempDriverFav, setTempDriverFav] = useState(false)
 
   // Manage 60-second countdown when ACCEPTED
   useEffect(() => {
@@ -306,7 +308,7 @@ export default function PassengerDashboard() {
         setRouteGeometry(result.geometry)
         setRouteKm(result.km)
         setRouteDuration(result.durationMin)
-        setRideState(prev => prev === 'FREIGHT' ? 'FREIGHT' : 'PRICED')
+        setRideState('PRICED')
         setIsSheetCollapsed(false)
       } else {
         alert('Não foi possível calcular a rota. Tente endereços mais específicos.')
@@ -563,10 +565,10 @@ export default function PassengerDashboard() {
                     { id: 'ostras', title: 'Rio das Ostras', label: 'Praia', img: '/ostras.png' },
                     { id: 'petropolis', title: 'Petrópolis', label: 'Montanha', img: '/petropolis.png' },
                     { id: 'teresopolis', title: 'Teresópolis', label: 'Montanha', img: '/teresopolis.png' },
-                    { id: 'friburgo', title: 'Nova Friburgo', label: 'Montanha', img: '/friburgo.jpg' },
-                    { id: 'vassouras', title: 'Vassouras', label: 'Interior', img: '/vassouras.jpg' },
-                    { id: 'valenca', title: 'Valença', label: 'Interior', img: '/valenca.jpg' },
-                    { id: 'barra_pirai', title: 'Barra do Piraí', label: 'Interior', img: '/barra_pirai.jpg' },
+                    { id: 'friburgo', title: 'Nova Friburgo', label: 'Montanha', img: 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=400&q=80' },
+                    { id: 'vassouras', title: 'Vassouras', label: 'Interior', img: 'https://images.unsplash.com/photo-1506506200949-df87442881d3?w=400&q=80' },
+                    { id: 'valenca', title: 'Valença', label: 'Interior', img: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400&q=80' },
+                    { id: 'barra_pirai', title: 'Barra do Piraí', label: 'Interior', img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400&q=80' },
                     { id: 'resende', title: 'Resende', label: 'Interior', img: '/resende.png' },
                     { id: 'campos', title: 'Campos', label: 'Interior', img: '/campos.png' }
                   ].map(dest => (
@@ -840,7 +842,7 @@ export default function PassengerDashboard() {
                 </div>
                 <div
                   className={`vehicle-option ${vehicleType === 'moto' ? 'active' : ''}`}
-                  onClick={() => { setVehicleType('moto'); setPassengersCount(1); }}
+                  onClick={() => setVehicleType('moto')}
                 >
                   <span className="vehicle-icon">🏍️</span>
                   <div className="vehicle-details">
@@ -883,7 +885,6 @@ export default function PassengerDashboard() {
                 </label>
               </div>
 
-              {vehicleType === 'car' && (
                 <div style={{marginTop:'16px',background:'#f8fafc',border:'1px solid #e2e8f0',padding:'16px',borderRadius:'16px'}}>
                   <h4 style={{margin:0,fontSize:'0.9rem',fontWeight:800,color:'#1e293b',marginBottom:'12px'}}>Quantidade de Pessoas</h4>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -895,7 +896,6 @@ export default function PassengerDashboard() {
                     </div>
                   </div>
                 </div>
-              )}
 
               <div className="action-buttons mt-4">
                 <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>
@@ -1013,7 +1013,15 @@ export default function PassengerDashboard() {
               <div className="driver-card-large" style={{marginBottom: '12px'}}>
                 <img src={favoriteDriversState[0].img} alt={favoriteDriversState[0].name} className="drv-avatar" />
                 <div className="drv-info">
-                  <h4>{favoriteDriversState[0].name}</h4>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <h4>{favoriteDriversState[0].name}</h4>
+                    <button 
+                      onClick={() => setTempDriverFav(!tempDriverFav)}
+                      style={{background:'none',border:'none',fontSize:'1.2rem',cursor:'pointer',padding:0,color: tempDriverFav ? '#f59e0b' : '#cbd5e1'}}
+                    >
+                      ★
+                    </button>
+                  </div>
                   <div className="drv-rating">⭐ {favoriteDriversState[0].rating}</div>
                 </div>
                 <div className="drv-car">
@@ -1089,6 +1097,81 @@ export default function PassengerDashboard() {
                   )}
                 </button>
               </div>
+
+              {/* Botão de simular chegada para ir para a tela de avaliação */}
+              <button 
+                className="btn btn-primary mt-4" 
+                style={{width: '100%', background: '#059669', color: '#fff'}}
+                onClick={() => {
+                  setRatingStars(0);
+                  setRideState('RATING');
+                }}
+              >
+                Cheguei ao Destino 🏁
+              </button>
+            </div>
+          )}
+
+          {/* ---- STATE: RATING ---- */}
+          {rideState === 'RATING' && (
+            <div className="state-rating animate-fade-in-up" style={{textAlign: 'center', padding: '20px 0'}}>
+              <h2 className="sheet-title" style={{marginBottom: '8px'}}>Corrida Finalizada!</h2>
+              <p className="hint-text" style={{marginBottom: '24px'}}>Como foi a viagem com {favoriteDriversState[0].name}?</p>
+              
+              <img src={favoriteDriversState[0].img} alt={favoriteDriversState[0].name} style={{width:'80px',height:'80px',borderRadius:'50%',marginBottom:'16px',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}} />
+              
+              <div style={{display:'flex',justifyContent:'center',gap:'8px',marginBottom:'32px'}}>
+                {[1, 2, 3, 4, 5].map(star => (
+                  <span 
+                    key={star} 
+                    onClick={() => setRatingStars(star)}
+                    style={{
+                      fontSize: '2.5rem', 
+                      cursor: 'pointer',
+                      color: ratingStars >= star ? '#f59e0b' : '#e2e8f0',
+                      transition: 'color 0.2s ease'
+                    }}>
+                    ★
+                  </span>
+                ))}
+              </div>
+
+              {ratingStars > 0 && (
+                <div style={{marginBottom: '24px', padding: '16px', background: '#f8fafc', borderRadius: '16px'}}>
+                  <p style={{fontWeight: 700, margin: '0 0 12px', color: '#334155'}}>Gostou do motorista?</p>
+                  <button 
+                    onClick={() => setTempDriverFav(!tempDriverFav)}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', 
+                      width: '100%', padding: '12px', borderRadius: '12px',
+                      background: tempDriverFav ? '#fef3c7' : '#fff',
+                      border: tempDriverFav ? '2px solid #f59e0b' : '1px solid #cbd5e1',
+                      color: tempDriverFav ? '#b45309' : '#475569',
+                      fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span>{tempDriverFav ? '★ Favoritado' : '☆ Salvar como Favorito'}</span>
+                  </button>
+                  <p style={{fontSize: '0.7rem', color: '#64748b', margin: '8px 0 0'}}>Seus motoristas favoritos são notificados primeiro nas próximas viagens.</p>
+                </div>
+              )}
+
+              <button 
+                className="btn btn-primary"
+                style={{width: '100%', padding: '16px', fontSize: '1.05rem'}}
+                disabled={ratingStars === 0}
+                onClick={() => {
+                  // Finalizar e salvar histórico
+                  const d = new Date();
+                  const today = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+                  setRideHistory(prev => [{ id: Date.now(), date: today, origin: originAddr, dest: destAddr, price: getPrice(routeKm, vehicleType), vehicle: vehicleType === 'car' ? 'Carro' : 'Moto', status: 'COMPLETED' }, ...prev]);
+                  
+                  alert('Obrigado pela sua avaliação! 🌟');
+                  resetFlow();
+                }}
+              >
+                Enviar Avaliação
+              </button>
             </div>
           )}
 
