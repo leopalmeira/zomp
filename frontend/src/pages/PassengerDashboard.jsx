@@ -318,19 +318,33 @@ export default function PassengerDashboard() {
   const handleForceCalculate = async () => {
     setIsLoading(true)
     try {
-      // Resolve origin if no coords
-      let oCoords = originCoords
+      // Use refs for latest coords (avoids stale closure from GPS)
+      let oCoords = originCoordsRef.current
       if (!oCoords) {
-        const resolved = await resolveAddress(originAddr)
-        if (resolved) {
-          oCoords = [resolved.lat, resolved.lon]
+        // Try HTML5 Geolocation first before falling back to text resolve
+        try {
+          const gpsPos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true, timeout: 5000, maximumAge: 10000
+            })
+          })
+          oCoords = [gpsPos.coords.latitude, gpsPos.coords.longitude]
           setOriginCoords(oCoords)
           setMapCenter(oCoords)
+          setOriginAddr('Meu Local Atual (GPS)')
+        } catch (gpsErr) {
+          // GPS failed, try text resolve as fallback
+          const resolved = await resolveAddress(originAddr)
+          if (resolved) {
+            oCoords = [resolved.lat, resolved.lon]
+            setOriginCoords(oCoords)
+            setMapCenter(oCoords)
+          }
         }
       }
 
       // Resolve destination if no coords
-      let dCoords = destCoords
+      let dCoords = destCoordsRef.current
       if (!dCoords) {
         const resolved = await resolveAddress(destAddr)
         if (resolved) {
@@ -342,7 +356,7 @@ export default function PassengerDashboard() {
       if (oCoords && dCoords) {
         await calculateRoute(oCoords, dCoords)
       } else {
-        alert('Não foi possível encontrar os endereços. Tente ser mais específico (ex: "Rua Toriba 113, Madureira, Rio de Janeiro")')
+        alert('Não foi possível encontrar os endereços. Verifique se o GPS está ativado ou digite um endereço de partida.')
       }
     } catch (e) {
       console.error('Force calculate error:', e)
@@ -560,12 +574,40 @@ export default function PassengerDashboard() {
                         flexShrink:0,
                         scrollSnapAlign:'start',
                         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                    }} onClick={() => {
+                    }} onClick={async () => {
                         setIsIntercity(true);
                         setDestAddr(`${dest.title}, RJ`);
                         setDestCoords(null);
-                        searchAddress(`${dest.title}, RJ`, 'dest');
-                        setTimeout(() => handleForceCalculate(), 1500);
+                        setIsLoading(true);
+                        try {
+                          // Resolve dest coordinates directly
+                          const resolved = await resolveAddress(`${dest.title}, Rio de Janeiro, RJ, Brasil`);
+                          if (resolved) {
+                            const dCoords = [resolved.lat, resolved.lon];
+                            setDestCoords(dCoords);
+                            // Get origin from GPS ref
+                            let oCoords = originCoordsRef.current;
+                            if (!oCoords) {
+                              try {
+                                const gpsPos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 5000 }));
+                                oCoords = [gpsPos.coords.latitude, gpsPos.coords.longitude];
+                                setOriginCoords(oCoords);
+                                setMapCenter(oCoords);
+                              } catch(e) { /* GPS failed */ }
+                            }
+                            if (oCoords) {
+                              await calculateRoute(oCoords, dCoords);
+                            } else {
+                              alert('Ative o GPS ou digite seu endereço de partida.');
+                            }
+                          } else {
+                            alert('Não foi possível localizar ' + dest.title);
+                          }
+                        } catch(e) {
+                          console.error(e);
+                        } finally {
+                          setIsLoading(false);
+                        }
                     }} onMouseEnter={(e) => { e.currentTarget.style.transform='scale(1.04)'; e.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform='scale(1)'; e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,0.12)'; }}>
                       <div style={{
                         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -586,6 +628,56 @@ export default function PassengerDashboard() {
                          <span style={{fontSize:'0.65rem',color:'#10b981',fontWeight:800, textTransform:'uppercase', letterSpacing:'1px', textShadow:'0 2px 4px rgba(0,0,0,0.5)'}}>{dest.label}</span>
                          <h4 style={{margin:0,fontSize:'1.1rem',fontWeight:800,color:'#fff', textShadow:'0 2px 4px rgba(0,0,0,0.5)'}}>{dest.title}</h4>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fretes e Entregas */}
+              <div className="intercity-section" style={{marginTop:'20px'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+                  <h3 style={{fontSize:'1.05rem',fontWeight:800,margin:0,color:'#18181b'}}>Fretes e Entregas</h3>
+                  <span style={{fontSize:'0.7rem',fontWeight:800,color:'#f59e0b',background:'#fffbeb',padding:'4px 8px',borderRadius:'100px'}}>NOVO</span>
+                </div>
+                <div style={{display:'flex',gap:'12px',overflowX:'auto',paddingBottom:'16px',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch'}} className="hide-scrollbar">
+                  {[
+                    { id: 'caixas', icon: '📦', title: 'Caixas', desc: 'Mudanças e volumes' },
+                    { id: 'sacos', icon: '🛍️', title: 'Sacos & Sacolas', desc: 'Compras e materiais' },
+                    { id: 'moveis', icon: '🪑', title: 'Móveis', desc: 'Itens grandes' },
+                    { id: 'entregas', icon: '🚚', title: 'Entregas em Geral', desc: 'Documentos, encomendas' },
+                    { id: 'construcao', icon: '🧱', title: 'Material de Obra', desc: 'Cimento, tijolos, etc.' },
+                  ].map(item => (
+                    <div key={item.id} style={{
+                      minWidth: '140px',
+                      background: '#fff',
+                      border: '1px solid #e4e4e7',
+                      borderRadius: '16px',
+                      padding: '20px 16px',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      scrollSnapAlign: 'start',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '8px',
+                      textAlign: 'center',
+                      transition: 'all 0.25s ease',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)'; e.currentTarget.style.borderColor='#10b981'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor='#e4e4e7'; }}
+                    onClick={() => {
+                      setDestAddr('');
+                      setDestCoords(null);
+                      setRouteGeometry([]);
+                      setRouteKm('0');
+                      setVehicleType('car');
+                      alert(`🚚 Frete: ${item.title}\n\nDigite o endereço de coleta (origem) e entrega (destino) nos campos acima para calcular o valor do frete.`);
+                    }}
+                    >
+                      <span style={{fontSize:'2.2rem'}}>{item.icon}</span>
+                      <span style={{fontSize:'0.9rem',fontWeight:800,color:'#18181b'}}>{item.title}</span>
+                      <span style={{fontSize:'0.7rem',color:'#71717a',fontWeight:600,lineHeight:1.3}}>{item.desc}</span>
                     </div>
                   ))}
                 </div>
