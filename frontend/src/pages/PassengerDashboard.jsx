@@ -306,7 +306,7 @@ export default function PassengerDashboard() {
         setRouteGeometry(result.geometry)
         setRouteKm(result.km)
         setRouteDuration(result.durationMin)
-        setRideState('PRICED')
+        setRideState(prev => prev === 'FREIGHT' ? 'FREIGHT' : 'PRICED')
         setIsSheetCollapsed(false)
       } else {
         alert('Não foi possível calcular a rota. Tente endereços mais específicos.')
