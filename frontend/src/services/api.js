@@ -128,3 +128,34 @@ export async function completeRide(rideId) {
   if (!res.ok) throw new Error(data.error || 'Erro ao completar corrida');
   return data;
 }
+
+export async function getCredits() {
+  const res = await fetch(`${API_BASE}/credits`, {
+    headers: getHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao buscar créditos');
+  return data;
+}
+
+export async function purchaseCredits(quantity) {
+  const res = await fetch(`${API_BASE}/credits/purchase`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ quantity }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao comprar créditos');
+  return data;
+}
+
+export async function cancelRide(rideId, status) {
+  const res = await fetch(`${API_BASE}/rides/${rideId}/cancel`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao cancelar corrida');
+  return data;
+}

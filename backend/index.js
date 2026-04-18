@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
@@ -351,5 +352,10 @@ app.post('/api/credits/purchase', authenticate, async (req, res) => {
   }
 });
 
+// --- HEALTH CHECK ---
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Backend server running on http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Backend server running on http://0.0.0.0:${PORT}`));
