@@ -563,10 +563,10 @@ export default function PassengerDashboard() {
                     { id: 'ostras', title: 'Rio das Ostras', label: 'Praia', img: '/ostras.png' },
                     { id: 'petropolis', title: 'Petrópolis', label: 'Montanha', img: '/petropolis.png' },
                     { id: 'teresopolis', title: 'Teresópolis', label: 'Montanha', img: '/teresopolis.png' },
-                    { id: 'friburgo', title: 'Nova Friburgo', label: 'Montanha', img: '/petropolis.png' },
-                    { id: 'vassouras', title: 'Vassouras', label: 'Interior', img: '/campos.png' },
-                    { id: 'valenca', title: 'Valença', label: 'Interior', img: '/resende.png' },
-                    { id: 'barra_pirai', title: 'Barra do Piraí', label: 'Interior', img: '/mangaratiba.png' },
+                    { id: 'friburgo', title: 'Nova Friburgo', label: 'Montanha', img: '/friburgo.jpg' },
+                    { id: 'vassouras', title: 'Vassouras', label: 'Interior', img: '/vassouras.jpg' },
+                    { id: 'valenca', title: 'Valença', label: 'Interior', img: '/valenca.jpg' },
+                    { id: 'barra_pirai', title: 'Barra do Piraí', label: 'Interior', img: '/barra_pirai.jpg' },
                     { id: 'resende', title: 'Resende', label: 'Interior', img: '/resende.png' },
                     { id: 'campos', title: 'Campos', label: 'Interior', img: '/campos.png' }
                   ].map(dest => (
