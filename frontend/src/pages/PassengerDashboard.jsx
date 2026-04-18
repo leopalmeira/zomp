@@ -802,16 +802,6 @@ export default function PassengerDashboard() {
                 </div>
               </div>
 
-              {/* Calculate Freight Route */}
-              <button
-                className="btn btn-primary"
-                style={{width:'100%', padding:'14px', fontWeight:700, fontSize:'0.95rem', borderRadius:'14px', marginBottom:'16px'}}
-                onClick={handleForceCalculate}
-                disabled={isLoading || destAddr.length < 4}
-              >
-                {isLoading ? '⏳ Calculando frete...' : '📦 CALCULAR FRETE'}
-              </button>
-
               {/* Freight Price Result */}
               {parseFloat(routeKm) > 0 && (
                 <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'16px',padding:'20px',marginBottom:'16px'}}>
@@ -828,27 +818,29 @@ export default function PassengerDashboard() {
               )}
 
               {/* Confirm Freight */}
-              {parseFloat(routeKm) > 0 && (
-                <button
-                  className="btn btn-primary btn-request"
-                  style={{width:'100%', padding:'16px', fontWeight:800, fontSize:'1rem', borderRadius:'14px', background:'#059669'}}
-                  disabled={!freightDescription.trim()}
-                  onClick={() => {
-                    if (!freightDescription.trim()) {
-                      alert('Por favor, descreva o que será transportado.');
-                      return;
-                    }
-                    const newCode = Math.floor(1000 + Math.random() * 9000).toString();
-                    setFreightSecurityCode(newCode);
+              <button
+                className="btn btn-primary btn-request"
+                style={{width:'100%', padding:'16px', fontWeight:800, fontSize:'1rem', borderRadius:'14px', background:'#059669'}}
+                disabled={!freightDescription.trim()}
+                onClick={() => {
+                  if (parseFloat(routeKm) === 0) {
+                    alert('Por favor, selecione um endereço válido nas sugestões para calcularmos a distância do frete.');
+                    return;
+                  }
+                  if (!freightDescription.trim()) {
+                    alert('Por favor, descreva o que será transportado.');
+                    return;
+                  }
+                  const newCode = Math.floor(1000 + Math.random() * 9000).toString();
+                  setFreightSecurityCode(newCode);
 
-                    // Simulate sending freight request (like ride request)
-                    alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nContato: ${freightContactName || 'Não informado'} ${freightContactPhone ? `(${freightContactPhone})` : ''}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}\n\nCódigo Temporário: ${newCode}\n\nProcurando motorista...`);
-                    setRideState('SEARCHING');
-                  }}
-                >
-                  🚚 SOLICITAR FRETE — R$ {Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}
-                </button>
-              )}
+                  // Simulate sending freight request (like ride request)
+                  alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nContato: ${freightContactName || 'Não informado'} ${freightContactPhone ? `(${freightContactPhone})` : ''}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}\n\nCódigo Temporário: ${newCode}\n\nProcurando motorista...`);
+                  setRideState('SEARCHING');
+                }}
+              >
+                🚚 SOLICITAR FRETE {parseFloat(routeKm) > 0 ? `— R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}` : ''}
+              </button>
             </div>
           )}
 
