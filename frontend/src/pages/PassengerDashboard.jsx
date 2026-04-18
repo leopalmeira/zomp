@@ -198,13 +198,8 @@ export default function PassengerDashboard() {
 
   // Compute price based on vehicle type and distance
   const getPrice = (km, type, includeFee = false) => {
-    let basePrice
-    if (isTripIntercity) {
-      basePrice = Math.max(parseFloat(km) * 1.70, 30.00); // 1.70 per km, base de seguranca
-    } else {
-      const calculated = parseFloat(km) * PRICE_PER_KM[type]
-      basePrice = Math.max(calculated, MIN_PRICE[type])
-    }
+    const calculated = parseFloat(km) * PRICE_PER_KM[type]
+    const basePrice = Math.max(calculated, MIN_PRICE[type])
     const finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
     return finalPrice.toFixed(2)
   }
@@ -531,18 +526,27 @@ export default function PassengerDashboard() {
 
               {/* Viagens Longas */}
               <div className="intercity-section" style={{marginTop:'20px'}}>
-                <div className="section-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
                   <h3 style={{fontSize:'1.05rem',fontWeight:800,margin:0,color:'#18181b'}}>Viagens Longas</h3>
-                  <span style={{fontSize:'0.7rem',fontWeight:800,color:'#059669',background:'#ecfdf5',padding:'4px 8px',borderRadius:'100px'}}>R$ 1,70 / km</span>
                 </div>
                 <div style={{display:'flex',overflowX:'auto',gap:'12px',paddingBottom:'16px',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch'}} className="hide-scrollbar">
                   {[
-                    { id: 'angra', title: 'Angra dos Reis', label: 'Litoral Sul', img: '/angra.png' },
-                    { id: 'mangaratiba', title: 'Mangaratiba', label: 'Costa Verde', img: '/mangaratiba.png' },
-                    { id: 'buzios', title: 'Búzios', label: 'Região dos Lagos', img: '/buzios.png' },
-                    { id: 'cabo', title: 'Cabo Frio', label: 'Região dos Lagos', img: '/cabo.png' },
-                    { id: 'resende', title: 'Resende', label: 'Vale do Paraíba', img: '/resende.png' },
-                    { id: 'campos', title: 'Campos', label: 'Norte Fluminense', img: '/campos.png' }
+                    { id: 'angra', title: 'Angra dos Reis', label: 'Praia', img: '/angra.png' },
+                    { id: 'mangaratiba', title: 'Mangaratiba', label: 'Praia', img: '/mangaratiba.png' },
+                    { id: 'buzios', title: 'Búzios', label: 'Praia', img: '/buzios.png' },
+                    { id: 'cabo', title: 'Cabo Frio', label: 'Praia', img: '/cabo.png' },
+                    { id: 'arraial', title: 'Arraial do Cabo', label: 'Praia', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'saquarema', title: 'Saquarema', label: 'Praia', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'paraty', title: 'Paraty', label: 'Praia', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'ostras', title: 'Rio das Ostras', label: 'Praia', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'petropolis', title: 'Petrópolis', label: 'Montanha', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'teresopolis', title: 'Teresópolis', label: 'Montanha', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'friburgo', title: 'Nova Friburgo', label: 'Montanha', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'vassouras', title: 'Vassouras', label: 'Interior', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'valenca', title: 'Valença', label: 'Interior', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'barra_pirai', title: 'Barra do Piraí', label: 'Interior', img: 'https://images.unsplash.com/photo-1590073844006-3a425a05aa0a?w=400' },
+                    { id: 'resende', title: 'Resende', label: 'Interior', img: '/resende.png' },
+                    { id: 'campos', title: 'Campos', label: 'Interior', img: '/campos.png' }
                   ].map(dest => (
                     <div key={dest.id} style={{
                         position: 'relative',
@@ -655,7 +659,6 @@ export default function PassengerDashboard() {
                 </label>
               </div>
 
-              {isTripIntercity && (
                 <div style={{marginTop:'16px',background:'#f8fafc',border:'1px solid #e2e8f0',padding:'16px',borderRadius:'16px'}}>
                   <h4 style={{margin:0,fontSize:'0.9rem',fontWeight:800,color:'#1e293b',marginBottom:'12px'}}>Quantidade de Pessoas</h4>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -667,7 +670,6 @@ export default function PassengerDashboard() {
                     </div>
                   </div>
                 </div>
-              )}
 
               <div className="action-buttons mt-4">
                 <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>
