@@ -537,12 +537,12 @@ export default function PassengerDashboard() {
                 </div>
                 <div style={{display:'flex',overflowX:'auto',gap:'12px',paddingBottom:'16px',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch'}} className="hide-scrollbar">
                   {[
-                    { id: 'angra', title: 'Angra dos Reis', label: 'Litoral Sul', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Angra_dos_Reis%2C_v%C3%A1rias_ilhas.jpg/400px-Angra_dos_Reis%2C_v%C3%A1rias_ilhas.jpg' },
-                    { id: 'mangaratiba', title: 'Mangaratiba', label: 'Costa Verde', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Mangaratiba_-_01.jpg/400px-Mangaratiba_-_01.jpg' },
-                    { id: 'buzios', title: 'Búzios', label: 'Região dos Lagos', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Arma%C3%A7%C3%A3o_dos_B%C3%BAzios_-_RJ_-_Brasil.jpg/400px-Arma%C3%A7%C3%A3o_dos_B%C3%BAzios_-_RJ_-_Brasil.jpg' },
-                    { id: 'cabo', title: 'Cabo Frio', label: 'Região dos Lagos', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Praia_do_Forte_Cabo_Frio.jpg/400px-Praia_do_Forte_Cabo_Frio.jpg' },
-                    { id: 'resende', title: 'Resende', label: 'Vale do Paraíba', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Aman_2.jpg/400px-Aman_2.jpg' },
-                    { id: 'campos', title: 'Campos', label: 'Norte Fluminense', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Campos_dos_Goytacazes_%282054665487%29.jpg/400px-Campos_dos_Goytacazes_%282054665487%29.jpg' }
+                    { id: 'angra', title: 'Angra dos Reis', label: 'Litoral Sul', img: '/angra.png' },
+                    { id: 'mangaratiba', title: 'Mangaratiba', label: 'Costa Verde', img: '/mangaratiba.png' },
+                    { id: 'buzios', title: 'Búzios', label: 'Região dos Lagos', img: '/buzios.png' },
+                    { id: 'cabo', title: 'Cabo Frio', label: 'Região dos Lagos', img: '/cabo.png' },
+                    { id: 'resende', title: 'Resende', label: 'Vale do Paraíba', img: '/resende.png' },
+                    { id: 'campos', title: 'Campos', label: 'Norte Fluminense', img: '/campos.png' }
                   ].map(dest => (
                     <div key={dest.id} style={{
                         position: 'relative',
