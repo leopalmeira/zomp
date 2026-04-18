@@ -46,6 +46,19 @@ export function getCurrentUser() {
   return raw ? JSON.parse(raw) : null;
 }
 
+export async function updateProfile(data) {
+  const res = await fetch(`${API_BASE}/user/profile`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Erro ao atualizar perfil');
+  const d = await res.json();
+  const c = getCurrentUser();
+  localStorage.setItem('zomp_user', JSON.stringify({ ...c, ...d }));
+  return d;
+}
+
 export function isAuthenticated() {
   return !!getToken();
 }
@@ -69,13 +82,40 @@ export async function requestWithdrawal() {
   return data;
 }
 
-export async function requestRide() {
+export async function requestRide(payload) {
   const res = await fetch(`${API_BASE}/rides/request`, {
     method: 'POST',
     headers: getHeaders(),
+    body: JSON.stringify(payload),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Erro ao solicitar corrida');
+  return data;
+}
+
+export async function getRideHistory() {
+  const res = await fetch(`${API_BASE}/rides`, {
+    headers: getHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao buscar histórico');
+  return data;
+}
+
+export async function getPendingRides() {
+  const res = await fetch(`${API_BASE}/rides/pending`, { headers: getHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao buscar corridas');
+  return data;
+}
+
+export async function acceptRide(rideId) {
+  const res = await fetch(`${API_BASE}/rides/${rideId}/accept`, {
+    method: 'POST',
+    headers: getHeaders()
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao aceitar corrida');
   return data;
 }
 

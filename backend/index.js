@@ -25,7 +25,8 @@ app.post('/api/auth/register', async (req, res) => {
         email,
         password: hashedPassword,
         role: role || 'PASSENGER',
-        qrCode: role === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null
+        qrCode: role === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null,
+        credits: role === 'DRIVER' ? 10 : 0  // Motoristas ganham 10 créditos grátis
       }
     });
 
@@ -36,10 +37,13 @@ app.post('/api/auth/register', async (req, res) => {
       });
       if (referrer) {
         // Link Passenger to Driver permanently
+        const expiresAt = new Date();
+        expiresAt.setFullYear(expiresAt.getFullYear() + 5); // 5 anos
         await prisma.referral.create({
           data: {
             referrerId: referrer.id,
-            referredId: user.id
+            referredId: user.id,
+            expiresAt
           }
         });
       }
@@ -62,7 +66,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance } });
+    res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance, credits: user.credits, cnh: user.cnh, crlv: user.crlv, carPlate: user.carPlate, carModel: user.carModel, carColor: user.carColor, isApproved: user.isApproved } });
   } catch (error) {
     res.status(500).json({ error: 'Internal error login' });
   }
@@ -83,21 +87,121 @@ const authenticate = (req, res, next) => {
   }
 };
 
+app.put('/api/user/profile', authenticate, async (req, res) => {
+  try {
+    const { name, email, phone, cnh, crlv, photo, carPlate, carModel, carColor } = req.body;
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        name,
+        email,
+        cnh,
+        crlv,
+        photo,
+        carPlate,
+        carModel,
+        carColor
+      }
+    });
+    res.json(updatedUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error updating profile' });
+  }
+});
+
 // --- RIDES & ROYALTIES ---
 
 app.post('/api/rides/request', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'PASSENGER') return res.status(403).json({ error: 'Only passengers can request a ride' });
 
+    const { origin, destination, price, distanceKm, vehicleType } = req.body;
+
     const ride = await prisma.ride.create({
       data: {
         passengerId: req.user.id,
+        origin,
+        destination,
+        price: parseFloat(price),
+        distanceKm: parseFloat(distanceKm),
+        vehicleType,
         status: 'PENDING'
       }
     });
     res.json(ride);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Error requesting ride' });
+  }
+});
+
+app.get('/api/rides', authenticate, async (req, res) => {
+  try {
+    // If passenger, return their rides. If driver, return rides they drove
+    const whereClause = req.user.role === 'PASSENGER' 
+      ? { passengerId: req.user.id } 
+      : { driverId: req.user.id };
+
+    const rides = await prisma.ride.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(rides);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching rides' });
+  }
+});
+
+app.get('/api/rides/pending', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers can view pending rides' });
+    
+    // Fetch pending rides that haven't been picked up
+    const pendingRides = await prisma.ride.findMany({
+      where: { status: 'PENDING' },
+      include: { passenger: { select: { name: true, email: true, role: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(pendingRides);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching pending rides' });
+  }
+});
+
+app.post('/api/rides/:id/accept', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers can accept rides' });
+
+    // Check credits
+    const driver = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (driver.credits <= 0) {
+      return res.status(400).json({ error: 'Sem créditos! Compre um pacote para aceitar corridas.' });
+    }
+
+    // Ensure the ride is still pending
+    const existing = await prisma.ride.findUnique({ where: { id: req.params.id }});
+    if(!existing || existing.status !== 'PENDING') {
+      return res.status(400).json({ error: 'Ride is no longer available' });
+    }
+
+    // Deduct 1 credit
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { credits: { decrement: 1 } }
+    });
+
+    const ride = await prisma.ride.update({
+      where: { id: req.params.id },
+      data: { status: 'ACCEPTED', driverId: req.user.id },
+      include: { passenger: { select: { name: true } } }
+    });
+    res.json(ride);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error accepting ride' });
   }
 });
 
@@ -112,12 +216,38 @@ app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
       include: { passenger: { include: { referredBy: true } } }
     });
 
-    // Check if the passenger was referred by someone
+    // Check if the passenger was referred by someone and if it's still valid
     const referral = ride.passenger.referredBy;
-    if (referral) {
+    const now = new Date();
+    const isExpired = referral ? new Date(referral.expiresAt) < now : true;
+
+    if (referral && !isExpired) {
       // Add R$ 0.10 to the referrer's balance
       await prisma.user.update({
         where: { id: referral.referrerId },
+        data: { balance: { increment: 0.10 } }
+      });
+    } else {
+      if (referral) {
+        // Exclui vínculo expirado para dar lugar ao novo motorista
+        await prisma.referral.delete({ where: { referredId: ride.passengerId } });
+      }
+
+      // Passenger has no valid referrer. Auto-bind to this driver!
+      const expiresAt = new Date();
+      expiresAt.setFullYear(expiresAt.getFullYear() + 3); // Voltou a se vincular, agora por 3 anos
+
+      await prisma.referral.create({
+        data: {
+          referrerId: req.user.id,
+          referredId: ride.passengerId,
+          expiresAt,
+          isRenewed: !!referral
+        }
+      });
+      // Add the first R$ 0.10 to this driver
+      await prisma.user.update({
+        where: { id: req.user.id },
         data: { balance: { increment: 0.10 } }
       });
     }
@@ -126,6 +256,20 @@ app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error completing ride' });
+  }
+});
+
+app.put('/api/rides/:id/cancel', authenticate, async (req, res) => {
+  try {
+    const { status } = req.body; // CANCELED_FREE or CANCELED_FEE
+    const ride = await prisma.ride.update({
+      where: { id: req.params.id },
+      data: { status: status || 'CANCELLED' }
+    });
+    res.json({ message: 'Ride cancelled successfully', ride });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error cancelling ride' });
   }
 });
 
@@ -166,6 +310,44 @@ app.post('/api/wallet/withdraw', authenticate, async (req, res) => {
     res.json({ message: 'Withdrawal requested successfully', withdrawal });
   } catch (error) {
     res.status(500).json({ error: 'Error processing withdrawal' });
+  }
+});
+// --- CREDITS ---
+
+app.get('/api/credits', authenticate, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    res.json({ credits: user.credits });
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching credits' });
+  }
+});
+
+app.post('/api/credits/purchase', authenticate, async (req, res) => {
+  try {
+    const { quantity } = req.body; // 10, 20 or 30
+    const validPackages = [10, 20, 30];
+    if (!validPackages.includes(quantity)) {
+      return res.status(400).json({ error: 'Pacote inválido. Escolha 10, 20 ou 30 créditos.' });
+    }
+
+    const pricePerCredit = 1.50;
+    const totalPrice = quantity * pricePerCredit;
+
+    // Add credits to user
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { credits: { increment: quantity } }
+    });
+
+    res.json({
+      message: `${quantity} créditos adicionados com sucesso!`,
+      credits: user.credits,
+      charged: totalPrice
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error purchasing credits' });
   }
 });
 

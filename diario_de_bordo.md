@@ -51,3 +51,64 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementa√ß√£o e
 - Mapa real com integra√ß√£o de geolocaliza√ß√£o (Leaflet ou Google Maps).
 - Testes end-to-end das regras de royalties.
 - Deploy no Render (backend + frontend build).
+
+---
+
+### [17/04/2026] - Deploy Local e Configura√ß√£o de Ambiente
+**Feito:**
+- **Instala√ß√£o de Depend√™ncias:** `npm install` completo em `frontend/` e `backend/`.
+- **Sincroniza√ß√£o de Banco de Dados:** SQLite (`dev.db`) inicializado e sincronizado via `npx prisma db push`.
+- **Setup de Execu√ß√£o:** 
+    - Backend ativo em `http://localhost:3001`.
+    - Frontend (Vite) ativo em `http://localhost:5173/` (com `--host` habilitado).
+- **Valida√ß√£o:** Ambiente local totalmente operacional para desenvolvimento simult√¢neo.
+
+### [17/04/2026] - IntegraÁ„o do Passageiro ao Backend
+**Feito:**
+- **Schema Prisma Atualizado:** Adicionado suporte a origin, destination, price, distanceKm e vehicleType na tabela Ride.
+- **API GET /api/rides:** Endpoint para buscar histÛrico real sincronizado com o banco.
+- **API PUT /api/rides/:id/cancel:** IntegraÁ„o da cobranÁa e mudanÁa de status de cancelamentos virtuais (CANCELED_FREE e CANCELED_FEE).
+- **Frontend (PassengerDashboard):**
+  - IntegraÁ„o do bot„o Chamar Agora disparando payload rico para a base.
+  - Sidebar substitui histÛrico mockado via localStorage por busca assÌncrona.
+  - LÛgica de cancelamento reativa repassando o ID da viagem pro servidor.
+
+### [17/04/2026] - IntegraÁ„o do Motorista Parceiro
+**Feito:**
+- **API GET /api/rides/pending:** Endpoint no backend para os motoristas escutarem chamados em tempo real.
+- **API POST /api/rides/:id/accept:** Endpoint permitindo travar um pedido pendente para o motorista.
+- **Frontend (DriverDashboard):**
+  - Adicionado Toggle (Online / Offline) em tempo real que executa polling das novas corridas.
+  - Cart„o detalhado informando o preÁo da corrida, origem, destino, km e nome do passageiro.
+  - Botıes para 'Aceitar Corrida' e 'Finalizar Corrida', que automaticamente recalcula os Royalties (via api completeRide) se o passageiro foi indicado.
+
+### [17/04/2026] - Ajustes UI Mobile
+**Feito:**
+- Modificado tema do mapa padrao para Claro, adcionando opcao de dark mode no menu de configuracoes.
+- Alterado comportamento do botao de online para um slide-to-go-online fixo em baixo.
+
+### [17/04/2026] - Componentes Essenciais Driver App
+**Feito:**
+- Fix taxa de cancelamento do Passageiro (corrida cancelada cobra corretamente 2.80 fixo).
+- Frontend: Melhorias significativas visuais na barra Slide To Go Online (bottom sheet).
+- Frontend: Drawer Menu lateral com design mais profissional, cards e espacamentos ajustados.
+- Adicionado Tela de 'Documentos e Ve√≠culo' para insercao de CNH, CRLV, Placa, Modelo, Cor e upload mockado de fotos.
+- Backend: Atualizacao do Prisma (cnh, crlv, etc) e novo endpoint PUT /api/user/profile.
+
+### [17/04/2026] - Regras de Royalties e Vinculo (5 Anos / 3 Anos)
+**Feito:**
+- Passageiro indicado (qr/link) ou na sua primeira corrida passa a ter um vinculo com o Motorista com duracao de **5 ANOS**.
+- Apos a expiracao dos 5 anos, o passageiro fica 'livre'. Na proxima vez que ele concluir uma corrida, ele e imediatamente vinculado ao novo motorista daquela corrida, desta vez com duracao de **3 ANOS**.
+- V√≠nculo gerencia o split de Royalties (0.10 por corrida) automaticamente.
+
+### [17/04/2026] - GPS Tracking
+**Feito:**
+- Substitu√≠do getCurrentPosition por watchPosition().
+- Ambos os apps (Passageiro e Motorista) agora vao atualizar a localizacao nativa (pino verde) em tempo real conforme andam com o dispositivo na rua.
+
+### [17/04/2026] - Validacoes de Aprova√ß√£o do Motorista
+**Feito:**
+- Criado logica na barra Slide To Go Online do Driver App:
+  - Se usuario nao preencheu CNH e CRLV, o slider √© bloqueado pedindo que ele faca o upload em 'Documentos e Ve√≠culo'.
+  - Se ele fez upload mas ainda o **isApproved == false**, um alerta expec√≠fico √© retornado na tela ('Estamos validando seus dados... ate 12 horas') proibindo-o de aceitar corridas.
+- Banco de dados atualizado, flag isApproved retornando no proprio payload de Sessao na hora do login.

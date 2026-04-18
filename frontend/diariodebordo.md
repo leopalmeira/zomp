@@ -44,3 +44,10 @@
 
 6. **AÃ§Ãµes Registradas de Versionamento e Controles:**
    - Commit frequente (com Push integrado via console CLI) enviando atualizaÃ§Ãµes sequencialmente para a master do GitHub (`leopalmeira/zomp.git`).
+
+7. **Deploy Local (17/04/2026):**
+- **Processo:** Instalação limpa de node_modules e reconstrução do Prisma Client.
+- **Ambiente:** Servidores locais ativos:
+    - Frontend: http://localhost:5173/
+    - Backend: http://localhost:3001
+- **Status:** Disponível para acesso local e testes de integração.
