@@ -98,8 +98,14 @@
   position: absolute;
   bottom: 0; left: 0; right: 0;
   z-index: 1000;
-  padding: 16px;
-  padding-bottom: 28px;
+  padding: 0;
+}
+
+.driver-bottom-bar .ride-request-card,
+.driver-bottom-bar .active-ride-card,
+.driver-bottom-bar .driver-idle-msg {
+  margin: 16px;
+  margin-bottom: 28px;
 }
 
 /* Ride Request Card */
@@ -222,12 +228,16 @@
 
 /* Slide Online Bar */
 .slide-online-container {
-  background: #fff; border-radius: 20px;
-  box-shadow: 0 -6px 40px rgba(0,0,0,0.15);
-  padding: 24px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.12);
+  padding: 24px 20px 32px; /* Extra padding bottom for safe area */
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  border-top: 1px solid rgba(0,0,0,0.05);
 }
 .slide-track {
-  height: 60px;
+  height: 64px;
   background: #f4f4f5;
   border-radius: 100px;
   margin: 0 auto;
@@ -235,18 +245,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
 }
 .slide-label {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
   color: #a1a1aa;
   pointer-events: none;
 }
 .slide-thumb {
   position: absolute;
-  left: 5px;
-  top: 5px; bottom: 5px;
-  width: 50px;
+  left: 6px;
+  top: 6px; bottom: 6px;
+  width: 52px;
   background: linear-gradient(135deg, #059669, #00E676);
   border-radius: 100px;
   display: flex; align-items: center; justify-content: center;
@@ -257,7 +268,7 @@
 }
 .slide-thumb:active { cursor: grabbing; }
 .slide-thumb span {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 900;
 }
 
@@ -279,12 +290,13 @@
   top: 0; left: 0; bottom: 0;
   width: 85%;
   max-width: 380px;
-  background: #fff;
-  box-shadow: 4px 0 30px rgba(0,0,0,0.2);
+  background: #ffffff;
+  box-shadow: 10px 0 40px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
-  animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideRight 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   overflow-y: auto;
+  border-right: 1px solid rgba(0,0,0,0.05);
 }
 @keyframes slideRight { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 
@@ -340,38 +352,42 @@
 }
 
 /* Navigation Items */
-.drawer-nav { flex: 1; padding: 8px 0; }
+.drawer-nav { flex: 1; padding: 12px 16px; }
 
 .drawer-nav-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 13px 24px;
-  background: none;
+  gap: 16px;
+  padding: 14px 20px;
+  margin-bottom: 4px;
+  background: transparent;
   border: none;
   width: 100%;
   text-align: left;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: #3f3f46;
   cursor: pointer;
-  transition: all 0.15s;
-  border-left: 3px solid transparent;
+  border-radius: 16px;
+  transition: all 0.2s;
 }
 .drawer-nav-item:hover {
-  background: #f8fafc;
+  background: #f4f4f5;
   color: #18181b;
-  border-left-color: #00E676;
+  transform: translateX(4px);
 }
 .drawer-nav-item .nav-icon {
-  font-size: 1.15rem;
-  width: 28px;
-  text-align: center;
+  font-size: 1.25rem;
+  width: 32px; height: 32px;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 .drawer-nav-separator {
   height: 1px;
-  background: linear-gradient(90deg, transparent, #e4e4e7, transparent);
-  margin: 6px 24px;
+  background: #e4e4e7;
+  margin: 12px 20px;
 }
 
 .drawer-footer {

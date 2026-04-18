@@ -84,6 +84,29 @@ const authenticate = (req, res, next) => {
   }
 };
 
+app.put('/api/user/profile', authenticate, async (req, res) => {
+  try {
+    const { name, email, phone, cnh, crlv, photo, carPlate, carModel, carColor } = req.body;
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        name,
+        email,
+        cnh,
+        crlv,
+        photo,
+        carPlate,
+        carModel,
+        carColor
+      }
+    });
+    res.json(updatedUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error updating profile' });
+  }
+});
+
 // --- RIDES & ROYALTIES ---
 
 app.post('/api/rides/request', authenticate, async (req, res) => {

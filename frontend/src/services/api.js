@@ -46,6 +46,19 @@ export function getCurrentUser() {
   return raw ? JSON.parse(raw) : null;
 }
 
+export async function updateProfile(data) {
+  const res = await fetch(`${API_BASE}/user/profile`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error('Erro ao atualizar perfil');
+  const d = await res.json();
+  const c = getCurrentUser();
+  localStorage.setItem('zomp_user', JSON.stringify({ ...c, ...d }));
+  return d;
+}
+
 export function isAuthenticated() {
   return !!getToken();
 }

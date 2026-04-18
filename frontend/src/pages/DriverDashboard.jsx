@@ -151,8 +151,17 @@ export default function DriverDashboard() {
     load()
   }, [activeRide])
 
-  // Profile
-  const [profileData, setProfileData] = useState({ name: user?.name || '', email: user?.email || '', phone: '' })
+  // Profile & Docs
+  const [profileData, setProfileData] = useState({ 
+    name: user?.name || '', 
+    email: user?.email || '', 
+    phone: '',
+    cnh: user?.cnh || '',
+    crlv: user?.crlv || '',
+    carPlate: user?.carPlate || '',
+    carModel: user?.carModel || '',
+    carColor: user?.carColor || '',
+  })
 
   // FAQ
   const [openFaq, setOpenFaq] = useState(null)
@@ -318,6 +327,7 @@ export default function DriverDashboard() {
             </div>
             <nav className="drawer-nav">
               <button className="drawer-nav-item" onClick={() => openScreen('PROFILE')}><span className="nav-icon">👤</span>Meu Perfil</button>
+              <button className="drawer-nav-item" onClick={() => openScreen('DOCS')}><span className="nav-icon">📄</span>Documentos e Veículo</button>
               <button className="drawer-nav-item" onClick={() => openScreen('HISTORY')}><span className="nav-icon">📋</span>Histórico</button>
               <button className="drawer-nav-item" onClick={() => openScreen('CREDITS')}><span className="nav-icon">🎫</span>Créditos<span style={{marginLeft:'auto',background:'#ecfdf5',color:'#059669',padding:'2px 8px',borderRadius:'100px',fontSize:'0.75rem',fontWeight:800}}>{credits}</span></button>
               <button className="drawer-nav-item" onClick={() => openScreen('ROYALTIES')}><span className="nav-icon">👑</span>Royalties<span style={{marginLeft:'auto',color:'#059669',fontSize:'0.8rem',fontWeight:800}}>R$ {wallet.balance?.toFixed(2)}</span></button>
@@ -352,7 +362,66 @@ export default function DriverDashboard() {
             <div className="form-field"><label className="form-label">Nome Completo</label><input className="form-input" value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} /></div>
             <div className="form-field"><label className="form-label">E-mail</label><input className="form-input" type="email" value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} /></div>
             <div className="form-field"><label className="form-label">Telefone</label><input className="form-input" type="tel" placeholder="(00) 00000-0000" value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} /></div>
-            <button className="btn-premium btn-dark" style={{marginTop:'8px'}} onClick={() => { alert('Perfil salvo!'); setActiveScreen(null) }}>Salvar Alterações</button>
+            <button className="btn-premium btn-dark" style={{marginTop:'8px'}} onClick={async () => { 
+                try {
+                  const res = await fetch(`${API}/user/profile`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(profileData)
+                  });
+                  if(!res.ok) throw new Error('Erro ao salvar');
+                  alert('Perfil salvo!');
+                  setActiveScreen(null);
+                } catch(e) { alert(e.message) }
+              }}>Salvar Alterações</button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== DOCUMENTS & VEHICLES ===== */}
+      {activeScreen === 'DOCS' && (
+        <div className="driver-inner-screen">
+          <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Documentos & Veículo</h2></div>
+          <div className="inner-body">
+            <div className="section-title">Informações do Veículo</div>
+            <div className="premium-card" style={{padding: '16px'}}>
+              <div className="form-field"><label className="form-label">Placa do Veículo</label><input className="form-input" placeholder="ABC-1234" value={profileData.carPlate} onChange={e => setProfileData({...profileData, carPlate: e.target.value.toUpperCase()})} /></div>
+              <div className="form-field"><label className="form-label">Modelo</label><input className="form-input" placeholder="Ex: Chevrolet Onix" value={profileData.carModel} onChange={e => setProfileData({...profileData, carModel: e.target.value})} /></div>
+              <div className="form-field"><label className="form-label">Cor</label><input className="form-input" placeholder="Ex: Prata" value={profileData.carColor} onChange={e => setProfileData({...profileData, carColor: e.target.value})} /></div>
+            </div>
+
+            <div className="section-title" style={{marginTop: '20px'}}>Documentos (Fotos)</div>
+            <div className="premium-card" style={{padding: '16px'}}>
+              <div className="form-field">
+                <label className="form-label">CNH</label>
+                <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                  <input type="file" accept="image/*" style={{display:'none'}} id="upload-cnh" onChange={(e) => { if(e.target.files[0]) setProfileData({...profileData, cnh: 'uploaded'})}} />
+                  <label htmlFor="upload-cnh" className="btn-premium btn-dark" style={{flex:1, textAlign:'center', padding:'10px'}}>+ Enviar CNH</label>
+                  {profileData.cnh && <span style={{color: '#059669', fontWeight: 800}}>✓ OK</span>}
+                </div>
+              </div>
+              <div className="form-field" style={{marginTop: '16px'}}>
+                <label className="form-label">CRLV do Veículo</label>
+                <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                  <input type="file" accept="image/*" style={{display:'none'}} id="upload-crlv" onChange={(e) => { if(e.target.files[0]) setProfileData({...profileData, crlv: 'uploaded'})}} />
+                  <label htmlFor="upload-crlv" className="btn-premium btn-dark" style={{flex:1, textAlign:'center', padding:'10px'}}>+ Enviar CRLV</label>
+                  {profileData.crlv && <span style={{color: '#059669', fontWeight: 800}}>✓ OK</span>}
+                </div>
+              </div>
+            </div>
+
+            <button className="btn-premium btn-green" style={{marginTop:'16px'}} onClick={async () => {
+                try {
+                  const res = await fetch(`${API}/user/profile`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(profileData)
+                  });
+                  if(!res.ok) throw new Error('Erro ao salvar');
+                  alert('Documentos e dados salvos com sucesso!');
+                  setActiveScreen(null);
+                } catch(e) { alert(e.message) }
+            }}>Salvar Documentos</button>
           </div>
         </div>
       )}

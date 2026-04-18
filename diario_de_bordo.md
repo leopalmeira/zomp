@@ -81,3 +81,16 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementa√ß√£o e
   - Adicionado Toggle (Online / Offline) em tempo real que executa polling das novas corridas.
   - Cart„o detalhado informando o preÁo da corrida, origem, destino, km e nome do passageiro.
   - Botıes para 'Aceitar Corrida' e 'Finalizar Corrida', que automaticamente recalcula os Royalties (via api completeRide) se o passageiro foi indicado.
+
+### [17/04/2026] - Ajustes UI Mobile
+**Feito:**
+- Modificado tema do mapa padrao para Claro, adcionando opcao de dark mode no menu de configuracoes.
+- Alterado comportamento do botao de online para um slide-to-go-online fixo em baixo.
+
+### [17/04/2026] - Componentes Essenciais Driver App
+**Feito:**
+- Fix taxa de cancelamento do Passageiro (corrida cancelada cobra corretamente 2.80 fixo).
+- Frontend: Melhorias significativas visuais na barra Slide To Go Online (bottom sheet).
+- Frontend: Drawer Menu lateral com design mais profissional, cards e espacamentos ajustados.
+- Adicionado Tela de 'Documentos e Ve√≠culo' para insercao de CNH, CRLV, Placa, Modelo, Cor e upload mockado de fotos.
+- Backend: Atualizacao do Prisma (cnh, crlv, etc) e novo endpoint PUT /api/user/profile.

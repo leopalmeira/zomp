@@ -754,7 +754,7 @@ export default function PassengerDashboard() {
                       
                       const d = new Date()
                       const today = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
-                      setRideHistory(prev => [{ id: Date.now(), date: today, origin: originAddr, dest: destAddr, price: statusVal === 'CANCELED_FREE' ? '0.00' : '2.60', vehicle: vehicleType === 'car' ? 'Carro' : 'Moto', status: statusVal }, ...prev])
+                      setRideHistory(prev => [{ id: Date.now(), date: today, origin: originAddr, dest: destAddr, price: statusVal === 'CANCELED_FREE' ? '0.00' : '2.80', vehicle: vehicleType === 'car' ? 'Carro' : 'Moto', status: statusVal }, ...prev])
                       resetFlow()
                     }
                   }}
@@ -1044,7 +1044,7 @@ export default function PassengerDashboard() {
                           
                           {ride.status === 'CANCELED_FEE' && (
                             <div style={{background: '#fef2f2', color: '#b91c1c', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, marginBottom: '12px', border: '1px solid #fecaca'}}>
-                              ⚠️ Cancelada (Taxa de deslocamento de R$ 2,60 a ser cobrada na próxima corrida)
+                              ⚠️ Cancelada (Taxa de deslocamento de R$ 2,80 a ser cobrada na próxima corrida)
                             </div>
                           )}
                           {ride.status === 'CANCELED_FREE' && (
