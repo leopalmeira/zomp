@@ -921,6 +921,35 @@ export default function PassengerDashboard() {
                 </p>
               )}
 
+              {/* Payment Method Selector */}
+              <div style={{marginBottom:'16px'}}>
+                <label style={{fontSize:'0.85rem',fontWeight:700,color:'#374151',display:'block',marginBottom:'8px'}}>Forma de Pagamento</label>
+                <div style={{display:'flex', gap:'12px'}}>
+                  <button
+                    onClick={() => setPaymentMethod('PIX')}
+                    style={{
+                      flex:1, padding:'14px', borderRadius:'12px', fontWeight:800, cursor:'pointer', transition:'all 0.2s',
+                      border: paymentMethod === 'PIX' ? '2px solid #10b981' : '1px solid #d1d5db',
+                      background: paymentMethod === 'PIX' ? '#ecfdf5' : '#fff',
+                      color: paymentMethod === 'PIX' ? '#059669' : '#4b5563'
+                    }}
+                  >
+                    <span style={{fontSize:'1.1rem', marginRight:'4px'}}>❖</span> PIX
+                  </button>
+                  <button
+                    onClick={() => setPaymentMethod('DINHEIRO')}
+                    style={{
+                      flex:1, padding:'14px', borderRadius:'12px', fontWeight:800, cursor:'pointer', transition:'all 0.2s',
+                      border: paymentMethod === 'DINHEIRO' ? '2px solid #10b981' : '1px solid #d1d5db',
+                      background: paymentMethod === 'DINHEIRO' ? '#ecfdf5' : '#fff',
+                      color: paymentMethod === 'DINHEIRO' ? '#059669' : '#4b5563'
+                    }}
+                  >
+                    <span style={{fontSize:'1.1rem', marginRight:'4px'}}>💵</span> Dinheiro
+                  </button>
+                </div>
+              </div>
+
               {pendingFeeAmount > 0 && (
                 <div style={{background: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '8px', marginBottom: '16px'}}>
                   <p style={{fontSize: '0.85rem', color: '#b91c1c', margin: 0, fontWeight: 700}}>
@@ -1190,6 +1219,34 @@ export default function PassengerDashboard() {
               
               <img src={favoriteDriversState[0].img} alt={favoriteDriversState[0].name} style={{width:'80px',height:'80px',borderRadius:'50%',marginBottom:'16px',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}} />
               
+              {paymentMethod === 'PIX' && (
+                <div style={{background: '#fffbeb', border: '1px solid #fde68a', padding: '16px', borderRadius: '16px', marginBottom: '24px', textAlign: 'left'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px'}}>
+                    <span style={{fontSize: '1.2rem', color: '#10b981'}}>❖</span>
+                    <span style={{fontWeight: 800, color: '#92400e', fontSize: '1rem'}}>Pagamento via PIX</span>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px'}}>
+                    <span style={{fontWeight: 600, color: '#b45309', fontSize: '0.9rem'}}>Valor Total:</span>
+                    <span style={{fontWeight: 900, color: '#b45309', fontSize: '1.2rem'}}>R$ {freightType ? Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2) : getPrice(routeKm, vehicleType)}</span>
+                  </div>
+                  <div style={{background: '#fef3c7', padding: '12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span style={{fontFamily: 'monospace', fontWeight: 600, color: '#d97706'}}>chavetestemotorista@pix.com</span>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText('chavetestemotorista@pix.com');
+                        alert('Chave PIX copiada com sucesso!');
+                      }}
+                      style={{background: '#f59e0b', border: 'none', padding: '6px 12px', borderRadius: '6px', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem'}}
+                    >
+                      Copiar Chave
+                    </button>
+                  </div>
+                  <p style={{margin: '12px 0 0', fontSize: '0.75rem', color: '#b45309', fontWeight: 600, lineHeight: 1.4}}>
+                    Realize a transferência PIX para liberar o motorista e registrar sua corrida.
+                  </p>
+                </div>
+              )}
+
               <div style={{display:'flex',justifyContent:'center',gap:'8px',marginBottom:'32px'}}>
                 {[1, 2, 3, 4, 5].map(star => (
                   <span 
