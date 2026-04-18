@@ -199,20 +199,27 @@ export default function DriverDashboard() {
   const handleLogout = () => { logout(); navigate('/motorista') }
   const openScreen = (s) => { setActiveScreen(s); setMenuOpen(false) }
 
-  // Credit purchase
-  const handleBuyCredits = async (qty) => {
+  // Credit purchase: Payment Initialization (PIX)
+  const [pixModal, setPixModal] = useState(null)
+  
+  const handleBuyCreditsInit = (qty) => {
     const price = (qty * 1.5).toFixed(2)
-    if (!confirm(`Confirma a compra de ${qty} créditos por R$ ${price}?`)) return
+    const pixPayload = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2,15)}-zomp0204${qty}C5204000053039865405${price}5802BR5914ZOMP PAGAMENTOS6009SAO_PAULO62070503***6304ABCD`
+    setPixModal({ qty, price, pixKey: pixPayload })
+  }
+
+  const handleConfirmPixPayment = async () => {
     try {
       const res = await fetch(`${API}/credits/purchase`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity: qty })
+        body: JSON.stringify({ quantity: pixModal.qty })
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error)
       setCredits(d.credits)
       alert(d.message)
+      setPixModal(null)
     } catch (e) { alert(e.message || 'Erro na compra') }
   }
 
@@ -509,19 +516,19 @@ export default function DriverDashboard() {
 
             <div className="section-title" style={{marginTop:'20px'}}>Comprar Pacotes</div>
 
-            <div className="credit-package" onClick={() => handleBuyCredits(10)}>
+            <div className="credit-package" onClick={() => handleBuyCreditsInit(10)}>
               <div className="credit-pkg-icon" style={{background:'#ecfdf5'}}>🎫</div>
               <div className="credit-pkg-info"><h4>10 Créditos</h4><p>Pacote inicial • 10 corridas</p></div>
               <div className="credit-pkg-price"><div className="price">R$ 15,00</div><div className="unit">R$ 1,50/un</div></div>
             </div>
 
-            <div className="credit-package popular" onClick={() => handleBuyCredits(20)}>
+            <div className="credit-package popular" onClick={() => handleBuyCreditsInit(20)}>
               <div className="credit-pkg-icon" style={{background:'#d1fae5'}}>⭐</div>
               <div className="credit-pkg-info"><h4>20 Créditos</h4><p>Mais popular • 20 corridas</p></div>
               <div className="credit-pkg-price"><div className="price">R$ 30,00</div><div className="unit">R$ 1,50/un</div></div>
             </div>
 
-            <div className="credit-package" onClick={() => handleBuyCredits(30)}>
+            <div className="credit-package" onClick={() => handleBuyCreditsInit(30)}>
               <div className="credit-pkg-icon" style={{background:'#fef3c7'}}>🏆</div>
               <div className="credit-pkg-info"><h4>30 Créditos</h4><p>Melhor valor • 30 corridas</p></div>
               <div className="credit-pkg-price"><div className="price">R$ 45,00</div><div className="unit">R$ 1,50/un</div></div>
