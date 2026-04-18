@@ -261,6 +261,12 @@ export default function DriverDashboard() {
               <div className="active-ride-info">
                 <div className="info-row"><span className="info-label">Passageiro</span><span className="info-value">{activeRide.passenger?.name || 'Passageiro'}</span></div>
                 <div className="info-row"><span className="info-label">Origem</span><span className="info-value" style={{maxWidth:'60%',textAlign:'right'}}>{activeRide.origin || '-'}</span></div>
+                {activeRide.stops && activeRide.stops.length > 0 && activeRide.stops.map((stop, i) => (
+                  <div key={i} className="info-row" style={{background:'#fffbeb',padding:'8px 14px',borderRadius:'8px',marginTop:'2px'}}>
+                    <span className="info-label" style={{color:'#92400e',fontWeight:700}}>📍 Parada {i+1}</span>
+                    <span className="info-value" style={{maxWidth:'60%',textAlign:'right',color:'#b45309'}}>{stop}</span>
+                  </div>
+                ))}
                 <div className="info-row"><span className="info-label">Destino</span><span className="info-value" style={{maxWidth:'60%',textAlign:'right'}}>{activeRide.destination || '-'}</span></div>
                 <div className="info-row"><span className="info-label">Distância</span><span className="info-value">{activeRide.distanceKm} km</span></div>
                 <div className="info-row" style={{background:'#ecfdf5',padding:'10px 14px',borderRadius:'10px',marginTop:'4px'}}>
@@ -286,6 +292,12 @@ export default function DriverDashboard() {
                 <div className="route-texts">
                   <div className="route-label">Embarque</div>
                   <div className="route-addr">{pendingRides[0].origin || 'Origem'}</div>
+                  {pendingRides[0].stops && pendingRides[0].stops.length > 0 && pendingRides[0].stops.map((stop, i) => (
+                    <div key={i}>
+                      <div className="route-label" style={{color:'#f59e0b'}}>📍 Parada {i+1}</div>
+                      <div className="route-addr" style={{color:'#b45309'}}>{stop}</div>
+                    </div>
+                  ))}
                   <div className="route-label">Destino</div>
                   <div className="route-addr">{pendingRides[0].destination || 'Destino'}</div>
                 </div>
@@ -293,6 +305,9 @@ export default function DriverDashboard() {
               <div className="request-meta">
                 <span className="meta-tag">📏 {pendingRides[0].distanceKm} km</span>
                 <span className="meta-tag">{pendingRides[0].vehicleType === 'car' ? '🚗 Carro' : '🏍️ Moto'}</span>
+                {pendingRides[0].stops && pendingRides[0].stops.length > 0 && (
+                  <span className="meta-tag" style={{background:'#fffbeb',color:'#b45309'}}>📍 {pendingRides[0].stops.length} parada{pendingRides[0].stops.length > 1 ? 's' : ''}</span>
+                )}
                 <span className="meta-tag" style={{background:'#ecfdf5',color:'#059669'}}>🎫 {credits} créditos</span>
               </div>
               <div className="request-actions">

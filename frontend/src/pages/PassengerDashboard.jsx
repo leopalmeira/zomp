@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, requestRide, getRideHistory } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline } from 'react-leaflet'
@@ -33,8 +33,10 @@ async function resolveAddress(text) {
 }
 
 // Helper: fetch real road route from OSRM
-async function fetchOSRMRoute(originCoords, destCoords) {
-  const url = `https://router.project-osrm.org/route/v1/driving/${originCoords[1]},${originCoords[0]};${destCoords[1]},${destCoords[0]}?overview=full&geometries=geojson`
+async function fetchOSRMRoute(originCoords, destCoords, stopsCoords = []) {
+  const allCoords = [originCoords, ...stopsCoords, destCoords].filter(Boolean)
+  const coordString = allCoords.map(c => `${c[1]},${c[0]}`).join(';')
+  const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`
   const res = await fetch(url)
   const data = await res.json()
   if (data.routes && data.routes.length > 0) {
@@ -79,6 +81,11 @@ export default function PassengerDashboard() {
   const destCoordsRef = useRef(null)
   useEffect(() => { originCoordsRef.current = originCoords }, [originCoords])
   useEffect(() => { destCoordsRef.current = destCoords }, [destCoords])
+
+  // Stops
+  const [stops, setStops] = useState([]) // array of {addr: '', coords: null}
+  const stopsRef = useRef(stops)
+  useEffect(() => { stopsRef.current = stops }, [stops])
 
   // Suggestions
   const [suggestions, setSuggestions] = useState([])
@@ -209,8 +216,10 @@ export default function PassengerDashboard() {
 
   // Compute price based on vehicle type and distance
   const getPrice = (km, type, includeFee = false) => {
+    const validStopsCount = stops.filter(s => s.coords || s.addr.length > 3).length
+    const stopsFee = validStopsCount * 2.00
     const calculated = parseFloat(km) * PRICE_PER_KM[type]
-    const basePrice = Math.max(calculated, MIN_PRICE[type])
+    const basePrice = Math.max(calculated, MIN_PRICE[type]) + stopsFee
     const finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
     return finalPrice.toFixed(2)
   }
@@ -287,27 +296,35 @@ export default function PassengerDashboard() {
       setOriginAddr(shortAddr)
       setOriginCoords(coords)
       setMapCenter(coords)
-    } else {
+    } else if (sugTarget === 'dest') {
       setDestAddr(shortAddr)
       setDestCoords(coords)
+    } else if (sugTarget.startsWith('stop_')) {
+      const idx = parseInt(sugTarget.split('_')[1])
+      const newStops = [...stops]
+      newStops[idx] = { addr: shortAddr, coords }
+      setStops(newStops)
     }
 
     setSuggestions([])
 
-    // Try to calculate route immediately if both coords are ready
+    // Try to calculate route immediately if enough coords are ready
     const oCoords = sugTarget === 'origin' ? coords : originCoordsRef.current
     const dCoords = sugTarget === 'dest' ? coords : destCoordsRef.current
+    const sCoords = sugTarget.startsWith('stop_') 
+      ? stopsRef.current.map((s, i) => i === parseInt(sugTarget.split('_')[1]) ? coords : s.coords) 
+      : stopsRef.current.map(s => s.coords)
 
     if (oCoords && dCoords) {
-      await calculateRoute(oCoords, dCoords)
+      await calculateRoute(oCoords, dCoords, sCoords.filter(Boolean))
     }
   }
 
   // ============= Calculate route (core function) =============
-  const calculateRoute = async (oCoords, dCoords) => {
+  const calculateRoute = async (oCoords, dCoords, sCoords = []) => {
     setIsLoading(true)
     try {
-      const result = await fetchOSRMRoute(oCoords, dCoords)
+      const result = await fetchOSRMRoute(oCoords, dCoords, sCoords)
       if (result) {
         setRouteGeometry(result.geometry)
         setRouteKm(result.km)
@@ -365,8 +382,20 @@ export default function PassengerDashboard() {
         }
       }
 
+      // Resolve stops
+      let resolvedStops = []
+      const currentStops = stopsRef.current
+      for (let i = 0; i < currentStops.length; i++) {
+        let sc = currentStops[i].coords
+        if (!sc && currentStops[i].addr.length >= 4) {
+          const res = await resolveAddress(currentStops[i].addr)
+          if (res) sc = [res.lat, res.lon]
+        }
+        if (sc) resolvedStops.push(sc)
+      }
+
       if (oCoords && dCoords) {
-        await calculateRoute(oCoords, dCoords)
+        await calculateRoute(oCoords, dCoords, resolvedStops)
       } else {
         alert('Não foi possível encontrar os endereços. Verifique se o GPS está ativado ou digite um endereço de partida.')
       }
@@ -428,6 +457,7 @@ export default function PassengerDashboard() {
     setActiveRideId(null)
     setIsIntercity(false)
     setPassengersCount(1)
+    setStops([])
   }
 
   // ============= Markers for map =============
@@ -463,6 +493,12 @@ export default function PassengerDashboard() {
             <div className="route-timeline">
               <div className="dot-start"></div>
               <div className="timeline-line"></div>
+              {stops.map((_, si) => (
+                <React.Fragment key={`dot-stop-${si}`}>
+                  <div style={{width:'10px',height:'10px',borderRadius:'50%',background:'#f59e0b',border:'2px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,0.15)',zIndex:1}}></div>
+                  <div className="timeline-line"></div>
+                </React.Fragment>
+              ))}
               <div className="dot-end"></div>
             </div>
             <div className="route-fields">
@@ -477,6 +513,32 @@ export default function PassengerDashboard() {
                 }}
                 placeholder="Local de partida"
               />
+              {stops.map((stop, si) => (
+                <div key={`stop-${si}`} style={{display:'flex',alignItems:'center',gap:'6px',width:'100%'}}>
+                  <input
+                    className="route-input"
+                    style={{flex:1,borderLeft:'3px solid #f59e0b'}}
+                    value={stop.addr}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      const newStops = [...stops]
+                      newStops[si] = { addr: v, coords: null }
+                      setStops(newStops)
+                      searchAddress(v, `stop_${si}`)
+                    }}
+                    placeholder={`Parada ${si + 1} (+R$ 2,00)`}
+                  />
+                  <button
+                    onClick={() => setStops(stops.filter((_, i) => i !== si))}
+                    style={{
+                      width:'28px',height:'28px',borderRadius:'50%',border:'none',
+                      background:'#fef2f2',color:'#ef4444',cursor:'pointer',
+                      fontWeight:900,fontSize:'0.9rem',flexShrink:0,
+                      display:'flex',alignItems:'center',justifyContent:'center'
+                    }}
+                  >✕</button>
+                </div>
+              ))}
               <input
                 className="route-input end-input"
                 value={destAddr}
@@ -505,6 +567,22 @@ export default function PassengerDashboard() {
               </div>
             )}
           </div>
+
+          {/* Add Stop Button */}
+          {stops.length < 3 && (
+            <button
+              onClick={() => setStops([...stops, { addr: '', coords: null }])}
+              style={{
+                width:'100%', marginTop:'8px', padding:'10px', borderRadius:'12px',
+                border:'1px dashed #d1d5db', background:'#f9fafb', color:'#6b7280',
+                fontWeight:700, fontSize:'0.85rem', cursor:'pointer',
+                display:'flex', alignItems:'center', justifyContent:'center', gap:'6px',
+                transition:'all 0.2s ease'
+              }}
+            >
+              <span style={{fontSize:'1rem'}}>＋</span> Adicionar Parada (+R$ 2,00 cada)
+            </button>
+          )}
 
           <button
             className="btn btn-primary"
@@ -880,7 +958,25 @@ export default function PassengerDashboard() {
           {rideState === 'PRICED' && (
             <div className="state-priced animate-fade-in-up">
               <h2 className="sheet-title" style={{marginBottom:'8px'}}>Resumo da Viagem</h2>
-              <p className="route-desc">{originAddr} → {destAddr}</p>
+              <p className="route-desc">{originAddr} → {stops.filter(s => s.addr).map(s => s.addr).join(' → ')}{stops.filter(s => s.addr).length > 0 ? ' → ' : ''}{destAddr}</p>
+
+              {stops.filter(s => s.addr).length > 0 && (
+                <div style={{
+                  background:'#fffbeb', border:'1px solid #fde68a', padding:'12px 16px',
+                  borderRadius:'12px', marginBottom:'16px', display:'flex',
+                  alignItems:'center', gap:'10px'
+                }}>
+                  <span style={{fontSize:'1.1rem'}}>📍</span>
+                  <div>
+                    <span style={{fontWeight:700, color:'#92400e', fontSize:'0.85rem'}}>
+                      {stops.filter(s => s.addr).length} parada{stops.filter(s => s.addr).length > 1 ? 's' : ''} adicionada{stops.filter(s => s.addr).length > 1 ? 's' : ''}
+                    </span>
+                    <span style={{fontWeight:800, color:'#b45309', fontSize:'0.85rem', marginLeft:'8px'}}>
+                      +R$ {(stops.filter(s => s.addr).length * 2).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Vehicle Type Selector */}
               <div className="vehicle-selector">
