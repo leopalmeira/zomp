@@ -118,6 +118,7 @@ export default function PassengerDashboard() {
   const [freightDescription, setFreightDescription] = useState('')
   const [freightContactName, setFreightContactName] = useState('')
   const [freightContactPhone, setFreightContactPhone] = useState('')
+  const [freightSecurityCode, setFreightSecurityCode] = useState('')
   const FREIGHT_PRICE_PER_KM = 2.70
 
   // Active Ride Extra States
@@ -684,6 +685,7 @@ export default function PassengerDashboard() {
                       setRouteGeometry([]);
                       setRouteKm('0');
                       setVehicleType('car');
+                      setFreightSecurityCode('');
                       setRideState('FREIGHT');
                     }}
                     >
@@ -836,8 +838,11 @@ export default function PassengerDashboard() {
                       alert('Por favor, descreva o que será transportado.');
                       return;
                     }
+                    const newCode = Math.floor(1000 + Math.random() * 9000).toString();
+                    setFreightSecurityCode(newCode);
+
                     // Simulate sending freight request (like ride request)
-                    alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nContato: ${freightContactName || 'Não informado'} ${freightContactPhone ? `(${freightContactPhone})` : ''}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}\n\nProcurando motorista...`);
+                    alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nContato: ${freightContactName || 'Não informado'} ${freightContactPhone ? `(${freightContactPhone})` : ''}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}\n\nCódigo Temporário: ${newCode}\n\nProcurando motorista...`);
                     setRideState('SEARCHING');
                   }}
                 >
@@ -1072,6 +1077,21 @@ export default function PassengerDashboard() {
                   <div style={{fontWeight: 800, fontSize: '1.1rem', color: '#166534'}}>
                     ~ {routeKm} km
                   </div>
+                </div>
+              )}
+
+              {freightType && freightSecurityCode && (
+                <div style={{background: '#fffbeb', border: '1px solid #fde68a', padding: '16px', borderRadius: '16px', marginBottom: '16px'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px'}}>
+                    <span style={{fontSize: '1.2rem'}}>🔐</span>
+                    <span style={{fontWeight: 800, color: '#92400e', fontSize: '1rem'}}>Código de Segurança</span>
+                  </div>
+                  <div style={{background: '#fef3c7', padding: '12px', borderRadius: '12px', textAlign: 'center', marginBottom: '12px', border: '2px dashed #f59e0b'}}>
+                    <span style={{fontSize: '2rem', fontWeight: 900, color: '#d97706', letterSpacing: '4px'}}>{freightSecurityCode}</span>
+                  </div>
+                  <p style={{margin: 0, fontSize: '0.8rem', color: '#b45309', fontWeight: 600, lineHeight: 1.4}}>
+                    <strong style={{color: '#92400e'}}>Importante:</strong> Informe este código fornecido ao motorista nas pontas de <strong>Retirada e Entrega</strong>. O motorista será obrigado a anexar <strong>2 fotos</strong> (na Origem e no Destino) para validar seu frete.
+                  </p>
                 </div>
               )}
 
