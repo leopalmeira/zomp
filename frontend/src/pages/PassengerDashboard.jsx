@@ -840,7 +840,7 @@ export default function PassengerDashboard() {
                 </div>
                 <div
                   className={`vehicle-option ${vehicleType === 'moto' ? 'active' : ''}`}
-                  onClick={() => setVehicleType('moto')}
+                  onClick={() => { setVehicleType('moto'); setPassengersCount(1); }}
                 >
                   <span className="vehicle-icon">🏍️</span>
                   <div className="vehicle-details">
@@ -883,6 +883,7 @@ export default function PassengerDashboard() {
                 </label>
               </div>
 
+              {vehicleType === 'car' && (
                 <div style={{marginTop:'16px',background:'#f8fafc',border:'1px solid #e2e8f0',padding:'16px',borderRadius:'16px'}}>
                   <h4 style={{margin:0,fontSize:'0.9rem',fontWeight:800,color:'#1e293b',marginBottom:'12px'}}>Quantidade de Pessoas</h4>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
@@ -894,6 +895,7 @@ export default function PassengerDashboard() {
                     </div>
                   </div>
                 </div>
+              )}
 
               <div className="action-buttons mt-4">
                 <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>
