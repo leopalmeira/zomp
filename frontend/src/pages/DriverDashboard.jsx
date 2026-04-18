@@ -569,7 +569,7 @@ export default function DriverDashboard() {
 
             <div className="tip-card" style={{marginTop:'16px'}}>
               <span className="tip-icon">👑</span>
-              <div><div className="tip-title">Como funciona?</div><div className="tip-text">Cada passageiro que você transporta pela primeira vez fica vinculado permanentemente a você. A cada corrida futura dele, R$ 0,10 é creditado na sua carteira.</div></div>
+              <div><div className="tip-title">Como funciona?</div><div className="tip-text">Cada passageiro que você transporta pela primeira vez fica vinculado por 3 anos a você. A cada corrida futura dele, R$ 0,10 é creditado na sua carteira.</div></div>
             </div>
           </div>
         </div>
@@ -595,7 +595,7 @@ export default function DriverDashboard() {
             <div className="section-title">Como funciona</div>
             <div className="premium-card">
               <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
-                {['Mostre o QR Code ao passageiro','Ele escaneia durante o cadastro','Vínculo permanente criado','Ganhe R$ 0,10 por corrida dele'].map((step, i) => (
+                {['Mostre o QR Code ao passageiro','Ele escaneia durante o cadastro','Vínculo de 3 anos criado!','Ganhe R$ 0,10 por corrida dele'].map((step, i) => (
                   <div key={i} style={{display:'flex',gap:'12px',alignItems:'center'}}>
                     <div style={{width:'28px',height:'28px',borderRadius:'50%',background: i < 4 ? '#ecfdf5' : '#f4f4f5',color:'#059669',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:'0.8rem',flexShrink:0}}>{i+1}</div>
                     <span style={{fontWeight:600,fontSize:'0.9rem',color:'#3f3f46'}}>{step}</span>
