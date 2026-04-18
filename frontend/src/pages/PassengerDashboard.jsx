@@ -108,6 +108,10 @@ export default function PassengerDashboard() {
   const [isLoading, setIsLoading] = useState(false)
   const [scheduleData, setScheduleData] = useState({ date: '', time: '' })
   const [activeRideId, setActiveRideId] = useState(null)
+  
+  // Intercity Trips State
+  const [isIntercity, setIsIntercity] = useState(false)
+  const [passengersCount, setPassengersCount] = useState(1)
 
   // Active Ride Extra States
   const [cancelCountdown, setCancelCountdown] = useState(119)
@@ -191,9 +195,13 @@ export default function PassengerDashboard() {
 
   // Compute price based on vehicle type and distance
   const getPrice = (km, type, includeFee = false) => {
-    const calculated = parseFloat(km) * PRICE_PER_KM[type]
-    const minimum = MIN_PRICE[type]
-    const basePrice = Math.max(calculated, minimum)
+    let basePrice
+    if (isIntercity) {
+      basePrice = Math.max(parseFloat(km) * 1.70, 30.00); // 1.70 per km, base de seguranca
+    } else {
+      const calculated = parseFloat(km) * PRICE_PER_KM[type]
+      basePrice = Math.max(calculated, MIN_PRICE[type])
+    }
     const finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
     return finalPrice.toFixed(2)
   }
@@ -394,6 +402,8 @@ export default function PassengerDashboard() {
     setIsChatOpen(false)
     setChatMessages([])
     setActiveRideId(null)
+    setIsIntercity(false)
+    setPassengersCount(1)
   }
 
   // ============= Markers for map =============
@@ -515,8 +525,39 @@ export default function PassengerDashboard() {
                 )}
                 <p className="hint-text">Serão notificados primeiro para sua corrida.</p>
               </div>
+
+              {/* Viagens Longas */}
+              <div className="intercity-section" style={{marginTop:'20px'}}>
+                <div className="section-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
+                  <h3 style={{fontSize:'1.05rem',fontWeight:800,margin:0,color:'#18181b'}}>Viagens Longas</h3>
+                  <span style={{fontSize:'0.7rem',fontWeight:800,color:'#059669',background:'#ecfdf5',padding:'4px 8px',borderRadius:'100px'}}>R$ 1,70 / km</span>
+                </div>
+                <div style={{display:'flex',overflowX:'auto',gap:'12px',paddingBottom:'8px',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch'}} className="hide-scrollbar">
+                  {[
+                    { id: 'angra', title: 'Angra dos Reis', label: 'Litoral Sul', img: 'https://images.unsplash.com/photo-1590483868516-ab66708ab2e6?w=400&q=80' },
+                    { id: 'buzios', title: 'Búzios', label: 'Região dos Lagos', img: 'https://images.unsplash.com/photo-1596423735880-5f2a1b94b29b?w=400&q=80' },
+                    { id: 'cabo', title: 'Cabo Frio', label: 'Região dos Lagos', img: 'https://images.unsplash.com/photo-1574691456108-a53ec6e2417e?w=400&q=80' }
+                  ].map(dest => (
+                    <div key={dest.id} style={{minWidth:'140px',borderRadius:'16px',overflow:'hidden',background:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',cursor:'pointer',flexShrink:0,scrollSnapAlign:'start'}} onClick={() => {
+                        setIsIntercity(true);
+                        setDestAddr(`${dest.title}, RJ`);
+                        setDestCoords(null);
+                        searchAddress(`${dest.title}, RJ`, 'dest');
+                        setTimeout(() => handleForceCalculate(), 1500);
+                    }}>
+                      <div style={{width:'100%',height:'90px',backgroundImage:`url(${dest.img})`,backgroundSize:'cover',backgroundPosition:'center'}}></div>
+                      <div style={{padding:'10px'}}>
+                         <h4 style={{margin:0,fontSize:'0.9rem',fontWeight:800,color:'#18181b'}}>{dest.title}</h4>
+                         <span style={{fontSize:'0.7rem',color:'#71717a',fontWeight:600}}>{dest.label}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             </div>
           )}
+
 
           {/* ---- STATE: PRICED ---- */}
           {rideState === 'PRICED' && (
@@ -581,6 +622,20 @@ export default function PassengerDashboard() {
                   <span className="slider round"></span>
                 </label>
               </div>
+
+              {isIntercity && (
+                <div style={{marginTop:'16px',background:'#f8fafc',border:'1px solid #e2e8f0',padding:'16px',borderRadius:'16px'}}>
+                  <h4 style={{margin:0,fontSize:'0.9rem',fontWeight:800,color:'#1e293b',marginBottom:'12px'}}>Quantidade de Pessoas</h4>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                    <p style={{margin:0,fontSize:'0.8rem',color:'#64748b',fontWeight:600}}>Lugares necessários (1-4)</p>
+                    <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+                       <button style={{width:'32px',height:'32px',borderRadius:'8px',background:'#fff',border:'1px solid #cbd5e1',cursor:'pointer',fontWeight:800,color:'#0f172a'}} onClick={() => setPassengersCount(Math.max(1, passengersCount - 1))}>-</button>
+                       <span style={{fontSize:'1.1rem',fontWeight:800}}>{passengersCount}</span>
+                       <button style={{width:'32px',height:'32px',borderRadius:'8px',background:'#fff',border:'1px solid #cbd5e1',cursor:'pointer',fontWeight:800,color:'#0f172a'}} onClick={() => setPassengersCount(Math.min(4, passengersCount + 1))}>+</button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="action-buttons mt-4">
                 <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>
