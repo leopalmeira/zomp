@@ -193,10 +193,13 @@ export default function PassengerDashboard() {
     .filter(h => h.status === 'CANCELED_FEE' && !h.feePaid)
     .reduce((sum, h) => sum + parseFloat(h.price || 0), 0)
 
+  // Dynamically evaluate if trip is intercity
+  const isTripIntercity = isIntercity || parseFloat(routeKm) > 90
+
   // Compute price based on vehicle type and distance
   const getPrice = (km, type, includeFee = false) => {
     let basePrice
-    if (isIntercity) {
+    if (isTripIntercity) {
       basePrice = Math.max(parseFloat(km) * 1.70, 30.00); // 1.70 per km, base de seguranca
     } else {
       const calculated = parseFloat(km) * PRICE_PER_KM[type]
@@ -532,23 +535,52 @@ export default function PassengerDashboard() {
                   <h3 style={{fontSize:'1.05rem',fontWeight:800,margin:0,color:'#18181b'}}>Viagens Longas</h3>
                   <span style={{fontSize:'0.7rem',fontWeight:800,color:'#059669',background:'#ecfdf5',padding:'4px 8px',borderRadius:'100px'}}>R$ 1,70 / km</span>
                 </div>
-                <div style={{display:'flex',overflowX:'auto',gap:'12px',paddingBottom:'8px',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch'}} className="hide-scrollbar">
+                <div style={{display:'flex',overflowX:'auto',gap:'12px',paddingBottom:'16px',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch'}} className="hide-scrollbar">
                   {[
-                    { id: 'angra', title: 'Angra dos Reis', label: 'Litoral Sul', img: 'https://images.unsplash.com/photo-1590483868516-ab66708ab2e6?w=400&q=80' },
-                    { id: 'buzios', title: 'Búzios', label: 'Região dos Lagos', img: 'https://images.unsplash.com/photo-1596423735880-5f2a1b94b29b?w=400&q=80' },
-                    { id: 'cabo', title: 'Cabo Frio', label: 'Região dos Lagos', img: 'https://images.unsplash.com/photo-1574691456108-a53ec6e2417e?w=400&q=80' }
+                    { id: 'angra', title: 'Angra dos Reis', label: 'Litoral Sul', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Angra_dos_Reis%2C_v%C3%A1rias_ilhas.jpg/400px-Angra_dos_Reis%2C_v%C3%A1rias_ilhas.jpg' },
+                    { id: 'mangaratiba', title: 'Mangaratiba', label: 'Costa Verde', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Mangaratiba_-_01.jpg/400px-Mangaratiba_-_01.jpg' },
+                    { id: 'buzios', title: 'Búzios', label: 'Região dos Lagos', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Arma%C3%A7%C3%A3o_dos_B%C3%BAzios_-_RJ_-_Brasil.jpg/400px-Arma%C3%A7%C3%A3o_dos_B%C3%BAzios_-_RJ_-_Brasil.jpg' },
+                    { id: 'cabo', title: 'Cabo Frio', label: 'Região dos Lagos', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Praia_do_Forte_Cabo_Frio.jpg/400px-Praia_do_Forte_Cabo_Frio.jpg' },
+                    { id: 'resende', title: 'Resende', label: 'Vale do Paraíba', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Aman_2.jpg/400px-Aman_2.jpg' },
+                    { id: 'campos', title: 'Campos', label: 'Norte Fluminense', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Campos_dos_Goytacazes_%282054665487%29.jpg/400px-Campos_dos_Goytacazes_%282054665487%29.jpg' }
                   ].map(dest => (
-                    <div key={dest.id} style={{minWidth:'140px',borderRadius:'16px',overflow:'hidden',background:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',cursor:'pointer',flexShrink:0,scrollSnapAlign:'start'}} onClick={() => {
+                    <div key={dest.id} style={{
+                        position: 'relative',
+                        minWidth:'150px',
+                        height: '180px',
+                        borderRadius:'20px',
+                        overflow:'hidden',
+                        background:'#000',
+                        boxShadow:'0 8px 20px rgba(0,0,0,0.12)',
+                        cursor:'pointer',
+                        flexShrink:0,
+                        scrollSnapAlign:'start',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    }} onClick={() => {
                         setIsIntercity(true);
                         setDestAddr(`${dest.title}, RJ`);
                         setDestCoords(null);
                         searchAddress(`${dest.title}, RJ`, 'dest');
                         setTimeout(() => handleForceCalculate(), 1500);
-                    }}>
-                      <div style={{width:'100%',height:'90px',backgroundImage:`url(${dest.img})`,backgroundSize:'cover',backgroundPosition:'center'}}></div>
-                      <div style={{padding:'10px'}}>
-                         <h4 style={{margin:0,fontSize:'0.9rem',fontWeight:800,color:'#18181b'}}>{dest.title}</h4>
-                         <span style={{fontSize:'0.7rem',color:'#71717a',fontWeight:600}}>{dest.label}</span>
+                    }} onMouseEnter={(e) => { e.currentTarget.style.transform='scale(1.04)'; e.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform='scale(1)'; e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,0.12)'; }}>
+                      <div style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundImage:`url(${dest.img})`,
+                        backgroundSize:'cover',
+                        backgroundPosition:'center',
+                        transition: 'transform 0.5s ease',
+                      }} className="dest-bg-img"></div>
+                      <div style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%)'
+                      }}></div>
+                      <div style={{
+                        position: 'absolute', bottom: 0, left: 0, right: 0,
+                        padding:'16px',
+                        display: 'flex', flexDirection: 'column', gap: '4px'
+                      }}>
+                         <span style={{fontSize:'0.65rem',color:'#10b981',fontWeight:800, textTransform:'uppercase', letterSpacing:'1px', textShadow:'0 2px 4px rgba(0,0,0,0.5)'}}>{dest.label}</span>
+                         <h4 style={{margin:0,fontSize:'1.1rem',fontWeight:800,color:'#fff', textShadow:'0 2px 4px rgba(0,0,0,0.5)'}}>{dest.title}</h4>
                       </div>
                     </div>
                   ))}
@@ -623,7 +655,7 @@ export default function PassengerDashboard() {
                 </label>
               </div>
 
-              {isIntercity && (
+              {isTripIntercity && (
                 <div style={{marginTop:'16px',background:'#f8fafc',border:'1px solid #e2e8f0',padding:'16px',borderRadius:'16px'}}>
                   <h4 style={{margin:0,fontSize:'0.9rem',fontWeight:800,color:'#1e293b',marginBottom:'12px'}}>Quantidade de Pessoas</h4>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
