@@ -105,3 +105,10 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementação e
 **Feito:**
 - Substituído getCurrentPosition por watchPosition().
 - Ambos os apps (Passageiro e Motorista) agora vao atualizar a localizacao nativa (pino verde) em tempo real conforme andam com o dispositivo na rua.
+
+### [17/04/2026] - Validacoes de Aprovação do Motorista
+**Feito:**
+- Criado logica na barra Slide To Go Online do Driver App:
+  - Se usuario nao preencheu CNH e CRLV, o slider é bloqueado pedindo que ele faca o upload em 'Documentos e Veículo'.
+  - Se ele fez upload mas ainda o **isApproved == false**, um alerta expecífico é retornado na tela ('Estamos validando seus dados... ate 12 horas') proibindo-o de aceitar corridas.
+- Banco de dados atualizado, flag isApproved retornando no proprio payload de Sessao na hora do login.

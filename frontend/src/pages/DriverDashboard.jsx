@@ -25,7 +25,7 @@ const getToken = () => localStorage.getItem('zomp_token')
 
 export default function DriverDashboard() {
   const navigate = useNavigate()
-  const [user] = useState(getCurrentUser())
+  const [user, setUser] = useState(getCurrentUser())
 
   useEffect(() => {
     if (!user || user.role !== 'DRIVER') { navigate('/motorista'); return }
@@ -78,6 +78,15 @@ export default function DriverDashboard() {
   const handleSlideEnd = () => {
     setIsSwiping(false)
     if (slideX >= slideThreshold) {
+      if (!user?.cnh || !user?.crlv) {
+        setSlideX(0);
+        return alert("⚠️ Envie seus documentos no menu 'Documentos & Veículo' antes de ficar online.");
+      }
+      if (!user?.isApproved) {
+        setSlideX(0);
+        return alert("⏳ Estamos validando seus dados, isso pode levar até 12 horas. Aguarde a aprovação da Zomp para ficar online.");
+      }
+
       setIsOnline(true)
       setSlideX(0)
     } else {
@@ -307,7 +316,12 @@ export default function DriverDashboard() {
                   <span>▶</span>
                 </div>
               </div>
-              <p style={{textAlign:'center',marginTop:'10px',fontSize:'0.8rem',color:'#71717a',fontWeight:600}}>🎫 {credits} créditos</p>
+              <p style={{
+                textAlign:'center', marginTop:'14px', fontSize:'0.85rem', fontWeight:700,
+                color: (!user?.cnh || !user?.crlv) ? '#ef4444' : (!user?.isApproved ? '#f59e0b' : '#059669')
+              }}>
+                {(!user?.cnh || !user?.crlv) ? '⚠️ Envio de Documentos Pendente' : (!user?.isApproved ? '⏳ Estamos validando seus dados (até 12h)' : `🎫 ${credits} créditos disponíveis`)}
+              </p>
             </div>
           ) : (
             /* Online + no rides available = searching */
@@ -375,6 +389,9 @@ export default function DriverDashboard() {
                     body: JSON.stringify(profileData)
                   });
                   if(!res.ok) throw new Error('Erro ao salvar');
+                  const updatedUserLocal = {...user, ...profileData};
+                  localStorage.setItem('zomp_user', JSON.stringify(updatedUserLocal));
+                  setUser(updatedUserLocal);
                   alert('Perfil salvo!');
                   setActiveScreen(null);
                 } catch(e) { alert(e.message) }
@@ -423,6 +440,9 @@ export default function DriverDashboard() {
                     body: JSON.stringify(profileData)
                   });
                   if(!res.ok) throw new Error('Erro ao salvar');
+                  const updatedUserLocal = {...user, ...profileData, isApproved: user.isApproved}; // preserve approval status from local
+                  localStorage.setItem('zomp_user', JSON.stringify(updatedUserLocal));
+                  setUser(updatedUserLocal);
                   alert('Documentos e dados salvos com sucesso!');
                   setActiveScreen(null);
                 } catch(e) { alert(e.message) }

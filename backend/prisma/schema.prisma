@@ -24,6 +24,7 @@ model User {
   carPlate  String?
   carModel  String?
   carColor  String?
+  isApproved Boolean @default(false) // Admin must approve before driver can go online
 
   // Relationships
   ridesAsPassenger Ride[] @relation("PassengerRides")
