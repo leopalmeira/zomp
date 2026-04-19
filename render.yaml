@@ -34,10 +34,8 @@ services:
   # ==========================================
   # FRONTEND - React + Vite (Static Site)
   # ==========================================
-  - type: web
+  - type: static
     name: zomp-app
-    runtime: static
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
