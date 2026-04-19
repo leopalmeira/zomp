@@ -449,26 +449,27 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 16px 12px;
-  border: 2px solid #e4e4e7;
+  padding: 10px;
+  background: #f8fafc;
+  border: 2px solid #f1f5f9;
   border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all 0.2s ease;
-  background: #fafafa;
-}
-
-.vehicle-option:hover {
-  border-color: #a3a3a3;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  min-height: 120px;
+  overflow: hidden;
 }
 
 .vehicle-option.active {
+  background: #ecfdf5;
   border-color: var(--primary);
-  background: var(--primary-subtle);
-  box-shadow: 0 0 0 1px var(--primary);
+  box-shadow: 0 10px 20px rgba(0,230,118,0.12);
+  transform: translateY(-2px);
 }
 
 .vehicle-icon {
   font-size: 2rem;
+  transition: transform 0.3s;
 }
 
 .vehicle-details {
@@ -479,20 +480,20 @@
 }
 
 .vehicle-name {
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 800;
   color: var(--text-dark);
 }
 
 .vehicle-price {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 800;
-  color: #065f46;
+  color: var(--primary);
 }
 
 .vehicle-info {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.65rem;
+  font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
