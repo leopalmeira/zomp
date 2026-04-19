@@ -1144,42 +1144,56 @@ export default function PassengerDashboard() {
                           try {
                             const file = e.target.files[0];
                             
-                            // Convert image to Base64
+                            // Convert and COMPRESS image to Base64 using Canvas
                             const reader = new FileReader();
                             reader.readAsDataURL(file);
-                            reader.onload = async () => {
-                                const base64Image = reader.result;
-                                
-                                try {
-                                    const token = localStorage.getItem('zomp_token');
-                                    const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://zomp-backend.onrender.com'}/api/analyze-print`, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'Authorization': `Bearer ${token}`
-                                        },
-                                        body: JSON.stringify({ imageBase64: base64Image })
-                                    });
+                            reader.onload = (event) => {
+                                const img = new Image();
+                                img.src = event.target.result;
+                                img.onload = async () => {
+                                    const canvas = document.createElement('canvas');
+                                    const MAX_WIDTH = 800; // Optimal for OCR and fast upload
+                                    const scaleSize = MAX_WIDTH / img.width;
+                                    canvas.width = MAX_WIDTH;
+                                    canvas.height = img.height * scaleSize;
                                     
-                                    if (!res.ok) throw new Error('Erro na API da IA');
+                                    const ctx = canvas.getContext('2d');
+                                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                                     
-                                    const data = await res.json();
-                                    const competitorPrice = data.price;
+                                    // Compress to JPEG with 80% quality (cuts down size from ~5MB to ~150kb)
+                                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
                                     
-                                    console.log('[AI VISION] Final selected price:', competitorPrice);
-                                    
-                                    if (competitorPrice >= 5) {
-                                      setCompPriceRead(competitorPrice);
-                                      setHasCompetitionDiscount(true);
-                                    } else {
-                                      alert('A IA não conseguiu identificar um preço válido no print. Tente uma imagem mais focada no valor.');
+                                    try {
+                                        const token = localStorage.getItem('zomp_token');
+                                        const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://zomp-backend.onrender.com'}/api/analyze-print`, {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'Authorization': `Bearer ${token}`
+                                            },
+                                            body: JSON.stringify({ imageBase64: compressedBase64 })
+                                        });
+                                        
+                                        if (!res.ok) throw new Error(`Erro API: ${res.status}`);
+                                        
+                                        const data = await res.json();
+                                        const competitorPrice = data.price;
+                                        
+                                        console.log('[AI VISION] Final selected price:', competitorPrice);
+                                        
+                                        if (competitorPrice >= 5) {
+                                          setCompPriceRead(competitorPrice);
+                                          setHasCompetitionDiscount(true);
+                                        } else {
+                                          alert('A IA não conseguiu identificar um preço válido no print. Tente uma imagem mais focada.');
+                                        }
+                                    } catch (apiErr) {
+                                        console.error('[AI VISION] Error calling backend:', apiErr);
+                                        alert('Falha na comunicação com a Inteligência Zomp. Tente novamente.');
+                                    } finally {
+                                        setIsAnalyzingPrint(false);
                                     }
-                                } catch (apiErr) {
-                                    console.error('[AI VISION] Error calling backend:', apiErr);
-                                    alert('Falha na comunicação com a Inteligência Zomp. Tente novamente.');
-                                } finally {
-                                    setIsAnalyzingPrint(false);
-                                }
+                                };
                             };
                             reader.onerror = () => {
                                 setIsAnalyzingPrint(false);
