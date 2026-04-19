@@ -19,7 +19,13 @@ export async function register({ name, email, password, role, referrerQrCode }) 
     body: JSON.stringify({ name, email, password, role, referrerQrCode }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Erro ao registrar');
+  if (!res.ok) {
+    let errMsg = data.error || 'Erro ao registrar';
+    if (data.details && data.details.includes('Unique constraint failed') && data.details.includes('email')) {
+      errMsg = 'Este e-mail já está cadastrado! Por favor, vá para a tela de Entrar (Login).';
+    }
+    throw new Error(errMsg);
+  }
   return data;
 }
 
