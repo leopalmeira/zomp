@@ -46,6 +46,18 @@ html, body {
   overscroll-behavior: none;
 }
 
+/* GLOBAL LEAFLET CLEANING */
+.leaflet-control-attribution,
+.leaflet-control-attribution a,
+.leaflet-bottom.leaflet-right,
+.leaflet-bottom.leaflet-left,
+.leaflet-logo-svg,
+.leaflet-control-zoom {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* The PWA Container */
 #root {
   width: 100%;

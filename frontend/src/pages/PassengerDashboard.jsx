@@ -984,24 +984,28 @@ export default function PassengerDashboard() {
                   className={`vehicle-option ${vehicleType === 'car' ? 'active' : ''}`}
                   onClick={() => setVehicleType('car')}
                 >
-                  <span className="vehicle-icon">🚗</span>
-                  <div className="vehicle-details">
-                    <span className="vehicle-name">{isTripIntercity ? 'Carro Seguro (Viagens Longas)' : 'Carro'}</span>
-                    <span className="vehicle-price">R$ {getPrice(routeKm, 'car', true)}</span>
-                    
-                    {/* Integrated Passenger Counter */}
-                    <div className="integrated-passengers" onClick={(e) => e.stopPropagation()}>
-                      <div className="passenger-icon-box">
-                        <User size={14} />
-                      </div>
-                      <div className="count-controls">
-                        <button onClick={() => setPassengersCount(Math.max(1, passengersCount - 1))}>-</button>
-                        <span>{passengersCount}</span>
-                        <button onClick={() => setPassengersCount(Math.min(4, passengersCount + 1))}>+</button>
-                      </div>
+                  <div style={{display:'flex', alignItems:'center', gap:'12px', width:'100%'}}>
+                    <span className="vehicle-icon">🚗</span>
+                    <div className="vehicle-details">
+                      <span className="vehicle-name">{isTripIntercity ? 'Carro Seguro' : 'Carro'}</span>
+                      <span className="vehicle-price">R$ {getPrice(routeKm, 'car', true)}</span>
                     </div>
                   </div>
-                  <span className="vehicle-info">{isTripIntercity ? 'R$ 1,70 / km' : 'Conforto'}</span>
+                  
+                  {vehicleType === 'car' && (
+                    <div className="integrated-counter" onClick={(e) => e.stopPropagation()}>
+                       <div className="counter-label">
+                         <User size={12} />
+                         <span>Passageiros</span>
+                       </div>
+                       <div className="counter-actions">
+                         <button onClick={() => setPassengersCount(Math.max(1, passengersCount - 1))}>-</button>
+                         <span className="count">{passengersCount}</span>
+                         <button onClick={() => setPassengersCount(Math.min(4, passengersCount + 1))}>+</button>
+                       </div>
+                    </div>
+                  )}
+                  <span className="vehicle-info">{isTripIntercity ? 'Viagem Longa' : 'Conforto'}</span>
                 </div>
                 
                 {!isTripIntercity && (

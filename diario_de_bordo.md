@@ -120,3 +120,8 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã£o e
 - **UX de Passageiros:** Integração do seletor de quantidade de pessoas diretamente no card do veículo, eliminando cards redundantes e melhorando o fluxo de escolha.
 - **Estabilidade PWA:** Implementação do bloqueio de rolagem e overscroll para sensação de App Nativo 100% estático.
 
+
+## [19/04/2026] - Refinamento Final de UX (v2.0.20)
+- **Integração Total:** Seletor de passageiros movido para DENTRO do card do Carro, limpando o layout inferior.
+- **Branding Clean:** Marca dágua do Leaflet removida globalmente de todos os mapas no Passageiro e Motorista.
+
