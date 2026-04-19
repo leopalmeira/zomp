@@ -489,6 +489,10 @@ export default function PassengerDashboard() {
     setIsIntercity(false)
     setPassengersCount(1)
     setStops([])
+    // Reset competition discount (per-trip only)
+    setHasCompetitionDiscount(false)
+    setCompPriceRead(0)
+    setIsAnalyzingPrint(false)
   }
 
   // ============= Markers for map =============
