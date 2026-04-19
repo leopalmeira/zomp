@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, requestRide, getRideHistory } from '../services/api'
-import { MapContainer, TileLayer, useMap, Marker, Polyline } from 'react-leaflet'
+import { MapContainer, TileLayer, useMap, Marker, Polyline, Popup } from 'react-leaflet'
 import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
