@@ -326,14 +326,18 @@ app.get('/api/credits', authenticate, async (req, res) => {
 
 app.post('/api/credits/purchase', authenticate, async (req, res) => {
   try {
-    const { quantity } = req.body; // 10, 20 or 30
-    const validPackages = [10, 20, 30];
-    if (!validPackages.includes(quantity)) {
-      return res.status(400).json({ error: 'Pacote inválido. Escolha 10, 20 ou 30 créditos.' });
+    const { quantity } = req.body; // 10, 22 or 35
+    const packages = {
+      10: 15.00,  // R$ 1,50 un
+      22: 30.00,  // R$ 1,36 un
+      35: 45.00   // R$ 1,28 un
+    };
+
+    if (!packages[quantity]) {
+      return res.status(400).json({ error: 'Pacote inválido. Escolha 10, 22 ou 35 créditos.' });
     }
 
-    const pricePerCredit = 1.50;
-    const totalPrice = quantity * pricePerCredit;
+    const totalPrice = packages[quantity];
 
     // Add credits to user
     const user = await prisma.user.update({

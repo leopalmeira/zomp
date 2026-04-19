@@ -574,25 +574,25 @@ export default function DriverDashboard() {
 
             <div className="credit-package" onClick={() => handleBuyCreditsInit(10)}>
               <div className="credit-pkg-icon" style={{background:'#ecfdf5'}}>🎫</div>
-              <div className="credit-pkg-info"><h4>10 Créditos</h4><p>Pacote inicial • 10 corridas</p></div>
+              <div className="credit-pkg-info"><h4>10 Créditos</h4><p>Pacote Básico • 10 corridas</p></div>
               <div className="credit-pkg-price"><div className="price">R$ 15,00</div><div className="unit">R$ 1,50/un</div></div>
             </div>
 
-            <div className="credit-package popular" onClick={() => handleBuyCreditsInit(20)}>
+            <div className="credit-package popular" onClick={() => handleBuyCreditsInit(22)}>
               <div className="credit-pkg-icon" style={{background:'#d1fae5'}}>⭐</div>
-              <div className="credit-pkg-info"><h4>20 Créditos</h4><p>Mais popular • 20 corridas</p></div>
-              <div className="credit-pkg-price"><div className="price">R$ 30,00</div><div className="unit">R$ 1,50/un</div></div>
+              <div className="credit-pkg-info"><h4>22 Créditos</h4><p style={{color:'#059669',fontWeight:700}}>+2 Corridas Grátis</p></div>
+              <div className="credit-pkg-price"><div className="price">R$ 30,00</div><div className="unit">R$ 1,36/un</div></div>
             </div>
 
-            <div className="credit-package" onClick={() => handleBuyCreditsInit(30)}>
-              <div className="credit-pkg-icon" style={{background:'#fef3c7'}}>🏆</div>
-              <div className="credit-pkg-info"><h4>30 Créditos</h4><p>Melhor valor • 30 corridas</p></div>
-              <div className="credit-pkg-price"><div className="price">R$ 45,00</div><div className="unit">R$ 1,50/un</div></div>
+            <div className="credit-package" onClick={() => handleBuyCreditsInit(35)} style={{background: '#fef3c7', borderColor: '#f59e0b', transform: 'scale(1.02)'}}>
+              <div className="credit-pkg-icon" style={{background:'#f59e0b', color:'#fff'}}>🏆</div>
+              <div className="credit-pkg-info"><h4>35 Créditos</h4><p style={{color:'#b45309',fontWeight:800}}>+5 Corridas Grátis (Econômico)</p></div>
+              <div className="credit-pkg-price"><div className="price" style={{color:'#92400e'}}>R$ 45,00</div><div className="unit" style={{color:'#b45309'}}>R$ 1,28/un</div></div>
             </div>
 
-            <div className="tip-card">
-              <span className="tip-icon">💡</span>
-              <div><div className="tip-title">Boas vindas!</div><div className="tip-text">Todo motorista cadastrado recebe 10 créditos grátis para começar. Após utilizá-los, adquira novos pacotes para continuar operando.</div></div>
+            <div className="tip-card" style={{marginTop:'20px', background:'#ecfdf5', borderColor:'#a7f3d0'}}>
+              <span className="tip-icon">🎁</span>
+              <div><div className="tip-title">Presente de Cadastro!</div><div className="tip-text">Como cortesia por se cadastrar na plataforma Zomp, você recebeu automaticamente <b>10 créditos gratuitos</b> em sua conta. Aproveite para começar a gerar renda agora mesmo!</div></div>
             </div>
           </div>
         </div>
