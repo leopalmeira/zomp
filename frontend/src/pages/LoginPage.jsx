@@ -40,7 +40,9 @@ export default function LoginPage({ forceRole }) {
       <div className="auth-container animate-fade-in">
         
         <div className="auth-header">
-          <img src={logoImage} alt="Zomp Logo" className="logo-image" />
+          <div className="logo-container">
+            <img src={logoImage} alt="Zomp Logo" className="logo-image" />
+          </div>
           <h1>{isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
           <p className="auth-subtitle">
             {isDriver ? 'Acesse o portal do motorista.' : 'Acesse para pedir sua viagem.'}

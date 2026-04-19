@@ -43,7 +43,9 @@ export default function RegisterPage({ forceRole }) {
       <div className="auth-container animate-fade-in">
         
         <div className="auth-header">
-          <img src={logoImage} alt="Zomp Logo" className="logo-image" />
+          <div className="logo-container">
+            <img src={logoImage} alt="Zomp Logo" className="logo-image" />
+          </div>
           <h1>{isDriver ? 'Dirija.' : 'Viaje.'}</h1>
           <p className="auth-subtitle">
             Crie sua conta como {isDriver ? 'motorista parceiro' : 'passageiro'}.

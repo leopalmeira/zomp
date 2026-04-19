@@ -37,49 +37,55 @@ export default function AuthMapBg() {
         */}
         <g mask="url(#mapMask)">
           
-          {/* Subtle Grid Lines (Streets) */}
-          <g stroke="#d4d4d8" strokeWidth="1.5" fill="none" opacity="0.6">
+          {/* Subtle Grid Lines (Dark Streets) */}
+          <g stroke="#1e293b" strokeWidth="2.5" fill="none" opacity="0.8">
             <path d="M-50,450 L150,450 L250,550 L450,550" />
             <path d="M50,850 L50,650 L150,550 L350,550 L450,450" />
             <path d="M300,350 L300,600 L200,700 L200,850" />
             <path d="M-50,600 L100,600 L100,750 L450,750" />
-            
-            {/* Additional cross-streets */}
             <path d="M-50,700 L200,700 L280,780 L450,780" />
             <path d="M150,450 L150,850" />
             <path d="M250,350 L250,550" />
             <path d="M350,550 L350,850" />
+            <path d="M-50,380 L180,380 L250,450 L450,450" />
           </g>
 
-          {/* Animated Cars / Traffic (Glowing Dots) */}
-          {/* Path 1 */}
-          <circle r="3.5" fill="#00E676" filter="url(#neonGlow)">
-            <animateMotion dur="8s" repeatCount="indefinite" path="M-50,450 L150,450 L250,550 L450,550" />
-            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="8s" repeatCount="indefinite" />
+          {/* Animated Cars / Traffic (Glowing Neon Dots) */}
+          
+          {/* Car 1 */}
+          <circle r="4.5" fill="#00E676" filter="url(#neonGlow)">
+            <animateMotion dur="14s" repeatCount="indefinite" path="M-50,450 L150,450 L250,550 L450,550" />
+            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="14s" repeatCount="indefinite" />
           </circle>
 
-          {/* Path 2 */}
-          <circle r="3.5" fill="#00E676" filter="url(#neonGlow)">
-            <animateMotion dur="11s" repeatCount="indefinite" path="M50,850 L50,650 L150,550 L350,550 L450,450" />
-            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="11s" repeatCount="indefinite" />
+          {/* Car 2 */}
+          <circle r="4" fill="#38bdf8" filter="url(#neonGlow)">
+            <animateMotion dur="19s" repeatCount="indefinite" path="M50,850 L50,650 L150,550 L350,550 L450,450" />
+            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="19s" repeatCount="indefinite" />
           </circle>
 
-          {/* Path 3 */}
-          <circle r="3.5" fill="#00E676" filter="url(#neonGlow)">
-            <animateMotion dur="9.5s" repeatCount="indefinite" path="M300,350 L300,600 L200,700 L200,850" />
-            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="9.5s" repeatCount="indefinite" />
+          {/* Car 3 */}
+          <circle r="4" fill="#00E676" filter="url(#neonGlow)">
+            <animateMotion dur="16s" repeatCount="indefinite" path="M300,350 L300,600 L200,700 L200,850" />
+            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="16s" repeatCount="indefinite" />
           </circle>
 
-          {/* Path 4 */}
-          <circle r="3.5" fill="#00E676" filter="url(#neonGlow)">
-            <animateMotion dur="10s" repeatCount="indefinite" path="M-50,600 L100,600 L100,750 L450,750" />
-            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="10s" repeatCount="indefinite" />
+          {/* Car 4 */}
+          <circle r="4.5" fill="#facc15" filter="url(#neonGlow)">
+            <animateMotion dur="15s" repeatCount="indefinite" path="M-50,600 L100,600 L100,750 L450,750" />
+            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="15s" repeatCount="indefinite" />
           </circle>
 
-          {/* Path 5 - Reverse traffic */}
-          <circle r="3.5" fill="#00E676" filter="url(#neonGlow)">
-            <animateMotion dur="8.5s" repeatCount="indefinite" path="M450,780 L280,780 L200,700 L-50,700" />
-            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="8.5s" repeatCount="indefinite" />
+          {/* Car 5 */}
+          <circle r="3.5" fill="#38bdf8" filter="url(#neonGlow)">
+            <animateMotion dur="13.5s" repeatCount="indefinite" path="M450,780 L280,780 L200,700 L-50,700" />
+            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="13.5s" repeatCount="indefinite" />
+          </circle>
+
+          {/* Car 6 */}
+          <circle r="4.5" fill="#00E676" filter="url(#neonGlow)">
+            <animateMotion dur="12s" repeatCount="indefinite" path="M450,450 L250,450 L180,380 L-50,380" />
+            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="12s" repeatCount="indefinite" />
           </circle>
 
         </g>
