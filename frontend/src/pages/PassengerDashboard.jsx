@@ -1149,8 +1149,8 @@ export default function PassengerDashboard() {
                             });
                             console.log('[OCR] Full text extracted:', text);
                             
-                            // Collect ALL R$ prices with their position in text
-                            const rsPriceRegex = /R\$\s*(\d{1,4})[.,](\d{2})/g;
+                            // Collect ALL R$ prices with their position
+                            const rsPriceRegex = /R\$?\s*(\d{1,4})[.,](\d{2})/gi;
                             const pricesWithPos = [];
                             let rsMatch;
                             while ((rsMatch = rsPriceRegex.exec(text)) !== null) {
@@ -1159,87 +1159,76 @@ export default function PassengerDashboard() {
                                 pricesWithPos.push({ value, position: rsMatch.index });
                               }
                             }
-                            console.log('[OCR] R$ prices found:', pricesWithPos.map(p => p.value));
+                            console.log('[OCR] Valid prices found:', pricesWithPos.map(p => p.value));
                             
                             let competitorPrice = 0;
                             
                             if (pricesWithPos.length > 0) {
-                              // STRATEGY 1: Find price near action words (solicitar, chamar, confirmar, pedir)
-                              // These indicate the SELECTED ride price near the action button
-                              const actionWords = /solicitar|chamar|confirmar|pedir|aceitar|corrida|viagem/gi;
-                              const checkWords = /✓|✔|selecionado|escolhido/gi;
-                              let actionMatch;
-                              let nearActionPrice = null;
+                              // STRATEGY 1: Is there a repeated price? (Very common in 99 App)
+                              const counts = {};
+                              pricesWithPos.forEach(p => counts[p.value] = (counts[p.value] || 0) + 1);
+                              const repeatedPrices = Object.keys(counts).filter(k => counts[k] > 1);
+                              if (repeatedPrices.length > 0) {
+                                competitorPrice = Math.max(...repeatedPrices.map(Number));
+                                console.log('[OCR] Strat 1 (Repeated Price):', competitorPrice);
+                              }
                               
-                              // Find action words and get nearest price
-                              while ((actionMatch = actionWords.exec(text)) !== null) {
-                                const actionPos = actionMatch.index;
-                                let closest = null;
-                                let minDist = Infinity;
-                                for (const p of pricesWithPos) {
-                                  const dist = Math.abs(p.position - actionPos);
-                                  if (dist < minDist) {
-                                    minDist = dist;
-                                    closest = p;
+                              // STRATEGY 2: Price near action keywords
+                              if (!competitorPrice) {
+                                const actionWords = /(solicitar|escolher|confirmar|chamar|dinheiro|pix|cartão|pagamento)/gi;
+                                let focusMatch;
+                                let bestPrice = null;
+                                let minDist = 200; // max char distance
+                                
+                                while ((focusMatch = actionWords.exec(text)) !== null) {
+                                  for (const p of pricesWithPos) {
+                                    const dist = Math.abs(p.position - focusMatch.index);
+                                    if (dist < minDist) {
+                                      minDist = dist;
+                                      bestPrice = p.value;
+                                    }
                                   }
                                 }
-                                if (closest && minDist < 200) {
-                                  nearActionPrice = closest.value;
+                                if (bestPrice) {
+                                  competitorPrice = bestPrice;
+                                  console.log('[OCR] Strat 2 (Near Keyword):', competitorPrice);
                                 }
                               }
                               
-                              // STRATEGY 2: Find price near checkmark ✓
-                              let nearCheckPrice = null;
-                              let checkMatch;
-                              while ((checkMatch = checkWords.exec(text)) !== null) {
-                                const checkPos = checkMatch.index;
-                                let closest = null;
-                                let minDist = Infinity;
-                                for (const p of pricesWithPos) {
-                                  const dist = Math.abs(p.position - checkPos);
-                                  if (dist < minDist) {
-                                    minDist = dist;
-                                    closest = p;
-                                  }
-                                }
-                                if (closest && minDist < 150) {
-                                  nearCheckPrice = closest.value;
-                                }
-                              }
-                              
-                              // PRIORITY: action button price > checkmark price > LAST price (bottom of screen)
-                              if (nearActionPrice) {
-                                competitorPrice = nearActionPrice;
-                                console.log('[OCR] Using price near action button:', competitorPrice);
-                              } else if (nearCheckPrice) {
-                                competitorPrice = nearCheckPrice;
-                                console.log('[OCR] Using price near checkmark:', competitorPrice);
-                              } else {
-                                // STRATEGY 3: Take LAST R$ value (nearest to bottom/button)
-                                competitorPrice = pricesWithPos[pricesWithPos.length - 1].value;
-                                console.log('[OCR] Using last R$ value (bottom of screen):', competitorPrice);
+                              // STRATEGY 3: First price appearing on the screen
+                              // In Uber, the selected/highlighted option goes to the very top.
+                              // The discounted price comes first, the crossed-out price comes second!
+                              if (!competitorPrice) {
+                                competitorPrice = pricesWithPos[0].value;
+                                console.log('[OCR] Strat 3 (First Price from top):', competitorPrice);
                               }
                             } else {
-                              // Fallback: no R$ found, try plain numbers
+                              // Fallback: If OCR missed the 'R$', look for any valid number format
                               const fallbackRegex = /(\d{2,3})[.,](\d{2})/g;
                               let fbMatch;
-                              let lastFb = 0;
+                              let firstFallback = 0;
                               while ((fbMatch = fallbackRegex.exec(text)) !== null) {
                                 const value = parseFloat(`${fbMatch[1]}.${fbMatch[2]}`);
-                                if (value >= 8 && value <= 300) lastFb = value;
+                                // Only pick the FIRST reasonable price found
+                                if (value >= 8 && value <= 300 && !firstFallback) {
+                                  firstFallback = value;
+                                }
                               }
-                              competitorPrice = lastFb;
+                              if (firstFallback > 0) {
+                                competitorPrice = firstFallback;
+                                console.log('[OCR] Fallback (First Number from top):', competitorPrice);
+                              }
                             }
                             
-                            console.log('[OCR] Final competitor price:', competitorPrice);
+                            console.log('[OCR] Final selected price:', competitorPrice);
                             
-                            if (competitorPrice > 0) {
+                            if (competitorPrice >= 5) {
                               setCompPriceRead(competitorPrice);
                               setHasCompetitionDiscount(true);
                               setIsAnalyzingPrint(false);
                             } else {
                               setIsAnalyzingPrint(false);
-                              alert('Não conseguimos identificar o preço da corrida no print. Tente com um print mais nítido mostrando o valor com R$.');
+                              alert('Não conseguimos identificar o preço no print. Tente um print mais focado no valor.');
                             }
                           } catch (ocrErr) {
                             console.error('[OCR] Error:', ocrErr);
