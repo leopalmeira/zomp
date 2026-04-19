@@ -988,6 +988,18 @@ export default function PassengerDashboard() {
                   <div className="vehicle-details">
                     <span className="vehicle-name">{isTripIntercity ? 'Carro Seguro (Viagens Longas)' : 'Carro'}</span>
                     <span className="vehicle-price">R$ {getPrice(routeKm, 'car', true)}</span>
+                    
+                    {/* Integrated Passenger Counter */}
+                    <div className="integrated-passengers" onClick={(e) => e.stopPropagation()}>
+                      <div className="passenger-icon-box">
+                        <User size={14} />
+                      </div>
+                      <div className="count-controls">
+                        <button onClick={() => setPassengersCount(Math.max(1, passengersCount - 1))}>-</button>
+                        <span>{passengersCount}</span>
+                        <button onClick={() => setPassengersCount(Math.min(4, passengersCount + 1))}>+</button>
+                      </div>
+                    </div>
                   </div>
                   <span className="vehicle-info">{isTripIntercity ? 'R$ 1,70 / km' : 'Conforto'}</span>
                 </div>
@@ -1067,20 +1079,6 @@ export default function PassengerDashboard() {
                   <span className="slider round"></span>
                 </label>
               </div>
-
-              {vehicleType !== 'moto' && (
-                <div style={{marginTop:'16px',background:'#f8fafc',border:'1px solid #e2e8f0',padding:'16px',borderRadius:'16px'}}>
-                  <h4 style={{margin:0,fontSize:'0.9rem',fontWeight:800,color:'#1e293b',marginBottom:'12px'}}>Quantidade de Pessoas</h4>
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                    <p style={{margin:0,fontSize:'0.8rem',color:'#64748b',fontWeight:600}}>Lugares necessários (1-4)</p>
-                    <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
-                       <button style={{width:'32px',height:'32px',borderRadius:'8px',background:'#fff',border:'1px solid #cbd5e1',cursor:'pointer',fontWeight:800,color:'#0f172a'}} onClick={() => setPassengersCount(Math.max(1, passengersCount - 1))}>-</button>
-                       <span style={{fontSize:'1.1rem',fontWeight:800}}>{passengersCount}</span>
-                       <button style={{width:'32px',height:'32px',borderRadius:'8px',background:'#fff',border:'1px solid #cbd5e1',cursor:'pointer',fontWeight:800,color:'#0f172a'}} onClick={() => setPassengersCount(Math.min(4, passengersCount + 1))}>+</button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="action-buttons mt-4">
                 <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>

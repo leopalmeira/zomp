@@ -768,3 +768,58 @@ input:checked + .slider:before { transform: translateX(22px); }
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.1);
 }
+
+ / *   I n t e g r a t e d   P a s s e n g e r   C o u n t e r   i n s i d e   V e h i c l e   O p t i o n   * / 
+ . i n t e g r a t e d - p a s s e n g e r s   { 
+     d i s p l a y :   f l e x ; 
+     a l i g n - i t e m s :   c e n t e r ; 
+     g a p :   8 p x ; 
+     m a r g i n - t o p :   8 p x ; 
+     b a c k g r o u n d :   r g b a ( 0 ,   0 ,   0 ,   0 . 0 4 ) ; 
+     p a d d i n g :   4 p x   8 p x ; 
+     b o r d e r - r a d i u s :   1 0 p x ; 
+     w i d t h :   f i t - c o n t e n t ; 
+ } 
+ 
+ . p a s s e n g e r - i c o n - b o x   { 
+     d i s p l a y :   f l e x ; 
+     a l i g n - i t e m s :   c e n t e r ; 
+     j u s t i f y - c o n t e n t :   c e n t e r ; 
+     c o l o r :   # 6 4 7 4 8 b ; 
+ } 
+ 
+ . c o u n t - c o n t r o l s   { 
+     d i s p l a y :   f l e x ; 
+     a l i g n - i t e m s :   c e n t e r ; 
+     g a p :   1 0 p x ; 
+ } 
+ 
+ . c o u n t - c o n t r o l s   b u t t o n   { 
+     w i d t h :   2 4 p x ; 
+     h e i g h t :   2 4 p x ; 
+     b o r d e r - r a d i u s :   6 p x ; 
+     b o r d e r :   1 p x   s o l i d   # c b d 5 e 1 ; 
+     b a c k g r o u n d :   # f f f ; 
+     c o l o r :   # 0 f 1 7 2 a ; 
+     f o n t - w e i g h t :   8 0 0 ; 
+     d i s p l a y :   f l e x ; 
+     a l i g n - i t e m s :   c e n t e r ; 
+     j u s t i f y - c o n t e n t :   c e n t e r ; 
+     c u r s o r :   p o i n t e r ; 
+     t r a n s i t i o n :   a l l   0 . 2 s ; 
+ } 
+ 
+ . c o u n t - c o n t r o l s   b u t t o n : h o v e r   { 
+     b a c k g r o u n d :   # f 1 f 5 f 9 ; 
+     b o r d e r - c o l o r :   # 9 4 a 3 b 8 ; 
+ } 
+ 
+ . c o u n t - c o n t r o l s   s p a n   { 
+     f o n t - s i z e :   0 . 9 5 r e m ; 
+     f o n t - w e i g h t :   8 0 0 ; 
+     c o l o r :   # 1 e 2 9 3 b ; 
+     m i n - w i d t h :   1 2 p x ; 
+     t e x t - a l i g n :   c e n t e r ; 
+ } 
+  
+ 

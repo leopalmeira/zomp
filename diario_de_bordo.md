@@ -112,3 +112,11 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã£o e
   - Se usuario nao preencheu CNH e CRLV, o slider Ã© bloqueado pedindo que ele faca o upload em 'Documentos e VeÃ­culo'.
   - Se ele fez upload mas ainda o **isApproved == false**, um alerta expecÃ­fico Ã© retornado na tela ('Estamos validando seus dados... ate 12 horas') proibindo-o de aceitar corridas.
 - Banco de dados atualizado, flag isApproved retornando no proprio payload de Sessao na hora do login.
+
+## [19/04/2026] - Upgrade de UX e Identidade Visual (v2.0.12 - v2.0.18)
+- **Compactação da Interface:** Barra de endereços reduzida em 30% e sistema de paradas minimalista com sinal de (+).
+- **Identidade Visual:** Substituição do logo de imagem por tipografia futurista neon, eliminando fundos brancos.
+- **Limpeza de Marca:** Remoção de todas as atribuições e logos do Leaflet (Liftmaps) para um visual limpo e proprietário.
+- **UX de Passageiros:** Integração do seletor de quantidade de pessoas diretamente no card do veículo, eliminando cards redundantes e melhorando o fluxo de escolha.
+- **Estabilidade PWA:** Implementação do bloqueio de rolagem e overscroll para sensação de App Nativo 100% estático.
+
