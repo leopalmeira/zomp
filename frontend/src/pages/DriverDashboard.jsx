@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet'
@@ -22,6 +22,34 @@ const driverIcon = L.divIcon({
 
 const API = 'http://localhost:3001/api'
 const getToken = () => localStorage.getItem('zomp_token')
+
+// --- Som de Notificação ---
+const playRingSound = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const playNote = (freq, startTime, duration, type='sine') => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.1, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+    const now = ctx.currentTime;
+    // Toca um padrão estilo chamada de aplicativo
+    playNote(523.25, now, 0.15, 'square'); 
+    playNote(659.25, now + 0.2, 0.15, 'square');
+    playNote(783.99, now + 0.4, 0.4, 'square');
+    
+    playNote(523.25, now + 1.0, 0.15, 'square'); 
+    playNote(659.25, now + 1.2, 0.15, 'square');
+    playNote(783.99, now + 1.4, 0.4, 'square');
+  } catch(e) { console.error('Audio falhou', e) }
+}
 
 export default function DriverDashboard() {
   const navigate = useNavigate()
@@ -113,16 +141,27 @@ export default function DriverDashboard() {
   // Pending Rides
   const [pendingRides, setPendingRides] = useState([])
   const [activeRide, setActiveRide] = useState(null)
+  const prevRideCountRef = useRef(0)
 
   useEffect(() => {
     let interval
     if (isOnline && !activeRide) {
       const poll = async () => {
-        try { const r = await getPendingRides(); setPendingRides(r) } catch (e) {}
+        try { 
+          const r = await getPendingRides();
+          if (r.length > 0 && prevRideCountRef.current === 0) {
+            playRingSound();
+          }
+          prevRideCountRef.current = r.length;
+          setPendingRides(r) 
+        } catch (e) {}
       }
       poll()
       interval = setInterval(poll, 3000)
-    } else { setPendingRides([]) }
+    } else { 
+      setPendingRides([])
+      prevRideCountRef.current = 0 
+    }
     return () => clearInterval(interval)
   }, [isOnline, activeRide])
 
