@@ -605,14 +605,11 @@ export default function PassengerDashboard() {
             )}
           </div>
 
-          <button
-            className="btn btn-primary"
-            style={{width:'100%', marginTop:'10px', padding:'12px', fontWeight:800, fontSize:'0.9rem', borderRadius:'12px', background: 'linear-gradient(135deg, #059669, #00E676)', color:'#000', border:'none', boxShadow:'0 4px 12px rgba(0,230,118,0.2)'}}
-            onClick={handleForceCalculate}
-            disabled={isLoading || destAddr.length < 4}
-          >
-            {isLoading ? '⏳ Calculando...' : 'VER PREÇO E ROTA'}
-          </button>
+          {isLoading && (
+            <div style={{marginTop:'10px', textAlign:'center', fontSize:'0.85rem', color:'#059669', fontWeight:700}}>
+              ⏳ Calculando melhor rota...
+            </div>
+          )}
         </div>
       )}
 
