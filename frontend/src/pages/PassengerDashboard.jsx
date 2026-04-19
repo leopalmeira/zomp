@@ -252,6 +252,7 @@ export default function PassengerDashboard() {
   }
 
   // ============= GPS tracking =============
+  // Runs ONCE on mount only — no dependencies to prevent infinite re-creation
   useEffect(() => {
     let watchId;
     if (navigator.geolocation) {
@@ -260,16 +261,11 @@ export default function PassengerDashboard() {
           const c = [pos.coords.latitude, pos.coords.longitude]
           setMapCenter(c)
           setOriginCoords(c)
-          // Just update coords, don't force text unless it's empty
-          if(!originAddr) {
-            setOriginAddr('Localização Atual')
-          }
+          setOriginAddr(prev => prev ? prev : 'Sua Localização')
         },
         (err) => {
           console.error('GPS error:', err)
-          if(originCoords[0] === -22.9068) { // Only set string if fallback is still active
-             setOriginAddr('Rio de Janeiro, RJ')
-          }
+          // Safe: no crash if originCoords is null
         },
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
       )
@@ -277,7 +273,8 @@ export default function PassengerDashboard() {
     return () => {
       if(watchId) navigator.geolocation.clearWatch(watchId);
     }
-  }, [originAddr])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])  // Empty deps = run only on mount
 
   // ============= Address search with debounce =============
   const searchAddress = useCallback((text, target) => {
