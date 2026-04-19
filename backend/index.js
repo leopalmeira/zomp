@@ -356,6 +356,45 @@ app.post('/api/credits/purchase', authenticate, async (req, res) => {
   }
 });
 
+// --- AI OCR (GEMINI VISION) ---
+const { GoogleGenAI } = require('@google/genai');
+
+app.post('/api/analyze-print', authenticate, async (req, res) => {
+  try {
+    const { imageBase64 } = req.body;
+    if (!imageBase64) return res.status(400).json({ error: 'Nenhuma imagem fornecida' });
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    
+    // Remove the data:image prefix if present
+    const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [
+            {
+               role: 'user',
+               parts: [
+                  { text: 'Look at this rideshare app screenshot (like Uber or 99). Analyze the screen and find the selected ride option. Return ONLY the numeric value of the selected ride price in Brazilian Reais (e.g., 48.90). Do not include currency symbols, just the number. If no rideshare price is found, return 0.' },
+                  { inlineData: { data: cleanBase64, mimeType: 'image/jpeg' }}
+               ]
+            }
+        ]
+    });
+    
+    let aiText = response.text().trim();
+    // Guarantee it parses correctly (e.g if it responds "48.90")
+    aiText = aiText.replace(',', '.'); // replace any stray commas
+    const finalPrice = parseFloat(aiText) || 0;
+    
+    res.json({ price: finalPrice });
+
+  } catch (error) {
+    console.error('Gemini OCR Error:', error);
+    res.status(500).json({ error: 'Falha ao analisar IA' });
+  }
+});
+
 // --- HEALTH CHECK ---
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

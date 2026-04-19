@@ -1143,97 +1143,53 @@ export default function PassengerDashboard() {
                           setIsAnalyzingPrint(true);
                           try {
                             const file = e.target.files[0];
-                            const Tesseract = await import('tesseract.js');
-                            const { data: { text } } = await Tesseract.recognize(file, 'por', {
-                              logger: m => console.log('[OCR]', m.status, Math.round((m.progress || 0) * 100) + '%')
-                            });
-                            console.log('[OCR] Full text extracted:', text);
                             
-                            // Collect ALL R$ prices with their position
-                            const rsPriceRegex = /R\$?\s*(\d{1,4})[.,](\d{2})/gi;
-                            const pricesWithPos = [];
-                            let rsMatch;
-                            while ((rsMatch = rsPriceRegex.exec(text)) !== null) {
-                              const value = parseFloat(`${rsMatch[1]}.${rsMatch[2]}`);
-                              if (value >= 5 && value <= 500) {
-                                pricesWithPos.push({ value, position: rsMatch.index });
-                              }
-                            }
-                            console.log('[OCR] Valid prices found:', pricesWithPos.map(p => p.value));
-                            
-                            let competitorPrice = 0;
-                            
-                            if (pricesWithPos.length > 0) {
-                              // STRATEGY 1: Is there a repeated price? (Very common in 99 App)
-                              const counts = {};
-                              pricesWithPos.forEach(p => counts[p.value] = (counts[p.value] || 0) + 1);
-                              const repeatedPrices = Object.keys(counts).filter(k => counts[k] > 1);
-                              if (repeatedPrices.length > 0) {
-                                competitorPrice = Math.max(...repeatedPrices.map(Number));
-                                console.log('[OCR] Strat 1 (Repeated Price):', competitorPrice);
-                              }
-                              
-                              // STRATEGY 2: Price near action keywords
-                              if (!competitorPrice) {
-                                const actionWords = /(solicitar|escolher|confirmar|chamar|dinheiro|pix|cartão|pagamento)/gi;
-                                let focusMatch;
-                                let bestPrice = null;
-                                let minDist = 200; // max char distance
+                            // Convert image to Base64
+                            const reader = new FileReader();
+                            reader.readAsDataURL(file);
+                            reader.onload = async () => {
+                                const base64Image = reader.result;
                                 
-                                while ((focusMatch = actionWords.exec(text)) !== null) {
-                                  for (const p of pricesWithPos) {
-                                    const dist = Math.abs(p.position - focusMatch.index);
-                                    if (dist < minDist) {
-                                      minDist = dist;
-                                      bestPrice = p.value;
+                                try {
+                                    const token = localStorage.getItem('zomp_token');
+                                    const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://zomp-backend.onrender.com'}/api/analyze-print`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${token}`
+                                        },
+                                        body: JSON.stringify({ imageBase64: base64Image })
+                                    });
+                                    
+                                    if (!res.ok) throw new Error('Erro na API da IA');
+                                    
+                                    const data = await res.json();
+                                    const competitorPrice = data.price;
+                                    
+                                    console.log('[AI VISION] Final selected price:', competitorPrice);
+                                    
+                                    if (competitorPrice >= 5) {
+                                      setCompPriceRead(competitorPrice);
+                                      setHasCompetitionDiscount(true);
+                                    } else {
+                                      alert('A IA não conseguiu identificar um preço válido no print. Tente uma imagem mais focada no valor.');
                                     }
-                                  }
+                                } catch (apiErr) {
+                                    console.error('[AI VISION] Error calling backend:', apiErr);
+                                    alert('Falha na comunicação com a Inteligência Zomp. Tente novamente.');
+                                } finally {
+                                    setIsAnalyzingPrint(false);
                                 }
-                                if (bestPrice) {
-                                  competitorPrice = bestPrice;
-                                  console.log('[OCR] Strat 2 (Near Keyword):', competitorPrice);
-                                }
-                              }
-                              
-                              // STRATEGY 3: First price appearing on the screen
-                              // In Uber, the selected/highlighted option goes to the very top.
-                              // The discounted price comes first, the crossed-out price comes second!
-                              if (!competitorPrice) {
-                                competitorPrice = pricesWithPos[0].value;
-                                console.log('[OCR] Strat 3 (First Price from top):', competitorPrice);
-                              }
-                            } else {
-                              // Fallback: If OCR missed the 'R$', look for any valid number format
-                              const fallbackRegex = /(\d{2,3})[.,](\d{2})/g;
-                              let fbMatch;
-                              let firstFallback = 0;
-                              while ((fbMatch = fallbackRegex.exec(text)) !== null) {
-                                const value = parseFloat(`${fbMatch[1]}.${fbMatch[2]}`);
-                                // Only pick the FIRST reasonable price found
-                                if (value >= 8 && value <= 300 && !firstFallback) {
-                                  firstFallback = value;
-                                }
-                              }
-                              if (firstFallback > 0) {
-                                competitorPrice = firstFallback;
-                                console.log('[OCR] Fallback (First Number from top):', competitorPrice);
-                              }
-                            }
+                            };
+                            reader.onerror = () => {
+                                setIsAnalyzingPrint(false);
+                                alert('Erro ao ler seu print da tela.');
+                            };
                             
-                            console.log('[OCR] Final selected price:', competitorPrice);
-                            
-                            if (competitorPrice >= 5) {
-                              setCompPriceRead(competitorPrice);
-                              setHasCompetitionDiscount(true);
-                              setIsAnalyzingPrint(false);
-                            } else {
-                              setIsAnalyzingPrint(false);
-                              alert('Não conseguimos identificar o preço no print. Tente um print mais focado no valor.');
-                            }
-                          } catch (ocrErr) {
-                            console.error('[OCR] Error:', ocrErr);
+                          } catch (fileErr) {
+                            console.error('[AI VISION] Error processing file:', fileErr);
                             setIsAnalyzingPrint(false);
-                            alert('Erro ao analisar o print. Tente novamente com outra imagem.');
+                            alert('Erro inesperado tentando preparar a imagem.');
                           }
                           e.target.value = '';
                         }
