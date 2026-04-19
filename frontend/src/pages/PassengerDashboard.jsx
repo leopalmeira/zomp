@@ -503,22 +503,22 @@ export default function PassengerDashboard() {
 
       {/* ===== FIXED ADDRESS BAR (always on top) ===== */}
       {rideState === 'IDLE' && (
-        <div className="fixed-address-bar">
+        <div className="fixed-address-bar animate-fade-in">
           <div className="route-inputs">
-            <div className="route-timeline">
-              <div className="dot-start"></div>
+            <div className="route-timeline" style={{paddingTop: '8px', paddingBottom: '8px'}}>
+              <div className="dot-start" style={{width:'6px', height:'6px'}}></div>
               <div className="timeline-line"></div>
               {stops.map((_, si) => (
                 <React.Fragment key={`dot-stop-${si}`}>
-                  <div style={{width:'10px',height:'10px',borderRadius:'50%',background:'#f59e0b',border:'2px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,0.15)',zIndex:1}}></div>
+                  <div style={{width:'6px',height:'6px',borderRadius:'50%',background:'#f59e0b',border:'1px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,0.15)',zIndex:1}}></div>
                   <div className="timeline-line"></div>
                 </React.Fragment>
               ))}
-              <div className="dot-end"></div>
+              <div className="dot-end" style={{width:'6px', height:'6px'}}></div>
             </div>
             <div className="route-fields">
               <input
-                className="route-input start-input"
+                className="route-input"
                 value={originAddr}
                 onChange={(e) => {
                   const v = e.target.value
@@ -526,13 +526,13 @@ export default function PassengerDashboard() {
                   setOriginCoords(null)
                   searchAddress(v, 'origin')
                 }}
-                placeholder="Local de partida"
+                placeholder="Partida"
               />
               {stops.map((stop, si) => (
-                <div key={`stop-${si}`} style={{display:'flex',alignItems:'center',gap:'6px',width:'100%'}}>
+                <div key={`stop-${si}`} className="stop-input-row">
                   <input
                     className="route-input"
-                    style={{flex:1,borderLeft:'3px solid #f59e0b'}}
+                    style={{flex:1}}
                     value={stop.addr}
                     onChange={(e) => {
                       const v = e.target.value
@@ -541,21 +541,14 @@ export default function PassengerDashboard() {
                       setStops(newStops)
                       searchAddress(v, `stop_${si}`)
                     }}
-                    placeholder={`Parada ${si + 1} (+R$ 2,00)`}
+                    placeholder={`Parada ${si + 1}`}
                   />
-                  <button
-                    onClick={() => setStops(stops.filter((_, i) => i !== si))}
-                    style={{
-                      width:'28px',height:'28px',borderRadius:'50%',border:'none',
-                      background:'#fef2f2',color:'#ef4444',cursor:'pointer',
-                      fontWeight:900,fontSize:'0.9rem',flexShrink:0,
-                      display:'flex',alignItems:'center',justifyContent:'center'
-                    }}
-                  >✕</button>
+                  <button className="remove-stop-btn" onClick={() => setStops(stops.filter((_, i) => i !== si))}>✕</button>
                 </div>
               ))}
               <input
-                className="route-input end-input"
+                className="route-input"
+                style={{borderTop: (stops.length > 0 || originAddr) ? '1px solid #f1f5f9' : 'none'}}
                 value={destAddr}
                 onChange={(e) => {
                   const v = e.target.value
@@ -567,15 +560,23 @@ export default function PassengerDashboard() {
               />
             </div>
 
+            {/* Compact Add Stop Button */}
+            {stops.length < 2 && (
+              <button 
+                className="add-stop-mini-btn" 
+                onClick={() => setStops([...stops, { addr: '', coords: null }])}
+                title="Adicionar Parada"
+              >
+                +
+              </button>
+            )}
+
             {/* Suggestions dropdown */}
             {suggestions.length > 0 && (
               <div className="autocomplete-dropdown">
                 {suggestions.map((s, i) => (
                   <div key={i} className="suggestion-item" onMouseDown={(e) => { e.preventDefault(); handleSelectSuggestion(s) }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
+                    <MapPin size={14} color="#888" />
                     <span>{s.display_name.split(',').slice(0, 3).join(',')}</span>
                   </div>
                 ))}
@@ -583,29 +584,13 @@ export default function PassengerDashboard() {
             )}
           </div>
 
-          {/* Add Stop Button */}
-          {stops.length < 3 && (
-            <button
-              onClick={() => setStops([...stops, { addr: '', coords: null }])}
-              style={{
-                width:'100%', marginTop:'8px', padding:'10px', borderRadius:'12px',
-                border:'1px dashed #d1d5db', background:'#f9fafb', color:'#6b7280',
-                fontWeight:700, fontSize:'0.85rem', cursor:'pointer',
-                display:'flex', alignItems:'center', justifyContent:'center', gap:'6px',
-                transition:'all 0.2s ease'
-              }}
-            >
-              <span style={{fontSize:'1rem'}}>＋</span> Adicionar Parada (+R$ 2,00 cada)
-            </button>
-          )}
-
           <button
             className="btn btn-primary"
-            style={{width:'100%', marginTop:'12px', padding:'14px', fontWeight:700, fontSize:'0.95rem', borderRadius:'14px'}}
+            style={{width:'100%', marginTop:'10px', padding:'12px', fontWeight:800, fontSize:'0.9rem', borderRadius:'12px', background: 'linear-gradient(135deg, #059669, #00E676)', color:'#000', border:'none', boxShadow:'0 4px 12px rgba(0,230,118,0.2)'}}
             onClick={handleForceCalculate}
             disabled={isLoading || destAddr.length < 4}
           >
-            {isLoading ? '⏳ Calculando rota...' : '🚗 VER PREÇO E ROTA'}
+            {isLoading ? '⏳ Calculando...' : 'VER PREÇO E ROTA'}
           </button>
         </div>
       )}

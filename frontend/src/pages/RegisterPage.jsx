@@ -44,7 +44,7 @@ export default function RegisterPage({ forceRole }) {
         
         <div className="auth-header">
           <div className="logo-container">
-            <img src={logoImage} alt="Zomp Logo" className="logo-image" />
+            <span className="text-logo">Zomp</span>
           </div>
           <h1>{isDriver ? 'Dirija.' : 'Viaje.'}</h1>
           {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
@@ -126,6 +126,10 @@ export default function RegisterPage({ forceRole }) {
             Já possui uma conta Zomp? <Link to={loginLink}>Entrar</Link>
           </p>
         </form>
+
+        <div className="auth-footer-phrase">
+          {isDriver ? 'Sua jornada como investidor começa aqui.' : 'Para onde será nossa próxima viagem?'}
+        </div>
       </div>
     </div>
   )

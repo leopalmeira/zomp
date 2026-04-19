@@ -41,7 +41,7 @@ export default function LoginPage({ forceRole }) {
         
         <div className="auth-header">
           <div className="logo-container">
-            <img src={logoImage} alt="Zomp Logo" className="logo-image" />
+            <span className="text-logo">Zomp</span>
           </div>
           <h1>{isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
           {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
@@ -95,6 +95,9 @@ export default function LoginPage({ forceRole }) {
           </p>
         </form>
 
+        <div className="auth-footer-phrase">
+          {isDriver ? 'Preparado para o seu próximo lucro?' : 'Para onde será nossa próxima viagem?'}
+        </div>
       </div>
     </div>
   )

@@ -14,14 +14,84 @@
 /* Fixed Address Bar - Always visible at top */
 .fixed-address-bar {
   position: absolute;
-  top: 72px;
-  left: 12px;
-  right: 12px;
+  top: 68px;
+  left: 14px;
+  right: 14px;
   z-index: 1100;
   background: #ffffff;
-  border-radius: 20px;
-  padding: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.route-inputs {
+  display: flex;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 14px;
+  position: relative;
+  border: 1px solid #f1f5f9;
+}
+
+.route-input {
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  outline: none;
+}
+
+.add-stop-mini-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  background: var(--primary);
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,230,118,0.3);
+  transition: all 0.2s;
+  z-index: 10;
+}
+.add-stop-mini-btn:hover { transform: translateY(-50%) scale(1.1); }
+.add-stop-mini-btn:active { transform: translateY(-50%) scale(0.9); }
+
+.stop-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.remove-stop-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: #fee2e2;
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 /* 1. Full Screen Interactive Map */
