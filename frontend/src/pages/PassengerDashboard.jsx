@@ -245,8 +245,9 @@ export default function PassengerDashboard() {
           const c = [pos.coords.latitude, pos.coords.longitude]
           setMapCenter(c)
           setOriginCoords(c)
-          if(originAddr === 'Rio de Janeiro, RJ' || originAddr === '') {
-            setOriginAddr('Meu Local Atual (GPS)')
+          // Just update coords, don't force text unless it's empty
+          if(!originAddr) {
+            setOriginAddr('Localização Atual')
           }
         },
         (err) => {
@@ -372,7 +373,7 @@ export default function PassengerDashboard() {
           oCoords = [gpsPos.coords.latitude, gpsPos.coords.longitude]
           setOriginCoords(oCoords)
           setMapCenter(oCoords)
-          setOriginAddr('Meu Local Atual (GPS)')
+          setOriginAddr('Sua Localização')
         } catch (gpsErr) {
           // GPS failed, try text resolve as fallback
           const resolved = await resolveAddress(originAddr)
@@ -483,13 +484,33 @@ export default function PassengerDashboard() {
         <MapContainer center={mapCenter} zoom={16} zoomControl={false} style={{width:'100%', height:'100%'}}>
           <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
           <MapController center={mapCenter} markers={allMarkers} />
-          {originCoords && <Marker position={originCoords} icon={originIcon} />}
+          {originCoords && (
+            <Marker position={originCoords} icon={originIcon}>
+              <Popup autoPan={false}>
+                <div style={{fontWeight:800}}>Partida</div>
+                <div style={{fontSize:'0.75rem'}}>{originAddr}</div>
+              </Popup>
+            </Marker>
+          )}
           {stops.filter(s => s.coords).map((stop, i) => (
-             <Marker key={`stop-marker-${i}`} position={stop.coords} icon={stopIcon} />
+             <Marker key={`stop-marker-${i}`} position={stop.coords} icon={stopIcon}>
+               <Popup autoPan={false}>
+                 <div style={{fontWeight:800}}>Parada {i+1}</div>
+                 <div style={{fontSize:'0.75rem'}}>{stop.addr}</div>
+               </Popup>
+             </Marker>
           ))}
-          {destCoords && <Marker position={destCoords} icon={destIcon} />}
-          {routeGeometry.length > 0 && (
-            <Polyline positions={routeGeometry} color="#1a1a2e" weight={5} opacity={0.85} />
+          {destCoords && (
+            <Marker position={destCoords} icon={destIcon}>
+              <Popup autoPan={false}>
+                <div style={{fontWeight:800}}>Destino</div>
+                <div style={{fontSize:'0.75rem'}}>{destAddr}</div>
+              </Popup>
+            </Marker>
+          )}
+          
+          {Array.isArray(routeGeometry) && routeGeometry.length > 0 && (
+            <Polyline positions={routeGeometry} color="#00E676" weight={6} opacity={0.9} lineCap="round" />
           )}
         </MapContainer>
       </div>

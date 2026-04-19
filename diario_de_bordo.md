@@ -130,3 +130,11 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã£o e
 - **Campanha Preço Imbatível:** Lançada funcionalidade que permite ao passageiro anexar print da concorrência (Uber/99) para receber R$ 2,00 de desconto adicional garantido.
 - **Refinamento de UI:** O seletor de passageiros foi movido para a borda inferior do card de veículo, com maior espaçamento entre os controles para melhor precisão ao toque.
 
+
+## [19/04/2026] - Estabilidade e Refinamento Geo (v2.0.24)
+- **Correção da Tela Branca:** Implementada proteção no renderizador de rotas e marcadores para evitar falhas catastróficas quando coordenadas são nulas.
+- **Melhoria no GPS:** Removido texto " GPS\ fixo que travava as caixas de endereço. Agora o usuário tem liberdade total para digitar ou usar a localização atual mapeada.
+- **Interatividade Total:** Adicionados marcadores interativos com Popups informando endereços de partida, paradas e destino diretamente no mapa.
+- **Design de Interface:** Barra de endereços compactada em 30% na altura e 10% na largura para otimizar o uso do espaço de tela e destacar o mapa.
+- **Desconto Garantido:** Reforçada funcionalidade de desconto de R$ 2,00 via print da concorrência, agora com interface de upload mais clara.
+
