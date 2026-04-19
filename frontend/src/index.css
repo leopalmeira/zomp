@@ -39,14 +39,18 @@ html, body {
   background-color: #000000; 
   color: var(--text-dark);
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: fixed;
+  overscroll-behavior: none;
 }
 
 /* The PWA Container */
 #root {
   width: 100%;
   max-width: 480px; 
-  min-height: 100vh;
+  height: 100%;
   margin: 0 auto;
   position: relative;
   background-color: #ffffff;
