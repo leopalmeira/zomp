@@ -53,7 +53,7 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(201).json({ message: 'User created successfully', user: { id: user.id, email: user.email, role: user.role } });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: 'Error creating user' });
+    res.status(400).json({ error: 'Error creating user', details: error.message });
   }
 });
 
