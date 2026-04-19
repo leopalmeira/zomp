@@ -219,8 +219,18 @@ export default function PassengerDashboard() {
   const getPrice = (km, type, includeFee = false) => {
     const validStopsCount = stops.filter(s => s.coords || s.addr.length > 3).length
     const stopsFee = validStopsCount * 2.00
-    const calculated = parseFloat(km) * PRICE_PER_KM[type]
-    const basePrice = Math.max(calculated, MIN_PRICE[type]) + stopsFee
+    
+    let calculated;
+    if (isTripIntercity && type === 'car') {
+      calculated = parseFloat(km) * 1.70; // Taxa fixa Viagens Longas
+    } else {
+      calculated = parseFloat(km) * PRICE_PER_KM[type];
+    }
+    
+    // Pequena taxa adicional fixa por passageiro extra selecionado (opcional mas bom para compor a tarifa justa)
+    const extraPsg = (type === 'car' && passengersCount > 1) ? (passengersCount - 1) * 2.50 : 0;
+
+    const basePrice = Math.max(calculated, MIN_PRICE[type]) + stopsFee + extraPsg
     const finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
     return finalPrice.toFixed(2)
   }
@@ -985,27 +995,30 @@ export default function PassengerDashboard() {
               {/* Vehicle Type Selector */}
               <div className="vehicle-selector">
                 <div
-                  className={`vehicle-option ${vehicleType === 'car' ? 'active' : ''}`}
+                  className={`vehicle-option active`}
                   onClick={() => setVehicleType('car')}
                 >
                   <span className="vehicle-icon">🚗</span>
                   <div className="vehicle-details">
-                    <span className="vehicle-name">Carro</span>
+                    <span className="vehicle-name">{isTripIntercity ? 'Carro Seguro (Viagens Longas)' : 'Carro'}</span>
                     <span className="vehicle-price">R$ {getPrice(routeKm, 'car', true)}</span>
                   </div>
-                  <span className="vehicle-info">Conforto</span>
+                  <span className="vehicle-info">{isTripIntercity ? 'R$ 1,70 / km' : 'Conforto'}</span>
                 </div>
-                <div
-                  className={`vehicle-option ${vehicleType === 'moto' ? 'active' : ''}`}
-                  onClick={() => setVehicleType('moto')}
-                >
-                  <span className="vehicle-icon">🏍️</span>
-                  <div className="vehicle-details">
-                    <span className="vehicle-name">Moto</span>
-                    <span className="vehicle-price">R$ {getPrice(routeKm, 'moto', true)}</span>
+                
+                {!isTripIntercity && (
+                  <div
+                    className={`vehicle-option ${vehicleType === 'moto' ? 'active' : ''}`}
+                    onClick={() => setVehicleType('moto')}
+                  >
+                    <span className="vehicle-icon">🏍️</span>
+                    <div className="vehicle-details">
+                      <span className="vehicle-name">Moto</span>
+                      <span className="vehicle-price">R$ {getPrice(routeKm, 'moto', true)}</span>
+                    </div>
+                    <span className="vehicle-info">Econômico</span>
                   </div>
-                  <span className="vehicle-info">Econômico</span>
-                </div>
+                )}
               </div>
 
               <div className="price-box">
