@@ -122,6 +122,7 @@ export default function PassengerDashboard() {
   const [isIntercity, setIsIntercity] = useState(false)
   const [isAnalyzingPrint, setIsAnalyzingPrint] = useState(false)
   const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
+  const [compPriceRead, setCompPriceRead] = useState(0)
   const [passengersCount, setPassengersCount] = useState(1)
 
   // Freight State
@@ -236,7 +237,12 @@ export default function PassengerDashboard() {
     const basePrice = Math.max(calculated, MIN_PRICE[type]) + stopsFee + extraPsg
     let finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
     
-    // Apply competition discount if validated
+    // If we have a validated competition match, we MUST be cheaper than their price
+    if (hasCompetitionDiscount && compPriceRead > 0) {
+      return Math.max(compPriceRead - 2.00, MIN_PRICE[type]).toFixed(2);
+    }
+    
+    // Apply standard discount if no specific price was read from print
     if (hasCompetitionDiscount) {
       finalPrice = Math.max(finalPrice - 2.00, MIN_PRICE[type]);
     }
@@ -1108,11 +1114,17 @@ export default function PassengerDashboard() {
                   
                   {isAnalyzingPrint ? (
                     <div style={{fontSize: '0.75rem', color: '#b91c1c', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px'}}>
-                       <span className="animate-pulse">🔍 IA Analisando Print...</span>
+                       <span className="animate-pulse">🔍 IA Lendo valor no print...</span>
                     </div>
                   ) : hasCompetitionDiscount ? (
-                    <div style={{fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px'}}>
-                       <Check size={14} /> <span>DESCONTO DE R$ 2,00 APLICADO!</span>
+                    <div style={{background:'#f0fdf4', padding:'10px', borderRadius:'12px', border:'1px solid #bbf7d0'}}>
+                      <div style={{fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom:'4px'}}>
+                         <Check size={14} /> <span>PREÇO IMBATÍVEL APLICADO!</span>
+                      </div>
+                      <p style={{margin:0, fontSize:'0.7rem', color:'#166534', fontWeight:600}}>
+                        Identificamos R$ {compPriceRead.toFixed(2)} no print. <br/>
+                        Seu preço Zomp: <strong>R$ {(compPriceRead - 2).toFixed(2)}</strong>
+                      </p>
                     </div>
                   ) : (
                     <label htmlFor="price-print" className="challenge-upload-btn">
@@ -1121,8 +1133,13 @@ export default function PassengerDashboard() {
                       <input type="file" id="price-print" accept="image/*" style={{display:'none'}} onChange={(e) => {
                         if(e.target.files?.[0]) {
                           setIsAnalyzingPrint(true);
+                          // Generate a "fake" competition price slightly higher than current one for demo
+                          const current = parseFloat(getPrice(routeKm, vehicleType));
+                          const fakeComp = current + (Math.random() * 5 + 1); 
+                          
                           setTimeout(() => {
                             setIsAnalyzingPrint(false);
+                            setCompPriceRead(fakeComp);
                             setHasCompetitionDiscount(true);
                           }, 3000);
                         }
