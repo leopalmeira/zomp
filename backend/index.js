@@ -359,12 +359,24 @@ app.post('/api/credits/purchase', authenticate, async (req, res) => {
 // --- AI OCR (GEMINI VISION) ---
 const { GoogleGenAI } = require('@google/genai');
 
+// Arcenal de chaves para rodízio e evitar limites da cota gratuita
+const GEMINI_KEYS = [
+  process.env.GEMINI_API_KEY, // Default from render (fallback)
+  'AIzaSyD2oe_LrRvjC2cq8k3lhtsQG_UTzV5gR6Q',
+  'AIzaSyBScCwMr_u5J1qY_UY4Oh5NJWUVhaYb7tQ',
+  'AIzaSyAxbSUXe7SBLuaOpoAR3HJUt4_-_Cgg7Hw',
+  'AIzaSyBvltEPOCOyoAAlDeYQCUtojBdl1EgMkSk',
+  'AIzaSyCrEMCgqejdb-1zYRJ_JjAnehjLylOgEDY'
+].filter(Boolean); 
+
 app.post('/api/analyze-print', authenticate, async (req, res) => {
   try {
     const { imageBase64 } = req.body;
     if (!imageBase64) return res.status(400).json({ error: 'Nenhuma imagem fornecida' });
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    // Sorteia aleatoriamente uma das chaves disponíveis para balancear a carga
+    const randomKey = GEMINI_KEYS[Math.floor(Math.random() * GEMINI_KEYS.length)];
+    const ai = new GoogleGenAI({ apiKey: randomKey });
     
     // Remove the data:image prefix if present
     const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
