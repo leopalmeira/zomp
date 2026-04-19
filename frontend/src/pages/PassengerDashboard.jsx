@@ -1138,18 +1138,48 @@ export default function PassengerDashboard() {
                     <label htmlFor="price-print" className="challenge-upload-btn">
                       <Camera size={14} /> 
                       <span>Anexar Print da Concorrência</span>
-                      <input type="file" id="price-print" accept="image/*" style={{display:'none'}} onChange={(e) => {
+                      <input type="file" id="price-print" accept="image/*" style={{display:'none'}} onChange={async (e) => {
                         if(e.target.files?.[0]) {
                           setIsAnalyzingPrint(true);
-                          // Generate a "fake" competition price slightly higher than current one for demo
-                          const current = parseFloat(getPrice(routeKm, vehicleType));
-                          const fakeComp = current + (Math.random() * 5 + 1); 
-                          
-                          setTimeout(() => {
+                          try {
+                            const file = e.target.files[0];
+                            const Tesseract = await import('tesseract.js');
+                            const { data: { text } } = await Tesseract.recognize(file, 'por', {
+                              logger: m => console.log('[OCR]', m.status, Math.round((m.progress || 0) * 100) + '%')
+                            });
+                            console.log('[OCR] Full text extracted:', text);
+                            
+                            // Extract ALL monetary values from the text
+                            // Matches: R$ 25,90 | R$25.90 | 25,90 | 25.90 | R$ 8,40
+                            const priceRegex = /R?\$?\s*(\d{1,4})[.,](\d{2})/g;
+                            const prices = [];
+                            let match;
+                            while ((match = priceRegex.exec(text)) !== null) {
+                              const value = parseFloat(`${match[1]}.${match[2]}`);
+                              if (value >= 5 && value <= 500) { // reasonable ride price range
+                                prices.push(value);
+                              }
+                            }
+                            
+                            console.log('[OCR] Prices found:', prices);
+                            
+                            if (prices.length > 0) {
+                              // Take the LARGEST value (usually the main ride price shown prominently)
+                              const competitorPrice = Math.max(...prices);
+                              setCompPriceRead(competitorPrice);
+                              setHasCompetitionDiscount(true);
+                              setIsAnalyzingPrint(false);
+                            } else {
+                              setIsAnalyzingPrint(false);
+                              alert('Não conseguimos identificar um valor no print. Tente com um print mais nítido mostrando o preço da corrida.');
+                            }
+                          } catch (ocrErr) {
+                            console.error('[OCR] Error:', ocrErr);
                             setIsAnalyzingPrint(false);
-                            setCompPriceRead(fakeComp);
-                            setHasCompetitionDiscount(true);
-                          }, 3000);
+                            alert('Erro ao analisar o print. Tente novamente com outra imagem.');
+                          }
+                          // Reset file input so the same file can be re-selected if needed
+                          e.target.value = '';
                         }
                       }} />
                     </label>
