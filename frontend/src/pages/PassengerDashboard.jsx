@@ -1149,36 +1149,58 @@ export default function PassengerDashboard() {
                             });
                             console.log('[OCR] Full text extracted:', text);
                             
-                            // Extract ALL monetary values from the text
-                            // Matches: R$ 25,90 | R$25.90 | 25,90 | 25.90 | R$ 8,40
-                            const priceRegex = /R?\$?\s*(\d{1,4})[.,](\d{2})/g;
-                            const prices = [];
-                            let match;
-                            while ((match = priceRegex.exec(text)) !== null) {
-                              const value = parseFloat(`${match[1]}.${match[2]}`);
-                              if (value >= 5 && value <= 500) { // reasonable ride price range
-                                prices.push(value);
+                            // STEP 1: Look for values WITH "R$" prefix (these are DEFINITELY prices)
+                            const rsPriceRegex = /R\$\s*(\d{1,4})[.,](\d{2})/g;
+                            const rsPrices = [];
+                            let rsMatch;
+                            while ((rsMatch = rsPriceRegex.exec(text)) !== null) {
+                              const value = parseFloat(`${rsMatch[1]}.${rsMatch[2]}`);
+                              if (value >= 5 && value <= 500) {
+                                rsPrices.push(value);
+                              }
+                            }
+                            console.log('[OCR] R$ prices found:', rsPrices);
+                            
+                            let competitorPrice = 0;
+                            
+                            if (rsPrices.length > 0) {
+                              // Among R$ values, take the LARGEST (main ride price)
+                              competitorPrice = Math.max(...rsPrices);
+                            } else {
+                              // STEP 2: Fallback - look for numbers near price-related words
+                              // Only if no R$ was found explicitly
+                              const fallbackRegex = /(\d{2,3})[.,](\d{2})/g;
+                              const fallbackPrices = [];
+                              let fbMatch;
+                              while ((fbMatch = fallbackRegex.exec(text)) !== null) {
+                                const value = parseFloat(`${fbMatch[1]}.${fbMatch[2]}`);
+                                // Stricter range for non-R$ values to avoid picking up time/km
+                                if (value >= 8 && value <= 300) {
+                                  fallbackPrices.push(value);
+                                }
+                              }
+                              console.log('[OCR] Fallback prices found:', fallbackPrices);
+                              if (fallbackPrices.length > 0) {
+                                competitorPrice = Math.max(...fallbackPrices);
                               }
                             }
                             
-                            console.log('[OCR] Prices found:', prices);
+                            console.log('[OCR] Final competitor price:', competitorPrice);
                             
-                            if (prices.length > 0) {
-                              // Take the LARGEST value (usually the main ride price shown prominently)
-                              const competitorPrice = Math.max(...prices);
+                            if (competitorPrice > 0) {
                               setCompPriceRead(competitorPrice);
                               setHasCompetitionDiscount(true);
                               setIsAnalyzingPrint(false);
                             } else {
                               setIsAnalyzingPrint(false);
-                              alert('Não conseguimos identificar um valor no print. Tente com um print mais nítido mostrando o preço da corrida.');
+                              alert('Não conseguimos identificar um valor no print. Tente com um print mais nítido mostrando o preço da corrida com R$.');
                             }
                           } catch (ocrErr) {
                             console.error('[OCR] Error:', ocrErr);
                             setIsAnalyzingPrint(false);
                             alert('Erro ao analisar o print. Tente novamente com outra imagem.');
                           }
-                          // Reset file input so the same file can be re-selected if needed
+                          // Reset file input so the same file can be re-selected
                           e.target.value = '';
                         }
                       }} />
