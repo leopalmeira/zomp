@@ -53,38 +53,43 @@ export default function AuthMapBg() {
           </filter>
         </defs>
 
-        {/* Traffic Dots ONLY (Lines are invisible to simulate following the real roads below) */}
+        {/* Traffic Dots ONLY - Simulating real street paths */}
         <g>
-          {/* Car 1 */}
-          <circle r="4.5" fill="#00E676" filter="url(#neonGlow)">
-            <animateMotion dur="22s" repeatCount="indefinite" path="M-50,450 L150,450 L250,550 L450,550" />
-            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="22s" repeatCount="indefinite" />
-          </circle>
-
-          {/* Car 2 */}
-          <circle r="4" fill="#00E676" filter="url(#neonGlow)">
-            <animateMotion dur="28s" repeatCount="indefinite" path="M50,850 L50,650 L150,550 L350,550 L450,450" />
-            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="28s" repeatCount="indefinite" />
-          </circle>
-
-          {/* Car 3 */}
-          <circle r="4" fill="#00E676" filter="url(#neonGlow)">
-            <animateMotion dur="25s" repeatCount="indefinite" path="M300,350 L300,600 L200,700 L200,850" />
-            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="25s" repeatCount="indefinite" />
-          </circle>
-
-          {/* Car 4 */}
-          <circle r="4.5" fill="#00E676" filter="url(#neonGlow)">
-            <animateMotion dur="20s" repeatCount="indefinite" path="M-50,600 L100,600 L100,750 L450,750" />
-            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="20s" repeatCount="indefinite" />
-          </circle>
-
-          {/* Car 5 */}
+          {/* Grid Path A: West-East Main Ave */}
           <circle r="3.5" fill="#00E676" filter="url(#neonGlow)">
-            <animateMotion dur="24s" repeatCount="indefinite" path="M450,780 L280,780 L200,700 L-50,700" />
-            <animate attributeName="opacity" values="0; 1; 1; 0" keyTimes="0; 0.1; 0.9; 1" dur="24s" repeatCount="indefinite" />
+            <animateMotion dur="25s" repeatCount="indefinite" path="M-20,400 L180,400 L180,480 L420,480" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="25s" repeatCount="indefinite" />
           </circle>
 
+          {/* Grid Path B: South-North side street */}
+          <circle r="3" fill="#00E676" filter="url(#neonGlow)">
+            <animateMotion dur="18s" repeatCount="indefinite" path="M100,820 L100,500 L80,480 L80,200" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="18s" repeatCount="indefinite" />
+          </circle>
+
+          {/* Grid Path C: Diagonal shortcut */}
+          <circle r="3.2" fill="#00E676" filter="url(#neonGlow)">
+            <animateMotion dur="30s" repeatCount="indefinite" path="M350,820 L150,620 L150,400 L250,300" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="30s" repeatCount="indefinite" />
+          </circle>
+
+          {/* Grid Path D: Perimeter road */}
+          <circle r="3.5" fill="#00E676" filter="url(#neonGlow)">
+            <animateMotion dur="22s" repeatCount="indefinite" path="M420,700 L250,700 L200,650 L200,350 L-20,350" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="22s" repeatCount="indefinite" />
+          </circle>
+
+          {/* Grid Path E: Random center turn */}
+          <circle r="3" fill="#00E676" filter="url(#neonGlow)">
+            <animateMotion dur="20s" repeatCount="indefinite" path="M-20,550 L120,550 L120,650 L350,650" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="20s" repeatCount="indefinite" />
+          </circle>
+          
+          {/* More fast "cars" */}
+          <circle r="2.8" fill="#00E676" filter="url(#neonGlow)">
+            <animateMotion dur="12s" begin="5s" repeatCount="indefinite" path="M180,820 L180,400 L-20,400" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="12s" repeatCount="indefinite" />
+          </circle>
         </g>
       </svg>
     </div>

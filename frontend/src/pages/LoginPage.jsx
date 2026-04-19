@@ -44,6 +44,7 @@ export default function LoginPage({ forceRole }) {
             <img src={logoImage} alt="Zomp Logo" className="logo-image" />
           </div>
           <h1>{isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
+          {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
           <p className="auth-subtitle">
             {isDriver ? 'Acesse o portal do motorista.' : 'Acesse para pedir sua viagem.'}
           </p>
