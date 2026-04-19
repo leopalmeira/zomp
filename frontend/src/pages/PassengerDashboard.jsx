@@ -73,7 +73,7 @@ export default function PassengerDashboard() {
   const [mapCenter, setMapCenter] = useState([-22.9068, -43.1729])
 
   // Origin & Destination
-  const [originAddr, setOriginAddr] = useState('Meu Local Atual (GPS)')
+  const [originAddr, setOriginAddr] = useState('')
   const [originCoords, setOriginCoords] = useState(null)
   const [destAddr, setDestAddr] = useState('')
   const [destCoords, setDestCoords] = useState(null)
@@ -188,7 +188,8 @@ export default function PassengerDashboard() {
         const history = await getRideHistory();
         // format history dynamically if needed
         const formatted = history.map(h => {
-          const datePart = h.createdAt.split('T')[0];
+          const createdAt = h.createdAt || new Date().toISOString();
+          const datePart = createdAt.split('T')[0];
           const dp = datePart.split('-');
           return {
             id: h.id,
@@ -1394,9 +1395,11 @@ export default function PassengerDashboard() {
           {rideState === 'RATING' && (
             <div className="state-rating animate-fade-in-up" style={{textAlign: 'center', padding: '20px 0'}}>
               <h2 className="sheet-title" style={{marginBottom: '8px'}}>Corrida Finalizada!</h2>
-              <p className="hint-text" style={{marginBottom: '24px'}}>Como foi a viagem com {favoriteDriversState[0].name}?</p>
+              <p className="hint-text" style={{marginBottom: '24px'}}>Como foi a viagem com {favoriteDriversState[0]?.name || 'seu motorista'}?</p>
               
-              <img src={favoriteDriversState[0].img} alt={favoriteDriversState[0].name} style={{width:'80px',height:'80px',borderRadius:'50%',marginBottom:'16px',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}} />
+              {favoriteDriversState[0]?.img && (
+                <img src={favoriteDriversState[0].img} alt={favoriteDriversState[0].name} style={{width:'80px',height:'80px',borderRadius:'50%',marginBottom:'16px',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}} />
+              )}
               
               {paymentMethod === 'PIX' && (
                 <div style={{background: '#fffbeb', border: '1px solid #fde68a', padding: '16px', borderRadius: '16px', marginBottom: '24px', textAlign: 'left'}}>
