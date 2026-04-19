@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DriverDashboard from './pages/DriverDashboard'
 import PassengerDashboard from './pages/PassengerDashboard'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function ProtectedRoute({ children, requiredRole }) {
   if (!isAuthenticated()) {
@@ -27,40 +28,43 @@ function RoleAutoRedirect() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<RoleAutoRedirect />} />
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/" element={<RoleAutoRedirect />} />
 
-      {/* ==================================
-          APP DO MOTORISTA
-          ================================== */}
-      <Route path="/motorista" element={<LoginPage forceRole="DRIVER" />} />
-      <Route path="/motorista/cadastro" element={<RegisterPage forceRole="DRIVER" />} />
-      <Route
-        path="/motorista/dashboard"
-        element={
-          <ProtectedRoute requiredRole="DRIVER">
-            <DriverDashboard />
-          </ProtectedRoute>
-        }
-      />
+        {/* ==================================
+            APP DO MOTORISTA
+            ================================== */}
+        <Route path="/motorista" element={<LoginPage forceRole="DRIVER" />} />
+        <Route path="/motorista/cadastro" element={<RegisterPage forceRole="DRIVER" />} />
+        <Route
+          path="/motorista/dashboard"
+          element={
+            <ProtectedRoute requiredRole="DRIVER">
+              <DriverDashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ==================================
-          APP DO PASSAGEIRO
-          ================================== */}
-      <Route path="/passageiro" element={<LoginPage forceRole="PASSENGER" />} />
-      <Route path="/passageiro/cadastro" element={<RegisterPage forceRole="PASSENGER" />} />
-      <Route
-        path="/passageiro/dashboard"
-        element={
-          <ProtectedRoute requiredRole="PASSENGER">
-            <PassengerDashboard />
-          </ProtectedRoute>
-        }
-      />
+        {/* ==================================
+            APP DO PASSAGEIRO
+            ================================== */}
+        <Route path="/passageiro" element={<LoginPage forceRole="PASSENGER" />} />
+        <Route path="/passageiro/cadastro" element={<RegisterPage forceRole="PASSENGER" />} />
+        <Route
+          path="/passageiro/dashboard"
+          element={
+            <ProtectedRoute requiredRole="PASSENGER">
+              <PassengerDashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </ErrorBoundary>
   )
 }
 
 export default App
+

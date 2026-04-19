@@ -165,7 +165,7 @@ export default function PassengerDashboard() {
     try {
       const saved = localStorage.getItem('zomp_scheduled_rides')
       return saved ? JSON.parse(saved) : []
-    } catch { return [] }
+    } catch (e) { return [] }
   })
 
   // Persist scheduled rides to localStorage
@@ -186,28 +186,34 @@ export default function PassengerDashboard() {
     async function loadHistory() {
       try {
         const history = await getRideHistory();
-        // format history dynamically if needed
-        const formatted = history.map(h => {
-          const createdAt = h.createdAt || new Date().toISOString();
-          const datePart = createdAt.split('T')[0];
-          const dp = datePart.split('-');
-          return {
-            id: h.id,
-            rawDate: new Date(h.createdAt),
-            date: dp.length === 3 ? `${dp[2]}/${dp[1]}/${dp[0]}` : datePart,
-            origin: h.origin || '-',
-            dest: h.destination || '-',
-            price: h.price?.toFixed(2) || '0.00',
-            vehicle: h.vehicleType === 'car' ? 'Carro' : 'Moto',
-            status: h.status
-          };
-        });
-        
-        // Let's add any local mock fees as well from our previous localStorage logic if we wanted, 
-        // but it's better to fetch pure DB history.
+        if (!Array.isArray(history)) {
+          setRideHistory([]);
+          return;
+        }
+        const formatted = [];
+        for (const h of history) {
+          try {
+            const createdAt = h.createdAt || new Date().toISOString();
+            const datePart = createdAt.split('T')[0];
+            const dp = datePart.split('-');
+            formatted.push({
+              id: h.id,
+              rawDate: new Date(createdAt),
+              date: dp.length === 3 ? `${dp[2]}/${dp[1]}/${dp[0]}` : datePart,
+              origin: h.origin || '-',
+              dest: h.destination || '-',
+              price: h.price != null ? Number(h.price).toFixed(2) : '0.00',
+              vehicle: h.vehicleType === 'car' ? 'Carro' : 'Moto',
+              status: h.status || 'UNKNOWN'
+            });
+          } catch (itemErr) {
+            console.warn('Skipping malformed ride history item:', itemErr);
+          }
+        }
         setRideHistory(formatted);
       } catch (err) {
         console.error('Failed to load history', err);
+        setRideHistory([]);
       }
     }
     loadHistory();

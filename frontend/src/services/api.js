@@ -100,12 +100,26 @@ export async function requestRide(payload) {
 }
 
 export async function getRideHistory() {
-  const res = await fetch(`${API_BASE}/rides`, {
-    headers: getHeaders(),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Erro ao buscar histórico');
-  return data;
+  try {
+    const res = await fetch(`${API_BASE}/rides`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      console.warn('getRideHistory failed with status:', res.status);
+      return [];
+    }
+    const text = await res.text();
+    try {
+      const data = JSON.parse(text);
+      return Array.isArray(data) ? data : [];
+    } catch {
+      console.warn('getRideHistory: non-JSON response');
+      return [];
+    }
+  } catch (err) {
+    console.warn('getRideHistory network error:', err);
+    return [];
+  }
 }
 
 export async function getPendingRides() {
