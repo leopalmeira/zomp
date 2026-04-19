@@ -125,3 +125,8 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã£o e
 - **Integração Total:** Seletor de passageiros movido para DENTRO do card do Carro, limpando o layout inferior.
 - **Branding Clean:** Marca dágua do Leaflet removida globalmente de todos os mapas no Passageiro e Motorista.
 
+
+## [19/04/2026] - Estratégia de Preço Imbatível (v2.0.22)
+- **Campanha Preço Imbatível:** Lançada funcionalidade que permite ao passageiro anexar print da concorrência (Uber/99) para receber R$ 2,00 de desconto adicional garantido.
+- **Refinamento de UI:** O seletor de passageiros foi movido para a borda inferior do card de veículo, com maior espaçamento entre os controles para melhor precisão ao toque.
+

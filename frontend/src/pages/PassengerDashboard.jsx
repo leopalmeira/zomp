@@ -993,12 +993,12 @@ export default function PassengerDashboard() {
                   </div>
                   
                   {vehicleType === 'car' && (
-                    <div className="integrated-counter" onClick={(e) => e.stopPropagation()}>
+                    <div className="integrated-counter-border" onClick={(e) => e.stopPropagation()}>
                        <div className="counter-label">
                          <User size={12} />
-                         <span>Passageiros</span>
+                         <span>Pessoas</span>
                        </div>
-                       <div className="counter-actions">
+                       <div className="counter-actions-spaced">
                          <button onClick={() => setPassengersCount(Math.max(1, passengersCount - 1))}>-</button>
                          <span className="count">{passengersCount}</span>
                          <button onClick={() => setPassengersCount(Math.min(4, passengersCount + 1))}>+</button>
@@ -1072,6 +1072,23 @@ export default function PassengerDashboard() {
                   </p>
                 </div>
               )}
+
+              {/* Challenge Price Box */}
+              <div className="price-challenge-box animate-fade-in">
+                <div className="challenge-icon">🔥</div>
+                <div className="challenge-content">
+                  <h4 style={{fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c', margin: 0}}>PREÇO IMBATÍVEL ZOMP</h4>
+                  <p style={{fontSize: '0.75rem', fontWeight: 600, color: '#7f1d1d', margin: '2px 0 6px'}}>Tem print da Uber ou 99? Cobrimos e damos + R$ 2,00 de desconto!</p>
+                  
+                  <label htmlFor="price-print" className="challenge-upload-btn">
+                    <Camera size={14} /> 
+                    <span>Anexar Print da Concorrência</span>
+                    <input type="file" id="price-print" accept="image/*" style={{display:'none'}} onChange={(e) => {
+                      if(e.target.files?.[0]) alert('Print recebido! Analisando desconto imbatível...')
+                    }} />
+                  </label>
+                </div>
+              </div>
 
               <div className="prioritize-toggle">
                 <div>

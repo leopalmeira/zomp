@@ -879,3 +879,95 @@ input:checked + .slider:before { transform: translateX(22px); }
  } 
   
  
+/* Refined Integrated Counter - Bottom Border Style */
+.integrated-counter-border {
+  margin-top: auto;
+  background: rgba(0, 0, 0, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-radius: 0 0 16px 16px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.counter-actions-spaced {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.counter-actions-spaced button {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.counter-actions-spaced .count {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #000;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* Price Challenge Box */
+.price-challenge-box {
+  background: #fef2f2;
+  border: 1px dashed #fecaca;
+  padding: 12px;
+  border-radius: 16px;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.challenge-icon {
+  font-size: 1.5rem;
+  background: #fee2e2;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.challenge-content {
+  flex: 1;
+}
+
+.challenge-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #b91c1c;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.challenge-upload-btn:hover {
+  background: #b91c1c;
+  color: #fff;
+}
+
