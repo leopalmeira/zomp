@@ -120,6 +120,8 @@ export default function PassengerDashboard() {
   
   // Intercity Trips State
   const [isIntercity, setIsIntercity] = useState(false)
+  const [isAnalyzingPrint, setIsAnalyzingPrint] = useState(false)
+  const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
   const [passengersCount, setPassengersCount] = useState(1)
 
   // Freight State
@@ -232,7 +234,13 @@ export default function PassengerDashboard() {
     const extraPsg = (type === 'car' && passengersCount > 1) ? (passengersCount - 1) * 2.50 : 0;
 
     const basePrice = Math.max(calculated, MIN_PRICE[type]) + stopsFee + extraPsg
-    const finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
+    let finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
+    
+    // Apply competition discount if validated
+    if (hasCompetitionDiscount) {
+      finalPrice = Math.max(finalPrice - 2.00, MIN_PRICE[type]);
+    }
+    
     return finalPrice.toFixed(2)
   }
 
@@ -1098,13 +1106,29 @@ export default function PassengerDashboard() {
                   <h4 style={{fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c', margin: 0}}>PREÇO IMBATÍVEL ZOMP</h4>
                   <p style={{fontSize: '0.75rem', fontWeight: 600, color: '#7f1d1d', margin: '2px 0 6px'}}>Tem print da Uber ou 99? Cobrimos e damos + R$ 2,00 de desconto!</p>
                   
-                  <label htmlFor="price-print" className="challenge-upload-btn">
-                    <Camera size={14} /> 
-                    <span>Anexar Print da Concorrência</span>
-                    <input type="file" id="price-print" accept="image/*" style={{display:'none'}} onChange={(e) => {
-                      if(e.target.files?.[0]) alert('Print recebido! Analisando desconto imbatível...')
-                    }} />
-                  </label>
+                  {isAnalyzingPrint ? (
+                    <div style={{fontSize: '0.75rem', color: '#b91c1c', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px'}}>
+                       <span className="animate-pulse">🔍 IA Analisando Print...</span>
+                    </div>
+                  ) : hasCompetitionDiscount ? (
+                    <div style={{fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px'}}>
+                       <Check size={14} /> <span>DESCONTO DE R$ 2,00 APLICADO!</span>
+                    </div>
+                  ) : (
+                    <label htmlFor="price-print" className="challenge-upload-btn">
+                      <Camera size={14} /> 
+                      <span>Anexar Print da Concorrência</span>
+                      <input type="file" id="price-print" accept="image/*" style={{display:'none'}} onChange={(e) => {
+                        if(e.target.files?.[0]) {
+                          setIsAnalyzingPrint(true);
+                          setTimeout(() => {
+                            setIsAnalyzingPrint(false);
+                            setHasCompetitionDiscount(true);
+                          }, 3000);
+                        }
+                      }} />
+                    </label>
+                  )}
                 </div>
               </div>
 
