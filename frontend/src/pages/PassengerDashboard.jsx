@@ -1149,40 +1149,86 @@ export default function PassengerDashboard() {
                             });
                             console.log('[OCR] Full text extracted:', text);
                             
-                            // STEP 1: Look for values WITH "R$" prefix (these are DEFINITELY prices)
+                            // Collect ALL R$ prices with their position in text
                             const rsPriceRegex = /R\$\s*(\d{1,4})[.,](\d{2})/g;
-                            const rsPrices = [];
+                            const pricesWithPos = [];
                             let rsMatch;
                             while ((rsMatch = rsPriceRegex.exec(text)) !== null) {
                               const value = parseFloat(`${rsMatch[1]}.${rsMatch[2]}`);
                               if (value >= 5 && value <= 500) {
-                                rsPrices.push(value);
+                                pricesWithPos.push({ value, position: rsMatch.index });
                               }
                             }
-                            console.log('[OCR] R$ prices found:', rsPrices);
+                            console.log('[OCR] R$ prices found:', pricesWithPos.map(p => p.value));
                             
                             let competitorPrice = 0;
                             
-                            if (rsPrices.length > 0) {
-                              // Among R$ values, take the LARGEST (main ride price)
-                              competitorPrice = Math.max(...rsPrices);
-                            } else {
-                              // STEP 2: Fallback - look for numbers near price-related words
-                              // Only if no R$ was found explicitly
-                              const fallbackRegex = /(\d{2,3})[.,](\d{2})/g;
-                              const fallbackPrices = [];
-                              let fbMatch;
-                              while ((fbMatch = fallbackRegex.exec(text)) !== null) {
-                                const value = parseFloat(`${fbMatch[1]}.${fbMatch[2]}`);
-                                // Stricter range for non-R$ values to avoid picking up time/km
-                                if (value >= 8 && value <= 300) {
-                                  fallbackPrices.push(value);
+                            if (pricesWithPos.length > 0) {
+                              // STRATEGY 1: Find price near action words (solicitar, chamar, confirmar, pedir)
+                              // These indicate the SELECTED ride price near the action button
+                              const actionWords = /solicitar|chamar|confirmar|pedir|aceitar|corrida|viagem/gi;
+                              const checkWords = /✓|✔|selecionado|escolhido/gi;
+                              let actionMatch;
+                              let nearActionPrice = null;
+                              
+                              // Find action words and get nearest price
+                              while ((actionMatch = actionWords.exec(text)) !== null) {
+                                const actionPos = actionMatch.index;
+                                let closest = null;
+                                let minDist = Infinity;
+                                for (const p of pricesWithPos) {
+                                  const dist = Math.abs(p.position - actionPos);
+                                  if (dist < minDist) {
+                                    minDist = dist;
+                                    closest = p;
+                                  }
+                                }
+                                if (closest && minDist < 200) {
+                                  nearActionPrice = closest.value;
                                 }
                               }
-                              console.log('[OCR] Fallback prices found:', fallbackPrices);
-                              if (fallbackPrices.length > 0) {
-                                competitorPrice = Math.max(...fallbackPrices);
+                              
+                              // STRATEGY 2: Find price near checkmark ✓
+                              let nearCheckPrice = null;
+                              let checkMatch;
+                              while ((checkMatch = checkWords.exec(text)) !== null) {
+                                const checkPos = checkMatch.index;
+                                let closest = null;
+                                let minDist = Infinity;
+                                for (const p of pricesWithPos) {
+                                  const dist = Math.abs(p.position - checkPos);
+                                  if (dist < minDist) {
+                                    minDist = dist;
+                                    closest = p;
+                                  }
+                                }
+                                if (closest && minDist < 150) {
+                                  nearCheckPrice = closest.value;
+                                }
                               }
+                              
+                              // PRIORITY: action button price > checkmark price > LAST price (bottom of screen)
+                              if (nearActionPrice) {
+                                competitorPrice = nearActionPrice;
+                                console.log('[OCR] Using price near action button:', competitorPrice);
+                              } else if (nearCheckPrice) {
+                                competitorPrice = nearCheckPrice;
+                                console.log('[OCR] Using price near checkmark:', competitorPrice);
+                              } else {
+                                // STRATEGY 3: Take LAST R$ value (nearest to bottom/button)
+                                competitorPrice = pricesWithPos[pricesWithPos.length - 1].value;
+                                console.log('[OCR] Using last R$ value (bottom of screen):', competitorPrice);
+                              }
+                            } else {
+                              // Fallback: no R$ found, try plain numbers
+                              const fallbackRegex = /(\d{2,3})[.,](\d{2})/g;
+                              let fbMatch;
+                              let lastFb = 0;
+                              while ((fbMatch = fallbackRegex.exec(text)) !== null) {
+                                const value = parseFloat(`${fbMatch[1]}.${fbMatch[2]}`);
+                                if (value >= 8 && value <= 300) lastFb = value;
+                              }
+                              competitorPrice = lastFb;
                             }
                             
                             console.log('[OCR] Final competitor price:', competitorPrice);
@@ -1193,14 +1239,13 @@ export default function PassengerDashboard() {
                               setIsAnalyzingPrint(false);
                             } else {
                               setIsAnalyzingPrint(false);
-                              alert('Não conseguimos identificar um valor no print. Tente com um print mais nítido mostrando o preço da corrida com R$.');
+                              alert('Não conseguimos identificar o preço da corrida no print. Tente com um print mais nítido mostrando o valor com R$.');
                             }
                           } catch (ocrErr) {
                             console.error('[OCR] Error:', ocrErr);
                             setIsAnalyzingPrint(false);
                             alert('Erro ao analisar o print. Tente novamente com outra imagem.');
                           }
-                          // Reset file input so the same file can be re-selected
                           e.target.value = '';
                         }
                       }} />
