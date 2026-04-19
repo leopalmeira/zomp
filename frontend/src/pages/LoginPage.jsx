@@ -46,7 +46,7 @@ export default function LoginPage({ forceRole }) {
           <h1>{isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
           {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
           <p className="auth-subtitle">
-            {isDriver ? 'Acesse o portal do motorista.' : 'Acesse para pedir sua viagem.'}
+            {isDriver ? 'Acesse o portal do motorista.' : 'Corridas mais justas, sem taxas abusivas para os motoristas.'}
           </p>
         </div>
 

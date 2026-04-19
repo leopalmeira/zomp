@@ -49,7 +49,7 @@ export default function RegisterPage({ forceRole }) {
           <h1>{isDriver ? 'Dirija.' : 'Viaje.'}</h1>
           {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
           <p className="auth-subtitle">
-            Crie sua conta como {isDriver ? 'motorista parceiro' : 'passageiro'}.
+            {isDriver ? 'Crie sua conta como motorista parceiro.' : 'Corridas mais justas, sem taxas abusivas para os motoristas.'}
           </p>
         </div>
 
