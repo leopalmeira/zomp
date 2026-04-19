@@ -289,110 +289,134 @@
   position: absolute;
   top: 0; left: 0; bottom: 0;
   width: 85%;
-  max-width: 380px;
-  background: #ffffff;
-  box-shadow: 10px 0 40px rgba(0,0,0,0.15);
+  max-width: 360px;
+  /* Premium Dark Glass */
+  background: rgba(18, 22, 28, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 10px 0 50px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
   animation: slideRight 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   overflow-y: auto;
-  border-right: 1px solid rgba(0,0,0,0.05);
+  border-right: 1px solid rgba(255,255,255,0.05);
 }
 @keyframes slideRight { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 
 /* Drawer Profile Header */
 .drawer-profile-section {
-  background: linear-gradient(135deg, #18181b 0%, #1a1a2e 50%, #16213e 100%);
-  padding: 36px 24px 28px;
+  padding: 40px 24px 32px;
   color: #fff;
   position: relative;
   overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .drawer-profile-section::after {
   content: '';
   position: absolute;
-  top: -50%; right: -50%;
-  width: 100%; height: 200%;
-  background: radial-gradient(circle, rgba(0,230,118,0.08) 0%, transparent 70%);
+  top: -30%; right: -30%;
+  width: 150%; height: 150%;
+  background: radial-gradient(circle, rgba(0,230,118,0.12) 0%, transparent 60%);
+  pointer-events: none;
 }
 .drawer-avatar {
-  width: 56px; height: 56px;
-  border-radius: 16px;
+  width: 64px; height: 64px;
+  border-radius: 20px;
   background: linear-gradient(135deg, #059669, #00E676);
   color: #000;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   position: relative;
   z-index: 2;
-  box-shadow: 0 4px 16px rgba(0,230,118,0.3);
+  box-shadow: 0 8px 24px rgba(0,230,118,0.3);
 }
 .drawer-name {
-  font-size: 1.15rem;
+  font-size: 1.3rem;
   font-weight: 800;
+  color: #f8fafc;
   position: relative;
   z-index: 2;
+  letter-spacing: -0.3px;
 }
 .drawer-role-tag {
   display: inline-block;
-  margin-top: 6px;
-  padding: 3px 10px;
-  background: rgba(0,230,118,0.15);
+  margin-top: 8px;
+  padding: 4px 12px;
+  background: rgba(0,230,118,0.1);
+  border: 1px solid rgba(0,230,118,0.2);
   color: #00E676;
   border-radius: 100px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   position: relative;
   z-index: 2;
 }
 
 /* Navigation Items */
-.drawer-nav { flex: 1; padding: 12px 16px; }
+.drawer-nav { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
 
 .drawer-nav-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 20px;
-  margin-bottom: 4px;
+  gap: 14px;
+  padding: 14px 16px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   width: 100%;
   text-align: left;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #3f3f46;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #cbd5e1;
   cursor: pointer;
   border-radius: 16px;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 .drawer-nav-item:hover {
-  background: #f4f4f5;
-  color: #18181b;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
   transform: translateX(4px);
 }
 .drawer-nav-item .nav-icon {
-  font-size: 1.25rem;
-  width: 32px; height: 32px;
-  background: #fff;
+  width: 36px; height: 36px;
+  background: rgba(0, 0, 0, 0.3);
   display: flex; align-items: center; justify-content: center;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  border-radius: 12px;
+  color: #00E676;
+  border: 1px solid rgba(0, 230, 118, 0.15);
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.02);
+}
+.drawer-nav-item:hover .nav-icon {
+  background: rgba(0, 230, 118, 0.1);
+  box-shadow: 0 0 12px rgba(0, 230, 118, 0.2);
 }
 .drawer-nav-separator {
   height: 1px;
-  background: #e4e4e7;
+  background: rgba(255,255,255,0.06);
   margin: 12px 20px;
 }
 
 .drawer-footer {
-  padding: 12px 0;
-  border-top: 1px solid #f4f4f5;
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.drawer-footer .drawer-nav-item {
+  color: #f87171;
+}
+.drawer-footer .drawer-nav-item:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+.drawer-footer .nav-icon {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 /* =============================================

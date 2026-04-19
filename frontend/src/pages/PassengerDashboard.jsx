@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, requestRide, getRideHistory } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline } from 'react-leaflet'
+import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Passenger.css'
@@ -995,7 +996,7 @@ export default function PassengerDashboard() {
               {/* Vehicle Type Selector */}
               <div className="vehicle-selector">
                 <div
-                  className={`vehicle-option active`}
+                  className={`vehicle-option ${vehicleType === 'car' ? 'active' : ''}`}
                   onClick={() => setVehicleType('car')}
                 >
                   <span className="vehicle-icon">🚗</span>
@@ -1436,18 +1437,28 @@ export default function PassengerDashboard() {
                       <span className="badge-nearby">Passageiro</span>
                     </div>
                   </div>
-                  <hr />
-                  <button className="menu-nav-btn" onClick={() => { resetFlow(); setIsMenuOpen(false) }}>Nova Viagem</button>
+                  <div className="menu-user-header">
+                    <div className="user-avatar-large">{user?.name?.charAt(0)}</div>
+                    <h2>{user?.name}</h2>
+                    <div style={{fontSize:'0.8rem', color:'#00E676', fontWeight:700, marginTop:'4px'}}>Passageiro Elite</div>
+                  </div>
+
+                  <button className="menu-nav-btn" onClick={() => { resetFlow(); setIsMenuOpen(false) }}>
+                    <span className="nav-icon"><MapPin size={18} /></span>
+                    Nova Viagem
+                  </button>
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('SCHEDULED')}>
-                    📅 Corridas Agendadas
+                    <span className="nav-icon"><Calendar size={18} /></span>
+                    Agendamentos
                     {scheduledRides.length > 0 && (
                       <span style={{
-                        marginLeft: '8px',
-                        background: 'var(--primary)',
-                        color: '#000',
+                        marginLeft: 'auto',
+                        background: 'rgba(0,230,118,0.15)',
+                        border: '1px solid rgba(0,230,118,0.3)',
+                        color: '#00E676',
                         borderRadius: '50%',
-                        width: '22px',
-                        height: '22px',
+                        width: '24px',
+                        height: '24px',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1456,11 +1467,21 @@ export default function PassengerDashboard() {
                       }}>{scheduledRides.length}</span>
                     )}
                   </button>
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('PROFILE')}>👤 Meu Perfil</button>
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('HISTORY')}>🕒 Histórico</button>
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('FAVORITES')}>⭐ Favoritos</button>
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('PROFILE')}>
+                    <span className="nav-icon"><User size={18} /></span>
+                    Meu Perfil
+                  </button>
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('HISTORY')}>
+                    <span className="nav-icon"><Clock size={18} /></span>
+                    Histórico
+                  </button>
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('FAVORITES')}>
+                    <span className="nav-icon"><Star size={18} /></span>
+                    Favoritos
+                  </button>
                   <div className="menu-spacer"></div>
                   <button className="menu-nav-btn text-danger" onClick={() => { logout(); navigate('/passageiro') }}>
+                    <span className="nav-icon"><LogOut size={18} /></span>
                     Sair do App
                   </button>
                 </>

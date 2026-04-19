@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet'
+import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Driver.css'
@@ -407,24 +408,24 @@ export default function DriverDashboard() {
               <div className="drawer-role-tag">Motorista Parceiro</div>
             </div>
             <nav className="drawer-nav">
-              <button className="drawer-nav-item" onClick={() => openScreen('PROFILE')}><span className="nav-icon">👤</span>Meu Perfil</button>
-              <button className="drawer-nav-item" onClick={() => openScreen('DOCS')}><span className="nav-icon">📄</span>Documentos e Veículo</button>
-              <button className="drawer-nav-item" onClick={() => openScreen('HISTORY')}><span className="nav-icon">📋</span>Histórico</button>
-              <button className="drawer-nav-item" onClick={() => openScreen('CREDITS')}><span className="nav-icon">🎫</span>Créditos<span style={{marginLeft:'auto',background:'#ecfdf5',color:'#059669',padding:'2px 8px',borderRadius:'100px',fontSize:'0.75rem',fontWeight:800}}>{credits}</span></button>
-              <button className="drawer-nav-item" onClick={() => openScreen('ROYALTIES')}><span className="nav-icon">👑</span>Royalties<span style={{marginLeft:'auto',color:'#059669',fontSize:'0.8rem',fontWeight:800}}>R$ {wallet.balance?.toFixed(2)}</span></button>
+              <button className="drawer-nav-item" onClick={() => openScreen('PROFILE')}><span className="nav-icon"><User size={20} /></span>Menu Interativo Perfil</button>
+              <button className="drawer-nav-item" onClick={() => openScreen('DOCS')}><span className="nav-icon"><FileText size={20} /></span>Documentos e Veículo</button>
+              <button className="drawer-nav-item" onClick={() => openScreen('HISTORY')}><span className="nav-icon"><Clock size={20} /></span>Histórico de Corridas</button>
+              <button className="drawer-nav-item" onClick={() => openScreen('CREDITS')}><span className="nav-icon"><Ticket size={20} /></span>Acessar Créditos<span style={{marginLeft:'auto',background:'rgba(0,230,118,0.15)',color:'#00E676',border:'1px solid rgba(0,230,118,0.3)',padding:'4px 10px',borderRadius:'100px',fontSize:'0.75rem',fontWeight:800}}>{credits}</span></button>
+              <button className="drawer-nav-item" onClick={() => openScreen('ROYALTIES')}><span className="nav-icon"><Gem size={20} /></span>Extrato Royalties<span style={{marginLeft:'auto',color:'#00E676',fontSize:'0.85rem',fontWeight:800}}>R$ {wallet.balance?.toFixed(2)}</span></button>
               <div className="drawer-nav-separator"></div>
-              <button className="drawer-nav-item" onClick={() => openScreen('REFERRAL')}><span className="nav-icon">🔗</span>Indicar Passageiro</button>
-              <button className="drawer-nav-item" onClick={() => openScreen('EXTERNAL')}><span className="nav-icon">🔄</span>Corridas Externas</button>
+              <button className="drawer-nav-item" onClick={() => openScreen('REFERRAL')}><span className="nav-icon"><UserPlus size={20} /></span>Indicar Passageiro</button>
+              <button className="drawer-nav-item" onClick={() => openScreen('EXTERNAL')}><span className="nav-icon"><RefreshCw size={20} /></span>Corridas de Outros Apps</button>
               <div className="drawer-nav-separator"></div>
-              <button className="drawer-nav-item" onClick={() => openScreen('SUPPORT')}><span className="nav-icon">🎧</span>Suporte</button>
-              <button className="drawer-nav-item" onClick={() => openScreen('FAQ')}><span className="nav-icon">❓</span>FAQ</button>
+              <button className="drawer-nav-item" onClick={() => openScreen('SUPPORT')}><span className="nav-icon"><Headset size={20} /></span>Central de Suporte</button>
+              <button className="drawer-nav-item" onClick={() => openScreen('FAQ')}><span className="nav-icon"><HelpCircle size={20} /></span>Perguntas Frequentes</button>
               <div className="drawer-nav-separator"></div>
               <button className="drawer-nav-item" onClick={() => { setDarkMap(!darkMap); setMenuOpen(false) }}>
-                <span className="nav-icon">{darkMap ? '☀️' : '🌙'}</span>{darkMap ? 'Mapa Claro' : 'Mapa Escuro'}
+                <span className="nav-icon">{darkMap ? <Sun size={20} /> : <Moon size={20} />}</span>{darkMap ? 'Ligar Modo Claro' : 'Ativar Mapa Escuro'}
               </button>
             </nav>
             <div className="drawer-footer">
-              <button className="drawer-nav-item" style={{color:'#ef4444'}} onClick={handleLogout}><span className="nav-icon">🚪</span>Sair</button>
+              <button className="drawer-nav-item" onClick={handleLogout}><span className="nav-icon"><LogOut size={20} /></span>Desconectar-se</button>
             </div>
           </div>
         </div>

@@ -19,16 +19,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then((registration) => {
-            console.log('PWA ServiceWorker registrado com sucesso: ', registration.scope);
-          }).catch((err) => {
-            console.log('Falha ao registrar o PWA ServiceWorker: ', err);
-          });
-        });
-      }
-    </script>
   </body>
 </html>
