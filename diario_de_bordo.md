@@ -143,4 +143,6 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Backend Híbrido:** O endpoint `/api/analyze-print` agora tenta primeiro o processamento local e utiliza o Google Gemini apenas como fallback automático.
 - **Frontend Consistente:** Padronizada a `API_BASE` no `PassengerDashboard.jsx` para evitar erros de conexão e adicionado tratamento de erro visual para chaves de IA expiradas.
 - **Motor de Extração:** Criado `ocr_service.py` com lógica de Regex e heurística para ler categorias "Pop" da 99 e "UberX" da Uber com alta precisão.
-- **Log e Depuração:** Implementados logs detalhados no servidor para monitorar o sucesso de cada engine de OCR (Local vs IA).
+- **Correção de Transparência:** Implementada conversão automática para RGB no script Python, resolvendo falhas ao salvar prints RGBA/LA como JPEG.
+- **Compatibilidade Render:** Padronizado comando de execução para `python3` em ambientes Linux e inclusão automática de dependências no `render.yaml`.
+- **JSON Limpo:** Silenciados logs e barras de progresso do EasyOCR para evitar poluição no STDOUT do Node.js.
