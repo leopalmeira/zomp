@@ -1165,7 +1165,8 @@ export default function PassengerDashboard() {
                                     
                                     try {
                                         const token = localStorage.getItem('zomp_token');
-                                        const API_BASE = import.meta.env.VITE_API_URL || 'https://zomp-api.onrender.com/api';
+                                        // Usa o mesmo fallback do api.js para consistência
+                                        const API_BASE = import.meta.env.VITE_API_URL || '/api';
                                         
                                         const res = await fetch(`${API_BASE}/analyze-print`, {
                                             method: 'POST',
@@ -1176,6 +1177,10 @@ export default function PassengerDashboard() {
                                             body: JSON.stringify({ imageBase64: compressedBase64 })
                                         });
                                         
+                                        if (res.status === 503) {
+                                          throw new Error("O serviço de IA está temporariamente indisponível (chaves expiradas).");
+                                        }
+
                                         if (!res.ok) throw new Error(`Erro API: ${res.status}`);
                                         
                                         const data = await res.json();

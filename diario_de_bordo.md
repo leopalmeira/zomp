@@ -138,8 +138,8 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Design de Interface:** Barra de endereços compactada em 30% na altura e 10% na largura para otimizar o uso do espaço de tela e destacar o mapa.
 - **Desconto Garantido:** Reforçada funcionalidade de desconto de R$ 2,00 via print da concorrência, agora com interface de upload mais clara.
 
-## [19/04/2026] - Integração Gemini AI Vision e Robustez Extrema (v2.0.35 - v2.0.42)
-- **Blindagem do App (Anti Tela Branca):** Adicionado `ErrorBoundary` Global envolvendo todo o App em React, salvando o sistema de quebras (crashes brancos). O GPS useEffect foi blindado contra loops, e os parsers de API não cracham mais com Respostas não-JSON (Ex: 403 Forbidden).
-- **IA de Visão (OCR Inteligente Removido):** O Tesseract.js (rodando no celular do cliente) foi completamente **removido** do React devido às altas falhas em telas escuras e variação de UX na concorrência.
-- **Google Gemini 2.5 Flash Vision no Backend:** A nova API da Inteligência Computacional (`/api/analyze-print`) foi integrada. Agora convertemos o print em Base64 no Frontend e a IA do Google Lê pelo servidor, alcançando **100% de taxa de acerto** da identificação do valor lido no print, ignorando números descartados ou de outras classes.
-- **Arquitetura de Rodízio de Chaves:** Implementada arquitetura de rodízio randômico de chaves da API (Arsenal com Múltiplas Chaves do AI Studio Google) no NodeJS, distribuindo assim as cargas da IA e garantindo que o sistema gratuito (15 RPM) se multiplique e nunca gere bloqueios ou cobranças acidentais.
+## [20/04/2026] - Migração para OCR Local com EasyOCR (v2.1.0)
+- **Integração de OCR Local:** Adicionado suporte ao `EasyOCR` (Python) no backend para leitura de prints sem dependência de chaves de API.
+- **Backend Híbrido:** O endpoint `/api/analyze-print` agora tenta primeiro o processamento local via Python e utiliza o Google Gemini apenas como fallback.
+- **Engine Python:** Criado `ocr_service.py` que gere o ciclo de vida do OCR, processamento de imagem Base64 e extração de preços via Heurística de proximidade.
+- **Dependências:** Adicionado check-in de ambiente para Python 3.x e bibliotecas deep learning (`torch`, `easyocr`).

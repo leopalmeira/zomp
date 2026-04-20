@@ -4,6 +4,8 @@ const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { exec } = require('child_process');
+const path = require('path');
 
 const prisma = new PrismaClient();
 const app = express();
@@ -377,34 +379,69 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
     const { imageBase64 } = req.body;
     if (!imageBase64) return res.status(400).json({ error: 'Nenhuma imagem fornecida' });
 
-    // Sorteia aleatoriamente uma das chaves disponíveis para balancear a carga
+    console.log('[OCR] Iniciando análise de imagem...');
+
+    // Tentar primeiro com EasyOCR (via Python)
+    const pythonScript = path.join(__dirname, 'ocr_service.py');
+    
+    // Usamos exec para chamar o script Python. Nota: Para produção o ideal seria um microserviço ou worker.
+    // Limitamos o tamanho do buffer para evitar estouro com base64 gigante
+    const maxBuffer = 50 * 1024 * 1024; // 50MB
+
+    const callPythonOCR = () => {
+        return new Promise((resolve, reject) => {
+            // Escapar aspas duplas no base64 se necessário
+            const safeBase64 = imageBase64.replace(/"/g, '\\"');
+            exec(`python "${pythonScript}" "${safeBase64}"`, { maxBuffer }, (error, stdout, stderr) => {
+                if (error) {
+                    console.warn('[OCR] Erro ao chamar Python EasyOCR:', stderr);
+                    return reject(error);
+                }
+                try {
+                    const result = JSON.parse(stdout);
+                    resolve(result.price || 0);
+                } catch (e) {
+                    reject(new Error('Falha ao parsear saída do Python'));
+                }
+            });
+        });
+    };
+
+    try {
+        const easyPrice = await callPythonOCR();
+        if (easyPrice > 0) {
+            console.log(`[OCR] EasyOCR identificou preço: ${easyPrice}`);
+            return res.json({ price: easyPrice, source: 'EasyOCR' });
+        }
+    } catch (pyErr) {
+        console.warn('[OCR] EasyOCR falhou, tentando fallback Gemini...');
+    }
+
+    // FALLBACK: Gemini AI
+    if (GEMINI_KEYS.length === 0) {
+      return res.status(503).json({ error: 'IA indisponível e OCR local não configurado.' });
+    }
+
     const randomKey = GEMINI_KEYS[Math.floor(Math.random() * GEMINI_KEYS.length)];
     const genAI = new GoogleGenerativeAI(randomKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
-    // Remove the data:image prefix se presente
     const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-
-    const prompt = 'Você analisa prints de apps de transporte. REGRA 1 (99): Encontre a categoria "Pop" e extraia o valor dela. REGRA 2 (Uber): Encontre a categoria "UberX" e extraia o valor dela, IGNORANDO qualquer preço que tenha um traço no meio (riscado de desconto fake). Ignore valores maiores como Comfort. Retorne APENAS E ESTRITAMENTE o número em formato float que representa o valor final do Pop ou UberX (Exemplo: 48.90). Caso não ache retorne 0.';
+    const prompt = `Extraia APENAS o valor final (UberX ou 99Pop) deste print. Responda apenas o número.`;
     
-    const imagePart = {
-      inlineData: {
-        data: cleanBase64,
-        mimeType: "image/jpeg"
-      }
-    };
-
+    const imagePart = { inlineData: { data: cleanBase64, mimeType: "image/jpeg" } };
     const result = await model.generateContent([prompt, imagePart]);
-    let aiText = result.response.text().trim();
-    // Guarantee it parses correctly (e.g if it responds "48.90")
-    aiText = aiText.replace(',', '.'); // replace any stray commas
-    const finalPrice = parseFloat(aiText) || 0;
+    const response = await result.response;
+    const aiText = response.text().trim();
+    const match = aiText.match(/\d+([.,]\d+)?/);
+    const finalPrice = match ? parseFloat(match[0].replace(',', '.')) : 0;
     
-    res.json({ price: finalPrice });
+    console.log(`[OCR] Gemini fallback identificou preço: ${finalPrice}`);
+    res.json({ price: finalPrice, source: 'Gemini' });
 
   } catch (error) {
-    console.error('Gemini OCR Error:', error);
-    res.status(500).json({ error: 'Falha ao analisar IA' });
+    console.error('OCR Error:', error);
+    res.status(500).json({ error: 'Falha total na análise do print.' });
   }
 });
 
