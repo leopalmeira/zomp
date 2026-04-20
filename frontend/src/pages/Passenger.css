@@ -945,7 +945,7 @@ input:checked + .slider:before { transform: translateX(22px); }
   transform: translateY(-2px);
 }
 
-/* The Aura Effect - Bright Green Zomp Pattern */
+/* The Aura Effect - Vibrant Zomp Glow Mode */
 .price-challenge-box::before {
   content: '';
   position: absolute;
@@ -955,15 +955,15 @@ input:checked + .slider:before { transform: translateX(22px); }
   height: 200%;
   background: conic-gradient(
     transparent, 
-    rgba(0, 230, 118, 0.3), 
-    #00E676, 
-    rgba(0, 230, 118, 0.3), 
+    rgba(0, 230, 118, 0.5), 
+    #00FF87, /* Verde ultra-vibrante */
+    rgba(0, 230, 118, 0.5), 
     transparent
   );
-  animation: rotateAura 10s linear infinite;
+  animation: rotateAura 8s linear infinite; /* 20% mais rápido que 10s */
   z-index: 0;
   pointer-events: none;
-  filter: blur(10px);
+  filter: blur(30px); /* Glow mais expansivo */
 }
 
 @keyframes rotateAura {
