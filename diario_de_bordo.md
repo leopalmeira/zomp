@@ -154,3 +154,9 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Lógica de Preço Inteligente:** No frontend (`PassengerDashboard.jsx`), a função `getPrice` agora garante que o preço final seja o **mínimo** entre a tarifa padrão Zomp e o valor do print menos R$ 2,00. O desconto agora é aplicado exclusivamente à categoria "Carro".
 - **UX de Confirmação:** Adicionado feedback visual claro no log do servidor e melhorado o tratamento de erros caso o print não contenha categorias elegíveis.
 - **Conformidade de Especialistas:** Garantido que todas as mudanças respeitam os parâmetros definidos em `@backend-specialist.md` e `@frontend-specialist.md` para um app premium e escalável.
+
+## [20/04/2026] - Robustez no Processamento de Print (v2.2.1)
+- **Refatoração Async no Frontend:** Migrada toda a lógica de leitura, compressão e upload de imagem para uma estrutura de Promises encadeadas (`async/await`) no `PassengerDashboard.jsx`. Isso garante que o estado de "Lendo..." seja sempre limpo via `finally`, evitando que a interface trave.
+- **Roteamento de API Fixo:** Adicionado o domínio `zomp-backend.onrender.com` como fallback direto no frontend para garantir que as requisições de análise de imagem cheguem ao servidor correto, independente de variáveis de ambiente do Vite.
+- **Logging de Diagnóstico:** Implementados logs detalhados no console do navegador (`[AI VISION]`) para facilitar o rastreamento de sucessos e falhas em tempo real durante a análise do print.
+- **Correção de Deployment:** Sincronizado o código corrigido com o GitHub, resolvendo o erro de build que impedia a atualização das novas regras de OCR.
