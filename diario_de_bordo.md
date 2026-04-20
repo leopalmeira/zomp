@@ -145,4 +145,5 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Motor de Extração:** Criado `ocr_service.py` com lógica de Regex e heurística para ler categorias "Pop" da 99 e "UberX" da Uber com alta precisão.
 - **Correção de Transparência:** Implementada conversão automática para RGB no script Python, resolvendo falhas ao salvar prints RGBA/LA como JPEG.
 - **Compatibilidade Render:** Padronizado comando de execução para `python3` em ambientes Linux e inclusão automática de dependências no `render.yaml`.
-- **JSON Limpo:** Silenciados logs e barras de progresso do EasyOCR para evitar poluição no STDOUT do Node.js.
+- **Estabilidade CLI:** Migrado o envio da imagem do `base64` direto para um arquivo temporário no disco antes de chamar o Python. Isso resolve o erro `Argument list too long (E2BIG)` comum em sistemas Linux/Render com imagens grandes.
+- **Tratamento de Arquivos:** Implementada limpeza automática (unlink) dos arquivos temporários após o processamento.

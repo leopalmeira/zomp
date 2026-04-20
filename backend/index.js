@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { exec } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 const prisma = new PrismaClient();
 const app = express();
@@ -381,20 +382,25 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
 
     console.log('[OCR] Iniciando análise de imagem...');
 
-    // Tentar primeiro com EasyOCR (via Python)
     const pythonScript = path.join(__dirname, 'ocr_service.py');
     
-    // Usamos exec para chamar o script Python. Nota: Para produção o ideal seria um microserviço ou worker.
-    // Limitamos o tamanho do buffer para evitar estouro com base64 gigante
-    const maxBuffer = 50 * 1024 * 1024; // 50MB
+    // Caminho temporário para a imagem para evitar passar base64 gigante via CLI
+    const tempImageDir = path.join(__dirname, 'temp');
+    if (!fs.existsSync(tempImageDir)) fs.mkdirSync(tempImageDir);
+    
+    const tempImagePath = path.join(tempImageDir, `print_${Date.now()}.png`);
+    const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    fs.writeFileSync(tempImagePath, Buffer.from(cleanBase64, 'base64'));
 
     const callPythonOCR = () => {
         return new Promise((resolve, reject) => {
-            const safeBase64 = imageBase64.replace(/"/g, '\\"');
-            // Tenta python3 primeiro (linux), depois python (windows/fallback)
             const cmd = process.platform === 'win32' ? 'python' : 'python3';
             
-            exec(`${cmd} "${pythonScript}" "${safeBase64}"`, { maxBuffer }, (error, stdout, stderr) => {
+            // Passamos o caminho do arquivo em vez do base64
+            exec(`${cmd} "${pythonScript}" "${tempImagePath}"`, { maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
+                // Cleanup file
+                if (fs.existsSync(tempImagePath)) try { fs.unlinkSync(tempImagePath); } catch(e){}
+
                 if (error) {
                     console.warn('[OCR] Erro ao chamar Python EasyOCR:', stderr || error.message);
                     return reject(new Error(stderr || error.message));
@@ -417,7 +423,6 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
         }
     } catch (pyErr) {
         console.warn('[OCR] EasyOCR falhou:', pyErr.message);
-        // Não retorna erro 500 imediatamente, tenta o fallback
     }
 
     // FALLBACK: Gemini AI

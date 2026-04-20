@@ -12,16 +12,23 @@ def analyze_print(image_data):
         # gpu=False garante CPU se não houver placa, evitando logs de aviso
         reader = easyocr.Reader(['pt', 'en'], gpu=False, verbose=False)
         
-        # Open image from base64
-        img_bytes = base64.b64decode(image_data)
-        img = Image.open(BytesIO(img_bytes))
+        # Se image_data for um caminho de arquivo existente
+        if os.path.exists(image_data):
+            img = Image.open(image_data)
+        else:
+            # Se for base64 (fallback ou direto)
+            clean_b64 = image_data
+            if clean_b64.startswith("data:"):
+                clean_b64 = clean_b64.split(",")[1]
+            img_bytes = base64.b64decode(clean_b64)
+            img = Image.open(BytesIO(img_bytes))
         
         # Converte para RGB (necessário para salvar como JPEG caso seja RGBA/PNG)
         if img.mode != 'RGB':
             img = img.convert('RGB')
         
         # Save to temp file because easyocr works better with paths or numpy arrays
-        temp_path = os.path.join(os.path.dirname(__file__), "temp_print_verify.jpg")
+        temp_path = os.path.join(os.path.dirname(__file__), "temp_process.jpg")
         img.save(temp_path, format='JPEG', quality=90)
         
         # Read text
@@ -35,36 +42,26 @@ def analyze_print(image_data):
         print(f"DEBUG: Texto extraído: {full_text}", file=sys.stderr)
         
         # Logic to find price
-        # Similar logic to what Gemini was doing, but manual
-        # We look for "Pop" or "UberX" and the numbers near them
-        
         final_price = 0
         
-        # Simple heuristic: find numbers that look like currency (X.XX)
-        # and are near keywords
-        keywords = ["pop", "uberx", "99pop"]
-        found_keywords = []
-        for kw in keywords:
-            if kw in full_text.lower():
-                found_keywords.append(kw)
-        
-        # Extract all numbers from results
+        # Heuristic search
         prices = []
         import re
         for _, text, prob in results:
             # Match formats like 25,50 25.50 R$25,50
             match = re.search(r'(\d+[\.,]\d{2})', text)
             if match:
-                val = float(match.group(1).replace(',', '.'))
-                prices.append((val, text, prob))
+                val_str = match.group(1).replace(',', '.')
+                try:
+                    val = float(val_str)
+                    prices.append((val, text, prob))
+                except: continue
         
         if prices:
-            # Heuristic: The price is usually the one most prominent or near keywords
-            # For now, let's take the first one that fits typical range (8-150)
+            # Pega o que parecer mais com preço de app de transporte (Uber/99 variam entre 8 a 150 em geral)
             valid_prices = [p[0] for p in prices if 5 < p[0] < 500]
             if valid_prices:
-                # If we found keywords, the price might be the one closest to it in the list
-                final_price = valid_prices[0] # TODO: improve heuristic
+                final_price = valid_prices[0]
                 
         return final_price
     except Exception as e:
@@ -73,13 +70,9 @@ def analyze_print(image_data):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "No image data"}))
+        print(json.dumps({"error": "No image data or path"}))
         sys.exit(1)
         
-    img_b64 = sys.argv[1]
-    # If it has data:image prefix, strip it
-    if img_b64.startswith("data:"):
-        img_b64 = img_b64.split(",")[1]
-        
-    price = analyze_print(img_b64)
+    input_data = sys.argv[1]
+    price = analyze_print(input_data)
     print(json.dumps({"price": price}))
