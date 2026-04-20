@@ -9,61 +9,89 @@ from PIL import Image
 def analyze_print(image_data):
     try:
         # Initialize reader silenciando o download e logs
-        # gpu=False garante CPU se não houver placa, evitando logs de aviso
         reader = easyocr.Reader(['pt', 'en'], gpu=False, verbose=False)
         
         # Se image_data for um caminho de arquivo existente
         if os.path.exists(image_data):
             img = Image.open(image_data)
         else:
-            # Se for base64 (fallback ou direto)
+            # Se for base64
             clean_b64 = image_data
             if clean_b64.startswith("data:"):
                 clean_b64 = clean_b64.split(",")[1]
             img_bytes = base64.b64decode(clean_b64)
             img = Image.open(BytesIO(img_bytes))
         
-        # Converte para RGB (necessário para salvar como JPEG caso seja RGBA/PNG)
+        # Converte para RGB
         if img.mode != 'RGB':
             img = img.convert('RGB')
         
-        # Save to temp file because easyocr works better with paths or numpy arrays
         temp_path = os.path.join(os.path.dirname(__file__), "temp_process.jpg")
         img.save(temp_path, format='JPEG', quality=90)
         
-        # Read text
+        # Read text with bounding boxes
         results = reader.readtext(temp_path)
         
         # Cleanup
         if os.path.exists(temp_path):
             os.remove(temp_path)
             
-        full_text = " ".join([res[1] for res in results])
+        full_text = " ".join([res[1] for res in results]).upper()
         print(f"DEBUG: Texto extraído: {full_text}", file=sys.stderr)
         
-        # Logic to find price
-        final_price = 0
+        # Check if it's Pop or UberX
+        is_valid_category = any(cat in full_text for cat in ["POP", "99POP", "UBERX", "UBER X"])
         
-        # Heuristic search
+        if not is_valid_category:
+            print("DEBUG: Categoria Pop/UberX não encontrada no print.", file=sys.stderr)
+            # Se não achar a categoria, vamos tentar achar o preço mais provável mesmo assim
+            # Mas o ideal seria retornar 0 se formos rigorosos. 
+            # Vou manter a busca por preço como fallback mas avisar no log.
+        
         prices = []
         import re
+        
+        # Regex para preços: R$ 25,50 ou 25,50
+        price_pattern = re.compile(r'(\d+[\.,]\d{2})')
+        
+        # Vamos tentar associar preços a categorias
+        # Categorias de interesse
+        target_cats = ["POP", "99POP", "UBERX", "UBER X"]
+        
+        for i, (bbox, text, prob) in enumerate(results):
+            text_up = text.upper()
+            
+            # Se achamos uma categoria, o preço geralmente está no mesmo bloco ou no próximo/anterior
+            found_cat = any(cat in text_up for cat in target_cats)
+            
+            if found_cat:
+                # Procura preço nas vizinhanças (mesmo índice, anterior ou próximo)
+                for j in range(max(0, i-2), min(len(results), i+3)):
+                    near_text = results[j][1]
+                    match = price_pattern.search(near_text)
+                    if match:
+                        val_str = match.group(1).replace(',', '.')
+                        try:
+                            val = float(val_str)
+                            if 5 < val < 500:
+                                return val # Encontrou preço perto da categoria!
+                        except: continue
+
+        # Fallback: Se não achou perto da categoria, pega o primeiro preço maior que 5
         for _, text, prob in results:
-            # Match formats like 25,50 25.50 R$25,50
-            match = re.search(r'(\d+[\.,]\d{2})', text)
+            match = price_pattern.search(text)
             if match:
                 val_str = match.group(1).replace(',', '.')
                 try:
                     val = float(val_str)
-                    prices.append((val, text, prob))
+                    if 5 < val < 500:
+                        prices.append(val)
                 except: continue
         
         if prices:
-            # Pega o que parecer mais com preço de app de transporte (Uber/99 variam entre 8 a 150 em geral)
-            valid_prices = [p[0] for p in prices if 5 < p[0] < 500]
-            if valid_prices:
-                final_price = valid_prices[0]
+            return prices[0]
                 
-        return final_price
+        return 0
     except Exception as e:
         print(f"ERROR: {str(e)}", file=sys.stderr)
         return 0

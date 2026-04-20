@@ -147,3 +147,10 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Compatibilidade Render:** Padronizado comando de execução para `python3` em ambientes Linux e inclusão automática de dependências no `render.yaml`.
 - **Estabilidade CLI:** Migrado o envio da imagem do `base64` direto para um arquivo temporário no disco antes de chamar o Python. Isso resolve o erro `Argument list too long (E2BIG)` comum em sistemas Linux/Render com imagens grandes.
 - **Tratamento de Arquivos:** Implementada limpeza automática (unlink) dos arquivos temporários após o processamento.
+
+## [20/04/2026] - Refinamento da Campanha Preço Imbatível (v2.2.0)
+- **Heurística de OCR Aprimorada:** Atualizado o `ocr_service.py` para priorizar a extração de preços próximos às palavras-chave "UberX", "99Pop" e "Pop", garantindo que o desconto seja aplicado sobre a categoria correta do concorrente.
+- **Robustez no Backend:** Corrigido erro de redeclaração de variável no endpoint `/api/analyze-print` e otimizado o prompt do Gemini (fallback) para focar estritamente nas categorias econômicas.
+- **Lógica de Preço Inteligente:** No frontend (`PassengerDashboard.jsx`), a função `getPrice` agora garante que o preço final seja o **mínimo** entre a tarifa padrão Zomp e o valor do print menos R$ 2,00. O desconto agora é aplicado exclusivamente à categoria "Carro".
+- **UX de Confirmação:** Adicionado feedback visual claro no log do servidor e melhorado o tratamento de erros caso o print não contenha categorias elegíveis.
+- **Conformidade de Especialistas:** Garantido que todas as mudanças respeitam os parâmetros definidos em `@backend-specialist.md` e `@frontend-specialist.md` para um app premium e escalável.

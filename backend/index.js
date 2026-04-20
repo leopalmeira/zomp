@@ -389,8 +389,8 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
     if (!fs.existsSync(tempImageDir)) fs.mkdirSync(tempImageDir);
     
     const tempImagePath = path.join(tempImageDir, `print_${Date.now()}.png`);
-    const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-    fs.writeFileSync(tempImagePath, Buffer.from(cleanBase64, 'base64'));
+    const cleanImageBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    fs.writeFileSync(tempImagePath, Buffer.from(cleanImageBase64, 'base64'));
 
     const callPythonOCR = () => {
         return new Promise((resolve, reject) => {
@@ -434,10 +434,11 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
     const genAI = new GoogleGenerativeAI(randomKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
-    const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-    const prompt = `Extraia APENAS o valor final (UberX ou 99Pop) deste print. Responda apenas o número.`;
+    const prompt = `Analise este print de app de viagem (Uber ou 99). 
+    Localize e extraia o valor da categoria mais econômica (UberX ou 99Pop). 
+    Responda APENAS o número decimal (ex: 25.50). Se não encontrar, responda 0.`;
     
-    const imagePart = { inlineData: { data: cleanBase64, mimeType: "image/jpeg" } };
+    const imagePart = { inlineData: { data: cleanImageBase64, mimeType: "image/jpeg" } };
     const result = await model.generateContent([prompt, imagePart]);
     const response = await result.response;
     const aiText = response.text().trim();

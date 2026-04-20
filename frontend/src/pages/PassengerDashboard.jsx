@@ -238,19 +238,18 @@ export default function PassengerDashboard() {
       calculated = parseFloat(km) * PRICE_PER_KM[type];
     }
     
-    // Pequena taxa adicional fixa por passageiro extra selecionado (opcional mas bom para compor a tarifa justa)
     const extraPsg = (type === 'car' && passengersCount > 1) ? (passengersCount - 1) * 2.50 : 0;
-
     const basePrice = Math.max(calculated, MIN_PRICE[type]) + stopsFee + extraPsg
     let finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
     
-    // If we have a validated competition match, we MUST be cheaper than their price
-    if (hasCompetitionDiscount && compPriceRead > 0) {
-      return Math.max(compPriceRead - 2.00, MIN_PRICE[type]).toFixed(2);
-    }
-    
-    // Apply standard discount if no specific price was read from print
-    if (hasCompetitionDiscount) {
+    // REGRA PREÇO IMBATÍVEL: se tivermos um print validado (UberX/Pop)
+    if (hasCompetitionDiscount && compPriceRead > 0 && type === 'car') {
+      // O preço deve ser o menor entre o nosso normal e (concorrência - 2)
+      // Garantindo sempre ser o mais barato do mercado
+      const challengePrice = Math.max(compPriceRead - 2.00, MIN_PRICE[type]);
+      finalPrice = Math.min(finalPrice, challengePrice);
+    } else if (hasCompetitionDiscount && type === 'car') {
+      // Fallback: se não leu o preço mas validou que é print, dá o desconto fixo sobre o nosso
       finalPrice = Math.max(finalPrice - 2.00, MIN_PRICE[type]);
     }
     
