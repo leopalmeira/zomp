@@ -1119,103 +1119,95 @@ export default function PassengerDashboard() {
                   <h4 style={{fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c', margin: 0}}>PREÇO IMBATÍVEL ZOMP</h4>
                   <p style={{fontSize: '0.75rem', fontWeight: 600, color: '#7f1d1d', margin: '2px 0 6px'}}>Tem print da Uber ou 99? Cobrimos e damos + R$ 2,00 de desconto!</p>
                   
-                  {isAnalyzingPrint ? (
-                    <div style={{fontSize: '0.75rem', color: '#b91c1c', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px'}}>
-                       <span className="animate-pulse">🔍 IA Lendo valor no print...</span>
-                    </div>
-                  ) : hasCompetitionDiscount ? (
-                    <div style={{background:'#f0fdf4', padding:'10px', borderRadius:'12px', border:'1px solid #bbf7d0'}}>
-                      <div style={{fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom:'4px'}}>
-                         <Check size={14} /> <span>PREÇO IMBATÍVEL APLICADO!</span>
+                    {isAnalyzingPrint ? (
+                      <div style={{fontSize: '0.75rem', color: '#b91c1c', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px'}}>
+                         <span className="animate-pulse">🔍 IA Lendo valor no print...</span>
                       </div>
-                      <p style={{margin:0, fontSize:'0.7rem', color:'#166534', fontWeight:600}}>
-                        Identificamos R$ {compPriceRead.toFixed(2)} no print. <br/>
-                        Seu preço Zomp: <strong>R$ {(compPriceRead - 2).toFixed(2)}</strong>
-                      </p>
-                    </div>
-                  ) : (
-                    <label htmlFor="price-print" className="challenge-upload-btn">
-                      <Camera size={14} /> 
-                      <span>Anexar Print da Concorrência</span>
-                      <input type="file" id="price-print" accept="image/*" style={{display:'none'}} onChange={async (e) => {
-                        if(e.target.files?.[0]) {
-                          setIsAnalyzingPrint(true);
-                          try {
-                            const file = e.target.files[0];
-                            
-                            // Convert and COMPRESS image to Base64 using Canvas
-                            const reader = new FileReader();
-                            reader.readAsDataURL(file);
-                            reader.onload = (event) => {
-                                const img = new Image();
-                                img.src = event.target.result;
-                                img.onload = async () => {
-                                    const canvas = document.createElement('canvas');
-                                    const MAX_WIDTH = 800; // Optimal for OCR and fast upload
-                                    const scaleSize = MAX_WIDTH / img.width;
-                                    canvas.width = MAX_WIDTH;
-                                    canvas.height = img.height * scaleSize;
-                                    
-                                    const ctx = canvas.getContext('2d');
-                                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                                    
-                                    // Compress to JPEG with 80% quality (cuts down size from ~5MB to ~150kb)
-                                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-                                    
-                                    try {
-                                        const token = localStorage.getItem('zomp_token');
-                                        // Usa o mesmo fallback do api.js para consistência
-                                        const API_BASE = import.meta.env.VITE_API_URL || '/api';
-                                        
-                                        const res = await fetch(`${API_BASE}/analyze-print`, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'Authorization': `Bearer ${token}`
-                                            },
-                                            body: JSON.stringify({ imageBase64: compressedBase64 })
-                                        });
-                                        
-                                        if (res.status === 503) {
-                                          throw new Error("O serviço de IA está temporariamente indisponível (chaves expiradas).");
-                                        }
+                    ) : hasCompetitionDiscount ? (
+                      <div style={{background:'#f0fdf4', padding:'10px', borderRadius:'12px', border:'1px solid #bbf7d0'}}>
+                        <div style={{fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom:'4px'}}>
+                           <Check size={14} /> <span>PREÇO IMBATÍVEL APLICADO!</span>
+                        </div>
+                        <p style={{margin:0, fontSize:'0.7rem', color:'#166534', fontWeight:600}}>
+                          Identificamos R$ {parseFloat(compPriceRead).toFixed(2)} no print. <br/>
+                          Seu preço Zomp: <strong>R$ {(compPriceRead - 2).toFixed(2)}</strong>
+                        </p>
+                      </div>
+                    ) : (
+                      <label htmlFor="price-print" className="challenge-upload-btn">
+                        <Camera size={14} /> 
+                        <span>Anexar Print da Concorrência</span>
+                        <input type="file" id="price-print" accept="image/*" style={{display:'none'}} onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
 
-                                        if (!res.ok) throw new Error(`Erro API: ${res.status}`);
-                                        
-                                        const data = await res.json();
-                                        const competitorPrice = data.price;
-                                        
-                                        console.log('[AI VISION] Final selected price:', competitorPrice);
-                                        
-                                        if (competitorPrice >= 5) {
-                                          setCompPriceRead(competitorPrice);
-                                          setHasCompetitionDiscount(true);
-                                        } else {
-                                          alert('A IA não conseguiu identificar um preço válido no print. Tente uma imagem mais focada.');
-                                        }
-                                    } catch (apiErr) {
-                                        console.error('[AI VISION] Error calling backend:', apiErr);
-                                        alert('Falha na comunicação com a Inteligência Zomp. Tente novamente.');
-                                    } finally {
-                                        setIsAnalyzingPrint(false);
-                                    }
-                                };
-                            };
-                            reader.onerror = () => {
-                                setIsAnalyzingPrint(false);
-                                alert('Erro ao ler seu print da tela.');
-                            };
+                          setIsAnalyzingPrint(true);
+                          console.log('[AI VISION] Iniciando processamento do arquivo:', file.name);
+
+                          try {
+                            // 1. Ler arquivo como base64 original
+                            const base64 = await new Promise((resolve, reject) => {
+                              const reader = new FileReader();
+                              reader.onload = () => resolve(reader.result);
+                              reader.onerror = reject;
+                              reader.readAsDataURL(file);
+                            });
+
+                            // 2. Comprimir via Canvas para JPEG (otimiza OCR e upload)
+                            const compressedBase64 = await new Promise((resolve) => {
+                              const img = new Image();
+                              img.src = base64;
+                              img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const MAX_WIDTH = 1000; 
+                                const scaleSize = MAX_WIDTH / img.width;
+                                canvas.width = MAX_WIDTH;
+                                canvas.height = img.height * scaleSize;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                resolve(canvas.toDataURL('image/jpeg', 0.8));
+                              };
+                            });
+
+                            // 3. Chamar API
+                            const token = localStorage.getItem('zomp_token');
+                            const API_BASE = import.meta.env.VITE_API_URL || 'https://zomp-backend.onrender.com/api';
                             
-                          } catch (fileErr) {
-                            console.error('[AI VISION] Error processing file:', fileErr);
+                            console.log('[AI VISION] Enviando para API:', API_BASE);
+                            const res = await fetch(`${API_BASE}/analyze-print`, {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                              },
+                              body: JSON.stringify({ imageBase64: compressedBase64 })
+                            });
+
+                            if (!res.ok) {
+                              const errorData = await res.json().catch(() => ({}));
+                              throw new Error(errorData.error || `Erro API: ${res.status}`);
+                            }
+
+                            const data = await res.json();
+                            console.log('[AI VISION] Resposta recebida:', data);
+
+                            if (data.price && data.price >= 5) {
+                              setCompPriceRead(data.price);
+                              setHasCompetitionDiscount(true);
+                            } else {
+                              alert('A IA não conseguiu identificar um preço válido (UberX/Pop) neste print. Tente uma imagem mais nítida.');
+                            }
+
+                          } catch (err) {
+                            console.error('[AI VISION] Erro fatal:', err);
+                            alert(`Falha na análise: ${err.message}`);
+                          } finally {
                             setIsAnalyzingPrint(false);
-                            alert('Erro inesperado tentando preparar a imagem.');
+                            e.target.value = ''; // Reset input
                           }
-                          e.target.value = '';
-                        }
-                      }} />
-                    </label>
-                  )}
+                        }} />
+                      </label>
+                    )}
                 </div>
               </div>
 
