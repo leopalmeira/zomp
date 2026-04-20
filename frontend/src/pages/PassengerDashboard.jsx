@@ -1165,7 +1165,9 @@ export default function PassengerDashboard() {
                                     
                                     try {
                                         const token = localStorage.getItem('zomp_token');
-                                        const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://zomp-backend.onrender.com'}/api/analyze-print`, {
+                                        const API_BASE = import.meta.env.VITE_API_URL || 'https://zomp-api.onrender.com/api';
+                                        
+                                        const res = await fetch(`${API_BASE}/analyze-print`, {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json',
