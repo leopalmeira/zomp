@@ -170,3 +170,20 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Aura Verde Neon:** Alterada a cor da aura para o verde padrão Zomp (`#00E676`), criando um contraste vibrante com o fundo avermelhado do card "Preço Imbatível".
 - **Desfoque de 10px:** Aplicado filtro de `blur(10px)` na aura para um efeito de iluminação suave e profissional ("glow mode").
 - **Animação Desacelerada:** Reduzida a velocidade de rotação para 10 segundos, tornando o movimento mais elegante e menos distrativo, mantendo o foco na informação.
+
+## [20/04/2026] - Refatoração do Endpoint analyze-print: Gemini como Principal (v2.3.0)
+- **Inversão de Prioridade:** O endpoint /api/analyze-print foi refatorado para usar o **Google Gemini Vision como método principal** (e não mais fallback). O EasyOCR Python passou a ser o fallback para ambientes locais.
+- **Prompt Estruturado:** O prompt do Gemini foi completamente reescrito para ser muito mais específico, instruindo a IA a:
+  1. Identificar a plataforma (Uber ou 99)
+  2. Localizar APENAS o preço de **UberX** (Uber) ou **Pop/99Pop** (99)
+  3. Ignorar categorias premium (UberBlack, Comfort, 99Top, etc.)
+  4. Retornar um JSON estruturado: {platform, category, price}
+- **Rodízio de Chaves:** Loop em sequência pelas chaves Gemini disponíveis até uma funcionar, garantindo máxima disponibilidade.
+- **Validação de Categoria:** Backend agora valida se a categoria retornada pelo Gemini é aceitável (UberX ou Pop). Se for categoria premium, retorna HTTP 422 com mensagem específica.
+- **Frontend Aprimorado:** O PassengerDashboard.jsx agora:
+  - Guarda compPlatform e compCategory além do compPriceRead
+  - Exibe badge com a plataforma identificada (Uber/99) e a categoria (UberX/Pop) no card de confirmação
+  - Trata HTTP 422 de forma amigável (sem throw, mostra alert com mensagem do backend)
+  - Mensagem de erro mais detalhada com dicas práticas ao usuário
+  - Reset dos estados de plataforma/categoria no esetFlow()
+- **Card de Confirmação Melhorado:** O card "PREÇO IMBATÍVEL APLICADO!" agora mostra: plataforma identificada, categoria, preço original, novo preço Zomp (- R$ 2,00) e badge "R$ 2,00 mais barato que a concorrência ✅"

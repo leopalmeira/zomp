@@ -123,6 +123,8 @@ export default function PassengerDashboard() {
   const [isAnalyzingPrint, setIsAnalyzingPrint] = useState(false)
   const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
   const [compPriceRead, setCompPriceRead] = useState(0)
+  const [compPlatform, setCompPlatform] = useState('') // 'Uber' | '99' | 'Desconhecida'
+  const [compCategory, setCompCategory] = useState('') // 'UberX' | 'Pop' | 'Nenhuma'
   const [passengersCount, setPassengersCount] = useState(1)
 
   // Freight State
@@ -491,6 +493,8 @@ export default function PassengerDashboard() {
     // Reset competition discount (per-trip only)
     setHasCompetitionDiscount(false)
     setCompPriceRead(0)
+    setCompPlatform('')
+    setCompCategory('')
     setIsAnalyzingPrint(false)
   }
 
@@ -1128,9 +1132,20 @@ export default function PassengerDashboard() {
                         <div style={{fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom:'4px'}}>
                            <Check size={14} /> <span>PREÇO IMBATÍVEL APLICADO!</span>
                         </div>
+                        {compPlatform && compPlatform !== 'Desconhecida' && (
+                          <div style={{display:'flex', alignItems:'center', gap:'6px', marginBottom:'6px'}}>
+                            <span style={{fontSize:'0.7rem', background: compPlatform === 'Uber' ? '#000' : '#1a1a2e', color:'#fff', padding:'2px 8px', borderRadius:'100px', fontWeight:800}}>
+                              {compPlatform === 'Uber' ? '🚗 Uber' : '🏎 99'}
+                            </span>
+                            <span style={{fontSize:'0.7rem', color:'#374151', fontWeight:700}}>
+                              {compCategory && compCategory !== 'Nenhuma' ? compCategory : 'categoria econômica'}
+                            </span>
+                          </div>
+                        )}
                         <p style={{margin:0, fontSize:'0.7rem', color:'#166534', fontWeight:600}}>
-                          Identificamos R$ {parseFloat(compPriceRead).toFixed(2)} no print. <br/>
-                          Seu preço Zomp: <strong>R$ {(compPriceRead - 2).toFixed(2)}</strong>
+                          Identificamos <strong>R$ {parseFloat(compPriceRead).toFixed(2)}</strong> no print. <br/>
+                          Seu preço Zomp: <strong style={{fontSize:'0.85rem', color:'#059669'}}>R$ {(compPriceRead - 2).toFixed(2)}</strong>
+                          <span style={{fontSize:'0.65rem', color:'#6b7280', display:'block', marginTop:'2px'}}>R$ 2,00 mais barato que a concorrência ✅</span>
                         </p>
                       </div>
                     ) : (
@@ -1185,6 +1200,11 @@ export default function PassengerDashboard() {
 
                             if (!res.ok) {
                               const errorData = await res.json().catch(() => ({}));
+                              // 422 = categoria inválida (premium) ou preço não encontrado — mostra mensagem amigável
+                              if (res.status === 422) {
+                                alert(`⚠️ ${errorData.error || 'Não foi possível identificar preço de UberX ou 99Pop.'}`);
+                                return; // Não joga erro, só avisa
+                              }
                               throw new Error(errorData.error || `Erro API: ${res.status}`);
                             }
 
@@ -1193,9 +1213,11 @@ export default function PassengerDashboard() {
 
                             if (data.price && data.price >= 5) {
                               setCompPriceRead(data.price);
+                              setCompPlatform(data.platform || 'Desconhecida');
+                              setCompCategory(data.category || 'Nenhuma');
                               setHasCompetitionDiscount(true);
                             } else {
-                              alert('A IA não conseguiu identificar um preço válido (UberX/Pop) neste print. Tente uma imagem mais nítida.');
+                              alert('❌ A IA não conseguiu identificar um preço válido de UberX ou 99Pop neste print.\n\nDicas:\n• Certifique-se que o print mostra a opção UberX (Uber) ou Pop (99)\n• A imagem deve estar nítida e com o preço visível\n• Tente um screenshot em vez de foto da tela');
                             }
 
                           } catch (err) {

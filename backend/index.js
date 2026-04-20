@@ -10,7 +10,16 @@ const fs = require('fs');
 
 const prisma = new PrismaClient();
 const app = express();
-app.use(cors());
+
+// CORS explícito: aceita qualquer origem (Render: frontend e backend em domínios diferentes)
+const corsOptions = {
+  origin: true, // Reflete a origem da requisição — aceita qualquer domínio
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Preflight para todas as rotas
 
 // Aumentado o limite vital para não recusar imagens via Base64 (Erro 413 Content Too Large)
 app.use(express.json({ limit: '50mb' }));
@@ -365,93 +374,160 @@ app.post('/api/credits/purchase', authenticate, async (req, res) => {
 // --- AI OCR (GEMINI VISION) ---
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Arcenal de chaves para rodízio e evitar limites da cota gratuita
+// Rodízio de chaves Gemini para evitar limites de cota gratuita
 const GEMINI_KEYS = [
-  process.env.GEMINI_API_KEY, // Default from render (fallback)
+  process.env.GEMINI_API_KEY,
   'AIzaSyD2oe_LrRvjC2cq8k3lhtsQG_UTzV5gR6Q',
   'AIzaSyBScCwMr_u5J1qY_UY4Oh5NJWUVhaYb7tQ',
   'AIzaSyAxbSUXe7SBLuaOpoAR3HJUt4_-_Cgg7Hw',
   'AIzaSyBvltEPOCOyoAAlDeYQCUtojBdl1EgMkSk',
   'AIzaSyCrEMCgqejdb-1zYRJ_JjAnehjLylOgEDY'
-].filter(Boolean); 
+].filter(Boolean);
 
 app.post('/api/analyze-print', authenticate, async (req, res) => {
   try {
     const { imageBase64 } = req.body;
     if (!imageBase64) return res.status(400).json({ error: 'Nenhuma imagem fornecida' });
 
-    console.log('[OCR] Iniciando análise de imagem...');
+    console.log('[OCR] Iniciando análise de imagem via Gemini Vision (método principal)...');
 
-    const pythonScript = path.join(__dirname, 'ocr_service.py');
-    
-    // Caminho temporário para a imagem para evitar passar base64 gigante via CLI
-    const tempImageDir = path.join(__dirname, 'temp');
-    if (!fs.existsSync(tempImageDir)) fs.mkdirSync(tempImageDir);
-    
-    const tempImagePath = path.join(tempImageDir, `print_${Date.now()}.png`);
     const cleanImageBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-    fs.writeFileSync(tempImagePath, Buffer.from(cleanImageBase64, 'base64'));
 
-    const callPythonOCR = () => {
-        return new Promise((resolve, reject) => {
-            const cmd = process.platform === 'win32' ? 'python' : 'python3';
-            
-            // Passamos o caminho do arquivo em vez do base64
-            exec(`${cmd} "${pythonScript}" "${tempImagePath}"`, { maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
-                // Cleanup file
-                if (fs.existsSync(tempImagePath)) try { fs.unlinkSync(tempImagePath); } catch(e){}
+    // === MÉTODO PRINCIPAL: GEMINI VISION ===
+    if (GEMINI_KEYS.length > 0) {
+      for (let keyIndex = 0; keyIndex < GEMINI_KEYS.length; keyIndex++) {
+        const currentKey = GEMINI_KEYS[keyIndex];
+        try {
+          const genAI = new GoogleGenerativeAI(currentKey);
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-                if (error) {
-                    console.warn('[OCR] Erro ao chamar Python EasyOCR:', stderr || error.message);
-                    return reject(new Error(stderr || error.message));
-                }
-                try {
-                    const result = JSON.parse(stdout);
-                    resolve(result.price || 0);
-                } catch (e) {
-                    reject(new Error('Falha ao parsear saída do Python: ' + stdout));
-                }
+          const prompt = `Você é um especialista em análise de prints de aplicativos de transporte.
+Analise a imagem e extraia as seguintes informações:
+
+1. Identifique se é um print da Uber ou da 99 (ou outra plataforma).
+2. Localize o preço da categoria mais econômica disponível:
+   - Se for Uber: procure o preço de "UberX" (pode aparecer como UberX, Uber X, X).
+   - Se for 99: procure o preço de "99Pop" ou "Pop" (pode aparecer como Pop, 99Pop, Pop 99).
+3. O preço deve ser um número (ex: 23.50 ou 23,50).
+
+IMPORTANTE: Ignore preços de categorias premium (UberBlack, Comfort, 99Top, 99Exec, etc).
+Foque APENAS em UberX ou 99Pop.
+
+Responda EXCLUSIVAMENTE no formato JSON abaixo (sem markdown, sem explicações extras):
+{"platform": "Uber" ou "99" ou "Desconhecida", "category": "UberX" ou "Pop" ou "Nenhuma", "price": 0}
+
+Se não conseguir identificar um preço válido das categorias corretas, use price: 0.`;
+
+          const imagePart = {
+            inlineData: { data: cleanImageBase64, mimeType: 'image/jpeg' }
+          };
+
+          const result = await model.generateContent([prompt, imagePart]);
+          const response = await result.response;
+          const aiText = response.text().trim();
+
+          console.log(`[Gemini] Resposta bruta (chave ${keyIndex + 1}):`, aiText);
+
+          // Tenta parsear como JSON
+          let parsed = null;
+          try {
+            const cleaned = aiText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            parsed = JSON.parse(cleaned);
+          } catch (jsonErr) {
+            // Fallback regex: extrai número do texto
+            const match = aiText.match(/(\d+[.,]\d{2})/);
+            if (match) {
+              const val = parseFloat(match[1].replace(',', '.'));
+              if (val >= 5 && val < 500) {
+                parsed = { platform: 'Desconhecida', category: 'Nenhuma', price: val };
+              }
+            }
+          }
+
+          if (parsed && typeof parsed.price === 'number' && parsed.price >= 5 && parsed.price < 500) {
+            const categoryLower = (parsed.category || '').toLowerCase();
+            const validCategories = ['uberx', 'uber x', 'x', 'pop', '99pop'];
+            const isValidCat = validCategories.some(c => categoryLower.includes(c));
+
+            if (isValidCat) {
+              console.log(`[Gemini] ✅ Identificado: R$ ${parsed.price} | ${parsed.platform} | ${parsed.category}`);
+              return res.json({
+                price: parsed.price,
+                platform: parsed.platform || 'Desconhecida',
+                category: parsed.category || 'Nenhuma',
+                source: 'Gemini'
+              });
+            } else if (parsed.category && parsed.category !== 'Nenhuma' && parsed.price > 0) {
+              // Encontrou preço mas categoria inválida (premium)
+              console.warn(`[Gemini] Categoria inválida: ${parsed.category}`);
+              return res.status(422).json({
+                error: `A categoria "${parsed.category}" não é válida para o Preço Imbatível. Envie um print mostrando UberX ou 99Pop.`,
+                category: parsed.category,
+                price: 0
+              });
+            }
+            // Se category === 'Nenhuma' com preço, aceita como fallback
+            console.log(`[Gemini] ✅ Preço via fallback: R$ ${parsed.price}`);
+            return res.json({
+              price: parsed.price,
+              platform: parsed.platform || 'Desconhecida',
+              category: parsed.category || 'Nenhuma',
+              source: 'Gemini'
             });
-        });
-    };
+          }
 
-    try {
-        const easyPrice = await callPythonOCR();
-        if (easyPrice > 0) {
-            console.log(`[OCR] EasyOCR identificou preço: ${easyPrice}`);
-            return res.json({ price: easyPrice, source: 'EasyOCR' });
+          console.warn(`[Gemini] Preço não identificado ou inválido (chave ${keyIndex + 1}). Tentando próxima...`);
+
+        } catch (geminiErr) {
+          console.warn(`[Gemini] Erro na chave ${keyIndex + 1}:`, geminiErr.message);
         }
-    } catch (pyErr) {
+      }
+    }
+
+    // === FALLBACK: EASYOCR PYTHON (ambiente local) ===
+    console.log('[OCR] Gemini não identificou. Tentando EasyOCR local...');
+    const pythonScript = path.join(__dirname, 'ocr_service.py');
+
+    if (fs.existsSync(pythonScript)) {
+      const tempImageDir = path.join(__dirname, 'temp');
+      if (!fs.existsSync(tempImageDir)) fs.mkdirSync(tempImageDir);
+      const tempImagePath = path.join(tempImageDir, `print_${Date.now()}.png`);
+      fs.writeFileSync(tempImagePath, Buffer.from(cleanImageBase64, 'base64'));
+
+      try {
+        const easyPrice = await new Promise((resolve, reject) => {
+          const cmd = process.platform === 'win32' ? 'python' : 'python3';
+          exec(`${cmd} "${pythonScript}" "${tempImagePath}"`, { maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
+            if (fs.existsSync(tempImagePath)) try { fs.unlinkSync(tempImagePath); } catch(e){}
+            if (error) return reject(new Error(stderr || error.message));
+            try {
+              const result = JSON.parse(stdout);
+              resolve(result.price || 0);
+            } catch (e) {
+              reject(new Error('Falha ao parsear saída Python: ' + stdout));
+            }
+          });
+        });
+
+        if (easyPrice > 0) {
+          console.log(`[OCR] EasyOCR identificou preço: R$ ${easyPrice}`);
+          return res.json({ price: easyPrice, platform: 'Desconhecida', category: 'Nenhuma', source: 'EasyOCR' });
+        }
+      } catch (pyErr) {
         console.warn('[OCR] EasyOCR falhou:', pyErr.message);
+      }
     }
 
-    // FALLBACK: Gemini AI
-    if (GEMINI_KEYS.length === 0) {
-      return res.status(503).json({ error: 'IA indisponível e OCR local não configurado.' });
-    }
-
-    const randomKey = GEMINI_KEYS[Math.floor(Math.random() * GEMINI_KEYS.length)];
-    const genAI = new GoogleGenerativeAI(randomKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
-    const prompt = `Analise este print de app de viagem (Uber ou 99). 
-    Localize e extraia o valor da categoria mais econômica (UberX ou 99Pop). 
-    Responda APENAS o número decimal (ex: 25.50). Se não encontrar, responda 0.`;
-    
-    const imagePart = { inlineData: { data: cleanImageBase64, mimeType: "image/jpeg" } };
-    const result = await model.generateContent([prompt, imagePart]);
-    const response = await result.response;
-    const aiText = response.text().trim();
-    const match = aiText.match(/\d+([.,]\d+)?/);
-    const finalPrice = match ? parseFloat(match[0].replace(',', '.')) : 0;
-    
-    console.log(`[OCR] Gemini fallback identificou preço: ${finalPrice}`);
-    res.json({ price: finalPrice, source: 'Gemini' });
+    // Nenhum método funcionou
+    return res.status(422).json({
+      error: 'Não foi possível identificar preço de UberX ou 99Pop neste print. Tente uma imagem mais nítida com os valores visíveis.',
+      price: 0
+    });
 
   } catch (error) {
-    console.error('OCR Error:', error);
-    res.status(500).json({ 
-      error: 'Falha total na análise do print.', 
+    console.error('[OCR] Erro interno:', error);
+    res.status(500).json({
+      error: 'Falha total na análise do print.',
       details: error.message,
       source: 'InternalError'
     });
