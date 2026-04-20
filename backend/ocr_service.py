@@ -8,15 +8,21 @@ from PIL import Image
 
 def analyze_print(image_data):
     try:
-        # Initialize reader (this takes time on first run as it downloads models)
-        reader = easyocr.Reader(['pt', 'en'])
+        # Initialize reader silenciando o download e logs
+        # gpu=False garante CPU se não houver placa, evitando logs de aviso
+        reader = easyocr.Reader(['pt', 'en'], gpu=False, verbose=False)
         
         # Open image from base64
-        img = Image.open(BytesIO(base64.b64decode(image_data)))
+        img_bytes = base64.b64decode(image_data)
+        img = Image.open(BytesIO(img_bytes))
+        
+        # Converte para RGB (necessário para salvar como JPEG caso seja RGBA/PNG)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
         
         # Save to temp file because easyocr works better with paths or numpy arrays
-        temp_path = "temp_print.jpg"
-        img.save(temp_path)
+        temp_path = os.path.join(os.path.dirname(__file__), "temp_print_verify.jpg")
+        img.save(temp_path, format='JPEG', quality=90)
         
         # Read text
         results = reader.readtext(temp_path)

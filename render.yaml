@@ -16,7 +16,7 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npm run build && (pip install easyocr opencv-python-headless pillow || python3 -m pip install easyocr opencv-python-headless pillow || echo 'Pip not found, OCR source will be Gemini only')
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:

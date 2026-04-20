@@ -390,18 +390,20 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
 
     const callPythonOCR = () => {
         return new Promise((resolve, reject) => {
-            // Escapar aspas duplas no base64 se necessário
             const safeBase64 = imageBase64.replace(/"/g, '\\"');
-            exec(`python "${pythonScript}" "${safeBase64}"`, { maxBuffer }, (error, stdout, stderr) => {
+            // Tenta python3 primeiro (linux), depois python (windows/fallback)
+            const cmd = process.platform === 'win32' ? 'python' : 'python3';
+            
+            exec(`${cmd} "${pythonScript}" "${safeBase64}"`, { maxBuffer }, (error, stdout, stderr) => {
                 if (error) {
-                    console.warn('[OCR] Erro ao chamar Python EasyOCR:', stderr);
-                    return reject(error);
+                    console.warn('[OCR] Erro ao chamar Python EasyOCR:', stderr || error.message);
+                    return reject(new Error(stderr || error.message));
                 }
                 try {
                     const result = JSON.parse(stdout);
                     resolve(result.price || 0);
                 } catch (e) {
-                    reject(new Error('Falha ao parsear saída do Python'));
+                    reject(new Error('Falha ao parsear saída do Python: ' + stdout));
                 }
             });
         });
@@ -414,7 +416,8 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
             return res.json({ price: easyPrice, source: 'EasyOCR' });
         }
     } catch (pyErr) {
-        console.warn('[OCR] EasyOCR falhou, tentando fallback Gemini...');
+        console.warn('[OCR] EasyOCR falhou:', pyErr.message);
+        // Não retorna erro 500 imediatamente, tenta o fallback
     }
 
     // FALLBACK: Gemini AI
@@ -441,7 +444,11 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
 
   } catch (error) {
     console.error('OCR Error:', error);
-    res.status(500).json({ error: 'Falha total na análise do print.' });
+    res.status(500).json({ 
+      error: 'Falha total na análise do print.', 
+      details: error.message,
+      source: 'InternalError'
+    });
   }
 });
 
