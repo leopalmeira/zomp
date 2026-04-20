@@ -165,3 +165,8 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Efeito de Aura Animada:** Implementada uma animação de "aura" rotativa utilizando `conic-gradient` e `keyframes` em torno do card de Preço Imbatível. Isso cria um destaque visual de alto nível que atrai a atenção do passageiro para a promessa de menor preço.
 - **Micro-interações:** Adicionado efeito de `hover` com elevação (`translateY`) e escala no botão de upload, reforçando a natureza interativa e premium da interface.
 - **Design System:** Ajustados paddings, sombras e arredondamentos do card para alinhar com os parâmetros de "Visual Excellence" do projeto.
+
+## [20/04/2026] - Refinamento Visual: Aura Verde Zomp (v2.2.3)
+- **Aura Verde Neon:** Alterada a cor da aura para o verde padrão Zomp (`#00E676`), criando um contraste vibrante com o fundo avermelhado do card "Preço Imbatível".
+- **Desfoque de 10px:** Aplicado filtro de `blur(10px)` na aura para um efeito de iluminação suave e profissional ("glow mode").
+- **Animação Desacelerada:** Reduzida a velocidade de rotação para 10 segundos, tornando o movimento mais elegante e menos distrativo, mantendo o foco na informação.
