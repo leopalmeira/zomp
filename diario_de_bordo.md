@@ -160,3 +160,8 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Roteamento de API Fixo:** Adicionado o domínio `zomp-backend.onrender.com` como fallback direto no frontend para garantir que as requisições de análise de imagem cheguem ao servidor correto, independente de variáveis de ambiente do Vite.
 - **Logging de Diagnóstico:** Implementados logs detalhados no console do navegador (`[AI VISION]`) para facilitar o rastreamento de sucessos e falhas em tempo real durante a análise do print.
 - **Correção de Deployment:** Sincronizado o código corrigido com o GitHub, resolvendo o erro de build que impedia a atualização das novas regras de OCR.
+
+## [20/04/2026] - Estética Premium: Aura Preço Imbatível (v2.2.2)
+- **Efeito de Aura Animada:** Implementada uma animação de "aura" rotativa utilizando `conic-gradient` e `keyframes` em torno do card de Preço Imbatível. Isso cria um destaque visual de alto nível que atrai a atenção do passageiro para a promessa de menor preço.
+- **Micro-interações:** Adicionado efeito de `hover` com elevação (`translateY`) e escala no botão de upload, reforçando a natureza interativa e premium da interface.
+- **Design System:** Ajustados paddings, sombras e arredondamentos do card para alinhar com os parâmetros de "Visual Excellence" do projeto.
