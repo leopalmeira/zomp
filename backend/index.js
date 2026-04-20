@@ -360,7 +360,7 @@ app.post('/api/credits/purchase', authenticate, async (req, res) => {
 });
 
 // --- AI OCR (GEMINI VISION) ---
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Arcenal de chaves para rodízio e evitar limites da cota gratuita
 const GEMINI_KEYS = [
@@ -379,25 +379,23 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
 
     // Sorteia aleatoriamente uma das chaves disponíveis para balancear a carga
     const randomKey = GEMINI_KEYS[Math.floor(Math.random() * GEMINI_KEYS.length)];
-    const ai = new GoogleGenAI({ apiKey: randomKey });
+    const genAI = new GoogleGenerativeAI(randomKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
-    // Remove the data:image prefix if present
+    // Remove the data:image prefix se presente
     const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-            {
-               role: 'user',
-               parts: [
-                  { text: 'Você analisa prints de apps de transporte. REGRA 1 (99): Encontre a categoria "Pop" e extraia o valor dela. REGRA 2 (Uber): Encontre a categoria "UberX" e extraia o valor dela, IGNORANDO qualquer preço que tenha um traço no meio (riscado de desconto fake). Ignore valores maiores como Comfort. Retorne APENAS E ESTRITAMENTE o número em formato float que representa o valor final do Pop ou UberX (Exemplo: 48.90). Caso não ache retorne 0.' },
-                  { inlineData: { data: cleanBase64, mimeType: 'image/jpeg' }}
-               ]
-            }
-        ]
-    });
+    const prompt = 'Você analisa prints de apps de transporte. REGRA 1 (99): Encontre a categoria "Pop" e extraia o valor dela. REGRA 2 (Uber): Encontre a categoria "UberX" e extraia o valor dela, IGNORANDO qualquer preço que tenha um traço no meio (riscado de desconto fake). Ignore valores maiores como Comfort. Retorne APENAS E ESTRITAMENTE o número em formato float que representa o valor final do Pop ou UberX (Exemplo: 48.90). Caso não ache retorne 0.';
     
-    let aiText = response.text().trim();
+    const imagePart = {
+      inlineData: {
+        data: cleanBase64,
+        mimeType: "image/jpeg"
+      }
+    };
+
+    const result = await model.generateContent([prompt, imagePart]);
+    let aiText = result.response.text().trim();
     // Guarantee it parses correctly (e.g if it responds "48.90")
     aiText = aiText.replace(',', '.'); // replace any stray commas
     const finalPrice = parseFloat(aiText) || 0;
