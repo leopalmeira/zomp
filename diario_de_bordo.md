@@ -138,8 +138,9 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Design de Interface:** Barra de endereços compactada em 30% na altura e 10% na largura para otimizar o uso do espaço de tela e destacar o mapa.
 - **Desconto Garantido:** Reforçada funcionalidade de desconto de R$ 2,00 via print da concorrência, agora com interface de upload mais clara.
 
-## [20/04/2026] - Migração para OCR Local com EasyOCR (v2.1.0)
-- **Integração de OCR Local:** Adicionado suporte ao `EasyOCR` (Python) no backend para leitura de prints sem dependência de chaves de API.
-- **Backend Híbrido:** O endpoint `/api/analyze-print` agora tenta primeiro o processamento local via Python e utiliza o Google Gemini apenas como fallback.
-- **Engine Python:** Criado `ocr_service.py` que gere o ciclo de vida do OCR, processamento de imagem Base64 e extração de preços via Heurística de proximidade.
-- **Dependências:** Adicionado check-in de ambiente para Python 3.x e bibliotecas deep learning (`torch`, `easyocr`).
+## [20/04/2026] - Migração para OCR Local com EasyOCR e Robustez (v2.1.0)
+- **Integração de OCR Local:** Adicionado suporte ao `EasyOCR` (Python) no backend para leitura de prints sem dependência de chaves de API externa e custo zero.
+- **Backend Híbrido:** O endpoint `/api/analyze-print` agora tenta primeiro o processamento local e utiliza o Google Gemini apenas como fallback automático.
+- **Frontend Consistente:** Padronizada a `API_BASE` no `PassengerDashboard.jsx` para evitar erros de conexão e adicionado tratamento de erro visual para chaves de IA expiradas.
+- **Motor de Extração:** Criado `ocr_service.py` com lógica de Regex e heurística para ler categorias "Pop" da 99 e "UberX" da Uber com alta precisão.
+- **Log e Depuração:** Implementados logs detalhados no servidor para monitorar o sucesso de cada engine de OCR (Local vs IA).
