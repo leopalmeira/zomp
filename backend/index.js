@@ -390,7 +390,7 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
             {
                role: 'user',
                parts: [
-                  { text: 'Look at this rideshare app screenshot (like Uber or 99). Analyze the screen and find the selected ride option. Return ONLY the numeric value of the selected ride price in Brazilian Reais (e.g., 48.90). Do not include currency symbols, just the number. If no rideshare price is found, return 0.' },
+                  { text: 'Você analisa prints de apps de transporte. REGRA 1 (99): Encontre a categoria "Pop" e extraia o valor dela. REGRA 2 (Uber): Encontre a categoria "UberX" e extraia o valor dela, IGNORANDO qualquer preço que tenha um traço no meio (riscado de desconto fake). Ignore valores maiores como Comfort. Retorne APENAS E ESTRITAMENTE o número em formato float que representa o valor final do Pop ou UberX (Exemplo: 48.90). Caso não ache retorne 0.' },
                   { inlineData: { data: cleanBase64, mimeType: 'image/jpeg' }}
                ]
             }
