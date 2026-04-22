@@ -82,3 +82,17 @@ As cidades de rotas longas que estavam com redundância de praia (como Nova Frib
 - Roteamento nativo e UI estendida para suportar paradas entre rota (Multi-Stop).
 - Ocultação inteligente veicular (Ex: Quantidade de pessoas é oculto para Motos).
 - Incremento progressivo na tarifa (+2 BRL flat-fee base).
+## [2026-04-20] - Refinamento Premium & Integração de Ferramentas IA Parte 2
+
+### 🚀 Novidades
+- **Menu do Motorista (Premium v3.0):**
+    - Redesign completo do drawer lateral do Motorista com estética 'Slate/Emerald' moderna (glassmorphism leve).
+    - Organização de itens por categoria (Principal, Financeiro, Sistema & Ajuda).
+    - Header dinâmico com Resumo de Créditos, Extrato de Royalties e Avatar destacado.
+    - Navegação muito mais polida e profissional para alavancar a experiência do parceiro.
+- **Antigravity Kit Instalado:**
+    - Repositório udovn/antigravity-kit instalado na raiz (/antigravity-kit), trazendo blueprints e guias de +20 especialistas.
+- **Preço Imbatível (OCR Resiliência):**
+    - Otimização do endpoint do Gemini com novo Fallback Regex para correção de formatação em respostas Markdown embutidas.
+    - Logs mais transparentes de Request (Base64 character length exibido) criados para facilitar debug de payload no Render.
+

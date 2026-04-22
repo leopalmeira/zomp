@@ -126,6 +126,8 @@ export default function PassengerDashboard() {
   const [compPlatform, setCompPlatform] = useState('') // 'Uber' | '99' | 'Desconhecida'
   const [compCategory, setCompCategory] = useState('') // 'UberX' | 'Pop' | 'Nenhuma'
   const [passengersCount, setPassengersCount] = useState(1)
+  const [manualPriceInput, setManualPriceInput] = useState('')
+  const [manualPriceError, setManualPriceError] = useState('')
 
   // Freight State
   const [freightType, setFreightType] = useState(null) // 'caixas' | 'sacos'
@@ -244,14 +246,12 @@ export default function PassengerDashboard() {
     const basePrice = Math.max(calculated, MIN_PRICE[type]) + stopsFee + extraPsg
     let finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
     
-    // REGRA PREÇO IMBATÍVEL: se tivermos um print validado (UberX/Pop)
+    // REGRA PREÇO IMBATÍVEL: se tivermos um print validado ou entrada manual
     if (hasCompetitionDiscount && compPriceRead > 0 && type === 'car') {
       // O preço deve ser o menor entre o nosso normal e (concorrência - 2)
-      // Garantindo sempre ser o mais barato do mercado
       const challengePrice = Math.max(compPriceRead - 2.00, MIN_PRICE[type]);
       finalPrice = Math.min(finalPrice, challengePrice);
     } else if (hasCompetitionDiscount && type === 'car') {
-      // Fallback: se não leu o preço mas validou que é print, dá o desconto fixo sobre o nosso
       finalPrice = Math.max(finalPrice - 2.00, MIN_PRICE[type]);
     }
     
@@ -1117,58 +1117,90 @@ export default function PassengerDashboard() {
               )}
 
               {/* Challenge Price Box */}
-              <div className="price-challenge-box animate-fade-in">
+              <div className="price-challenge-box animate-fade-in" style={{ border: manualPriceError ? '1px solid #ef4444' : 'none' }}>
                 <div className="challenge-icon">🔥</div>
                 <div className="challenge-content">
                   <h4 style={{fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c', margin: 0}}>PREÇO IMBATÍVEL ZOMP</h4>
-                  <p style={{fontSize: '0.75rem', fontWeight: 600, color: '#7f1d1d', margin: '2px 0 6px'}}>Tem print da Uber ou 99? Cobrimos e damos + R$ 2,00 de desconto!</p>
+                  <p style={{fontSize: '0.75rem', fontWeight: 600, color: '#7f1d1d', margin: '2px 0 8px'}}>
+                    Viu preço mais barato na Uber ou 99? Cobrimos! informe aqui para consultar:
+                  </p>
                   
-                    {isAnalyzingPrint ? (
-                      <div style={{fontSize: '0.75rem', color: '#b91c1c', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px'}}>
-                         <span className="animate-pulse">🔍 IA Lendo valor no print...</span>
+                  <div style={{display:'flex', gap:'8px', marginBottom:'8px'}}>
+                    <input 
+                      type="number" 
+                      placeholder="R$ 0,00"
+                      value={manualPriceInput}
+                      onChange={(e) => setManualPriceInput(e.target.value)}
+                      style={{
+                        flex:1, padding:'8px 12px', borderRadius:'8px', border:'1px solid #d1d5db',
+                        fontSize:'0.9rem', fontWeight:700, outline:'none'
+                      }}
+                    />
+                    <button 
+                      onClick={() => {
+                        const price = parseFloat(manualPriceInput);
+                        const distance = parseFloat(routeKm);
+                        if (isNaN(price) || price <= 0) {
+                          setManualPriceError('Informe um valor válido.');
+                          return;
+                        }
+                        if (price / distance < 1.50) {
+                          setManualPriceError('Não conseguimos ter desconto nesse valor.');
+                          setHasCompetitionDiscount(false);
+                          setCompPriceRead(0);
+                        } else {
+                          setManualPriceError('');
+                          setCompPriceRead(price);
+                          setHasCompetitionDiscount(true);
+                          setCompPlatform('Concorrência');
+                          setCompCategory('Manual');
+                        }
+                      }}
+                      style={{
+                        background:'#b91c1c', color:'#fff', border:'none', padding:'8px 16px',
+                        borderRadius:'8px', fontWeight:800, cursor:'pointer'
+                      }}
+                    >
+                      Consultar
+                    </button>
+                  </div>
+
+                  {manualPriceError && (
+                    <p style={{fontSize: '0.75rem', color: '#ef4444', fontWeight: 800, margin: '4px 0'}}>
+                      ⚠️ {manualPriceError}
+                    </p>
+                  )}
+
+                  {hasCompetitionDiscount && !manualPriceError && (
+                    <div style={{background:'#f0fdf4', padding:'10px', borderRadius:'12px', border:'1px solid #bbf7d0', marginTop:'8px'}}>
+                      <div style={{fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom:'4px'}}>
+                         <Check size={14} /> <span>PREÇO IMBATÍVEL APLICADO!</span>
                       </div>
-                    ) : hasCompetitionDiscount ? (
-                      <div style={{background:'#f0fdf4', padding:'10px', borderRadius:'12px', border:'1px solid #bbf7d0'}}>
-                        <div style={{fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom:'4px'}}>
-                           <Check size={14} /> <span>PREÇO IMBATÍVEL APLICADO!</span>
-                        </div>
-                        {compPlatform && compPlatform !== 'Desconhecida' && (
-                          <div style={{display:'flex', alignItems:'center', gap:'6px', marginBottom:'6px'}}>
-                            <span style={{fontSize:'0.7rem', background: compPlatform === 'Uber' ? '#000' : '#1a1a2e', color:'#fff', padding:'2px 8px', borderRadius:'100px', fontWeight:800}}>
-                              {compPlatform === 'Uber' ? '🚗 Uber' : '🏎 99'}
-                            </span>
-                            <span style={{fontSize:'0.7rem', color:'#374151', fontWeight:700}}>
-                              {compCategory && compCategory !== 'Nenhuma' ? compCategory : 'categoria econômica'}
-                            </span>
-                          </div>
-                        )}
-                        <p style={{margin:0, fontSize:'0.7rem', color:'#166534', fontWeight:600}}>
-                          Identificamos <strong>R$ {parseFloat(compPriceRead).toFixed(2)}</strong> no print. <br/>
-                          Seu preço Zomp: <strong style={{fontSize:'0.85rem', color:'#059669'}}>R$ {(compPriceRead - 2).toFixed(2)}</strong>
-                          <span style={{fontSize:'0.65rem', color:'#6b7280', display:'block', marginTop:'2px'}}>R$ 2,00 mais barato que a concorrência ✅</span>
-                        </p>
-                      </div>
-                    ) : (
-                      <label htmlFor="price-print" className="challenge-upload-btn">
+                      <p style={{margin:0, fontSize:'0.7rem', color:'#166534', fontWeight:600}}>
+                        Cobrimos o valor de <strong>R$ {parseFloat(compPriceRead).toFixed(2)}</strong>. <br/>
+                        Seu preço Zomp: <strong style={{fontSize:'0.85rem', color:'#059669'}}>R$ {(compPriceRead - 2).toFixed(2)}</strong>
+                        <span style={{fontSize:'0.65rem', color:'#6b7280', display:'block', marginTop:'2px'}}>R$ 2,00 mais barato que a concorrência ✅</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {!hasCompetitionDiscount && !manualPriceError && (
+                    <div style={{marginTop:'12px', borderTop:'1px dashed #fca5a5', paddingTop:'12px'}}>
+                      <p style={{fontSize: '0.7rem', fontWeight: 600, color: '#7f1d1d', marginBottom:'8px'}}>Ou se preferir, anexe o print:</p>
+                      <label htmlFor="price-print" className="challenge-upload-btn" style={{background:'rgba(185, 28, 28, 0.1)', color:'#b91c1c', border:'1px solid #fca5a5'}}>
                         <Camera size={14} /> 
-                        <span>Anexar Print da Concorrência</span>
+                        <span>Anexar Print</span>
                         <input type="file" id="price-print" accept="image/*" style={{display:'none'}} onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-
                           setIsAnalyzingPrint(true);
-                          console.log('[AI VISION] Iniciando processamento do arquivo:', file.name);
-
                           try {
-                            // 1. Ler arquivo como base64 original
                             const base64 = await new Promise((resolve, reject) => {
                               const reader = new FileReader();
                               reader.onload = () => resolve(reader.result);
                               reader.onerror = reject;
                               reader.readAsDataURL(file);
                             });
-
-                            // 2. Comprimir via Canvas para JPEG (otimiza OCR e upload)
                             const compressedBase64 = await new Promise((resolve) => {
                               const img = new Image();
                               img.src = base64;
@@ -1183,12 +1215,8 @@ export default function PassengerDashboard() {
                                 resolve(canvas.toDataURL('image/jpeg', 0.8));
                               };
                             });
-
-                            // 3. Chamar API
                             const token = localStorage.getItem('zomp_token');
                             const API_BASE = import.meta.env.VITE_API_URL || 'https://zomp-backend.onrender.com/api';
-                            
-                            console.log('[AI VISION] Enviando para API:', API_BASE);
                             const res = await fetch(`${API_BASE}/analyze-print`, {
                               method: 'POST',
                               headers: {
@@ -1197,39 +1225,34 @@ export default function PassengerDashboard() {
                               },
                               body: JSON.stringify({ imageBase64: compressedBase64 })
                             });
-
                             if (!res.ok) {
                               const errorData = await res.json().catch(() => ({}));
-                              // 422 = categoria inválida (premium) ou preço não encontrado — mostra mensagem amigável
                               if (res.status === 422) {
                                 alert(`⚠️ ${errorData.error || 'Não foi possível identificar preço de UberX ou 99Pop.'}`);
-                                return; // Não joga erro, só avisa
+                                return;
                               }
                               throw new Error(errorData.error || `Erro API: ${res.status}`);
                             }
-
                             const data = await res.json();
-                            console.log('[AI VISION] Resposta recebida:', data);
-
                             if (data.price && data.price >= 5) {
                               setCompPriceRead(data.price);
                               setCompPlatform(data.platform || 'Desconhecida');
                               setCompCategory(data.category || 'Nenhuma');
                               setHasCompetitionDiscount(true);
+                              setManualPriceError('');
                             } else {
-                              alert('❌ A IA não conseguiu identificar um preço válido de UberX ou 99Pop neste print.\n\nDicas:\n• Certifique-se que o print mostra a opção UberX (Uber) ou Pop (99)\n• A imagem deve estar nítida e com o preço visível\n• Tente um screenshot em vez de foto da tela');
+                              alert('❌ A IA não conseguiu identificar um preço válido.');
                             }
-
                           } catch (err) {
-                            console.error('[AI VISION] Erro fatal:', err);
                             alert(`Falha na análise: ${err.message}`);
                           } finally {
                             setIsAnalyzingPrint(false);
-                            e.target.value = ''; // Reset input
+                            e.target.value = '';
                           }
                         }} />
                       </label>
-                    )}
+                    </div>
+                  )}
                 </div>
               </div>
 

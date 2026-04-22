@@ -187,3 +187,18 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
   - Mensagem de erro mais detalhada com dicas práticas ao usuário
   - Reset dos estados de plataforma/categoria no esetFlow()
 - **Card de Confirmação Melhorado:** O card "PREÇO IMBATÍVEL APLICADO!" agora mostra: plataforma identificada, categoria, preço original, novo preço Zomp (- R$ 2,00) e badge "R$ 2,00 mais barato que a concorrência ✅"
+
+## [2026-04-20] - Refinamento Premium & Integração de Ferramentas IA Parte 2
+
+### 🚀 Novidades
+- **Menu do Motorista (Premium v3.0):**
+    - Redesign completo do drawer lateral do Motorista com estética 'Slate/Emerald' moderna (glassmorphism leve).
+    - Organização de itens por categoria (Principal, Financeiro, Sistema & Ajuda).
+    - Header dinâmico com Resumo de Créditos, Extrato de Royalties e Avatar destacado.
+    - Navegação muito mais polida e profissional para alavancar a experiência do parceiro.
+- **Antigravity Kit Instalado:**
+    - Repositório udovn/antigravity-kit instalado na raiz (/antigravity-kit), trazendo blueprints e guias de +20 especialistas.
+- **Preço Imbatível (OCR Resiliência):**
+    - Otimização do endpoint do Gemini com novo Fallback Regex para correção de formatação em respostas Markdown embutidas.
+    - Logs mais transparentes de Request (Base64 character length exibido) criados para facilitar debug de payload no Render.
+

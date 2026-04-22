@@ -389,7 +389,7 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
     const { imageBase64 } = req.body;
     if (!imageBase64) return res.status(400).json({ error: 'Nenhuma imagem fornecida' });
 
-    console.log('[OCR] Iniciando análise de imagem via Gemini Vision (método principal)...');
+    console.log(`[OCR] Iniciando análise de imagem via Gemini Vision. Tamanho do Base64: ${imageBase64.length} chars`);
 
     const cleanImageBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
@@ -401,22 +401,28 @@ app.post('/api/analyze-print', authenticate, async (req, res) => {
           const genAI = new GoogleGenerativeAI(currentKey);
           const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-          const prompt = `Você é um especialista em análise de prints de aplicativos de transporte.
-Analise a imagem e extraia as seguintes informações:
+          const prompt = `Você é um especialista em OCR e análise de prints de aplicativos de mobilidade (Uber e 99).
+Sua missão é extrair o preço da categoria MAIS ECONÔMICA (UberX ou 99Pop/Pop) deste print.
 
-1. Identifique se é um print da Uber ou da 99 (ou outra plataforma).
-2. Localize o preço da categoria mais econômica disponível:
-   - Se for Uber: procure o preço de "UberX" (pode aparecer como UberX, Uber X, X).
-   - Se for 99: procure o preço de "99Pop" ou "Pop" (pode aparecer como Pop, 99Pop, Pop 99).
-3. O preço deve ser um número (ex: 23.50 ou 23,50).
+DIRETRIZES:
+1. Identifique a PLATAFORMA (Uber ou 99).
+2. Identifique a CATEGORIA vinculada ao preço (ex: UberX, Pop, 99Pop, X).
+3. Extraia o VALOR exato (apenas o número). 
 
-IMPORTANTE: Ignore preços de categorias premium (UberBlack, Comfort, 99Top, 99Exec, etc).
-Foque APENAS em UberX ou 99Pop.
+REGRAS CRÍTICAS:
+- IGNORE categorias premium (UberBlack, Comfort, 99Top, 99Exec, Comfort, etc).
+- Se houver múltiplos preços da mesma categoria, pegue o mais visível ou o primeiro.
+- Se não houver UberX ou Pop, retorne price: 0.
+- A saída DEVE ser exclusivamente um JSON puro.
 
-Responda EXCLUSIVAMENTE no formato JSON abaixo (sem markdown, sem explicações extras):
-{"platform": "Uber" ou "99" ou "Desconhecida", "category": "UberX" ou "Pop" ou "Nenhuma", "price": 0}
+FORMATO DE RESPOSTA (JSON APENAS):
+{
+  "platform": "Uber" | "99" | "Desconhecida",
+  "category": "UberX" | "Pop" | "Nenhuma",
+  "price": 0.00
+}
 
-Se não conseguir identificar um preço válido das categorias corretas, use price: 0.`;
+Analise a imagem agora.`;
 
           const imagePart = {
             inlineData: { data: cleanImageBase64, mimeType: 'image/jpeg' }
@@ -426,21 +432,22 @@ Se não conseguir identificar um preço válido das categorias corretas, use pri
           const response = await result.response;
           const aiText = response.text().trim();
 
-          console.log(`[Gemini] Resposta bruta (chave ${keyIndex + 1}):`, aiText);
+          console.log(`[Gemini] Resposta bruta (Chave ${keyIndex + 1}):`, aiText);
 
-          // Tenta parsear como JSON
+          // Tenta extrair JSON se a IA mandou Markdown ou texto extra
           let parsed = null;
           try {
-            const cleaned = aiText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-            parsed = JSON.parse(cleaned);
+            const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const cleaned = jsonMatch[0].trim();
+              parsed = JSON.parse(cleaned);
+            }
           } catch (jsonErr) {
-            // Fallback regex: extrai número do texto
-            const match = aiText.match(/(\d+[.,]\d{2})/);
-            if (match) {
-              const val = parseFloat(match[1].replace(',', '.'));
-              if (val >= 5 && val < 500) {
-                parsed = { platform: 'Desconhecida', category: 'Nenhuma', price: val };
-              }
+            console.warn(`[Gemini] Falha no parse JSON (Chave ${keyIndex + 1}):`, jsonErr.message);
+            // Fallback regex final
+            const priceMatch = aiText.match(/(\d+[.,]\d{2})/);
+            if (priceMatch) {
+              parsed = { platform: 'Desconhecida', category: 'Nenhuma', price: parseFloat(priceMatch[1].replace(',', '.')) };
             }
           }
 

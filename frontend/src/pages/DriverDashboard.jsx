@@ -402,30 +402,70 @@ export default function DriverDashboard() {
       {menuOpen && (
         <div className="driver-side-overlay" onClick={() => setMenuOpen(false)}>
           <div className="driver-side-drawer" onClick={e => e.stopPropagation()}>
-            <div className="drawer-profile-section">
-              <div className="drawer-avatar">{user?.name?.charAt(0) || 'M'}</div>
-              <div className="drawer-name">{user?.name}</div>
-              <div className="drawer-role-tag">Motorista Parceiro</div>
+            <div className="drawer-header">
+              <div className="drawer-profile-box">
+                <div className="drawer-avatar">{user?.name?.charAt(0) || 'M'}</div>
+                <div className="drawer-user-info">
+                  <h3>{user?.name}</h3>
+                  <span>Motorista Premium ⭐ 4.9</span>
+                </div>
+              </div>
+              <div className="drawer-balance-row">
+                <div className="balance-item">
+                  <span className="lbl">Créditos</span>
+                  <div className="val green">{credits}</div>
+                </div>
+                <div className="balance-item">
+                  <span className="lbl">Royalties</span>
+                  <div className="val">R$ {wallet.balance?.toFixed(2)}</div>
+                </div>
+              </div>
             </div>
+
+            <div className="drawer-section-label">Principal</div>
             <nav className="drawer-nav">
-              <button className="drawer-nav-item" onClick={() => openScreen('PROFILE')}><span className="nav-icon"><User size={20} /></span>Menu Interativo Perfil</button>
-              <button className="drawer-nav-item" onClick={() => openScreen('DOCS')}><span className="nav-icon"><FileText size={20} /></span>Documentos e Veículo</button>
-              <button className="drawer-nav-item" onClick={() => openScreen('HISTORY')}><span className="nav-icon"><Clock size={20} /></span>Histórico de Corridas</button>
-              <button className="drawer-nav-item" onClick={() => openScreen('CREDITS')}><span className="nav-icon"><Ticket size={20} /></span>Acessar Créditos<span style={{marginLeft:'auto',background:'rgba(0,230,118,0.15)',color:'#00E676',border:'1px solid rgba(0,230,118,0.3)',padding:'4px 10px',borderRadius:'100px',fontSize:'0.75rem',fontWeight:800}}>{credits}</span></button>
-              <button className="drawer-nav-item" onClick={() => openScreen('ROYALTIES')}><span className="nav-icon"><Gem size={20} /></span>Extrato Royalties<span style={{marginLeft:'auto',color:'#00E676',fontSize:'0.85rem',fontWeight:800}}>R$ {wallet.balance?.toFixed(2)}</span></button>
-              <div className="drawer-nav-separator"></div>
-              <button className="drawer-nav-item" onClick={() => openScreen('REFERRAL')}><span className="nav-icon"><UserPlus size={20} /></span>Indicar Passageiro</button>
-              <button className="drawer-nav-item" onClick={() => openScreen('EXTERNAL')}><span className="nav-icon"><RefreshCw size={20} /></span>Corridas de Outros Apps</button>
-              <div className="drawer-nav-separator"></div>
-              <button className="drawer-nav-item" onClick={() => openScreen('SUPPORT')}><span className="nav-icon"><Headset size={20} /></span>Central de Suporte</button>
-              <button className="drawer-nav-item" onClick={() => openScreen('FAQ')}><span className="nav-icon"><HelpCircle size={20} /></span>Perguntas Frequentes</button>
-              <div className="drawer-nav-separator"></div>
+              <button className={`drawer-nav-item ${activeScreen === 'PROFILE' ? 'active' : ''}`} onClick={() => openScreen('PROFILE')}>
+                <span className="nav-icon"><User size={18} /></span> Perfil Interativo
+              </button>
+              <button className={`drawer-nav-item ${activeScreen === 'DOCS' ? 'active' : ''}`} onClick={() => openScreen('DOCS')}>
+                <span className="nav-icon"><FileText size={18} /></span> Documentação
+              </button>
+              <button className={`drawer-nav-item ${activeScreen === 'HISTORY' ? 'active' : ''}`} onClick={() => openScreen('HISTORY')}>
+                <span className="nav-icon"><Clock size={18} /></span> Histórico
+              </button>
+              
+              <div className="drawer-section-label">Financeiro</div>
+              <button className={`drawer-nav-item ${activeScreen === 'CREDITS' ? 'active' : ''}`} onClick={() => openScreen('CREDITS')}>
+                <span className="nav-icon"><Ticket size={18} /></span> Comprar Créditos
+                <span className="nav-badge">{credits}</span>
+              </button>
+              <button className={`drawer-nav-item ${activeScreen === 'ROYALTIES' ? 'active' : ''}`} onClick={() => openScreen('ROYALTIES')}>
+                <span className="nav-icon"><Gem size={18} /></span> Extrato Royalties
+              </button>
+
+              <div className="drawer-section-label">Sistema & Ajuda</div>
+              <button className={`drawer-nav-item ${activeScreen === 'REFERRAL' ? 'active' : ''}`} onClick={() => openScreen('REFERRAL')}>
+                <span className="nav-icon"><UserPlus size={18} /></span> Indicar Passageiro
+              </button>
+              <button className={`drawer-nav-item ${activeScreen === 'EXTERNAL' ? 'active' : ''}`} onClick={() => openScreen('EXTERNAL')}>
+                <span className="nav-icon"><RefreshCw size={18} /></span> Outros Apps
+              </button>
+              <button className={`drawer-nav-item ${activeScreen === 'SUPPORT' ? 'active' : ''}`} onClick={() => openScreen('SUPPORT')}>
+                <span className="nav-icon"><Headset size={18} /></span> Suporte
+              </button>
+              <button className={`drawer-nav-item ${activeScreen === 'FAQ' ? 'active' : ''}`} onClick={() => openScreen('FAQ')}>
+                <span className="nav-icon"><HelpCircle size={18} /></span> FAQ
+              </button>
+
               <button className="drawer-nav-item" onClick={() => { setDarkMap(!darkMap); setMenuOpen(false) }}>
-                <span className="nav-icon">{darkMap ? <Sun size={20} /> : <Moon size={20} />}</span>{darkMap ? 'Ligar Modo Claro' : 'Ativar Mapa Escuro'}
+                <span className="nav-icon">{darkMap ? <Sun size={18} /> : <Moon size={18} />}</span> {darkMap ? 'Modo Claro' : 'Mapa Escuro'}
               </button>
             </nav>
+
             <div className="drawer-footer">
-              <button className="drawer-nav-item" onClick={handleLogout}><span className="nav-icon"><LogOut size={20} /></span>Desconectar-se</button>
+              <button className="logout-btn" onClick={handleLogout}>
+                <LogOut size={18} /> Sair da Conta
+              </button>
             </div>
           </div>
         </div>
