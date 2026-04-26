@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zomp - Pré-Cadastro Motorista</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- HEADER -->
+        <header>
+            <div class="logo">
+                <span class="z">Z</span>
+                <span class="text">Zomp</span>
+            </div>
+            <div class="badge-rj">CHEGOU NO RIO DE JANEIRO!</div>
+        </header>
+
+        <!-- HERO SECTION -->
+        <section class="hero">
+            <h1>POR QUE VOCÊ <span class="highlight-green">AINDA VAI FICAR</span> FAZENDO CORRIDAS PELOS CONCORRENTES, <span class="highlight-red">QUE NÃO TE DÁ RENDA PASSIVA</span> DE ROYALTIES TODOS OS DIAS?</h1>
+            <p class="subtitle">No final do dia, você se cansa, o aplicativo lucra, e você começa do zero no dia seguinte. <strong>MUDE ISSO. MUDE PARA A ZOMP!</strong></p>
+            
+            <div class="main-benefits">
+                <div class="benefit-item">
+                    <i data-lucide="banknote" class="icon-green"></i>
+                    <div class="benefit-content">
+                        <h3>TAXA FIXA GARANTIDA</h3>
+                        <p class="price">R$ 1,50 <span>por corrida</span></p>
+                        <p class="desc">FIXA POR 3 ANOS 🔒</p>
+                    </div>
+                </div>
+                <div class="benefit-item">
+                    <i data-lucide="users" class="icon-green"></i>
+                    <div class="benefit-content">
+                        <h3>ROYALTIES DE PASSAGEIROS</h3>
+                        <p class="price">R$ 0,50 <span>por corrida</span></p>
+                        <p class="desc">por cada corrida feita por seus passageiros vinculados</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CARDS WRAPPER -->
+        <section class="cards-grid">
+            <div class="card">
+                <i data-lucide="trending-up"></i>
+                <h4>RENDA PASSIVA TODOS OS DIAS</h4>
+                <p>Mesmo quando você não está online, você continua ganhando.</p>
+            </div>
+            <div class="card">
+                <i data-lucide="award"></i>
+                <h4>MAIS VALOR, MAIS LIBERDADE</h4>
+                <p>Você no controle do seu tempo e da sua vida.</p>
+            </div>
+        </section>
+
+        <!-- COMPARISON -->
+        <section class="comparison">
+            <h2>COMPARE E VEJA A DIFERENÇA!</h2>
+            
+            <div class="comp-box zomp">
+                <div class="comp-header"><span class="z-sm">Z</span> ZOMP</div>
+                <ul>
+                    <li><i data-lucide="check-circle-2"></i> Taxa fixa garantida: R$ 1,50 por corrida.</li>
+                    <li><i data-lucide="check-circle-2"></i> Royalties de passageiros: R$ 0,50 por corrida.</li>
+                    <li><i data-lucide="check-circle-2"></i> Você constrói sua base e gera renda contínua.</li>
+                </ul>
+                <div class="comp-footer">É O SEU FUTURO!</div>
+            </div>
+
+            <div class="comp-box others">
+                <div class="comp-header">UBER / 99</div>
+                <ul>
+                    <li><i data-lucide="x-circle"></i> Não tem taxa fixa garantida</li>
+                    <li><i data-lucide="x-circle"></i> Não tem royalties</li>
+                    <li><i data-lucide="x-circle"></i> Você troca tempo por dinheiro.</li>
+                </ul>
+                <div class="comp-footer-red">VOCÊ DEPENDE 100% DO TEMPO ONLINE.</div>
+            </div>
+        </section>
+
+        <!-- THE ENGINE (PASSENGER APP) -->
+        <section class="passenger-pitch">
+            <h2>POR QUE O PASSAGEIRO VAI USAR A ZOMP?</h2>
+            <p class="pitch-intro">Este é o seu motor para trazer passageiros e garantir seus royalties!</p>
+            
+            <div class="price-battle">
+                <h3>PREÇO IMBATÍVEL!</h3>
+                <div class="price-cards">
+                    <div class="p-card zomp-price">
+                        <span>ZOMP</span>
+                        <strong>R$ 23,50</strong>
+                        <small>Nós cobrimos o preço!</small>
+                    </div>
+                    <div class="p-card other-price">
+                        <span>UBER</span>
+                        <strong class="strikethrough">R$ 28,90</strong>
+                    </div>
+                    <div class="p-card other-price">
+                        <span>99</span>
+                        <strong class="strikethrough">R$ 27,80</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="features-list">
+                <div class="f-item">
+                    <i data-lucide="calendar"></i>
+                    <span>Agendamento de Corridas</span>
+                </div>
+                <div class="f-item">
+                    <i data-lucide="star"></i>
+                    <span>Motoristas Favoritos</span>
+                </div>
+                <div class="f-item">
+                    <i data-lucide="map-pin"></i>
+                    <span>Viagens para outras cidades</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- COUNTDOWN SECTION -->
+        <section class="onboarding-cta">
+            <div class="cta-box">
+                <h2 class="attention">ATENÇÃO, MOTORISTA!</h2>
+                <h3 class="deadline">PRÉ-CADASTRO ATÉ 30 DE JUNHO</h3>
+                
+                <div id="countdown" class="timer">
+                    <div class="time-part"><span id="days">00</span><small>DIAS</small></div>
+                    <div class="separator">:</div>
+                    <div class="time-part"><span id="hours">00</span><small>HORAS</small></div>
+                    <div class="separator">:</div>
+                    <div class="time-part"><span id="minutes">00</span><small>MIN</small></div>
+                    <div class="separator">:</div>
+                    <div class="time-part"><span id="seconds">00</span><small>SEG</small></div>
+                </div>
+
+                <div class="vagas-info">
+                    <p>TOTAL DE APENAS <strong>5.000 VAGAS</strong></p>
+                    <p class="location">EXCLUSIVO PARA RIO DE JANEIRO</p>
+                </div>
+
+                <a href="/motorista/cadastro" class="btn-register">FAZER MEU PRÉ-CADASTRO AGORA</a>
+                <p class="limited">Vagas limitadas por conta dos royalties.</p>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-links">
+                <span><i data-lucide="shield-check"></i> Seguro e Confiável</span>
+                <span><i data-lucide="thumbs-up"></i> Valorizamos o Motorista</span>
+            </div>
+            <p class="zomp-footer">ZOMP. MAIS QUE CORRIDAS. É SUA NOVA FONTE DE RENDA.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Lucide icons initialization
+        lucide.createIcons();
+
+        // Countdown Logic
+        const targetDate = new Date('June 30, 2026 23:59:59').getTime();
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('days').innerText = days.toString().padStart(2, '0');
+            document.getElementById('hours').innerText = hours.toString().padStart(2, '0');
+            document.getElementById('minutes').innerText = minutes.toString().padStart(2, '0');
+            document.getElementById('seconds').innerText = seconds.toString().padStart(2, '0');
+
+            if (distance < 0) {
+                clearInterval(interval);
+                document.getElementById('countdown').innerHTML = "PRÉ-CADASTRO ENCERRADO";
+            }
+        }
+
+        const interval = setInterval(updateCountdown, 1000);
+        updateCountdown();
+    </script>
+</body>
+</html>

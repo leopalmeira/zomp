@@ -48,6 +48,9 @@ services:
         value: no-cache
     routes:
       - type: rewrite
+        source: /onboarding/*
+        destination: /onboarding/index.html
+      - type: rewrite
         source: /*
         destination: /index.html
     envVars:

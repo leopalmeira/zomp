@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DriverDashboard from './pages/DriverDashboard'
 import PassengerDashboard from './pages/PassengerDashboard'
+import LandingDriver from './pages/LandingDriver'
 import ErrorBoundary from './components/ErrorBoundary'
 
 function ProtectedRoute({ children, requiredRole }) {
@@ -22,8 +23,7 @@ function RoleAutoRedirect() {
     const user = getCurrentUser()
     return <Navigate to={user?.role === 'DRIVER' ? '/motorista/dashboard' : '/passageiro/dashboard'} replace />
   }
-  // If no auth and root visited, default direct to passenger app (could be a landing page later)
-  return <Navigate to="/passageiro" replace />
+  return <LandingDriver />
 }
 
 function App() {
