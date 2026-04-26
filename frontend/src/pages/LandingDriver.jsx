@@ -156,68 +156,43 @@ const LandingDriver = () => {
         >
           COMPARE E VEJA A DIFERENÇA!
         </motion.h2>
-        <div className="comparison-grid">
-          {/* ZOMP */}
-          <motion.div 
-            className="glass-card comp-zomp"
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="comp-header bz-logo-inline">
-               <img src="/logo.svg" alt="Zomp" style={{height: '24px'}} />
-            </div>
-            <ul className="comp-list zomp-list">
-              <li><Check className="icon-check" size={20} /> Taxa fixa garantida: R$ 1,50 por corrida. Fixa por 3 anos.</li>
-              <li><Check className="icon-check" size={20} /> Royalties de passageiros: R$ 0,50 por corrida. Renda passiva todos os dias.</li>
-              <li><Check className="icon-check" size={20} /> Você constrói sua base de passageiros e gera renda contínua.</li>
-              <li><Check className="icon-check" size={20} /> Mais ganhos por corrida + renda passiva.</li>
-            </ul>
-            <div className="comp-footer green-glow">
-              <strong className="highlight-green">MUITO MAIS QUE UMA CORRIDA.<br/>É O SEU FUTURO!</strong>
-            </div>
-          </motion.div>
-
-          {/* UBER */}
-          <motion.div 
-            className="glass-card comp-uber"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="comp-header">UBER</div>
-            <ul className="comp-list">
-              <li><X className="icon-times" size={20} /> Não tem taxa fixa garantida</li>
-              <li><X className="icon-times" size={20} /> Não tem royalties</li>
-              <li><X className="icon-times" size={20} /> Não gera renda passiva</li>
-              <li><X className="icon-times" size={20} /> Você depende 100% do tempo online e das tarifas da plataforma</li>
-            </ul>
-            <div className="comp-footer red-glow">
-              <strong className="highlight-red">VOCÊ TROCA TEMPO POR DINHEIRO.</strong>
-            </div>
-          </motion.div>
-
-          {/* 99 */}
-          <motion.div 
-            className="glass-card comp-99"
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.6 }}
-          >
-            <div className="comp-header text-yellow">99</div>
-            <ul className="comp-list">
-              <li><X className="icon-times" size={20} /> Não tem taxa fixa garantida</li>
-              <li><X className="icon-times" size={20} /> Não tem royalties</li>
-              <li><X className="icon-times" size={20} /> Não gera renda passiva</li>
-              <li><X className="icon-times" size={20} /> Você depende 100% do tempo online e das tarifas da plataforma</li>
-            </ul>
-            <div className="comp-footer red-glow">
-              <strong className="highlight-red">VOCÊ TROCA TEMPO POR DINHEIRO.</strong>
-            </div>
-          </motion.div>
+        <div className="comparison-wrapper">
+          <table className="comparison-matrix">
+            <thead>
+              <tr>
+                <th>Recurso</th>
+                <th className="zomp-col">ZOMP</th>
+                <th>Outros</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="matrix-row">
+                <td>Taxa Fixa Garantida</td>
+                <td className="matrix-val-zomp">R$ 1,50</td>
+                <td className="matrix-val-bad">Variável (Altas taxas)</td>
+              </tr>
+              <tr className="matrix-row">
+                <td>Royalties Vitais</td>
+                <td className="matrix-val-zomp">R$ 0,50 /corrida</td>
+                <td className="matrix-val-bad">Zero</td>
+              </tr>
+              <tr className="matrix-row">
+                <td>Renda Passiva</td>
+                <td className="matrix-val-zomp">Sim, Vitalícia</td>
+                <td className="matrix-val-bad">Não, Zero</td>
+              </tr>
+              <tr className="matrix-row">
+                <td>Base de Clientes</td>
+                <td className="matrix-val-zomp">Sua Propriedade</td>
+                <td className="matrix-val-bad">Do Aplicativo</td>
+              </tr>
+              <tr className="matrix-row">
+                <td>Conceito</td>
+                <td className="matrix-val-zomp">Motorista Investidor</td>
+                <td className="matrix-val-bad">Troca Tempo p/ Dinheiro</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
