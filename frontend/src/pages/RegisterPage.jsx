@@ -26,7 +26,7 @@ export default function RegisterPage({ forceRole }) {
     setLoading(true)
     try {
       await register(form)
-      navigate(isDriver ? '/motorista' : '/passageiro')
+      navigate(isDriver ? '/motorista/onboarding' : '/passageiro')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -42,9 +42,8 @@ export default function RegisterPage({ forceRole }) {
 
       <div className="auth-container animate-fade-in">
         
-        <div className="auth-header">
           <div className="logo-container">
-            <span className="text-logo">Zomp</span>
+            <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
           </div>
           <h1>{isDriver ? 'Dirija.' : 'Viaje.'}</h1>
           {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}

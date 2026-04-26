@@ -1,11 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:ital,wght@0,400;0,700;0,900;1,900&display=swap');
 
 :root {
-    --zomp-green: #97E900; /* Vibrant Flyer Green */
-    --zomp-dark: #121212;
+    --zomp-green: #97E900;
+    --zomp-dark: #000000;
+    --red-banner: #E30613;
+    --gray-text: #999999;
     --uber-border: #333333;
-    --99-yellow: #FFCF00;
-    --red-alert: #D0021B;
+    --99-yellow: #FFB800;
 }
 
 * {
@@ -16,318 +17,328 @@ body {
     background-color: #000;
     color: #fff;
     font-family: 'Montserrat', sans-serif;
-    line-height: 1.1;
     overflow-x: hidden;
 }
 
-.onboarding-page {
+.onboarding-container {
     max-width: 480px;
     margin: 0 auto;
     background: #000;
     position: relative;
+    box-shadow: 0 0 50px rgba(0,0,0,1);
 }
 
-/* TOP HEADER */
-.header {
+/* 1. HEADER */
+header {
     padding: 20px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
 }
 
-.logo-container {
+.logo-main {
     display: flex;
     flex-direction: column;
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+.logo-img {
+    height: 50px;
+    margin-bottom: 2px;
 }
 
-.logo .z {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 50px;
-    color: var(--zomp-green);
-    font-style: italic;
-    line-height: 1;
-}
-
-.logo .name {
-    font-size: 40px;
-    font-weight: 900;
-    letter-spacing: -2px;
-}
-
-.header .tagline {
+.brand-moto {
     font-size: 11px;
     font-weight: 700;
-    color: #fff;
-    margin-top: -5px;
+    letter-spacing: 0.5px;
 }
 
-.header .tagline span { color: var(--zomp-green); }
+.brand-moto span { color: var(--zomp-green); }
 
-.rj-badge {
-    text-align: center;
-    border: 1px solid var(--zomp-green);
+.rj-badge-circle {
+    width: 85px; height: 85px;
+    border: 2px solid var(--zomp-green);
     border-radius: 50%;
-    width: 75px; height: 75px;
-    display: flex; flex-direction: column; justify-content: center;
-    font-family: 'Bebas Neue';
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    text-align: center;
+    padding: 5px;
 }
 
-.rj-badge span:first-child { font-size: 9px; }
-.rj-badge span:last-child { font-size: 14px; color: var(--zomp-green); }
+.rj-badge-circle .t1 { font-family: 'Bebas Neue'; font-size: 11px; color: #fff; }
+.rj-badge-circle .t2 { font-family: 'Bebas Neue'; font-size: 14px; color: var(--zomp-green); }
 
-/* HERO TEXT */
-.hero-text {
+/* 2. HERO TITLES */
+.hero-headings {
     padding: 0 20px;
-    margin-top: 20px;
 }
 
-.hero-text h1 {
-    font-size: 42px;
-    font-weight: 900;
+.hero-headings h1 {
+    font-size: 40px;
+    font-weight: 950;
+    line-height: 0.85;
     font-style: italic;
-    line-height: 0.9;
     text-transform: uppercase;
 }
 
-.hero-text .green { color: var(--zomp-green); }
+.hero-headings .green-text {
+    color: var(--zomp-green);
+}
 
-.red-highlight {
-    background-color: var(--red-alert);
-    display: inline-block;
-    padding: 2px 10px;
-    margin: 10px 0;
+.hero-headings .red-skew {
+    display: table;
+    background: var(--red-banner);
+    color: #fff;
     font-size: 38px;
-    font-weight: 900;
+    padding: 2px 10px;
+    margin: 8px 0;
+    transform: rotate(-1deg);
+    font-weight: 950;
     font-style: italic;
 }
 
-.hero-sub {
-    font-size: 13px;
+.hero-headings h2 {
+    font-size: 26px;
+    font-weight: 900;
     color: #fff;
-    margin-top: 15px;
-    line-height: 1.4;
-    font-weight: 400;
+    font-style: italic;
 }
 
-.hero-sub strong { color: var(--zomp-green); }
+.hero-subtext {
+    padding: 20px;
+    font-size: 14px;
+    color: #fff;
+    line-height: 1.3;
+}
 
-/* HERO IMAGE OVERLAY AREA */
-.hero-visual {
+.hero-subtext strong { color: var(--zomp-green); }
+
+/* 3. HERO IMAGE AREA */
+.hero-image-wrapper {
     position: relative;
-    width: 100%;
-    margin-top: -20px;
-    padding: 0 10px;
+    margin: 0 10px;
 }
 
-.hero-visual img {
+.hero-image-wrapper img {
     width: 100%;
-    border-radius: 10px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(151, 233, 0, 0.2);
 }
 
-/* TOP 4 BENEFITS */
-.top-benefits {
+/* 4. VALUE PROPS (4 CIRCLES) */
+.value-props-flyer {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
     padding: 20px;
 }
 
-.benefit-item {
+.prop-box {
     display: flex;
     gap: 10px;
-    align-items: flex-start;
+    align-items: center;
 }
 
-.benefit-item .circle {
+.prop-box .prop-icon {
     width: 45px; height: 45px;
     border: 1px solid var(--zomp-green);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
     color: var(--zomp-green);
+    flex-shrink: 0;
 }
 
-.benefit-item .b-text h3 {
-    font-size: 10px; font-weight: 700; color: var(--zomp-green); margin-bottom: 2px;
+.prop-box .prop-text h3 {
+    font-size: 9px; font-weight: 700; color: var(--zomp-green);
 }
 
-.benefit-item .b-text .val {
+.prop-box .prop-text .big-val {
     font-size: 18px; font-weight: 900; color: #fff; display: block;
 }
 
-.benefit-item .b-text .sub {
-    font-size: 9px; color: #aaa;
+.prop-box .prop-text .sm-val {
+    font-size: 8px; color: var(--gray-text);
 }
 
-/* COMPARISON */
-.comparison-heading {
+/* 5. COMPARISON SECTION */
+.comp-title-flyer {
+    background-color: #fff;
+    color: #000;
     text-align: center;
-    font-size: 20px;
-    font-weight: 900;
-    margin: 20px 0;
-    text-transform: uppercase;
+    font-size: 18px;
+    font-weight: 950;
+    padding: 5px;
+    margin: 10px 20px;
+    border-radius: 2px;
 }
 
-.comparison-grid {
+.comp-grid-flyer {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 5px;
     padding: 0 10px;
 }
 
-.comp-col {
-    padding: 10px 5px;
+.comp-box-flyer {
     border-radius: 5px;
-    font-size: 10px;
+    padding: 10px 5px;
+    font-size: 9px;
 }
 
-.comp-col.zomp {
+.comp-box-flyer.zomp {
     background-color: var(--zomp-green);
     color: #000;
     border: 1px solid var(--zomp-green);
 }
 
-.comp-col.uber, .comp-col.n99 {
+.comp-box-flyer.others {
     background-color: #121212;
     border: 1px solid var(--uber-border);
 }
 
-.comp-col h4 {
+.comp-box-flyer h4 {
     text-align: center;
     font-family: 'Bebas Neue';
     font-size: 18px;
-    margin-bottom: 10px;
-}
-
-.comp-col.n99 h4 { color: var(--99-yellow); }
-
-.comp-col ul {
-    list-style: none;
-}
-
-.comp-col li {
     margin-bottom: 8px;
-    display: flex; gap: 4px;
 }
 
-.comp-col li i { flex-shrink: 0; margin-top: 1px; }
+.comp-box-flyer.n99 h4 { color: var(--99-yellow); }
 
-.comp-col .footer-tag {
-    margin-top: 15px;
+.comp-box-flyer ul { list-style: none; }
+.comp-box-flyer li { margin-bottom: 6px; display: flex; gap: 3px; }
+.comp-box-flyer li i { flex-shrink: 0; margin-top: 1px; }
+
+.comp-box-flyer .footer-line {
+    border-top: 1px solid rgba(0,0,0,0.1);
+    margin-top: 10px;
+    padding-top: 5px;
     text-align: center;
     font-weight: 900;
-    border-top: 1px solid rgba(0,0,0,0.1);
-    padding-top: 5px;
 }
 
-.uber .footer-tag, .n99 .footer-tag {
-    border-top-color: #333;
-}
+.comp-box-flyer.others .footer-line { border-top-color: #333; }
 
-/* QR SECTION */
-.qr-card {
-    background-color: #121212;
+/* 6. QR CODE AREA */
+.qr-container-flyer {
+    border: 1px solid #333;
     margin: 20px 10px;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
+    border-radius: 12px;
+    padding: 20px 15px;
 }
 
-.qr-card h2 { font-size: 24px; font-weight: 900; margin-bottom: 5px; }
-.qr-card h3 { font-size: 18px; color: var(--zomp-green); margin-bottom: 20px; }
+.qr-container-flyer h2 { font-size: 20px; font-weight: 900; margin-bottom: 5px; }
+.qr-container-flyer h3 { font-size: 16px; color: var(--zomp-green); margin-bottom: 15px; }
 
-.qr-content {
+.qr-flex {
     display: flex;
-    flex-direction: column;
     align-items: center;
     gap: 15px;
 }
 
-.qr-placeholder {
+.qr-box-img {
+    width: 100px; height: 100px;
     background: #fff;
-    padding: 10px;
-    border-radius: 10px;
-    width: 140px; height: 140px;
+    padding: 5px;
+    border-radius: 5px;
 }
 
-.qr-placeholder img { width: 100%; height: 100%; }
+.qr-box-img img { width: 100%; height: 100%; }
 
-.btn-pre {
-    background-color: var(--zomp-green);
+.qr-benefits-list {
+    flex: 1;
+    font-size: 10px;
+    list-style: none;
+}
+
+.qr-benefits-list li { display: flex; gap: 8px; margin-bottom: 8px; }
+.qr-benefits-list i { color: var(--zomp-green); }
+
+.btn-green-flyer {
+    background: var(--zomp-green);
     color: #000;
     display: block;
     width: 100%;
-    padding: 15px;
+    text-align: center;
+    padding: 12px;
     text-decoration: none;
     font-weight: 900;
-    border-radius: 10px;
-    margin-top: 15px;
+    font-size: 12px;
+    border-radius: 5px;
+    margin-top: 10px;
 }
 
-/* ATTENTION & CALENDAR */
-.attention-area {
-    padding: 20px;
+/* 7. ATTENTION & CALENDAR */
+.attention-v-flyer {
     text-align: center;
+    padding: 20px;
 }
 
-.attention-area h2 { color: var(--red-alert); font-size: 28px; }
-.attention-area h3 { font-size: 20px; }
+.attention-v-flyer .att-t { color: var(--red-banner); font-size: 26px; font-weight: 900; }
+.attention-v-flyer .att-s { font-size: 18px; font-weight: 900; }
 
-.calendar {
+.calendar-flyer {
     background: #fff;
     color: #000;
-    width: 120px;
-    margin: 20px auto;
+    width: 110px;
+    margin: 15px auto;
     border-radius: 10px;
-    box-shadow: 0 8px 0 var(--red-alert);
+    box-shadow: 0 8px 0 var(--red-banner);
 }
 
-.cal-top { height: 10px; background: var(--red-alert); border-radius: 10px 10px 0 0; }
-.cal-body { padding: 10px; }
-.cal-body .num { font-size: 40px; font-weight: 900; line-height: 1; }
-.cal-body .mon { font-size: 16px; font-weight: 700; }
+.cal-t { height: 8px; background: var(--red-banner); border-radius: 10px 10px 0 0; }
+.cal-b { padding: 10px; }
+.cal-b .d { font-size: 38px; font-weight: 900; line-height: 1; }
+.cal-b .m { font-size: 14px; font-weight: 700; }
 
-.limit-info {
-    margin-top: 25px;
-}
+.last-opp { font-size: 13px; font-weight: 800; margin-top: 10px; }
+.vagas-s { color: var(--99-yellow); font-size: 11px; margin-top: 5px; font-weight: 700; }
 
-.limit-info .yellow { color: var(--99-yellow); font-size: 12px; font-weight: 700; }
-.limit-info .big { font-size: 44px; font-weight: 900; color: var(--zomp-green); line-height: 1; }
-
-/* FOOTER ICONS */
-.flyer-footer {
+/* 8. EXCLUSIVITY */
+.exclusivity-flyer {
+    background-color: var(--dark);
+    text-align: center;
     padding: 20px;
-    border-top: 2px solid #222;
 }
 
-.footer-row {
+.ex-rj { background-color: var(--zomp-dark-green); border: 1px solid var(--zomp-green); padding: 20px; border-radius: 10px; }
+.ex-rj p { font-size: 12px; color: var(--zomp-green); font-weight: 800; }
+.ex-rj .num { font-size: 50px; font-weight: 950; color: var(--zomp-green); line-height: 1; }
+.ex-rj .label { font-size: 16px; font-weight: 950; }
+
+/* 9. FOOTER ICONS */
+.footer-flyer-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
+    padding: 30px 20px;
+    background: #000;
+    border-top: 2px solid #222;
 }
 
-.footer-feat {
-    display: flex; gap: 8px; font-size: 9px; align-items: center;
+.feat-f { display: flex; gap: 8px; align-items: center; font-size: 8px; text-transform: uppercase; }
+.feat-f i { color: var(--zomp-green); }
+
+.final-tagline-flyer {
+    text-align: center;
+    padding: 20px;
+    color: var(--zomp-green);
+    font-size: 12px;
+    font-weight: 900;
 }
 
-.footer-feat i { color: var(--zomp-green); }
-
-.final-cta {
+/* 10. FIXED CTA BOTTOM */
+.fixed-btn-flyer {
     background-color: var(--zomp-green);
     color: #000;
-    padding: 20px;
+    padding: 15px;
     text-align: center;
-    margin-top: 30px;
+    position: sticky;
+    bottom: 0;
+    width: 100%;
 }
 
-.final-cta h2 { font-size: 18px; font-weight: 900; }
-.final-cta p { font-size: 12px; font-weight: 700; margin-top: 5px; }
+.fixed-btn-flyer h2 { font-size: 14px; font-weight: 950; margin-bottom: 2px; }
+.fixed-btn-flyer p { font-size: 10px; font-weight: 600; }
 
-.float-logo { text-align: right; padding: 20px; }
-.float-logo i { color: var(--zomp-green); font-size: 30px; font-style: italic; font-weight: 900; }
+.float-z-final { text-align: right; padding: 20px; }
+.float-z-final img { height: 40px; }

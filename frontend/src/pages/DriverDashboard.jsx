@@ -403,6 +403,9 @@ export default function DriverDashboard() {
         <div className="driver-side-overlay" onClick={() => setMenuOpen(false)}>
           <div className="driver-side-drawer" onClick={e => e.stopPropagation()}>
             <div className="drawer-header">
+              <div style={{textAlign: 'center', marginBottom: '20px'}}>
+                <img src="/logo.svg" alt="Zomp Logo" style={{height: '40px', filter: 'drop-shadow(0 0 10px rgba(151, 233, 0, 0.4))'}} />
+              </div>
               <div className="drawer-profile-box">
                 <div className="drawer-avatar">{user?.name?.charAt(0) || 'M'}</div>
                 <div className="drawer-user-info">

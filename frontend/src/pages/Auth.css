@@ -53,10 +53,15 @@
 }
 
 .text-logo {
-  font-size: 4rem;
-  font-weight: 900;
-  letter-spacing: -4px;
-  background: linear-gradient(180deg, #00E676 20%, #059669 100%);
+  display: none;
+}
+
+.logo-img-auth {
+  height: 80px;
+  width: auto;
+  filter: drop-shadow(0 0 15px rgba(151, 233, 0, 0.4));
+  margin-bottom: 10px;
+}
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-family: 'Inter', sans-serif;

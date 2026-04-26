@@ -5,6 +5,8 @@ import RegisterPage from './pages/RegisterPage'
 import DriverDashboard from './pages/DriverDashboard'
 import PassengerDashboard from './pages/PassengerDashboard'
 import LandingDriver from './pages/LandingDriver'
+import DriverOnboarding from './pages/DriverOnboarding'
+import LandingPage from './pages/LandingPage'
 import ErrorBoundary from './components/ErrorBoundary'
 
 function ProtectedRoute({ children, requiredRole }) {
@@ -23,7 +25,7 @@ function RoleAutoRedirect() {
     const user = getCurrentUser()
     return <Navigate to={user?.role === 'DRIVER' ? '/motorista/dashboard' : '/passageiro/dashboard'} replace />
   }
-  return <LandingDriver />
+  return <LandingPage />
 }
 
 function App() {
@@ -37,6 +39,14 @@ function App() {
             ================================== */}
         <Route path="/motorista" element={<LoginPage forceRole="DRIVER" />} />
         <Route path="/motorista/cadastro" element={<RegisterPage forceRole="DRIVER" />} />
+        <Route
+          path="/motorista/onboarding"
+          element={
+            <ProtectedRoute requiredRole="DRIVER">
+              <DriverOnboarding />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/motorista/dashboard"
           element={

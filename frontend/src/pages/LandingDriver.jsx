@@ -84,8 +84,7 @@ const LandingDriver = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="bz-logo-container">
-          <div className="bz-icon">Z</div>
-          <span className="bz-name">Zomp</span>
+          <img src="/logo.svg" alt="Zomp Logo" style={{height: '45px', filter: 'drop-shadow(0 0 10px rgba(151, 233, 0, 0.4))'}} />
         </div>
         <div className="header-badge">NO RIO DE JANEIRO!</div>
       </motion.header>
@@ -167,7 +166,7 @@ const LandingDriver = () => {
             transition={{ delay: 0.2 }}
           >
             <div className="comp-header bz-logo-inline">
-               <div className="bz-icon sm">Z</div> <span>ZOMP</span>
+               <img src="/logo.svg" alt="Zomp" style={{height: '24px'}} />
             </div>
             <ul className="comp-list zomp-list">
               <li><Check className="icon-check" size={20} /> Taxa fixa garantida: R$ 1,50 por corrida. Fixa por 3 anos.</li>

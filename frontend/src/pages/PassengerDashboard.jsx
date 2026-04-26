@@ -1599,7 +1599,9 @@ export default function PassengerDashboard() {
           <div className="side-menu-drawer animate-slide-right" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-close" onClick={() => { setIsMenuOpen(false); setMenuScreen('MAIN') }}>✕</div>
             <div className="menu-nav-list">
-
+              <div style={{textAlign: 'center', margin: '30px 0 20px'}}>
+                <img src="/logo.svg" alt="Zomp Logo" style={{height: '35px', filter: 'drop-shadow(0 0 10px rgba(151, 233, 0, 0.4))'}} />
+              </div>
               {menuScreen === 'MAIN' && (
                 <>
                   <div className="menu-user-header">

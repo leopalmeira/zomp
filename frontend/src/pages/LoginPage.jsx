@@ -20,7 +20,8 @@ export default function LoginPage({ forceRole }) {
     try {
       const data = await login(form)
       if (data.user.role === 'DRIVER') {
-        navigate('/motorista/dashboard')
+        const hasCompletedProfile = data.user.carPlate && data.user.cnh
+        navigate(hasCompletedProfile ? '/motorista/dashboard' : '/motorista/onboarding')
       } else {
         navigate('/passageiro/dashboard')
       }
@@ -39,9 +40,8 @@ export default function LoginPage({ forceRole }) {
 
       <div className="auth-container animate-fade-in">
         
-        <div className="auth-header">
           <div className="logo-container">
-            <span className="text-logo">Zomp</span>
+            <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
           </div>
           <h1>{isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
           {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
