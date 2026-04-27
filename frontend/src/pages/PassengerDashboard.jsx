@@ -1599,28 +1599,42 @@ export default function PassengerDashboard() {
           <div className="side-menu-drawer animate-slide-right" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-close" onClick={() => { setIsMenuOpen(false); setMenuScreen('MAIN') }}>✕</div>
             <div className="menu-nav-list">
-              <div style={{textAlign: 'center', margin: '30px 0 20px'}}>
-                <img src="/logo.svg" alt="Zomp Logo" style={{height: '35px', filter: 'drop-shadow(0 0 10px rgba(151, 233, 0, 0.4))'}} />
+
+              {/* Logo no topo */}
+              <div style={{paddingTop: '52px', paddingBottom: '4px', paddingLeft: '8px'}}>
+                <img src="/logo.svg" alt="Zomp" style={{height: '28px', filter: 'drop-shadow(0 0 8px rgba(162,255,0,0.5))'}} />
               </div>
+
               {menuScreen === 'MAIN' && (
                 <>
+                  {/* Header do usuário — único e compacto */}
                   <div className="menu-user-header">
-                    <div className="user-avatar-large">{user?.name?.charAt(0) || 'P'}</div>
-                    <div>
-                      <h3 style={{margin:0}}>{user?.name || 'Passageiro'}</h3>
-                      <span className="badge-nearby">Passageiro</span>
+                    <div style={{display:'flex', alignItems:'center', gap:'14px'}}>
+                      <div className="user-avatar-large">
+                        {user?.name?.charAt(0) || 'P'}
+                      </div>
+                      <div>
+                        <h3 style={{margin:0, color:'#f8fafc', fontSize:'1.05rem', fontWeight:800}}>
+                          {user?.name || 'Passageiro'}
+                        </h3>
+                        <div style={{
+                          fontSize:'0.7rem', color:'#00E676', fontWeight:800,
+                          letterSpacing:'1px', marginTop:'4px', textTransform:'uppercase'
+                        }}>
+                          Passageiro Elite
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="menu-user-header">
-                    <div className="user-avatar-large">{user?.name?.charAt(0)}</div>
-                    <h2>{user?.name}</h2>
-                    <div style={{fontSize:'0.8rem', color:'#00E676', fontWeight:700, marginTop:'4px'}}>Passageiro Elite</div>
-                  </div>
+
+                  {/* ── Seção: VIAGENS ── */}
+                  <div className="menu-section-label">Viagens</div>
 
                   <button className="menu-nav-btn" onClick={() => { resetFlow(); setIsMenuOpen(false) }}>
                     <span className="nav-icon"><MapPin size={18} /></span>
                     Nova Viagem
                   </button>
+
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('SCHEDULED')}>
                     <span className="nav-icon"><Calendar size={18} /></span>
                     Agendamentos
@@ -1631,29 +1645,35 @@ export default function PassengerDashboard() {
                         border: '1px solid rgba(0,230,118,0.3)',
                         color: '#00E676',
                         borderRadius: '50%',
-                        width: '24px',
-                        height: '24px',
+                        width: '22px', height: '22px',
                         display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.75rem',
-                        fontWeight: 800
+                        alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.7rem', fontWeight: 800
                       }}>{scheduledRides.length}</span>
                     )}
                   </button>
+
+                  {/* ── Seção: CONTA ── */}
+                  <div className="menu-section-label">Conta</div>
+
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('PROFILE')}>
                     <span className="nav-icon"><User size={18} /></span>
                     Meu Perfil
                   </button>
+
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('HISTORY')}>
                     <span className="nav-icon"><Clock size={18} /></span>
                     Histórico
                   </button>
+
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('FAVORITES')}>
                     <span className="nav-icon"><Star size={18} /></span>
                     Favoritos
                   </button>
+
                   <div className="menu-spacer"></div>
+
+                  {/* ── Logout ── */}
                   <button className="menu-nav-btn text-danger" onClick={() => { logout(); navigate('/passageiro') }}>
                     <span className="nav-icon"><LogOut size={18} /></span>
                     Sair do App

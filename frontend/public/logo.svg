@@ -1,6 +1,6 @@
 <svg width="250" height="80" viewBox="0 0 250 80" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- The Bolt Z -->
-  <path d="M15 25L75 25L25 50L60 50L10 75L25 40L15 40L15 25Z" fill="#A2FF00" stroke="#000" stroke-width="1" />
+  <path d="M15 25L75 25L25 50L60 50L10 75L25 40L15 40L15 25Z" fill="#A2FF00" />
   <!-- Zomp Text -->
   <text x="85" y="55" fill="#A2FF00" font-family="'Montserrat', sans-serif" font-weight="900" font-size="48" letter-spacing="-2">Zomp</text>
   <!-- Gloss effect -->

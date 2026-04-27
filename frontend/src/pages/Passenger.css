@@ -187,17 +187,19 @@
   position: absolute;
   bottom: 0; left: 0; right: 0;
   background-color: #ffffff;
-  z-index: 1000;
+  z-index: 999; /* Abaixo da address bar (z-index 1100) */
   border-radius: 28px 28px 0 0;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   transform: translateY(0);
+  max-height: calc(100% - 158px); /* Nunca ultrapassa a barra de pesquisa */
+  overflow: hidden;
 }
 
 .passenger-bottom-sheet.collapsed {
-  transform: translateY(calc(100% - 110px));
+  transform: translateY(calc(100% - 82px)); /* Mostra só o handle */
 }
 
 .sheet-drag-area {
@@ -216,6 +218,9 @@
 
 .sheet-content-wrapper {
   padding: 0 24px 32px;
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sheet-title {
@@ -667,28 +672,65 @@ input:checked + .slider:before { transform: translateX(22px); }
 }
 
 .menu-user-header {
-  padding: 40px 24px 32px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 12px;
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  margin-bottom: 8px;
 }
 
 .user-avatar-large {
-  width: 64px; height: 64px;
+  width: 56px; height: 56px;
   background: linear-gradient(135deg, #059669, #00E676);
-  border-radius: 20px;
+  border-radius: 18px;
   color: #000;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.8rem;
-  font-weight: 800;
-  margin-bottom: 16px;
-  box-shadow: 0 8px 24px rgba(0,230,118,0.3);
-}
-
-.menu-user-header h2 {
-  color: #f8fafc;
-  font-size: 1.3rem; 
+  font-size: 1.5rem;
   font-weight: 800;
   margin: 0;
+  flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(0,230,118,0.35);
+}
+
+.menu-user-header h3 {
+  color: #f8fafc;
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+/* Premium section label */
+.menu-section-label {
+  padding: 16px 16px 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: rgba(255,255,255,0.28);
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* Drawer close button */
+.drawer-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+  font-weight: 400;
+}
+.drawer-close:hover {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
 }
 
 .menu-nav-btn {
