@@ -312,7 +312,7 @@ export default function DriverOnboarding() {
 
             <div style={{background: 'rgba(255, 255, 255, 0.03)', padding: '20px', borderRadius: '16px', marginBottom: '24px', textAlign: 'left'}}>
               <h4 style={{fontSize: '0.9rem', marginBottom: '8px'}}>O que acontece agora?</h4>
-              <ul style={{fontSize: '0.85rem', color: var(--text-muted), paddingLeft: '20px', lineHeight: '1.6'}}>
+              <ul style={{fontSize: '0.85rem', color: 'var(--text-muted)', paddingLeft: '20px', lineHeight: '1.6'}}>
                 <li>Análise técnica dos documentos.</li>
                 <li>Ativação do seu perfil no mapa.</li>
                 <li>Você receberá uma notificação quando for aprovado.</li>
