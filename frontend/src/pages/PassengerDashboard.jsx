@@ -589,7 +589,11 @@ export default function PassengerDashboard() {
                     }}
                     placeholder={`Parada ${si + 1}`}
                   />
-                  <button className="remove-stop-btn" onClick={() => setStops(stops.filter((_, i) => i !== si))}>✕</button>
+                  <button 
+                    className="remove-stop-btn" 
+                    onMouseDown={(e) => { e.preventDefault(); setStops(stops.filter((_, i) => i !== si)) }}
+                    title="Remover parada"
+                  >✕</button>
                 </div>
               ))}
               <input
@@ -606,11 +610,11 @@ export default function PassengerDashboard() {
               />
             </div>
 
-            {/* Compact Add Stop Button */}
-            {stops.length < 2 && (
+            {/* Compact Add Stop Button — até 5 paradas */}
+            {stops.length < 5 && (
               <button 
                 className="add-stop-mini-btn" 
-                onClick={() => setStops([...stops, { addr: '', coords: null }])}
+                onMouseDown={(e) => { e.preventDefault(); setStops([...stops, { addr: '', coords: null }]) }}
                 title="Adicionar Parada"
               >
                 +
