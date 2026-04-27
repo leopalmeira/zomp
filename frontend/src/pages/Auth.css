@@ -46,8 +46,9 @@
 
 /* Premium Typographic Logo */
 .logo-container {
-  display: inline-block;
-  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
   position: relative;
   z-index: 10;
 }
@@ -57,20 +58,9 @@
 }
 
 .logo-img-auth {
-  height: 80px;
+  height: 52px;
   width: auto;
-  filter: drop-shadow(0 0 15px rgba(151, 233, 0, 0.4));
-  margin-bottom: 10px;
-}
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-family: 'Inter', sans-serif;
-  font-style: italic;
-  font-stretch: extra-expanded;
-  filter: drop-shadow(0 0 10px rgba(0, 230, 118, 0.4));
-  position: relative;
-  display: block;
-  padding-right: 12px; /* Fix clipping of italic text */
+  filter: drop-shadow(0 0 12px rgba(162, 255, 0, 0.5));
 }
 
 .text-logo::after {
