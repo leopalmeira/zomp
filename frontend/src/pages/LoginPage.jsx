@@ -48,7 +48,7 @@ export default function LoginPage({ forceRole }) {
           <p className="auth-subtitle">
             {isDriver ? 'Acesse o portal do motorista.' : 'Corridas mais justas, sem taxas abusivas para os motoristas.'}
           </p>
-        </div>
+        
 
         <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-accent' : ''}`}>
           

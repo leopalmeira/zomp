@@ -50,7 +50,7 @@ export default function RegisterPage({ forceRole }) {
           <p className="auth-subtitle">
             {isDriver ? 'Crie sua conta como motorista parceiro.' : 'Corridas mais justas, sem taxas abusivas para os motoristas.'}
           </p>
-        </div>
+        
 
         <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-accent' : ''}`}>
           
