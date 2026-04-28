@@ -208,20 +208,33 @@
   display: flex; align-items: center; justify-content: center;
   color: var(--green); margin-bottom: 18px;
 }
-.lp-entry-card h3 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; color: var(--txt); }
-.lp-entry-card p { color: var(--txt2); line-height: 1.6; margin-bottom: 22px; font-size: 0.95rem; }
-.lp-entry-card p strong { color: var(--txt); }
+.lp-entry-card h3 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; color: #f1f5f9; }
+.lp-entry-card p { color: #94a3b8; line-height: 1.6; margin-bottom: 22px; font-size: 0.95rem; }
+.lp-entry-card p strong { color: #e2e8f0; }
 .lp-entry-pill {
   display: inline-block;
-  background: var(--green-dim);
-  border: 1px solid rgba(151,233,0,0.18);
-  color: var(--green);
+  background: rgba(151,233,0,0.08);
+  border: 1px solid rgba(151,233,0,0.15);
+  color: #b8e86a;
   padding: 5px 14px; border-radius: 100px;
   font-size: 0.82rem; font-weight: 600; margin-bottom: 22px;
 }
-.lp-entry-btn { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--green); font-size: 0.95rem; }
+.lp-entry-btn { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #b8e86a; font-size: 0.95rem; }
 
-/* ── SHARED TITLES ── */
+/* Passenger card neutral pill & btn */
+.lp-entry-pill-alt {
+  display: inline-block;
+  background: rgba(148,163,184,0.1);
+  border: 1px solid rgba(148,163,184,0.2);
+  color: #cbd5e1;
+  padding: 5px 14px; border-radius: 100px;
+  font-size: 0.82rem; font-weight: 600; margin-bottom: 22px;
+}
+.lp-entry-btn-alt {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 700; color: #e2e8f0; font-size: 0.95rem;
+}
+
 .lp-section-tag {
   display: inline-block;
   background: rgba(255,255,255,0.05);
@@ -257,9 +270,9 @@
   transition: border-color 0.3s;
 }
 .lp-how-step:hover { border-color: var(--border-light); }
-.lp-how-num { font-size: 2.5rem; font-weight: 900; color: var(--green); opacity: 0.22; margin-bottom: 14px; line-height: 1; }
-.lp-how-step h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; color: var(--txt); }
-.lp-how-step p { color: var(--txt2); font-size: 0.9rem; line-height: 1.6; }
+.lp-how-num { font-size: 2.5rem; font-weight: 900; color: #475569; margin-bottom: 14px; line-height: 1; }
+.lp-how-step h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 10px; color: #f1f5f9; }
+.lp-how-step p { color: #7a8fa6; font-size: 0.9rem; line-height: 1.6; }
 
 /* ── SIMULADOR ── */
 .lp-sim-section { padding: 100px 5%; position: relative; z-index: 1; }
@@ -286,17 +299,17 @@
   padding: 9px 0; font-size: 0.9rem; color: var(--txt2);
   border-bottom: 1px solid rgba(255,255,255,0.03);
 }
-.lp-calc-row strong { color: var(--txt); }
-.lp-calc-sub strong { color: var(--green) !important; }
+.lp-calc-row strong { color: #e2e8f0; }
+.lp-calc-sub strong { color: #97E900 !important; }
 .lp-calc-divider { height: 1px; background: var(--border); margin: 10px 0; }
 .lp-calc-total { padding-top: 14px !important; }
 .lp-gold-val { color: var(--gold) !important; font-size: 1.7rem !important; font-weight: 900 !important; }
 
 .lp-sim-disclaimer { font-size: 0.78rem; color: var(--txt2); font-style: italic; margin-bottom: 10px; }
 .lp-sim-footnote {
-  font-size: 0.88rem; color: var(--txt);
-  background: rgba(151,233,0,0.06);
-  border: 1px solid rgba(151,233,0,0.12);
+  font-size: 0.88rem; color: #e2e8f0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: var(--radius-sm);
   padding: 12px 16px; margin-bottom: 24px; line-height: 1.5;
 }
@@ -343,9 +356,9 @@
 .zomp-brand { color: var(--green); border-color: rgba(151,233,0,0.15); }
 .other-brand { color: var(--txt2); }
 .lp-compare-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-.lp-compare-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; color: var(--txt); }
-.lp-compare-zomp .lp-compare-list li { color: var(--txt); }
-.lp-compare-other .lp-compare-list li { color: var(--txt2); }
+.lp-compare-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; }
+.lp-compare-zomp .lp-compare-list li { color: #e2e8f0; }
+.lp-compare-other .lp-compare-list li { color: #64748b; }
 .lp-check { color: var(--green); flex-shrink: 0; margin-top: 1px; }
 .lp-x { color: #e05252; flex-shrink: 0; margin-top: 1px; }
 .lp-compare-footer-zomp {
@@ -379,8 +392,8 @@
   background: var(--card2); border: 1px solid var(--border);
   border-radius: var(--radius-sm); padding: 16px 12px; text-align: center;
 }
-.lp-wstat-val { display: block; font-size: 1.1rem; font-weight: 800; color: var(--gold); }
-.lp-wstat-lbl { font-size: 0.68rem; color: var(--txt2); margin-top: 4px; display: block; }
+.lp-wstat-val { display: block; font-size: 1.1rem; font-weight: 800; color: #e8c96a; }
+.lp-wstat-lbl { font-size: 0.68rem; color: #64748b; margin-top: 4px; display: block; }
 
 /* ── FEATURES ── */
 .lp-features-section {
@@ -405,8 +418,8 @@
   display: flex; align-items: center; justify-content: center;
   color: var(--green); margin-bottom: 18px;
 }
-.lp-feat-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--txt); }
-.lp-feat-card p { color: var(--txt2); font-size: 0.88rem; line-height: 1.6; }
+.lp-feat-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: #f1f5f9; }
+.lp-feat-card p { color: #7a8fa6; font-size: 0.88rem; line-height: 1.6; }
 
 /* ── STATS ── */
 .lp-stats-section { padding: 70px 5%; position: relative; z-index: 1; }

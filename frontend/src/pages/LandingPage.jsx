@@ -132,9 +132,13 @@ export default function LandingPage() {
           <motion.div className="lp-entry-card" variants={fadeUp} onClick={() => navigate('/passageiro')}>
             <div className="lp-entry-icon"><User size={32} /></div>
             <h3>Passageiro</h3>
-            <p>Viaje com <strong>Preço Imbatível</strong>. Se o Uber ou 99 estiver mais barato, a Zomp cobre e ainda dá desconto extra.</p>
-            <div className="lp-entry-pill">🏷️ Menor preço garantido</div>
-            <div className="lp-entry-btn">Viajar Agora <ArrowRight size={18} /></div>
+            <p>
+              Peça seu motorista favorito para <strong>indicar você no app Zomp</strong> e aproveite o 
+              sistema de <strong>Preço Imbatível</strong>: mostre o preço do Uber ou 99 e a Zomp garante 
+              um valor mais baixo com desconto adicional direto na corrida.
+            </p>
+            <div className="lp-entry-pill-alt">🏷️ Menor preço garantido</div>
+            <div className="lp-entry-btn-alt">Viajar Agora <ArrowRight size={18} /></div>
           </motion.div>
         </motion.div>
       </section>
