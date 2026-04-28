@@ -202,3 +202,41 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
     - Otimização do endpoint do Gemini com novo Fallback Regex para correção de formatação em respostas Markdown embutidas.
     - Logs mais transparentes de Request (Base64 character length exibido) criados para facilitar debug de payload no Render.
 
+
+---
+
+### [28/04/2026] - Landing Page Premium + Simulador de Ganhos (v3.1.0)
+**Feito:**
+- Redesenho completo da LandingPage.jsx e LandingPage.css
+- Royalty ajustado para R$ 0,30 por corrida
+- Tabela: 400 passageiros x 2 corridas/semana = R$ 2.880 trimestral (estimado)
+- Imagens IA: zomp_driver_network.png e zomp_driver_wallet.png
+- CountUp animado nos valores com Framer Motion
+- Todos os valores marcados como estimados de exemplo
+
+### [28/04/2026] - Landing Page Redesign Visual (v3.2.0)
+**Feito:**
+- Hero com foto realista de motorista como banner fullscreen
+- Countdown regressivo ate 30/06/2026 (dias, horas, minutos, segundos)
+- Vagas limitadas com ponto verde pulsante, texto sempre claro
+- Cards comparativos clean: Zomp destacada, concorrencia apagada
+- Paleta equilibrada: verde so em CTAs e destaques
+- Card Passageiro: motorista indica app, passageiro acessa Preco Imbativel
+- Secao Por que a Zomp e diferente: textos sempre claros
+
+### [28/04/2026] - Painel Administrativo Completo (v4.0.0)
+**Feito:**
+- AdminPanel.jsx + AdminPanel.css: 7 secoes (Dashboard, Motoristas, Passageiros, Vinculos, Configuracoes, Fundo, Saques)
+- Regras de negocio:
+  - 1o Vinculo: 36 meses via QR Code ou 1a corrida com o motorista
+  - Renovacao: 24 meses apos expirar (proximo motorista que aceitar)
+  - Royalty padrao: R$ 0,30 por corrida concluida do passageiro vinculado
+  - Limite mensal: mais de 8 corridas/mes vai ao fundo coletivo
+  - Maximo 700 passageiros vinculados por motorista
+- Novas rotas backend /api/admin/: stats, drivers, passengers, link, config, royalty-fund, withdrawals
+- Schema Prisma: AdminConfig, RoyaltyFund, Ride.royaltySentToFund, User.role=ADMIN
+- Migration SQL manual: 20260428000000_add_admin_config_royalty_fund
+- seed.js: cria admin e config via env vars (nunca hardcoded no codigo)
+- App.jsx: rotas /admin e /admin/login
+- SEGURANCA: configurar no Render Dashboard: ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME
+
