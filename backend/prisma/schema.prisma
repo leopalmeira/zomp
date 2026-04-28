@@ -12,75 +12,91 @@ model User {
   name      String
   email     String   @unique
   password  String
-  role      String   @default("PASSENGER") // "PASSENGER" or "DRIVER"
-  qrCode    String?  @unique               // URL or ID for referrals (mainly for drivers)
-  balance   Float    @default(0.0)         // Royalty balance in BRL
-  credits   Int      @default(0)           // Ride credits (drivers start with 10)
-  
-  // Driver Info
-  cnh       String?
-  crlv      String?
-  photo     String?
-  carPlate  String?
-  carModel  String?
-  carColor  String?
-  isApproved Boolean @default(false) // Admin must approve before driver can go online
+  role      String   @default("PASSENGER") // "PASSENGER" | "DRIVER" | "ADMIN"
+  qrCode    String?  @unique
+  balance   Float    @default(0.0)
+  credits   Int      @default(0)
 
-  // Relationships
-  ridesAsPassenger Ride[] @relation("PassengerRides")
-  ridesAsDriver    Ride[] @relation("DriverRides")
+  // Driver fields
+  cnh        String?
+  crlv       String?
+  photo      String?
+  carPlate   String?
+  carModel   String?
+  carColor   String?
+  isApproved Boolean @default(false)
 
-  referralsMade    Referral[] @relation("Referrer")
-  referredBy       Referral?  @relation("Referred")
-
+  ridesAsPassenger Ride[]       @relation("PassengerRides")
+  ridesAsDriver    Ride[]       @relation("DriverRides")
+  referralsMade    Referral[]   @relation("Referrer")
+  referredBy       Referral?    @relation("Referred")
   withdrawals      Withdrawal[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+// Vínculo passageiro ↔ motorista
 model Referral {
   id         String   @id @default(uuid())
-  
-  referrerId String   // The driver who referred
+  referrerId String
   referrer   User     @relation("Referrer", fields: [referrerId], references: [id])
-  
-  referredId String   @unique // The passenger who was referred (1:1 with user for being referred)
+  referredId String   @unique
   referred   User     @relation("Referred", fields: [referredId], references: [id])
   createdAt  DateTime @default(now())
   expiresAt  DateTime
+  // isRenewed=false → 36 meses (QR ou 1ª corrida)
+  // isRenewed=true  → 24 meses (renovado após expirar)
   isRenewed  Boolean  @default(false)
 }
 
 model Ride {
-  id          String   @id @default(uuid())
-  
-  passengerId String
-  passenger   User     @relation("PassengerRides", fields: [passengerId], references: [id])
-  
-  driverId    String?
-  driver      User?    @relation("DriverRides", fields: [driverId], references: [id])
-
-  origin      String?
-  destination String?
-  price       Float?
-  distanceKm  Float?
-  vehicleType String?
-
-  status      String   @default("PENDING") // PENDING, ACCEPTED, IN_PROGRESS, COMPLETED, CANCELLED
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(uuid())
+  passengerId       String
+  passenger         User     @relation("PassengerRides", fields: [passengerId], references: [id])
+  driverId          String?
+  driver            User?    @relation("DriverRides", fields: [driverId], references: [id])
+  origin            String?
+  destination       String?
+  price             Float?
+  distanceKm        Float?
+  vehicleType       String?
+  status            String   @default("PENDING")
+  royaltySentToFund Boolean  @default(false) // true se passageiro fez >8 corridas no mês
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Withdrawal {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  
+  user        User      @relation(fields: [userId], references: [id])
   amount      Float
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  
-  requestedAt DateTime @default(now())
+  status      String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  requestedAt DateTime  @default(now())
   processedAt DateTime?
+}
+
+// Configurações globais editáveis pelo admin
+model AdminConfig {
+  id                    String   @id @default("singleton")
+  pricePerKmCar         Float    @default(2.00)
+  pricePerKmMoto        Float    @default(1.50)
+  minFareCar            Float    @default(8.40)
+  minFareMoto           Float    @default(7.20)
+  royaltyPerRide        Float    @default(0.30)
+  royaltyMonthlyLimit   Int      @default(8)
+  maxPassengersPerDriver Int     @default(700)
+  bindingMonthsFirst    Int      @default(36)
+  bindingMonthsRenew    Int      @default(24)
+  updatedAt             DateTime @updatedAt
+}
+
+// Fundo coletivo de royalties
+model RoyaltyFund {
+  id         String   @id @default(uuid())
+  amount     Float
+  reason     String
+  fromRideId String?
+  createdAt  DateTime @default(now())
 }

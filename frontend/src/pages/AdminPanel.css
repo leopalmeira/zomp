@@ -1,0 +1,350 @@
+/* ── Admin Panel CSS ── */
+:root {
+  --ap-bg: #060d1a;
+  --ap-sidebar: #0a1628;
+  --ap-card: rgba(12,26,46,0.9);
+  --ap-border: rgba(255,255,255,0.07);
+  --ap-txt: #f0f4f8;
+  --ap-txt2: #8a9bb5;
+  --ap-green: #97E900;
+  --ap-gold: #E8B84B;
+  --ap-red: #ef4444;
+  --ap-blue: #3b82f6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+.ap-root {
+  display: flex;
+  min-height: 100vh;
+  background: var(--ap-bg);
+  color: var(--ap-txt);
+  font-family: 'Outfit', sans-serif;
+}
+
+/* ── SIDEBAR ── */
+.ap-sidebar {
+  width: 220px;
+  background: var(--ap-sidebar);
+  border-right: 1px solid var(--ap-border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.ap-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--ap-border);
+}
+.ap-logo { height: 28px; }
+.ap-brand span { font-size: 1rem; font-weight: 700; color: var(--ap-txt2); }
+
+.ap-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.ap-nav-btn {
+  background: none;
+  border: none;
+  color: var(--ap-txt2);
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+.ap-nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--ap-txt); }
+.ap-nav-btn.active { background: rgba(151,233,0,0.1); color: var(--ap-green); border-left: 3px solid var(--ap-green); }
+
+.ap-logout {
+  background: none;
+  border: 1px solid var(--ap-border);
+  color: var(--ap-txt2);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 16px;
+}
+.ap-logout:hover { border-color: var(--ap-red); color: var(--ap-red); }
+
+/* ── MAIN ── */
+.ap-main {
+  flex: 1;
+  margin-left: 220px;
+  padding: 32px;
+  max-width: calc(100vw - 220px);
+}
+
+.ap-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+.ap-page-title { font-size: 1.6rem; font-weight: 800; color: var(--ap-txt); }
+.ap-topbar-right { display: flex; align-items: center; gap: 12px; }
+.ap-admin-badge {
+  background: rgba(151,233,0,0.1);
+  border: 1px solid rgba(151,233,0,0.2);
+  color: var(--ap-green);
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.ap-refresh {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--ap-border);
+  color: var(--ap-txt2);
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ap-refresh:hover { color: var(--ap-txt); border-color: rgba(255,255,255,0.15); }
+
+.ap-loading {
+  text-align: center;
+  color: var(--ap-txt2);
+  padding: 60px;
+  font-size: 1rem;
+}
+
+/* ── TOAST ── */
+.ap-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  z-index: 9999;
+  animation: slideIn 0.3s ease;
+}
+.ap-toast-success { background: rgba(151,233,0,0.15); border: 1px solid rgba(151,233,0,0.3); color: var(--ap-green); }
+.ap-toast-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: var(--ap-red); }
+@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── STATS DASHBOARD ── */
+.ap-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.ap-stat-card {
+  background: var(--ap-card);
+  border: 1px solid var(--ap-border);
+  border-radius: 16px;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ap-stat-val { font-size: 2rem; font-weight: 900; color: var(--ap-txt); }
+.ap-stat-lbl { font-size: 0.78rem; color: var(--ap-txt2); text-transform: uppercase; letter-spacing: 0.8px; }
+.ap-stat-green .ap-stat-val { color: var(--ap-green); }
+.ap-stat-gold .ap-stat-val { color: var(--ap-gold); }
+
+/* ── RULES BOX ── */
+.ap-rules-box {
+  background: var(--ap-card);
+  border: 1px solid var(--ap-border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.ap-rules-box h3 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; color: var(--ap-txt); }
+.ap-rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.ap-rule {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--ap-border);
+  border-radius: 12px;
+  padding: 14px;
+}
+.ap-rule-icon { font-size: 1.4rem; flex-shrink: 0; }
+.ap-rule strong { display: block; font-size: 0.88rem; color: var(--ap-txt); margin-bottom: 4px; }
+.ap-rule p { font-size: 0.8rem; color: var(--ap-txt2); line-height: 1.5; }
+
+/* ── TABLES ── */
+.ap-table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--ap-border); }
+.ap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.ap-table thead { background: rgba(255,255,255,0.04); }
+.ap-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--ap-txt2);
+  border-bottom: 1px solid var(--ap-border);
+}
+.ap-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--ap-txt);
+  vertical-align: middle;
+}
+.ap-table tr:hover td { background: rgba(255,255,255,0.02); }
+.ap-td-email { color: var(--ap-txt2); font-size: 0.82rem; }
+.ap-td-green { color: var(--ap-green); font-weight: 700; }
+.ap-td-sm { font-size: 0.75rem; color: var(--ap-txt2); font-family: monospace; }
+
+/* ── SEARCH ── */
+.ap-search {
+  width: 100%;
+  max-width: 400px;
+  background: var(--ap-card);
+  border: 1px solid var(--ap-border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: var(--ap-txt);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ap-search:focus { border-color: rgba(151,233,0,0.3); }
+
+/* ── BADGES ── */
+.ap-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.ap-badge-green { background: rgba(151,233,0,0.12); color: var(--ap-green); }
+.ap-badge-red { background: rgba(239,68,68,0.12); color: var(--ap-red); }
+.ap-badge-yellow { background: rgba(232,184,75,0.12); color: var(--ap-gold); }
+.ap-badge-gray { background: rgba(255,255,255,0.07); color: var(--ap-txt2); }
+
+/* ── BUTTONS ── */
+.ap-btn-sm {
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.ap-btn-sm:hover { opacity: 0.8; }
+.ap-btn-success { background: rgba(151,233,0,0.15); color: var(--ap-green); border: 1px solid rgba(151,233,0,0.2); }
+.ap-btn-danger { background: rgba(239,68,68,0.12); color: var(--ap-red); border: 1px solid rgba(239,68,68,0.2); }
+.ap-btn-primary {
+  background: var(--ap-green);
+  color: #000;
+  font-weight: 800;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: opacity 0.2s;
+}
+.ap-btn-primary:hover { opacity: 0.9; }
+.ap-btn-save { margin-top: 24px; }
+
+.ap-link-btn {
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.2);
+  color: var(--ap-blue);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── DETAIL BOX ── */
+.ap-detail-box {
+  margin-top: 24px;
+  background: var(--ap-card);
+  border: 1px solid var(--ap-border);
+  border-radius: 14px;
+  padding: 20px;
+}
+.ap-detail-box h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; color: var(--ap-txt); }
+
+/* ── LINK FORM ── */
+.ap-link-box {
+  background: var(--ap-card);
+  border: 1px solid var(--ap-border);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 700px;
+}
+.ap-link-box h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+.ap-link-desc { font-size: 0.88rem; color: var(--ap-txt2); margin-bottom: 20px; line-height: 1.5; }
+.ap-link-form { display: flex; flex-direction: column; gap: 16px; }
+.ap-form-group { display: flex; flex-direction: column; gap: 6px; }
+.ap-form-group label { font-size: 0.8rem; font-weight: 600; color: var(--ap-txt2); text-transform: uppercase; letter-spacing: 0.6px; }
+.ap-form-group select,
+.ap-form-group input {
+  background: rgba(4,10,22,0.9);
+  border: 1px solid var(--ap-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--ap-txt);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ap-form-group select:focus,
+.ap-form-group input:focus { border-color: rgba(151,233,0,0.3); }
+.ap-form-group small { font-size: 0.75rem; color: var(--ap-txt2); }
+.ap-form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+
+/* ── CONFIG ── */
+.ap-config-grid { display: flex; flex-direction: column; gap: 20px; max-width: 900px; }
+.ap-config-section {
+  background: var(--ap-card);
+  border: 1px solid var(--ap-border);
+  border-radius: 16px;
+  padding: 24px;
+}
+.ap-config-section h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 18px; color: var(--ap-txt); }
+
+/* ── FUND ── */
+.ap-fund-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--ap-card);
+  border: 1px solid rgba(232,184,75,0.2);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  color: var(--ap-txt2);
+}
+.ap-fund-total strong { font-size: 1.8rem; font-weight: 900; color: var(--ap-gold); }
+.ap-fund-desc { font-size: 0.85rem; color: var(--ap-txt2); margin-bottom: 20px; line-height: 1.6; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .ap-sidebar { width: 60px; padding: 16px 8px; }
+  .ap-brand span { display: none; }
+  .ap-nav-btn { font-size: 0; padding: 10px; text-align: center; }
+  .ap-main { margin-left: 60px; padding: 16px; max-width: calc(100vw - 60px); }
+}

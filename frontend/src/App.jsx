@@ -7,14 +7,17 @@ import PassengerDashboard from './pages/PassengerDashboard'
 import LandingDriver from './pages/LandingDriver'
 import DriverOnboarding from './pages/DriverOnboarding'
 import LandingPage from './pages/LandingPage'
+import AdminPanel from './pages/AdminPanel'
 import ErrorBoundary from './components/ErrorBoundary'
 
 function ProtectedRoute({ children, requiredRole }) {
   if (!isAuthenticated()) {
+    if (requiredRole === 'ADMIN') return <Navigate to="/admin/login" replace />
     return <Navigate to={`/${requiredRole === 'DRIVER' ? 'motorista' : 'passageiro'}`} replace />
   }
   const user = getCurrentUser()
   if (requiredRole && user?.role !== requiredRole) {
+    if (user?.role === 'ADMIN') return <Navigate to="/admin" replace />
     return <Navigate to={user?.role === 'DRIVER' ? '/motorista/dashboard' : '/passageiro/dashboard'} replace />
   }
   return children
@@ -23,6 +26,7 @@ function ProtectedRoute({ children, requiredRole }) {
 function RoleAutoRedirect() {
   if (isAuthenticated()) {
     const user = getCurrentUser()
+    if (user?.role === 'ADMIN') return <Navigate to="/admin" replace />
     return <Navigate to={user?.role === 'DRIVER' ? '/motorista/dashboard' : '/passageiro/dashboard'} replace />
   }
   return <LandingPage />
@@ -33,6 +37,19 @@ function App() {
     <ErrorBoundary>
       <Routes>
         <Route path="/" element={<RoleAutoRedirect />} />
+
+        {/* ==================================
+            ADMIN
+            ================================== */}
+        <Route path="/admin/login" element={<LoginPage forceRole="ADMIN" />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <AdminPanel />
+            </ProtectedRoute>
+          }
+        />
 
         {/* ==================================
             APP DO MOTORISTA
@@ -77,4 +94,3 @@ function App() {
 }
 
 export default App
-

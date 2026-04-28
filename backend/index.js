@@ -546,5 +546,348 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// =====================================================
+// ADMIN ROUTES
+// =====================================================
+
+const isAdmin = (req, res, next) => {
+  if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Acesso negado. Apenas administradores.' });
+  next();
+};
+
+// GET /api/admin/stats — painel principal
+app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
+  try {
+    const [totalDrivers, totalPassengers, totalRides, completedRides, pendingWithdrawals, fundTotal, config] = await Promise.all([
+      prisma.user.count({ where: { role: 'DRIVER' } }),
+      prisma.user.count({ where: { role: 'PASSENGER' } }),
+      prisma.ride.count(),
+      prisma.ride.count({ where: { status: 'COMPLETED' } }),
+      prisma.withdrawal.count({ where: { status: 'PENDING' } }),
+      prisma.royaltyFund.aggregate({ _sum: { amount: true } }),
+      prisma.adminConfig.findUnique({ where: { id: 'singleton' } }),
+    ]);
+
+    // Total royalties distribuídos
+    const royaltiesDistributed = await prisma.user.aggregate({ _sum: { balance: true }, where: { role: 'DRIVER' } });
+
+    res.json({
+      totalDrivers,
+      totalPassengers,
+      totalRides,
+      completedRides,
+      pendingWithdrawals,
+      royaltyFundBalance: fundTotal._sum.amount || 0,
+      totalRoyaltiesInWallets: royaltiesDistributed._sum.balance || 0,
+      config,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/admin/drivers — lista motoristas com contagem de passageiros vinculados
+app.get('/api/admin/drivers', authenticate, isAdmin, async (req, res) => {
+  try {
+    const drivers = await prisma.user.findMany({
+      where: { role: 'DRIVER' },
+      select: {
+        id: true, name: true, email: true, balance: true, credits: true,
+        isApproved: true, carPlate: true, carModel: true, carColor: true,
+        cnh: true, crlv: true, createdAt: true,
+        referralsMade: {
+          where: { expiresAt: { gt: new Date() } },
+          select: {
+            id: true, createdAt: true, expiresAt: true, isRenewed: true,
+            referred: { select: { id: true, name: true, email: true } }
+          }
+        },
+        _count: { select: { ridesAsDriver: { where: { status: 'COMPLETED' } } } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const result = drivers.map(d => ({
+      ...d,
+      linkedPassengers: d.referralsMade.length,
+      completedRides: d._count.ridesAsDriver,
+      passengers: d.referralsMade
+    }));
+
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/admin/passengers — lista passageiros com vínculo atual
+app.get('/api/admin/passengers', authenticate, isAdmin, async (req, res) => {
+  try {
+    const passengers = await prisma.user.findMany({
+      where: { role: 'PASSENGER' },
+      select: {
+        id: true, name: true, email: true, createdAt: true,
+        referredBy: {
+          select: {
+            id: true, createdAt: true, expiresAt: true, isRenewed: true,
+            referrer: { select: { id: true, name: true, email: true } }
+          }
+        },
+        _count: { select: { ridesAsPassenger: { where: { status: 'COMPLETED' } } } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const now = new Date();
+    const result = passengers.map(p => ({
+      ...p,
+      completedRides: p._count.ridesAsPassenger,
+      bindingStatus: !p.referredBy ? 'free' : new Date(p.referredBy.expiresAt) < now ? 'expired' : 'active',
+      linkedDriver: p.referredBy?.referrer || null,
+      bindingExpiresAt: p.referredBy?.expiresAt || null,
+      bindingType: p.referredBy?.isRenewed ? '24 meses (renovado)' : '36 meses (1º vínculo)',
+    }));
+
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// PUT /api/admin/drivers/:id/approve — aprovar ou suspender motorista
+app.put('/api/admin/drivers/:id/approve', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { isApproved } = req.body;
+    const driver = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { isApproved: Boolean(isApproved) }
+    });
+    res.json({ message: `Motorista ${isApproved ? 'aprovado' : 'suspenso'}`, driver });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/admin/link — vincular passageiro a motorista manualmente
+app.post('/api/admin/link', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { passengerId, driverId } = req.body;
+    const config = await prisma.adminConfig.findUnique({ where: { id: 'singleton' } });
+
+    // Checar limite de passageiros do motorista
+    const count = await prisma.referral.count({
+      where: { referrerId: driverId, expiresAt: { gt: new Date() } }
+    });
+    if (count >= (config?.maxPassengersPerDriver || 700)) {
+      return res.status(400).json({ error: `Este motorista já atingiu o limite de ${config.maxPassengersPerDriver} passageiros.` });
+    }
+
+    // Remover vínculo anterior se existir
+    await prisma.referral.deleteMany({ where: { referredId: passengerId } });
+
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + (config?.bindingMonthsFirst || 36));
+
+    const referral = await prisma.referral.create({
+      data: { referrerId: driverId, referredId: passengerId, expiresAt, isRenewed: false }
+    });
+    res.json({ message: 'Passageiro vinculado com sucesso', referral });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// DELETE /api/admin/link/:passengerId — desvincular passageiro
+app.delete('/api/admin/link/:passengerId', authenticate, isAdmin, async (req, res) => {
+  try {
+    await prisma.referral.deleteMany({ where: { referredId: req.params.passengerId } });
+    res.json({ message: 'Vínculo removido com sucesso' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/admin/config — ler configurações
+app.get('/api/admin/config', authenticate, isAdmin, async (req, res) => {
+  try {
+    let config = await prisma.adminConfig.findUnique({ where: { id: 'singleton' } });
+    if (!config) {
+      config = await prisma.adminConfig.create({
+        data: { id: 'singleton', updatedAt: new Date() }
+      });
+    }
+    res.json(config);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// PUT /api/admin/config — atualizar configurações de preço e royalties
+app.put('/api/admin/config', authenticate, isAdmin, async (req, res) => {
+  try {
+    const {
+      pricePerKmCar, pricePerKmMoto, minFareCar, minFareMoto,
+      royaltyPerRide, royaltyMonthlyLimit, maxPassengersPerDriver,
+      bindingMonthsFirst, bindingMonthsRenew
+    } = req.body;
+
+    const config = await prisma.adminConfig.upsert({
+      where: { id: 'singleton' },
+      update: {
+        pricePerKmCar: parseFloat(pricePerKmCar),
+        pricePerKmMoto: parseFloat(pricePerKmMoto),
+        minFareCar: parseFloat(minFareCar),
+        minFareMoto: parseFloat(minFareMoto),
+        royaltyPerRide: parseFloat(royaltyPerRide),
+        royaltyMonthlyLimit: parseInt(royaltyMonthlyLimit),
+        maxPassengersPerDriver: parseInt(maxPassengersPerDriver),
+        bindingMonthsFirst: parseInt(bindingMonthsFirst),
+        bindingMonthsRenew: parseInt(bindingMonthsRenew),
+      },
+      create: {
+        id: 'singleton',
+        pricePerKmCar: parseFloat(pricePerKmCar) || 2.00,
+        pricePerKmMoto: parseFloat(pricePerKmMoto) || 1.50,
+        minFareCar: parseFloat(minFareCar) || 8.40,
+        minFareMoto: parseFloat(minFareMoto) || 7.20,
+        royaltyPerRide: parseFloat(royaltyPerRide) || 0.30,
+        royaltyMonthlyLimit: parseInt(royaltyMonthlyLimit) || 8,
+        maxPassengersPerDriver: parseInt(maxPassengersPerDriver) || 700,
+        bindingMonthsFirst: parseInt(bindingMonthsFirst) || 36,
+        bindingMonthsRenew: parseInt(bindingMonthsRenew) || 24,
+      }
+    });
+    res.json({ message: 'Configurações atualizadas com sucesso', config });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/admin/royalty-fund — saldo e histórico do fundo
+app.get('/api/admin/royalty-fund', authenticate, isAdmin, async (req, res) => {
+  try {
+    const [entries, total] = await Promise.all([
+      prisma.royaltyFund.findMany({ orderBy: { createdAt: 'desc' }, take: 50 }),
+      prisma.royaltyFund.aggregate({ _sum: { amount: true } })
+    ]);
+    res.json({ total: total._sum.amount || 0, entries });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/admin/withdrawals — listar saques pendentes
+app.get('/api/admin/withdrawals', authenticate, isAdmin, async (req, res) => {
+  try {
+    const withdrawals = await prisma.withdrawal.findMany({
+      where: { status: 'PENDING' },
+      include: { user: { select: { name: true, email: true, carPlate: true } } },
+      orderBy: { requestedAt: 'desc' }
+    });
+    res.json(withdrawals);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// PUT /api/admin/withdrawals/:id — aprovar ou rejeitar saque
+app.put('/api/admin/withdrawals/:id', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { status } = req.body; // APPROVED | REJECTED
+    const withdrawal = await prisma.withdrawal.update({
+      where: { id: req.params.id },
+      data: { status, processedAt: new Date() }
+    });
+
+    // Se rejeitado, devolve saldo ao motorista
+    if (status === 'REJECTED') {
+      await prisma.user.update({
+        where: { id: withdrawal.userId },
+        data: { balance: { increment: withdrawal.amount } }
+      });
+    }
+    res.json({ message: `Saque ${status === 'APPROVED' ? 'aprovado' : 'rejeitado'}`, withdrawal });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Atualização do complete ride para usar config dinâmica e regras corretas
+app.post('/api/rides/:id/complete-v2', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Apenas motoristas podem completar corridas' });
+
+    const config = await prisma.adminConfig.findUnique({ where: { id: 'singleton' } }) || {
+      royaltyPerRide: 0.30, royaltyMonthlyLimit: 8, maxPassengersPerDriver: 700,
+      bindingMonthsFirst: 36, bindingMonthsRenew: 24
+    };
+
+    const rideId = req.params.id;
+    const ride = await prisma.ride.update({
+      where: { id: rideId },
+      data: { status: 'COMPLETED' },
+      include: { passenger: { include: { referredBy: true } } }
+    });
+
+    const referral = ride.passenger.referredBy;
+    const now = new Date();
+    const isExpired = referral ? new Date(referral.expiresAt) < now : true;
+
+    // Contar corridas concluídas do passageiro no mês atual
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthlyRides = await prisma.ride.count({
+      where: {
+        passengerId: ride.passengerId,
+        status: 'COMPLETED',
+        createdAt: { gte: startOfMonth }
+      }
+    });
+
+    const overLimit = monthlyRides > config.royaltyMonthlyLimit;
+
+    if (referral && !isExpired) {
+      // Vínculo ativo — verificar limite mensal
+      if (overLimit) {
+        // Royalty vai para o fundo
+        await prisma.royaltyFund.create({
+          data: { amount: config.royaltyPerRide, reason: 'passenger_over_monthly_limit', fromRideId: rideId }
+        });
+        await prisma.ride.update({ where: { id: rideId }, data: { royaltySentToFund: true } });
+      } else {
+        // Royalty normal ao motorista vinculado
+        await prisma.user.update({
+          where: { id: referral.referrerId },
+          data: { balance: { increment: config.royaltyPerRide } }
+        });
+      }
+    } else {
+      // Sem vínculo ou expirado → verificar limite do motorista
+      if (referral) await prisma.referral.delete({ where: { referredId: ride.passengerId } });
+
+      const driverPassengerCount = await prisma.referral.count({
+        where: { referrerId: req.user.id, expiresAt: { gt: now } }
+      });
+
+      if (driverPassengerCount < config.maxPassengersPerDriver) {
+        const months = referral ? config.bindingMonthsRenew : config.bindingMonthsFirst;
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + months);
+        await prisma.referral.create({
+          data: { referrerId: req.user.id, referredId: ride.passengerId, expiresAt, isRenewed: !!referral }
+        });
+        await prisma.user.update({
+          where: { id: req.user.id },
+          data: { balance: { increment: config.royaltyPerRide } }
+        });
+      }
+    }
+
+    res.json({ message: 'Corrida concluída e royalties processados', ride, monthlyRides, overLimit });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, '0.0.0.0', () => console.log(`Backend server running on http://0.0.0.0:${PORT}`));

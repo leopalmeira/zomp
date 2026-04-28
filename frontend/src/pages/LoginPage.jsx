@@ -12,6 +12,7 @@ export default function LoginPage({ forceRole }) {
   const [error, setError] = useState('')
 
   const isDriver = forceRole === 'DRIVER'
+  const isAdmin = forceRole === 'ADMIN'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -19,7 +20,9 @@ export default function LoginPage({ forceRole }) {
     setLoading(true)
     try {
       const data = await login(form)
-      if (data.user.role === 'DRIVER') {
+      if (data.user.role === 'ADMIN') {
+        navigate('/admin')
+      } else if (data.user.role === 'DRIVER') {
         const hasCompletedProfile = data.user.carPlate && data.user.cnh
         navigate(hasCompletedProfile ? '/motorista/dashboard' : '/motorista/onboarding')
       } else {
@@ -35,7 +38,7 @@ export default function LoginPage({ forceRole }) {
   const registerLink = isDriver ? '/motorista/cadastro' : '/passageiro/cadastro'
 
   return (
-    <div className={`auth-page ${isDriver ? 'driver-theme' : ''}`}>
+    <div className={`auth-page ${isDriver ? 'driver-theme' : ''} ${isAdmin ? 'admin-theme' : ''}`}>
       <AuthMapBg />
 
       <div className="auth-container animate-fade-in">
@@ -43,10 +46,11 @@ export default function LoginPage({ forceRole }) {
           <div className="logo-container">
             <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
           </div>
-          <h1>{isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
+          <h1>{isAdmin ? 'Painel Admin' : isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
+          {isAdmin && <span className="driver-slogan" style={{color:'#97E900'}}>Acesso restrito ao administrador</span>}
           {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
           <p className="auth-subtitle">
-            {isDriver ? 'Acesse o portal do motorista.' : 'Corridas mais justas, sem taxas abusivas para os motoristas.'}
+            {isAdmin ? 'Digite suas credenciais de administrador para continuar.' : isDriver ? 'Acesse o portal do motorista.' : 'Corridas mais justas, sem taxas abusivas para os motoristas.'}
           </p>
         
 
@@ -96,7 +100,7 @@ export default function LoginPage({ forceRole }) {
         </form>
 
         <div className="auth-footer-phrase">
-          {isDriver ? 'Preparado para o seu próximo lucro?' : 'Para onde será nossa próxima viagem?'}
+          {isAdmin ? '🔒 Área restrita — Zomp Admin' : isDriver ? 'Preparado para o seu próximo lucro?' : 'Para onde será nossa próxima viagem?'}
         </div>
       </div>
     </div>
