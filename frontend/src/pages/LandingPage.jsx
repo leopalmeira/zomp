@@ -67,7 +67,7 @@ export default function LandingPage() {
           transition={{ duration: 1, delay: 0.5 }}
         >
           Seja você motorista ou passageiro, na Zomp todo mundo sai ganhando. 
-          Conheça o primeiro sistema de Royalties de mobilidade urbana do Brasil.
+          Conheça o primeiro sistema de <strong>Renda Passiva Real</strong> do Brasil.
         </motion.p>
 
         <motion.div 
@@ -82,12 +82,12 @@ export default function LandingPage() {
             onClick={() => navigate('/motorista')}
           >
             <div className="card-icon"><TrendingUp size={32} /></div>
-            <h3 className="card-title">Motorista</h3>
+            <h3 className="card-title">Motorista Parceiro</h3>
             <p className="card-desc">
-              Não seja apenas um motorista, seja um investidor. 
-              Ganhe taxas fixas e royalties vitalícios por indicações.
+              Não seja apenas um motorista, seja um <strong>Sócio</strong>. 
+              Ganhe taxas fixas baixas e <strong>Royalties de R$ 0,30</strong> por cada corrida de quem você indicou.
             </p>
-            <div className="card-btn">Quero Dirigir <ArrowRight size={20} /></div>
+            <div className="card-btn">Começar a Lucrar <ArrowRight size={20} /></div>
           </motion.div>
 
           <motion.div 
@@ -98,13 +98,47 @@ export default function LandingPage() {
             <div className="card-icon"><User size={32} /></div>
             <h3 className="card-title">Passageiro</h3>
             <p className="card-desc">
-              Corra sempre pelo menor preço garantido e ajude 
-              a construir uma comunidade mais justa.
+              Viaje com <strong>Preço Imbatível</strong>. 
+              Se o concorrente for mais barato, nós cobrimos e ainda damos desconto real.
             </p>
-            <div className="card-btn">Quero Viajar <ArrowRight size={20} /></div>
+            <div className="card-btn">Viajar Agora <ArrowRight size={20} /></div>
           </motion.div>
         </motion.div>
       </main>
+
+      <section className="earnings-simulator-section">
+        <div className="simulator-container">
+          <div className="sim-text">
+            <h2 className="sim-title">Sua Renda Passiva <br /><span>Sem Sair de Casa</span></h2>
+            <p className="sim-desc">
+              Imagine construir uma carteira de passageiros que trabalham para você. 
+              A cada corrida que eles fizerem, <strong>R$ 0,30</strong> cai direto na sua conta.
+            </p>
+            
+            <div className="sim-calc-box">
+              <div className="calc-item">
+                <span className="calc-label">Sua Rede</span>
+                <span className="calc-value">400 Passageiros</span>
+              </div>
+              <div className="calc-item">
+                <span className="calc-label">Royalties</span>
+                <span className="calc-value">R$ 0,30 / Corrida</span>
+              </div>
+              <div className="calc-divider"></div>
+              <div className="calc-item result">
+                <span className="calc-label">Ganhos Extras Estimados</span>
+                <span className="calc-value highlight">R$ 1.200,00<span>/mês</span></span>
+              </div>
+            </div>
+            
+            <p className="sim-info">*Baseado em uma média de 10 corridas/mês por passageiro.</p>
+            <button className="btn-primary" onClick={() => navigate('/motorista/cadastro')}>Garantir minha vaga</button>
+          </div>
+          <div className="sim-image">
+            <img src="/zomp_premium_driver_earnings_1777381652132.png" alt="Ganhos Zomp" />
+          </div>
+        </div>
+      </section>
 
       <section className="features-section">
         <div className="section-head">
@@ -116,7 +150,7 @@ export default function LandingPage() {
           <div className="feat-item">
             <div className="card-icon"><Gift size={24} /></div>
             <h4>Sistema de Royalties</h4>
-            <p>Receba R$ 0,10 por cada corrida de um passageiro que você indicou, para sempre.</p>
+            <p>Receba R$ 0,30 por cada corrida de um passageiro que você indicou, direto na sua carteira.</p>
           </div>
           <div className="feat-item">
             <div className="card-icon"><Shield size={24} /></div>
@@ -142,7 +176,7 @@ export default function LandingPage() {
           <span className="stat-lbl">Motoristas no RJ</span>
         </div>
         <div className="stat-box">
-          <span className="stat-val">R$ 0,10</span>
+          <span className="stat-val">R$ 0,30</span>
           <span className="stat-lbl">Royalties p/ Corrida</span>
         </div>
         <div className="stat-box">

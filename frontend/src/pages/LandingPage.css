@@ -140,9 +140,9 @@
 }
 
 .choice-card:hover {
-  transform: translateY(-10px);
+  transform: translateY(-10px) scale(1.02);
   border-color: var(--primary);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 80px rgba(151, 233, 0, 0.15);
 }
 
 .choice-card::after {
@@ -280,6 +280,138 @@
 .footer-text {
   color: var(--text-secondary);
   font-size: 0.9rem;
+}
+
+/* Earnings Simulator Section */
+.earnings-simulator-section {
+  padding: 100px 5%;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0) 0%, rgba(151, 233, 0, 0.05) 50%, rgba(2, 6, 23, 0) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.simulator-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.sim-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 24px;
+}
+
+.sim-title span {
+  color: var(--primary);
+  text-shadow: 0 0 20px var(--primary-glow);
+}
+
+.sim-desc {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.sim-calc-box {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-light);
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.calc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calc-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.calc-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.calc-divider {
+  height: 1px;
+  background: var(--border-light);
+}
+
+.calc-item.result {
+  margin-top: 10px;
+}
+
+.calc-value.highlight {
+  font-size: 2.5rem;
+  color: var(--primary);
+  text-shadow: 0 0 15px var(--primary-glow);
+}
+
+.calc-value.highlight span {
+  font-size: 1rem;
+  opacity: 0.7;
+  margin-left: 5px;
+}
+
+.sim-info {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  font-style: italic;
+}
+
+.sim-image {
+  position: relative;
+}
+
+.sim-image img {
+  width: 100%;
+  border-radius: 32px;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-light);
+}
+
+.sim-image::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  background: var(--primary);
+  filter: blur(60px);
+  opacity: 0.3;
+  z-index: -1;
+}
+
+@media (max-width: 968px) {
+  .simulator-container {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  
+  .sim-image {
+    order: -1;
+  }
+  
+  .calc-value.highlight {
+    font-size: 2rem;
+  }
 }
 
 @media (max-width: 768px) {
