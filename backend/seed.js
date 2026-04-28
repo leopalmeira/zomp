@@ -1,29 +1,31 @@
 // backend/seed.js — cria o admin e config inicial
+// Credenciais via variáveis de ambiente (nunca hardcoded no código)
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcrypt')
 
 const prisma = new PrismaClient()
 
 async function main() {
-  // 1. Admin user
-  const adminEmail = 'leandro2703palmeira@gmail.com'
-  const existing = await prisma.user.findUnique({ where: { email: adminEmail } })
-  if (!existing) {
-    const hash = await bcrypt.hash('Lps27031981@', 10)
-    await prisma.user.create({
-      data: {
-        name: 'Leandro Palmeira',
-        email: adminEmail,
-        password: hash,
-        role: 'ADMIN',
-      }
-    })
-    console.log('✅ Admin criado:', adminEmail)
+  const adminEmail = process.env.ADMIN_EMAIL
+  const adminPassword = process.env.ADMIN_PASSWORD
+  const adminName = process.env.ADMIN_NAME || 'Administrador Zomp'
+
+  if (!adminEmail || !adminPassword) {
+    console.log('⚠️  ADMIN_EMAIL ou ADMIN_PASSWORD não definidos. Pulando criação do admin.')
   } else {
-    console.log('ℹ️  Admin já existe:', adminEmail)
+    const existing = await prisma.user.findUnique({ where: { email: adminEmail } })
+    if (!existing) {
+      const hash = await bcrypt.hash(adminPassword, 10)
+      await prisma.user.create({
+        data: { name: adminName, email: adminEmail, password: hash, role: 'ADMIN' }
+      })
+      console.log('✅ Admin criado:', adminEmail)
+    } else {
+      console.log('ℹ️  Admin já existe:', adminEmail)
+    }
   }
 
-  // 2. Config inicial (upsert)
+  // Config inicial (upsert — idempotente)
   await prisma.adminConfig.upsert({
     where: { id: 'singleton' },
     update: {},
