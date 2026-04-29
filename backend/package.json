@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "build": "npx prisma generate && npx prisma db push --accept-data-loss",
-    "postinstall": "npx prisma generate",
+    "build": "prisma generate && prisma db push --accept-data-loss",
+    "postinstall": "prisma generate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
