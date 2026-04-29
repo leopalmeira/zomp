@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -24,7 +24,16 @@ model User {
   carPlate   String?
   carModel   String?
   carColor   String?
+  carYear    String?
+  pixKey     String?
   isApproved Boolean @default(false)
+  
+  // Stats & Ratings
+  rating          Float   @default(5.0)
+  totalRatings    Int     @default(0)
+  ridesCompleted  Int     @default(0)
+  ridesAccepted   Int     @default(0)
+  ridesMissed     Int     @default(0)
 
   ridesAsPassenger Ride[]       @relation("PassengerRides")
   ridesAsDriver    Ride[]       @relation("DriverRides")
@@ -61,7 +70,11 @@ model Ride {
   price             Float?
   distanceKm        Float?
   vehicleType       String?
-  status            String   @default("PENDING")
+  status            String   @default("PENDING") // PENDING, ACCEPTED, COMPLETED, CANCELLED
+  
+  passengerRating Float?
+  driverRating    Float?
+  
   royaltySentToFund Boolean  @default(false) // true se passageiro fez >8 corridas no mês
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -89,6 +102,15 @@ model AdminConfig {
   maxPassengersPerDriver Int     @default(700)
   bindingMonthsFirst    Int      @default(36)
   bindingMonthsRenew    Int      @default(24)
+  
+  // Preço Imbatível
+  minKmPriceImbativel     Float    @default(1.50)
+  discountImbativel       Float    @default(2.00)
+  
+  // Suspensão Automática
+  autoSuspendMinRating      Float  @default(4.0)
+  autoSuspendMinAcceptance  Float  @default(50.0)
+  
   updatedAt             DateTime @updatedAt
 }
 

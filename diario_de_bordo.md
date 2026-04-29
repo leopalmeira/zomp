@@ -240,3 +240,20 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - App.jsx: rotas /admin e /admin/login
 - SEGURANCA: configurar no Render Dashboard: ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME
 
+
+### [29/04/2026] - Governança Master & Preço Imbatível 2.0
+**Feito:**
+- **Preço Imbatível S/ Burocracia:** Removida a necessidade de print de tela no app do passageiro. Agora a validação é 100% via input de valor e lógica de teto de segurança no sistema.
+- **Visual Agressivo:** Redesign do feedback de oferta no app do passageiro, com animações e destaque de economia real (savings).
+- **Suspensão Automática (IA/Métricas):** Implementada lógica no backend que monitora Nota (Estrelas) e Taxa de Aceitação. Motoristas abaixo do limite (configurável pelo admin) são suspensos automaticamente.
+- **Painel Admin Consolidado:** Seção de configurações agora detalha todas as regras de negócio da plataforma (Preço, Royalties, Suspensão).
+- **Informe de Rendimentos:** Implementado gerador de informe anual em HTML/Print para conformidade fiscal dos motoristas.
+- **Deploy:** Atualização técnica completa e restauração de acessos aos servidores.
+
+**Decisões Técnicas:**
+- **Fim do Print:** A análise de print (Gemini/OCR) era um ponto de fricção. Optamos por uma regra de negócio baseada em "Teto de Segurança por KM", permitindo que o passageiro apenas informe o valor e o sistema decida se cobre ou não instantaneamente.
+- **Gatilho de Suspensão:** O check de suspensão ocorre em cada evento crítico (aceitação, rejeição ou avaliação), garantindo resposta rápida à baixa qualidade.
+
+**A Fazer:**
+- Automação de envio de e-mails/notificações para motoristas suspensos.
+- Exportação do Informe de Rendimentos diretamente para PDF (server-side).

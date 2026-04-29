@@ -139,6 +139,14 @@ export async function acceptRide(rideId) {
   return data;
 }
 
+export async function rejectRide(rideId) {
+  const res = await fetch(`${API_BASE}/rides/${rideId}/reject`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return res.ok;
+}
+
 export async function completeRide(rideId) {
   const res = await fetch(`${API_BASE}/rides/${rideId}/complete`, {
     method: 'POST',

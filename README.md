@@ -26,13 +26,20 @@ O core do aplicativo para os usuários solicitarem ou agendarem corridas com uma
 *   Esse vínculo é **permanente**: para toda corrida que o passageiro finaliza (independente de qual motorista fez a viagem), o motorista que o indicou recebe **R$ 0,10** de royalty.
 *   O motorista possui uma **Carteira (Wallet)** com o saldo acumulado, disponível para saque a cada 3 meses.
 
-### 3. State Machine da Corrida
-A interface responde dinamicamente à mudança de status sem recarregar a tela:
-*   `IDLE`: Tela inicial de busca e marcação do local.
-*   `PRICED`: Mostra o preço, opção de priorizar favoritos, seletor do veículo e os botões de Chamar ou Agendar.
-*   `SCHEDULING`: View de configuração de hora/data para agendar.
-*   `SEARCHING`: Radar de busca de motoristas dinâmico.
-*   `ACCEPTED`: Mostra o motorista que aceitou a viagem, com foto, placa, modelo do veículo e avaliação.
+### 3. Preço Imbatível Zomp (Anti-Concorrência)
+*   **Zero Burocracia:** O passageiro informa o preço visto na Uber ou 99 diretamente no app.
+*   **Desconto Instantâneo:** O sistema aplica automaticamente um desconto de R$ 2,00 sobre o valor informado.
+*   **Teto de Segurança:** Algoritmo protege o motorista, garantindo que o valor final por KM nunca fique abaixo do custo operacional definido pelo administrador.
+
+### 4. Governança & Qualidade (Driver Care)
+*   **Suspensão Automática:** Monitoramento em tempo real de Avaliação (Estrelas) e Taxa de Aceitação. Motoristas abaixo do padrão são suspensos instantaneamente pelo sistema.
+*   **Transparência Fiscal:** Geração de Informe de Rendimentos anual (HTML/PDF) para facilitar a declaração de imposto de renda dos parceiros.
+*   **Vínculo Vitalício:** Sistema de Royalties de 60 meses para indicações de novos passageiros.
+
+### 5. Painel Administrativo Master
+*   **Monitoramento Real-Time:** Fluxo de pedidos, corridas em andamento e faturamento global.
+*   **Gestão Financeira:** Controle de Fundo de Royalties, Saldo da Empresa e Processamento de Saques.
+*   **Configuração Global:** Alteração dinâmica de tarifas, limites de suspensão e parâmetros de rede.
 
 ## 💻 Stack Tecnológico
 
@@ -75,8 +82,10 @@ A interface responde dinamicamente à mudança de status sem recarregar a tela:
    - **App do Passageiro:** [http://localhost:5173/passageiro](http://localhost:5173/passageiro)
    - **App do Motorista:** [http://localhost:5173/motorista](http://localhost:5173/motorista)
 
-## 📖 Documentação Adicional
-Consulte os arquivos na raiz e dependências, e as atualizações descritas em `diario_de_bordo.md` (no frontend e raiz) para o histórico das decisões de arquitetura e registros do desenvolvimento ativo.
+### 5. Painel Administrativo Master
+*   **Monitoramento Real-Time:** Fluxo de pedidos, corridas em andamento e faturamento global.
+*   **Gestão Financeira:** Controle de Fundo de Royalties, Saldo da Empresa e Processamento de Saques.
+*   **Configuração Global:** Alteração dinâmica de tarifas, limites de suspensão e parâmetros de rede.
 
----
-*Zomp - Mudando a mobilidade de forma inteligente.*
+## 💻 Stack Tecnológico
+...

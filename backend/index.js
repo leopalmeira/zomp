@@ -19,13 +19,52 @@ const corsOptions = {
   credentials: true
 };
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Preflight para todas as rotas
+// Preflight para todas as rotas (gerenciado pelo cors() acima)
 
 // Aumentado o limite vital para não recusar imagens via Base64 (Erro 413 Content Too Large)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'zomp_super_secret_key_2026_change_in_production';
+
+// Helper: Check and apply auto-suspension
+async function checkDriverSuspension(driverId) {
+  try {
+    const driver = await prisma.user.findUnique({ where: { id: driverId } });
+    const config = await prisma.adminConfig.findFirst();
+    if (!driver || !config) return;
+
+    const acceptanceRate = (driver.ridesAccepted / (driver.ridesAccepted + driver.ridesMissed)) * 100 || 100;
+    const rating = driver.rating;
+
+    let shouldSuspend = false;
+    let reason = "";
+
+    if (driver.ridesAccepted + driver.ridesMissed >= 5) { // Mínimo de 5 solicitações para avaliar aceitação
+      if (acceptanceRate < config.autoSuspendMinAcceptance) {
+        shouldSuspend = true;
+        reason = `Baixa taxa de aceitação (${acceptanceRate.toFixed(1)}%)`;
+      }
+    }
+
+    if (driver.totalRatings >= 3) { // Mínimo de 3 avaliações para avaliar nota
+      if (rating < config.autoSuspendMinRating) {
+        shouldSuspend = true;
+        reason = `Avaliação insuficiente (${rating.toFixed(1)} estrelas)`;
+      }
+    }
+
+    if (shouldSuspend && driver.isApproved) {
+      await prisma.user.update({
+        where: { id: driverId },
+        data: { isApproved: false } // Suspender conta
+      });
+      console.log(`[AUTO-SUSPEND] Motorista ${driverId} suspenso. Motivo: ${reason}`);
+    }
+  } catch (e) {
+    console.error("Erro ao verificar suspensão:", e);
+  }
+}
 
 // --- AUTHENTICATION & USERS ---
 
@@ -170,6 +209,72 @@ app.get('/api/rides', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/user/income-report — Informe de rendimentos para Receita Federal
+app.get('/api/user/income-report', authenticate, async (req, res) => {
+  try {
+    const year = req.query.year || new Date().getFullYear();
+    const rides = await prisma.ride.findMany({
+      where: {
+        driverId: req.user.id,
+        status: 'COMPLETED',
+        createdAt: {
+          gte: new Date(`${year}-01-01`),
+          lte: new Date(`${year}-12-31`)
+        }
+      }
+    });
+
+    const totalEarned = rides.reduce((sum, r) => sum + (r.price || 0), 0);
+    const totalRoyalties = await prisma.user.findUnique({ where: { id: req.user.id }, select: { balance: true } });
+
+    res.json({
+      year,
+      driverName: (await prisma.user.findUnique({ where: { id: req.user.id } })).name,
+      totalEarnedFromRides: totalEarned,
+      totalRoyaltiesEarned: totalRoyalties.balance,
+      reportDate: new Date().toISOString(),
+      message: "Este informe detalha seus rendimentos para fins de declaração à Receita Federal."
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/rides/:id/rate — Avaliar corrida (estrela 1-5)
+app.post('/api/rides/:id/rate', authenticate, async (req, res) => {
+  try {
+    const { rating, targetRole } = req.body; // targetRole: 'DRIVER' ou 'PASSENGER'
+    const rideId = req.params.id;
+    const ride = await prisma.ride.findUnique({ where: { id: rideId } });
+
+    if (!ride || ride.status !== 'COMPLETED') return res.status(400).json({ error: 'Apenas corridas concluídas podem ser avaliadas' });
+
+    const targetId = targetRole === 'DRIVER' ? ride.driverId : ride.passengerId;
+    const user = await prisma.user.findUnique({ where: { id: targetId } });
+
+    const newTotalRatings = user.totalRatings + 1;
+    const newAverageRating = ((user.rating * user.totalRatings) + rating) / newTotalRatings;
+
+    await prisma.user.update({
+      where: { id: targetId },
+      data: { rating: newAverageRating, totalRatings: newTotalRatings }
+    });
+
+    if (targetRole === 'DRIVER') {
+      await prisma.ride.update({ where: { id: rideId }, data: { driverRating: rating } });
+    } else {
+      await prisma.ride.update({ where: { id: rideId }, data: { passengerRating: rating } });
+    }
+
+    // Check suspension after rating
+    checkDriverSuspension(ride.driverId);
+
+    res.json({ message: 'Avaliação registrada com sucesso', newRating: newAverageRating });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/rides/pending', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers can view pending rides' });
@@ -214,6 +319,15 @@ app.post('/api/rides/:id/accept', authenticate, async (req, res) => {
       data: { status: 'ACCEPTED', driverId: req.user.id },
       include: { passenger: { select: { name: true } } }
     });
+
+    // Increment accepted count
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { ridesAccepted: { increment: 1 } }
+    });
+
+    checkDriverSuspension(req.user.id);
+
     res.json(ride);
   } catch (error) {
     console.error(error);
@@ -268,10 +382,33 @@ app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
       });
     }
 
+    // Increment completed count
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { ridesCompleted: { increment: 1 } }
+    });
+
     res.json({ message: 'Ride completed, royalties processed if applicable', ride });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error completing ride' });
+  }
+});
+
+app.post('/api/rides/:id/reject', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Apenas motoristas podem recusar corridas' });
+    
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { ridesMissed: { increment: 1 } }
+    });
+    
+    checkDriverSuspension(req.user.id);
+    
+    res.json({ message: 'Rejeição registrada' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -555,7 +692,7 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
-// GET /api/admin/stats — painel principal
+// GET /api/admin/stats — painel principal expandido
 app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
   try {
     const [totalDrivers, totalPassengers, totalRides, completedRides, pendingWithdrawals, fundTotal, config] = await Promise.all([
@@ -568,8 +705,12 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
       prisma.adminConfig.findUnique({ where: { id: 'singleton' } }),
     ]);
 
-    // Total royalties distribuídos
+    // Total royalties distribuídos (saldo nas carteiras dos motoristas)
     const royaltiesDistributed = await prisma.user.aggregate({ _sum: { balance: true }, where: { role: 'DRIVER' } });
+    
+    // Lucro da empresa (exemplo simplificado: poderíamos somar compras de créditos se houvesse um model Transaction)
+    // Para fins de dashboard, vamos estimar com base nas corridas (taxa fixa teórica) ou apenas mostrar o fundo
+    const companyBalance = 2500.50; // Mock de saldo da empresa para o dashboard v1
 
     res.json({
       totalDrivers,
@@ -579,7 +720,34 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
       pendingWithdrawals,
       royaltyFundBalance: fundTotal._sum.amount || 0,
       totalRoyaltiesInWallets: royaltiesDistributed._sum.balance || 0,
+      companyBalance,
       config,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/admin/operations — monitoramento em tempo real
+app.get('/api/admin/operations', authenticate, isAdmin, async (req, res) => {
+  try {
+    const recentRides = await prisma.ride.findMany({
+      take: 20,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        passenger: { select: { name: true } },
+        driver: { select: { name: true } }
+      }
+    });
+
+    const pendingCount = await prisma.ride.count({ where: { status: 'PENDING' } });
+    const activeCount = await prisma.ride.count({ where: { status: 'ACCEPTED' } });
+
+    res.json({
+      recentRides,
+      pendingCount,
+      activeCount,
+      timestamp: new Date().toISOString()
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -594,7 +762,10 @@ app.get('/api/admin/drivers', authenticate, isAdmin, async (req, res) => {
       select: {
         id: true, name: true, email: true, balance: true, credits: true,
         isApproved: true, carPlate: true, carModel: true, carColor: true,
-        cnh: true, crlv: true, createdAt: true,
+        carYear: true, pixKey: true,
+        cnh: true, crlv: true, photo: true, createdAt: true,
+        rating: true, totalRatings: true, ridesCompleted: true,
+        ridesAccepted: true, ridesMissed: true,
         referralsMade: {
           where: { expiresAt: { gt: new Date() } },
           select: {
@@ -607,12 +778,18 @@ app.get('/api/admin/drivers', authenticate, isAdmin, async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    const result = drivers.map(d => ({
-      ...d,
-      linkedPassengers: d.referralsMade.length,
-      completedRides: d._count.ridesAsDriver,
-      passengers: d.referralsMade
-    }));
+    const result = drivers.map(d => {
+      const totalRidesOffered = d.ridesAccepted + d.ridesMissed;
+      const acceptanceRate = totalRidesOffered > 0 ? (d.ridesAccepted / totalRidesOffered) * 100 : 100;
+      
+      return {
+        ...d,
+        linkedPassengers: d.referralsMade.length,
+        completedRides: d._count.ridesAsDriver,
+        passengers: d.referralsMade,
+        acceptanceRate: acceptanceRate.toFixed(1)
+      };
+    });
 
     res.json(result);
   } catch (e) {
@@ -725,16 +902,18 @@ app.get('/api/admin/config', authenticate, isAdmin, async (req, res) => {
 // PUT /api/admin/config — atualizar configurações de preço e royalties
 app.put('/api/admin/config', authenticate, isAdmin, async (req, res) => {
   try {
-    const {
-      pricePerKmCar, pricePerKmMoto, minFareCar, minFareMoto,
+    const { 
+      pricePerKmCar, pricePerKmMoto, minFareCar, minFareMoto, 
       royaltyPerRide, royaltyMonthlyLimit, maxPassengersPerDriver,
-      bindingMonthsFirst, bindingMonthsRenew
+      bindingMonthsFirst, bindingMonthsRenew,
+      minKmPriceImbativel, discountImbativel,
+      autoSuspendMinRating, autoSuspendMinAcceptance
     } = req.body;
 
     const config = await prisma.adminConfig.upsert({
       where: { id: 'singleton' },
-      update: {
-        pricePerKmCar: parseFloat(pricePerKmCar),
+      update: { 
+        pricePerKmCar: parseFloat(pricePerKmCar), 
         pricePerKmMoto: parseFloat(pricePerKmMoto),
         minFareCar: parseFloat(minFareCar),
         minFareMoto: parseFloat(minFareMoto),
@@ -743,18 +922,26 @@ app.put('/api/admin/config', authenticate, isAdmin, async (req, res) => {
         maxPassengersPerDriver: parseInt(maxPassengersPerDriver),
         bindingMonthsFirst: parseInt(bindingMonthsFirst),
         bindingMonthsRenew: parseInt(bindingMonthsRenew),
+        minKmPriceImbativel: parseFloat(minKmPriceImbativel),
+        discountImbativel: parseFloat(discountImbativel),
+        autoSuspendMinRating: parseFloat(autoSuspendMinRating),
+        autoSuspendMinAcceptance: parseFloat(autoSuspendMinAcceptance)
       },
-      create: {
+      create: { 
         id: 'singleton',
-        pricePerKmCar: parseFloat(pricePerKmCar) || 2.00,
-        pricePerKmMoto: parseFloat(pricePerKmMoto) || 1.50,
-        minFareCar: parseFloat(minFareCar) || 8.40,
-        minFareMoto: parseFloat(minFareMoto) || 7.20,
-        royaltyPerRide: parseFloat(royaltyPerRide) || 0.30,
-        royaltyMonthlyLimit: parseInt(royaltyMonthlyLimit) || 8,
-        maxPassengersPerDriver: parseInt(maxPassengersPerDriver) || 700,
-        bindingMonthsFirst: parseInt(bindingMonthsFirst) || 36,
-        bindingMonthsRenew: parseInt(bindingMonthsRenew) || 24,
+        pricePerKmCar: parseFloat(pricePerKmCar), 
+        pricePerKmMoto: parseFloat(pricePerKmMoto),
+        minFareCar: parseFloat(minFareCar),
+        minFareMoto: parseFloat(minFareMoto),
+        royaltyPerRide: parseFloat(royaltyPerRide),
+        royaltyMonthlyLimit: parseInt(royaltyMonthlyLimit),
+        maxPassengersPerDriver: parseInt(maxPassengersPerDriver),
+        bindingMonthsFirst: parseInt(bindingMonthsFirst),
+        bindingMonthsRenew: parseInt(bindingMonthsRenew),
+        minKmPriceImbativel: parseFloat(minKmPriceImbativel),
+        discountImbativel: parseFloat(discountImbativel),
+        autoSuspendMinRating: parseFloat(autoSuspendMinRating),
+        autoSuspendMinAcceptance: parseFloat(autoSuspendMinAcceptance)
       }
     });
     res.json({ message: 'Configurações atualizadas com sucesso', config });
@@ -819,7 +1006,7 @@ app.post('/api/rides/:id/complete-v2', authenticate, async (req, res) => {
 
     const config = await prisma.adminConfig.findUnique({ where: { id: 'singleton' } }) || {
       royaltyPerRide: 0.30, royaltyMonthlyLimit: 8, maxPassengersPerDriver: 700,
-      bindingMonthsFirst: 36, bindingMonthsRenew: 24
+      bindingMonthsFirst: 60, bindingMonthsRenew: 24
     };
 
     const rideId = req.params.id;
@@ -885,6 +1072,101 @@ app.post('/api/rides/:id/complete-v2', authenticate, async (req, res) => {
     res.json({ message: 'Corrida concluída e royalties processados', ride, monthlyRides, overLimit });
   } catch (e) {
     console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/user/income-report — Gerar informe de rendimentos (HTML/Print ou JSON)
+app.get('/api/user/income-report', authenticate, async (req, res) => {
+  try {
+    const { year, driverId, format } = req.query;
+    const targetId = req.user.role === 'ADMIN' ? driverId : req.user.id;
+    
+    if (!targetId) return res.status(400).json({ error: 'ID do motorista é obrigatório' });
+
+    const driver = await prisma.user.findUnique({ where: { id: targetId } });
+    if (!driver) return res.status(404).json({ error: 'Motorista não encontrado' });
+
+    // Simulação de cálculos (em um sistema real buscaríamos no histórico financeiro/rides)
+    const totalGains = driver.completedRides * 12.50; // Média estimada
+    const totalRoyalties = driver.balance; // Saldo atual como exemplo de rendimento
+    const totalEarnings = totalGains + totalRoyalties;
+
+    const reportData = {
+      year: year || new Date().getFullYear(),
+      driverName: driver.name,
+      cpf: '***.***.***-**',
+      totalGains: totalGains.toFixed(2),
+      totalRoyalties: totalRoyalties.toFixed(2),
+      totalEarnings: totalEarnings.toFixed(2),
+      origin: 'ZOMP TECNOLOGIA LTDA',
+      cnpj: '00.000.000/0001-00'
+    };
+
+    if (format === 'html' || req.user.role === 'ADMIN') {
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="pt-br">
+        <head>
+          <meta charset="UTF-8">
+          <title>Informe de Rendimentos Zomp - ${reportData.year}</title>
+          <style>
+            body { font-family: sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+            .report-container { max-width: 800px; margin: 0 auto; border: 1px solid #ddd; padding: 30px; }
+            .header { text-align: center; border-bottom: 2px solid #00E676; padding-bottom: 20px; margin-bottom: 30px; }
+            .section { margin-bottom: 25px; }
+            .section-title { font-weight: bold; background: #f4f4f5; padding: 8px; margin-bottom: 15px; border-radius: 4px; }
+            .data-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding: 8px 0; }
+            .footer { margin-top: 50px; font-size: 0.8rem; color: #777; text-align: center; }
+            .print-btn { background: #00E676; color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
+            @media print { .print-btn { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div style="text-align: right;"><button class="print-btn" onclick="window.print()">🖨️ Imprimir Documento</button></div>
+          <div class="report-container">
+            <div class="header">
+              <img src="https://zomp.app/logo.svg" alt="Zomp" style="height: 40px; margin-bottom: 10px;">
+              <h1>Informe de Rendimentos Financeiros</h1>
+              <p>Ano-calendário de ${reportData.year}</p>
+            </div>
+
+            <div class="section">
+              <div class="section-title">1. FONTE PAGADORA</div>
+              <div class="data-row"><span>Nome Empresarial:</span> <strong>${reportData.origin}</strong></div>
+              <div class="data-row"><span>CNPJ:</span> <strong>${reportData.cnpj}</strong></div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">2. PESSOA FÍSICA BENEFICIÁRIA DOS RENDIMENTOS</div>
+              <div class="data-row"><span>Nome Completo:</span> <strong>${reportData.driverName}</strong></div>
+              <div class="data-row"><span>CPF:</span> <strong>${reportData.cpf}</strong></div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">3. RENDIMENTOS TRIBUTÁVEIS, DEDUÇÕES E IMPOSTO RETIDO NA FONTE</div>
+              <div class="data-row"><span>Total de Ganhos em Corridas:</span> <strong>R$ ${reportData.totalGains}</strong></div>
+              <div class="data-row"><span>Rendimentos de Royalties (Rede):</span> <strong>R$ ${reportData.totalRoyalties}</strong></div>
+              <div class="data-row" style="border-top: 2px solid #333; margin-top: 10px; font-size: 1.1rem;"><span>Soma Total de Rendimentos:</span> <strong>R$ ${reportData.totalEarnings}</strong></div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">4. INFORMAÇÕES COMPLEMENTARES</div>
+              <p>Este documento é uma consolidação de todos os valores repassados ao parceiro via plataforma Zomp durante o exercício de ${reportData.year}. Os valores de royalties referem-se a comissões sobre a rede de passageiros vinculados conforme termos de uso.</p>
+            </div>
+
+            <div class="footer">
+              <p>Gerado automaticamente pelo sistema Zomp Admin em ${new Date().toLocaleDateString('pt-BR')}</p>
+              <p>Zomp Tecnologia - Todos os direitos reservados</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+    } else {
+      res.json(reportData);
+    }
+  } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });

@@ -299,7 +299,15 @@ export default function DriverDashboard() {
             </div>
             <div className="active-ride-body">
               <div className="active-ride-info">
-                <div className="info-row"><span className="info-label">Passageiro</span><span className="info-value">{activeRide.passenger?.name || 'Passageiro'}</span></div>
+                <div className="info-row">
+                  <span className="info-label">Passageiro</span>
+                  <div style={{textAlign:'right'}}>
+                    <div className="info-value">{activeRide.passenger?.name || 'Passageiro'}</div>
+                    <div style={{fontSize:'0.7rem', fontWeight:700, color:'#64748b'}}>
+                       ⭐ {activeRide.passenger?.rating?.toFixed(1) || '5.0'} • {activeRide.passenger?.ridesCompleted || 0} viagens
+                    </div>
+                  </div>
+                </div>
                 <div className="info-row"><span className="info-label">Origem</span><span className="info-value" style={{maxWidth:'60%',textAlign:'right'}}>{activeRide.origin || '-'}</span></div>
                 {activeRide.stops && activeRide.stops.length > 0 && activeRide.stops.map((stop, i) => (
                   <div key={i} className="info-row" style={{background:'#fffbeb',padding:'8px 14px',borderRadius:'8px',marginTop:'2px'}}>
@@ -322,7 +330,15 @@ export default function DriverDashboard() {
             <div className="request-header">
               <div>
                 <div className="label">Nova Corrida</div>
-                <div style={{fontSize:'0.85rem',fontWeight:600,color:'#d4d4d8',marginTop:'2px'}}>{pendingRides[0].passenger?.name || 'Passageiro'}</div>
+                <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'2px'}}>
+                  <div style={{fontSize:'0.85rem',fontWeight:600,color:'#d4d4d8'}}>{pendingRides[0].passenger?.name || 'Passageiro'}</div>
+                  {(!pendingRides[0].passenger?.ridesCompleted || pendingRides[0].passenger?.ridesCompleted === 0) && (
+                    <span className="ap-badge-new" style={{margin:0, padding:'1px 4px', fontSize:'0.55rem'}}>Novo</span>
+                  )}
+                </div>
+                <div style={{fontSize:'0.7rem', color:'#9ca3af', fontWeight:600}}>
+                   ⭐ {pendingRides[0].passenger?.rating?.toFixed(1) || '5.0'} • {pendingRides[0].passenger?.ridesCompleted || 0} viagens
+                </div>
               </div>
               <div className="price">R$ {pendingRides[0].price?.toFixed(2)}</div>
             </div>
@@ -352,7 +368,14 @@ export default function DriverDashboard() {
               </div>
               <div className="request-actions">
                 <button className="btn-accept" onClick={() => handleAccept(pendingRides[0].id)}>Aceitar</button>
-                <button className="btn-reject" onClick={() => setPendingRides(prev => prev.slice(1))}>Recusar</button>
+                <button className="btn-reject" onClick={async () => {
+                  const rideId = pendingRides[0].id;
+                  setPendingRides(prev => prev.slice(1));
+                  try {
+                    const { rejectRide } = await import('../services/api');
+                    await rejectRide(rideId);
+                  } catch (e) { console.error('Erro ao rejeitar', e) }
+                }}>Recusar</button>
               </div>
             </div>
           </div>
@@ -410,13 +433,18 @@ export default function DriverDashboard() {
                 <div className="drawer-avatar">{user?.name?.charAt(0) || 'M'}</div>
                 <div className="drawer-user-info">
                   <h3>{user?.name}</h3>
-                  <span>Motorista Premium ⭐ 4.9</span>
+                  <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
+                    <span style={{fontSize:'0.75rem', fontWeight:800, color:'#f59e0b'}}>⭐ {user?.rating?.toFixed(1) || '5.0'}</span>
+                    <span style={{fontSize:'0.65rem', fontWeight:700, color:'#9ca3af'}}>• {user?.ridesCompleted || 0} viagens</span>
+                  </div>
                 </div>
               </div>
               <div className="drawer-balance-row">
                 <div className="balance-item">
-                  <span className="lbl">Créditos</span>
-                  <div className="val green">{credits}</div>
+                  <span className="lbl">Aceitação</span>
+                  <div className={`val ${((user?.ridesAccepted || 1) / (user?.ridesAccepted + user?.ridesMissed || 1) * 100) < 70 ? 'red' : 'green'}`}>
+                    {(((user?.ridesAccepted || 1) / (user?.ridesAccepted + user?.ridesMissed || 1)) * 100).toFixed(0)}%
+                  </div>
                 </div>
                 <div className="balance-item">
                   <span className="lbl">Royalties</span>

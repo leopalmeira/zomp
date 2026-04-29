@@ -23,6 +23,10 @@ function ProtectedRoute({ children, requiredRole }) {
   return children
 }
 
+function MobileLayout({ children }) {
+  return <div className="app-container">{children}</div>
+}
+
 function RoleAutoRedirect() {
   if (isAuthenticated()) {
     const user = getCurrentUser()
@@ -41,7 +45,7 @@ function App() {
         {/* ==================================
             ADMIN
             ================================== */}
-        <Route path="/admin/login" element={<LoginPage forceRole="ADMIN" />} />
+        <Route path="/admin/login" element={<MobileLayout><LoginPage forceRole="ADMIN" /></MobileLayout>} />
         <Route
           path="/admin"
           element={
@@ -54,13 +58,13 @@ function App() {
         {/* ==================================
             APP DO MOTORISTA
             ================================== */}
-        <Route path="/motorista" element={<LoginPage forceRole="DRIVER" />} />
-        <Route path="/motorista/cadastro" element={<RegisterPage forceRole="DRIVER" />} />
+        <Route path="/motorista" element={<MobileLayout><LoginPage forceRole="DRIVER" /></MobileLayout>} />
+        <Route path="/motorista/cadastro" element={<MobileLayout><RegisterPage forceRole="DRIVER" /></MobileLayout>} />
         <Route
           path="/motorista/onboarding"
           element={
             <ProtectedRoute requiredRole="DRIVER">
-              <DriverOnboarding />
+              <MobileLayout><DriverOnboarding /></MobileLayout>
             </ProtectedRoute>
           }
         />
@@ -68,7 +72,7 @@ function App() {
           path="/motorista/dashboard"
           element={
             <ProtectedRoute requiredRole="DRIVER">
-              <DriverDashboard />
+              <MobileLayout><DriverDashboard /></MobileLayout>
             </ProtectedRoute>
           }
         />
@@ -76,13 +80,13 @@ function App() {
         {/* ==================================
             APP DO PASSAGEIRO
             ================================== */}
-        <Route path="/passageiro" element={<LoginPage forceRole="PASSENGER" />} />
-        <Route path="/passageiro/cadastro" element={<RegisterPage forceRole="PASSENGER" />} />
+        <Route path="/passageiro" element={<MobileLayout><LoginPage forceRole="PASSENGER" /></MobileLayout>} />
+        <Route path="/passageiro/cadastro" element={<MobileLayout><RegisterPage forceRole="PASSENGER" /></MobileLayout>} />
         <Route
           path="/passageiro/dashboard"
           element={
             <ProtectedRoute requiredRole="PASSENGER">
-              <PassengerDashboard />
+              <MobileLayout><PassengerDashboard /></MobileLayout>
             </ProtectedRoute>
           }
         />

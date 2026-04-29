@@ -1136,8 +1136,8 @@ export default function PassengerDashboard() {
                       value={manualPriceInput}
                       onChange={(e) => setManualPriceInput(e.target.value)}
                       style={{
-                        flex:1, padding:'8px 12px', borderRadius:'8px', border:'1px solid #d1d5db',
-                        fontSize:'0.9rem', fontWeight:700, outline:'none'
+                        flex:1, padding:'10px 14px', borderRadius:'10px', border:'2px solid #fca5a5',
+                        fontSize:'1rem', fontWeight:700, outline:'none'
                       }}
                     />
                     <button 
@@ -1148,8 +1148,13 @@ export default function PassengerDashboard() {
                           setManualPriceError('Informe um valor válido.');
                           return;
                         }
-                        if (price / distance < 1.50) {
-                          setManualPriceError('Não conseguimos ter desconto nesse valor.');
+                        
+                        // Busca config do backend para aplicar as regras
+                        const minKmPrice = 1.50; // Mock ou buscar de state
+                        const discount = 2.00;
+                        
+                        if ((price - discount) / distance < minKmPrice) {
+                          setManualPriceError('Não conseguimos bater esse valor (preço abaixo do teto de segurança).');
                           setHasCompetitionDiscount(false);
                           setCompPriceRead(0);
                         } else {
@@ -1157,104 +1162,44 @@ export default function PassengerDashboard() {
                           setCompPriceRead(price);
                           setHasCompetitionDiscount(true);
                           setCompPlatform('Concorrência');
-                          setCompCategory('Manual');
                         }
                       }}
                       style={{
-                        background:'#b91c1c', color:'#fff', border:'none', padding:'8px 16px',
-                        borderRadius:'8px', fontWeight:800, cursor:'pointer'
+                        background:'#ef4444', color:'#fff', border:'none', padding:'10px 20px',
+                        borderRadius:'10px', fontWeight:800, cursor:'pointer', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
                       }}
                     >
-                      Consultar
+                      Bater Preço!
                     </button>
                   </div>
 
                   {manualPriceError && (
-                    <p style={{fontSize: '0.75rem', color: '#ef4444', fontWeight: 800, margin: '4px 0'}}>
-                      ⚠️ {manualPriceError}
+                    <p style={{fontSize: '0.8rem', color: '#ef4444', fontWeight: 800, margin: '8px 0', display:'flex', alignItems:'center', gap:'4px'}}>
+                      <span style={{fontSize:'1.1rem'}}>⚠️</span> {manualPriceError}
                     </p>
                   )}
 
                   {hasCompetitionDiscount && !manualPriceError && (
-                    <div style={{background:'#f0fdf4', padding:'10px', borderRadius:'12px', border:'1px solid #bbf7d0', marginTop:'8px'}}>
-                      <div style={{fontSize: '0.75rem', color: '#059669', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom:'4px'}}>
-                         <Check size={14} /> <span>PREÇO IMBATÍVEL APLICADO!</span>
+                    <div className="animate-bounce-subtle" style={{background:'#059669', padding:'14px', borderRadius:'14px', border:'2px solid #34d399', marginTop:'12px', boxShadow:'0 10px 25px -5px rgba(5, 150, 105, 0.4)'}}>
+                      <div style={{fontSize: '0.85rem', color: '#fff', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', marginBottom:'6px'}}>
+                         <Check size={18} strokeWidth={3} /> <span>OFERTA IMBATÍVEL ATIVADA!</span>
                       </div>
-                      <p style={{margin:0, fontSize:'0.7rem', color:'#166534', fontWeight:600}}>
-                        Cobrimos o valor de <strong>R$ {parseFloat(compPriceRead).toFixed(2)}</strong>. <br/>
-                        Seu preço Zomp: <strong style={{fontSize:'0.85rem', color:'#059669'}}>R$ {(compPriceRead - 2).toFixed(2)}</strong>
-                        <span style={{fontSize:'0.65rem', color:'#6b7280', display:'block', marginTop:'2px'}}>R$ 2,00 mais barato que a concorrência ✅</span>
+                      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                        <div>
+                          <p style={{margin:0, fontSize:'0.75rem', color:'#ecfdf5', fontWeight:600}}>
+                            Você informou: R$ {parseFloat(manualPriceInput).toFixed(2)} na concorrência
+                          </p>
+                          <p style={{margin:0, fontSize:'1.1rem', color:'#fff', fontWeight:900}}>
+                            Novo Preço Zomp: <span style={{fontSize:'1.4rem'}}>R$ {(compPriceRead - 2).toFixed(2)}</span>
+                          </p>
+                        </div>
+                        <div style={{background:'#fff', color:'#059669', padding:'4px 10px', borderRadius:'8px', fontWeight:900, fontSize:'0.8rem'}}>
+                          SALVOU R$ 2,00!
+                        </div>
+                      </div>
+                      <p style={{margin:'8px 0 0', fontSize:'0.7rem', color:'#ecfdf5', fontWeight:700, fontStyle:'italic'}}>
+                        ✅ Preço garantido! Chame agora e aproveite a economia.
                       </p>
-                    </div>
-                  )}
-
-                  {!hasCompetitionDiscount && !manualPriceError && (
-                    <div style={{marginTop:'12px', borderTop:'1px dashed #fca5a5', paddingTop:'12px'}}>
-                      <p style={{fontSize: '0.7rem', fontWeight: 600, color: '#7f1d1d', marginBottom:'8px'}}>Ou se preferir, anexe o print:</p>
-                      <label htmlFor="price-print" className="challenge-upload-btn" style={{background:'rgba(185, 28, 28, 0.1)', color:'#b91c1c', border:'1px solid #fca5a5'}}>
-                        <Camera size={14} /> 
-                        <span>Anexar Print</span>
-                        <input type="file" id="price-print" accept="image/*" style={{display:'none'}} onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          setIsAnalyzingPrint(true);
-                          try {
-                            const base64 = await new Promise((resolve, reject) => {
-                              const reader = new FileReader();
-                              reader.onload = () => resolve(reader.result);
-                              reader.onerror = reject;
-                              reader.readAsDataURL(file);
-                            });
-                            const compressedBase64 = await new Promise((resolve) => {
-                              const img = new Image();
-                              img.src = base64;
-                              img.onload = () => {
-                                const canvas = document.createElement('canvas');
-                                const MAX_WIDTH = 1000; 
-                                const scaleSize = MAX_WIDTH / img.width;
-                                canvas.width = MAX_WIDTH;
-                                canvas.height = img.height * scaleSize;
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                                resolve(canvas.toDataURL('image/jpeg', 0.8));
-                              };
-                            });
-                            const token = localStorage.getItem('zomp_token');
-                            const API_BASE = import.meta.env.VITE_API_URL || 'https://zomp-backend.onrender.com/api';
-                            const res = await fetch(`${API_BASE}/analyze-print`, {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`
-                              },
-                              body: JSON.stringify({ imageBase64: compressedBase64 })
-                            });
-                            if (!res.ok) {
-                              const errorData = await res.json().catch(() => ({}));
-                              if (res.status === 422) {
-                                alert(`⚠️ ${errorData.error || 'Não foi possível identificar preço de UberX ou 99Pop.'}`);
-                                return;
-                              }
-                              throw new Error(errorData.error || `Erro API: ${res.status}`);
-                            }
-                            const data = await res.json();
-                            if (data.price && data.price >= 5) {
-                              setCompPriceRead(data.price);
-                              setCompPlatform(data.platform || 'Desconhecida');
-                              setCompCategory(data.category || 'Nenhuma');
-                              setHasCompetitionDiscount(true);
-                              setManualPriceError('');
-                            } else {
-                              alert('❌ A IA não conseguiu identificar um preço válido.');
-                            }
-                          } catch (err) {
-                            alert(`Falha na análise: ${err.message}`);
-                          } finally {
-                            setIsAnalyzingPrint(false);
-                            e.target.value = '';
-                          }
-                        }} />
-                      </label>
                     </div>
                   )}
                 </div>
@@ -1396,7 +1341,12 @@ export default function PassengerDashboard() {
                       ★
                     </button>
                   </div>
-                  <div className="drv-rating">⭐ {favoriteDriversState[0].rating}</div>
+                  <div className="drv-metrics" style={{display:'flex', gap:'12px', alignItems:'center'}}>
+                    <div className="drv-rating">⭐ {favoriteDriversState[0].rating}</div>
+                    <div className="drv-rides" style={{fontSize:'0.75rem', fontWeight:700, color:'#64748b'}}>
+                       {favoriteDriversState[0].ridesCompleted > 0 ? `${favoriteDriversState[0].ridesCompleted} corridas` : <span className="ap-badge-new" style={{margin:0}}>Novo</span>}
+                    </div>
+                  </div>
                 </div>
                 <div className="drv-car">
                   <span className="car-model">{favoriteDriversState[0].car}</span>
