@@ -187,3 +187,10 @@ export async function cancelRide(rideId, status) {
   if (!res.ok) throw new Error(data.error || 'Erro ao cancelar corrida');
   return data;
 }
+
+export async function getGlobalConfig() {
+  const res = await fetch(`${API_BASE}/config`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao buscar configurações');
+  return data;
+}

@@ -387,6 +387,51 @@
 .ap-info-pills { margin-top: 16px; }
 .ap-info-pill { background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 6px; font-size: 0.75rem; color: var(--ap-blue); border-left: 3px solid var(--ap-blue); }
 
+/* ── DOCUMENTATION ── */
+.ap-docs-container { max-width: 1000px; }
+.ap-docs-header { margin-bottom: 32px; }
+.ap-docs-header h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; color: var(--ap-green); }
+.ap-docs-header p { color: var(--ap-txt2); font-size: 0.95rem; }
+.ap-docs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+.ap-doc-card { background: var(--ap-card); border: 1px solid var(--ap-border); border-radius: 16px; padding: 24px; transition: transform 0.2s; }
+.ap-doc-card:hover { border-color: rgba(151,233,0,0.2); }
+.ap-doc-card h3 { font-size: 1rem; font-weight: 800; color: var(--ap-green); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.ap-doc-details { display: flex; flex-direction: column; gap: 14px; }
+.ap-doc-details p { font-size: 0.88rem; color: var(--ap-txt2); line-height: 1.6; }
+.ap-doc-details strong { color: var(--ap-txt); }
+
+.ap-flow-steps { display: flex; flex-direction: column; gap: 12px; }
+.ap-flow-step { background: rgba(255,255,255,0.03); border: 1px solid var(--ap-border); border-radius: 12px; padding: 16px; font-size: 0.85rem; color: var(--ap-txt2); line-height: 1.5; border-left: 4px solid var(--ap-green); }
+.ap-flow-step strong { color: var(--ap-txt); display: block; margin-bottom: 4px; font-size: 0.9rem; }
+
+/* ── FINANCE IRP STYLE ── */
+.ap-irp-grid { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 20px; margin-bottom: 24px; }
+.ap-irp-card { background: var(--ap-card); border: 1px solid var(--ap-border); border-radius: 16px; padding: 20px; }
+.ap-irp-card h3 { font-size: 0.85rem; font-weight: 700; color: var(--ap-txt2); margin-bottom: 20px; text-transform: uppercase; }
+
+.ap-irp-chart { display: flex; align-items: flex-end; gap: 8px; height: 180px; padding-bottom: 10px; border-bottom: 1px solid var(--ap-border); }
+.ap-irp-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ap-irp-bar { width: 100%; background: linear-gradient(to top, var(--ap-blue), #fff); border-radius: 4px; position: relative; transition: height 0.5s ease; min-height: 2px; }
+.ap-irp-bar-tip { position: absolute; top: -18px; font-size: 0.6rem; width: 100%; text-align: center; color: var(--ap-txt); font-weight: 700; }
+.ap-irp-bar-lbl { font-size: 0.6rem; color: var(--ap-txt2); }
+
+.ap-irp-center { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ap-irp-circle { width: 120px; height: 120px; border-radius: 50%; border: 8px solid rgba(151,233,0,0.1); border-top-color: var(--ap-green); display: flex; align-items: center; justify-content: center; position: relative; }
+.ap-irp-circle-inner { text-align: center; display: flex; flex-direction: column; }
+.ap-irp-pct { font-size: 1.5rem; font-weight: 900; color: var(--ap-green); }
+.ap-irp-sub { font-size: 0.65rem; color: var(--ap-txt2); text-transform: uppercase; }
+
+.ap-irp-balance { display: flex; flex-direction: column; gap: 12px; }
+.ap-irp-bal-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--ap-txt2); padding-bottom: 8px; border-bottom: 1px dashed rgba(255,255,255,0.05); }
+.ap-irp-bal-row strong { color: var(--ap-txt); }
+.ap-irp-bal-total { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 900; margin-top: 8px; color: var(--ap-green); }
+
+.ap-stats-mini-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+.ap-mini-card { background: rgba(255,255,255,0.02); border: 1px solid var(--ap-border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+.ap-mini-card span { font-size: 0.7rem; color: var(--ap-txt2); text-transform: uppercase; }
+.ap-mini-card strong { font-size: 1.1rem; color: var(--ap-txt); }
+.ap-mini-card small { font-size: 0.6rem; color: var(--ap-gold); }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
   .ap-sidebar { width: 60px; padding: 16px 8px; }
@@ -394,4 +439,6 @@
   .ap-nav-btn { font-size: 0; padding: 10px; text-align: center; }
   .ap-main { margin-left: 60px; padding: 16px; max-width: calc(100vw - 60px); }
   .ap-doc-grid { grid-template-columns: 1fr; }
+  .ap-docs-grid { grid-template-columns: 1fr; }
+  .ap-irp-grid { grid-template-columns: 1fr; }
 }

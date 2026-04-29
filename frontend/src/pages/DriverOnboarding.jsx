@@ -118,28 +118,28 @@ export default function DriverOnboarding() {
             </p>
             
             <div className="feature-badge">
-              <div className="feature-icon"><Zap size={20} /></div>
-              <div className="feature-info">
-                <h4>Ganhe por indicação</h4>
-                <p>Receba R$ 0,10 por cada corrida de passageiros indicados.</p>
-              </div>
-            </div>
+               <div className="feature-icon"><Zap size={20} /></div>
+               <div className="feature-info">
+                 <h4>Sua Rede de Indicações</h4>
+                 <p>Ganhe royalties por cada corrida realizada pela sua rede de indicados.</p>
+               </div>
+             </div>
 
-            <div className="feature-badge">
-              <div className="feature-icon"><Wallet size={20} /></div>
-              <div className="feature-info">
-                <h4>Taxas Justas</h4>
-                <p>Sem comissões abusivas. Você fica com o que é seu.</p>
-              </div>
-            </div>
+             <div className="feature-badge">
+               <div className="feature-icon"><Wallet size={20} /></div>
+               <div className="feature-info">
+                 <h4>Liberdade Financeira</h4>
+                 <p>Sem comissões abusivas. Você é dono dos seus ganhos e do seu tempo.</p>
+               </div>
+             </div>
 
-            <div className="feature-badge">
-              <div className="feature-icon"><ShieldCheck size={20} /></div>
-              <div className="feature-info">
-                <h4>Segurança Zomp</h4>
-                <p>Suporte 24h e monitoramento em tempo real.</p>
-              </div>
-            </div>
+             <div className="feature-badge">
+               <div className="feature-icon"><ShieldCheck size={20} /></div>
+               <div className="feature-info">
+                 <h4>Tecnologia de Ponta</h4>
+                 <p>Suporte prioritário e monitoramento inteligente em tempo real.</p>
+               </div>
+             </div>
 
             <div className="button-row">
               <button className="btn-onboarding btn-next" onClick={handleNext}>

@@ -142,6 +142,25 @@ const authenticate = (req, res, next) => {
   }
 };
 
+// GET /api/config — Configurações globais para os Apps (Público/Auth)
+app.get('/api/config', async (req, res) => {
+  try {
+    const config = await prisma.adminConfig.findUnique({ where: { id: 'singleton' } });
+    res.json(config || {
+      pricePerKmCar: 2.0,
+      pricePerKmMoto: 1.5,
+      minFareCar: 8.4,
+      minFareMoto: 7.2,
+      royaltyPerRide: 0.3,
+      pricePerCredit: 1.0,
+      minKmPriceImbativel: 1.50,
+      discountImbativel: 2.0
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.put('/api/user/profile', authenticate, async (req, res) => {
   try {
     const { name, email, phone, cnh, crlv, photo, carPlate, carModel, carColor } = req.body;
@@ -692,36 +711,96 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
-// GET /api/admin/stats — painel principal expandido
+// GET /api/admin/stats — estatísticas gerais e financeiras detalhadas
 app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
   try {
-    const [totalDrivers, totalPassengers, totalRides, completedRides, pendingWithdrawals, fundTotal, config] = await Promise.all([
+    const [
+      totalDrivers, 
+      totalPassengers, 
+      completedRidesCount, 
+      royaltyFundBalance,
+      allCompletedRides,
+      totalWithdrawals,
+      config
+    ] = await Promise.all([
       prisma.user.count({ where: { role: 'DRIVER' } }),
       prisma.user.count({ where: { role: 'PASSENGER' } }),
-      prisma.ride.count(),
       prisma.ride.count({ where: { status: 'COMPLETED' } }),
-      prisma.withdrawal.count({ where: { status: 'PENDING' } }),
       prisma.royaltyFund.aggregate({ _sum: { amount: true } }),
+      prisma.ride.findMany({ 
+        where: { status: 'COMPLETED' },
+        select: { price: true, createdAt: true }
+      }),
+      prisma.withdrawal.aggregate({
+        where: { status: 'APPROVED' },
+        _sum: { amount: true }
+      }),
       prisma.adminConfig.findUnique({ where: { id: 'singleton' } }),
+      prisma.creditTransaction.findMany({
+        where: { status: 'COMPLETED' },
+        select: { pricePaid: true, createdAt: true, amount: true }
+      })
     ]);
 
-    // Total royalties distribuídos (saldo nas carteiras dos motoristas)
-    const royaltiesDistributed = await prisma.user.aggregate({ _sum: { balance: true }, where: { role: 'DRIVER' } });
+    const royaltyPerRide = config?.royaltyPerRide || 0.3;
     
-    // Lucro da empresa (exemplo simplificado: poderíamos somar compras de créditos se houvesse um model Transaction)
-    // Para fins de dashboard, vamos estimar com base nas corridas (taxa fixa teórica) ou apenas mostrar o fundo
-    const companyBalance = 2500.50; // Mock de saldo da empresa para o dashboard v1
+    // Cálculos de Receita de Corridas
+    const totalRideRevenue = allCompletedRides.reduce((sum, r) => sum + (r.price || 0), 0);
+    const totalRoyaltiesExpenses = completedRidesCount * royaltyPerRide;
+    
+    // Cálculos de Créditos
+    const totalCreditRevenue = creditTransactions.reduce((sum, c) => sum + (c.pricePaid || 0), 0);
+    const totalRevenue = totalRideRevenue + totalCreditRevenue;
+    const netProfit = totalRevenue - totalRoyaltiesExpenses;
+    
+    // Margem e Saldos
+    const grossMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0;
+    const approvedWithdrawals = totalWithdrawals._sum.amount || 0;
+    const companyBalance = netProfit - approvedWithdrawals;
+
+    // Estatísticas de Créditos por Período
+    const now = new Date();
+    const startOfDay = new Date(now.setHours(0,0,0,0));
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const creditsDay = creditTransactions.filter(c => c.createdAt >= startOfDay).reduce((s, c) => s + c.pricePaid, 0);
+    const creditsWeek = creditTransactions.filter(c => c.createdAt >= startOfWeek).reduce((s, c) => s + c.pricePaid, 0);
+    const creditsMonth = creditTransactions.filter(c => c.createdAt >= startOfMonth).reduce((s, c) => s + c.pricePaid, 0);
+
+    // Agrupamento Diário (Últimos 15 dias para o IRP)
+    const dailyStats = [];
+    for (let i = 14; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayRides = allCompletedRides.filter(r => r.createdAt.toISOString().split('T')[0] === dateStr);
+      const dayCredits = creditTransactions.filter(c => c.createdAt.toISOString().split('T')[0] === dateStr);
+      
+      dailyStats.push({
+        date: dateStr,
+        revenue: dayRides.reduce((sum, r) => sum + (r.price || 0), 0) + dayCredits.reduce((sum, c) => sum + c.pricePaid, 0),
+        count: dayRides.length + dayCredits.length
+      });
+    }
 
     res.json({
       totalDrivers,
       totalPassengers,
-      totalRides,
-      completedRides,
-      pendingWithdrawals,
-      royaltyFundBalance: fundTotal._sum.amount || 0,
-      totalRoyaltiesInWallets: royaltiesDistributed._sum.balance || 0,
+      completedRidesCount,
+      royaltyFundBalance: royaltyFundBalance._sum.amount || 0,
+      totalRevenue,
+      totalRoyaltiesExpenses,
+      netProfit,
+      grossMargin,
       companyBalance,
-      config,
+      dailyStats,
+      creditStats: {
+        day: creditsDay,
+        week: creditsWeek,
+        month: creditsMonth,
+        pricePerCredit: config?.pricePerCredit || 1.0
+      }
     });
   } catch (e) {
     res.status(500).json({ error: e.message });

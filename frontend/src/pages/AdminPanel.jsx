@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { LayoutDashboard, BarChart3, Activity, Users2, Settings2, Library, ArrowUpRightSquare, GanttChartSquare, Contact2, ShieldCheck, HelpCircle, Zap, Globe2, Wallet, Lock } from 'lucide-react'
 import './AdminPanel.css'
+
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -12,7 +14,7 @@ function api(path, opts = {}) {
   }).then(r => r.json())
 }
 
-const tabs = ['Dashboard', 'Financeiro', 'Operações', 'Motoristas', 'Passageiros', 'Configurações', 'Fundo', 'Saques']
+const tabs = ['Dashboard', 'Financeiro', 'Operações', 'Motoristas', 'Passageiros', 'Configurações', 'Fundo', 'Saques', 'Documentação']
 
 export default function AdminPanel() {
   const navigate = useNavigate()
@@ -89,6 +91,8 @@ export default function AdminPanel() {
   const filteredDrivers = drivers.filter(d => d.name?.toLowerCase().includes(search.toLowerCase()) || d.email?.toLowerCase().includes(search.toLowerCase()))
   const filteredPassengers = passengers.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()) || p.email?.toLowerCase().includes(search.toLowerCase()))
 
+
+
   return (
     <div className="ap-root">
       {toast && <div className={`ap-toast ap-toast-${toast.type}`}>{toast.msg}</div>}
@@ -104,6 +108,7 @@ export default function AdminPanel() {
               {t === 'Dashboard' && '📊'} {t === 'Financeiro' && '💰'} {t === 'Operações' && '📡'}
               {t === 'Motoristas' && '🚗'} {t === 'Passageiros' && '👤'}
               {t === 'Configurações' && '⚙️'} {t === 'Fundo' && '💰'} {t === 'Saques' && '💳'}
+              {t === 'Documentação' && '📖'}
               {' '}{t}
             </button>
           ))}
@@ -148,46 +153,91 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* ── FINANCEIRO ── */}
+        {/* ── FINANCEIRO (ESTILO IRP) ── */}
         {tab === 'Financeiro' && stats && (
           <div className="ap-finance">
             <div className="ap-stats-grid">
               <div className="ap-stat-card ap-stat-green">
-                <span className="ap-stat-val">R$ {Number(stats.companyBalance).toFixed(2)}</span>
-                <span className="ap-stat-lbl">Saldo da Empresa</span>
+                <span className="ap-stat-val">R$ {Number(stats?.totalRevenue || 0).toFixed(2)}</span>
+                <span className="ap-stat-lbl">Receita Bruta Total</span>
+              </div>
+              <div className="ap-stat-card ap-stat-red">
+                <span className="ap-stat-val">R$ {Number(stats?.totalRoyaltiesExpenses || 0).toFixed(2)}</span>
+                <span className="ap-stat-lbl">Despesas c/ Royalties</span>
               </div>
               <div className="ap-stat-card ap-stat-blue">
-                <span className="ap-stat-val">R$ {Number(stats.totalRoyaltiesInWallets).toFixed(2)}</span>
-                <span className="ap-stat-lbl">Royalties para Motoristas</span>
-              </div>
-              <div className="ap-stat-card ap-stat-gold">
-                <span className="ap-stat-val">R$ {Number(stats.royaltyFundBalance).toFixed(2)}</span>
-                <span className="ap-stat-lbl">Fundo de Royalties Global</span>
+                <span className="ap-stat-val">R$ {Number(stats?.netProfit || 0).toFixed(2)}</span>
+                <span className="ap-stat-lbl">Lucro Líquido Real</span>
               </div>
             </div>
 
-            <div className="ap-chart-section">
-              <h3>📈 Projeções e Volume de Corridas</h3>
-              <div className="ap-chart-container">
-                <div className="ap-chart-bars">
-                  {[45, 60, 85, 40, 95, 120, 150].map((v, i) => (
-                    <div key={i} className="ap-chart-bar-wrap">
-                      <div className="ap-chart-bar" style={{ height: `${v}px` }}>
-                        <span className="ap-bar-val">{v}</span>
+            <div className="ap-irp-grid">
+              <div className="ap-irp-card">
+                <h3>📊 Demonstrativo de Receita (Corridas + Créditos)</h3>
+                <div className="ap-irp-chart">
+                  {stats?.dailyStats?.map((d, i) => (
+                    <div key={i} className="ap-irp-bar-wrap">
+                      <div className="ap-irp-bar" style={{ height: `${Math.min(150, (d.revenue / 200) * 150)}px` }}>
+                         {d.revenue > 0 && <span className="ap-irp-bar-tip">R$ {d.revenue.toFixed(0)}</span>}
                       </div>
-                      <span className="ap-bar-label">Dia {i+1}</span>
+                      <span className="ap-irp-bar-lbl">{d.date.slice(-2)}/{d.date.slice(5,7)}</span>
                     </div>
                   ))}
-                </div>
-                <div className="ap-chart-info">
-                  <h4>Projeção de Crescimento</h4>
-                  <p>Com base no volume atual de <strong>{stats.completedRides}</strong> corridas, a estimativa de faturamento para o próximo trimestre é de <strong>+24%</strong>.</p>
-                  <div className="ap-projection-pills">
-                    <div className="ap-p-pill"><span>Est. Royalties</span><strong>R$ {(stats.completedRides * 0.3 * 1.2).toFixed(2)}</strong></div>
-                    <div className="ap-p-pill"><span>Est. Lucro</span><strong>R$ {(stats.companyBalance * 1.15).toFixed(2)}</strong></div>
-                  </div>
+                  {(!stats?.dailyStats || stats.dailyStats.length === 0) && <div className="ap-no-data">Aguardando dados...</div>}
                 </div>
               </div>
+
+              <div className="ap-irp-card ap-irp-center">
+                <h3>🎯 Margem de Lucro Líquida</h3>
+                <div className="ap-irp-circle">
+                  <div className="ap-irp-circle-inner">
+                    <span className="ap-irp-pct">{stats?.grossMargin || 0}%</span>
+                    <span className="ap-irp-sub">Lucratividade</span>
+                  </div>
+                </div>
+                <small style={{marginTop:12, opacity:0.6, fontSize:'0.7rem'}}>Retorno sobre faturamento total</small>
+              </div>
+
+              <div className="ap-irp-card">
+                <h3>💰 Saldo em Caixa (Disponível)</h3>
+                <div className="ap-irp-balance">
+                   <div className="ap-irp-bal-row"><span>Total Recebido:</span> <strong>R$ {(stats?.totalRevenue || 0).toFixed(2)}</strong></div>
+                   <div className="ap-irp-bal-row"><span>Royalties Pagos:</span> <strong style={{color:'var(--ap-red)'}}>- R$ {(stats?.totalRoyaltiesExpenses || 0).toFixed(2)}</strong></div>
+                   <div className="ap-irp-bal-row"><span>Saques Aprovados:</span> <strong style={{color:'var(--ap-red)'}}>- R$ {((stats?.netProfit || 0) - (stats?.companyBalance || 0)).toFixed(2)}</strong></div>
+                   <div className="ap-irp-bal-total"><span>Saldo Líquido:</span> <strong>R$ {(stats?.companyBalance || 0).toFixed(2)}</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <h3 style={{marginBottom:16, fontSize:'0.9rem', color:'var(--ap-txt2)'}}>💳 Gestão de Créditos de Motoristas</h3>
+            <div className="ap-stats-mini-grid" style={{marginBottom:24}}>
+              <div className="ap-mini-card">
+                <span>Comprado Hoje</span>
+                <strong>R$ {(stats?.creditStats?.day || 0).toFixed(2)}</strong>
+                <small>Vendas Diárias</small>
+              </div>
+              <div className="ap-mini-card">
+                <span>Comprado na Semana</span>
+                <strong>R$ {(stats?.creditStats?.week || 0).toFixed(2)}</strong>
+                <small>Ciclo Semanal</small>
+              </div>
+              <div className="ap-mini-card">
+                <span>Comprado no Mês</span>
+                <strong>R$ {(stats?.creditStats?.month || 0).toFixed(2)}</strong>
+                <small>Volume Mensal</small>
+              </div>
+              <div className="ap-mini-card">
+                <span>Preço do Crédito</span>
+                <strong>R$ {(stats?.creditStats?.pricePerCredit || 1).toFixed(2)}</strong>
+                <small>Valor p/ Motorista</small>
+              </div>
+            </div>
+
+            <div className="ap-stats-mini-grid">
+              <div className="ap-mini-card"><span>Contas a Pagar</span><strong>R$ 0,00</strong></div>
+              <div className="ap-mini-card"><span>Fundo Global (Receber)</span><strong>R$ {(stats?.royaltyFundBalance || 0).toFixed(2)}</strong><small>Reserva Técnica</small></div>
+              <div className="ap-mini-card"><span>Lucro Líquido</span><strong>{stats?.grossMargin || 0}%</strong></div>
+              <div className="ap-mini-card"><span>Índice de Liquidez</span><strong>1.0</strong></div>
             </div>
           </div>
         )}
@@ -384,11 +434,11 @@ export default function AdminPanel() {
             </div>
 
             <div className="ap-config-section" style={{ borderLeft: '4px solid #f59e0b' }}>
-              <h3>🤝 Estrutura de Rede & Royalties Vitalícios</h3>
+              <h3>🤝 Estrutura de Rede & Royalties com Prazo Definido</h3>
               <p className="ap-section-desc">
-                O motorista Zomp ganha sobre sua rede de passageiros. 
-                <strong> Vínculo Orgânico:</strong> O primeiro motorista a transportar um novo passageiro (ou via QR Code) detém o vínculo por 60 meses. 
-                <strong> Comissionamento:</strong> Cada corrida realizada pelo passageiro gera R$ 0,30 fixo para o motorista detentor do vínculo, limitado a 8 corridas/mês por passageiro (excedentes vão para o Fundo Global).
+                O motorista Zomp ganha sobre sua rede de passageiros sob condições específicas. 
+                <strong> Vínculo Orgânico:</strong> O primeiro motorista a transportar um novo passageiro (ou via QR Code) detém o vínculo por um prazo determinado (ex: 60 meses). 
+                <strong> Comissionamento:</strong> Cada corrida gera um royalty fixo, respeitando os limites mensais e a validade do vínculo.
               </p>
               <div className="ap-form-row">
                 <div className="ap-form-group">
@@ -398,6 +448,20 @@ export default function AdminPanel() {
                 <div className="ap-form-group">
                   <label>Limite Mensal de Corridas/Passag.</label>
                   <input type="number" value={config.royaltyMonthlyLimit} onChange={e => setConfig({ ...config, royaltyMonthlyLimit: e.target.value })} />
+                </div>
+              </div>
+            </div>
+
+            <div className="ap-config-section" style={{ borderLeft: '4px solid var(--ap-blue)' }}>
+              <h3>💳 Sistema de Créditos Operacionais</h3>
+              <p className="ap-section-desc">
+                Defina o valor de venda de cada crédito para os motoristas parceiros. Os créditos são necessários para que o motorista possa aceitar novas corridas na plataforma.
+              </p>
+              <div className="ap-form-row">
+                <div className="ap-form-group">
+                  <label>Preço por Crédito (R$)</label>
+                  <input type="number" step="0.01" value={config.pricePerCredit} onChange={e => setConfig({ ...config, pricePerCredit: e.target.value })} />
+                  <small>Valor unitário cobrado via PIX na plataforma.</small>
                 </div>
               </div>
             </div>
@@ -447,6 +511,63 @@ export default function AdminPanel() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* ── DOCUMENTAÇÃO DETALHADA ZOMP ── */}
+        {tab === 'Documentação' && (
+          <div className="ap-docs-container">
+            <div className="ap-docs-header">
+              <h2>📖 Enciclopédia Operacional & Manuais de Governança</h2>
+              <p>Este guia centraliza toda a inteligência de negócios, fluxos técnicos e regras de compliance da plataforma Zomp.</p>
+            </div>
+
+            <div className="ap-docs-grid">
+              <div className="ap-doc-card">
+                <h3>🚗 Governança do Motorista (Parceiro)</h3>
+                <div className="ap-doc-details">
+                  <p><strong>Onboarding & Auditoria:</strong> O processo de entrada exige CNH (EAR) e CRLV. A aprovação é manual através da aba "Motoristas", onde o administrador verifica a autenticidade das fotos e documentos.</p>
+                  <p><strong>Sistema de Auto-Suspensão:</strong> Auditoria em tempo real. Se a <strong>Nota &lt; {config?.autoSuspendMinRating || 4.0}</strong> ou a <strong>Taxa de Aceitação &lt; {config?.autoSuspendMinAcceptance || 50}%</strong>, a conta é suspensa. Reativação exige revisão.</p>
+                  <p><strong>Radar de Pedidos:</strong> Para receber chamadas, o status deve ser 'Online'. A prioridade no despacho considera proximidade e rating acumulado.</p>
+                </div>
+              </div>
+
+              <div className="ap-doc-card">
+                <h3>👤 Inteligência de Rede (Passageiros)</h3>
+                <div className="ap-doc-details">
+                  <p><strong>Vínculo Vitalício de Rede:</strong> O passageiro fica vinculado ao motorista indicador por 60 meses. Este vínculo é gerado no primeiro transporte ou via QR Code.</p>
+                  <p><strong>Mecânica Preço Imbatível:</strong> O sistema aplica <strong>R$ 2,00 de desconto</strong> sobre o valor informado da concorrência, respeitando o teto de <strong>R$ {config?.minKmPriceImbativel || 1.50}/km</strong>.</p>
+                  <p><strong>Segurança & Ratings:</strong> Avaliações mútuas ao fim de cada viagem para manter a qualidade da rede.</p>
+                </div>
+              </div>
+
+              <div className="ap-doc-card">
+                <h3>💰 Regras Financeiras & Royalties</h3>
+                <div className="ap-doc-details">
+                  <p><strong>Fluxo de Royalties:</strong> R$ {config?.royaltyPerRide || 0.30} creditados ao motorista indicador, retirados da taxa da Zomp (sem custo para o motorista da viagem).</p>
+                  <p><strong>Limite e Fundo Global:</strong> Teto de <strong>{config?.royaltyMonthlyLimit || 8} corridas bonificadas/mês</strong> por passageiro. Excedentes vão para o Fundo Global.</p>
+                  <p><strong>Gestão de Saques:</strong> Liquidação via PIX conforme saldo disponível na Wallet do parceiro.</p>
+                </div>
+              </div>
+
+              <div className="ap-doc-card">
+                <h3>📡 Engenharia do Ciclo de Corrida</h3>
+                <div className="ap-flow-steps">
+                  <div className="ap-flow-step">
+                    <strong>1. Precificação Dinâmica:</strong> Cálculo por KM: Carro (R$ {config?.pricePerKmCar || 2.0}/km) ou Moto (R$ {config?.pricePerKmMoto || 1.5}/km).
+                  </div>
+                  <div className="ap-flow-step">
+                    <strong>2. Despacho Local:</strong> Notificação Socket para motoristas em um raio de até 10km.
+                  </div>
+                  <div className="ap-flow-step">
+                    <strong>3. Multa de Cancelamento:</strong> Cancelamentos pelo passageiro após o aceite geram multa fixa de R$ 2,80.
+                  </div>
+                  <div className="ap-flow-step">
+                    <strong>4. Liquidação Instantânea:</strong> Saldo creditado na carteira imediatamente após a conclusão da viagem.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>

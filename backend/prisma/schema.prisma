@@ -40,6 +40,7 @@ model User {
   referralsMade    Referral[]   @relation("Referrer")
   referredBy       Referral?    @relation("Referred")
   withdrawals      Withdrawal[]
+  creditTransactions CreditTransaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -110,8 +111,21 @@ model AdminConfig {
   // Suspensão Automática
   autoSuspendMinRating      Float  @default(4.0)
   autoSuspendMinAcceptance  Float  @default(50.0)
+
+  // Sistema de Créditos
+  pricePerCredit            Float  @default(1.00)
   
   updatedAt             DateTime @updatedAt
+}
+
+model CreditTransaction {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Int
+  pricePaid Float
+  status    String   @default("COMPLETED") // PENDING, COMPLETED, FAILED
+  createdAt DateTime @default(now())
 }
 
 // Fundo coletivo de royalties

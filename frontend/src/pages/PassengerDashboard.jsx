@@ -100,51 +100,25 @@ export default function PassengerDashboard() {
   const [routeDuration, setRouteDuration] = useState(0)
   const [vehicleType, setVehicleType] = useState('car') // 'car' | 'moto'
 
-  // Pricing constants
-  const PRICE_PER_KM = { car: 2.00, moto: 1.50 }
-  const MIN_PRICE = { car: 8.40, moto: 7.20 }
-
-  // We will define getPrice below, after rideHistory is loaded
-
-  // Profile data
-  const [profileData, setProfileData] = useState({
-    name: user?.name || 'Leandro Palmeira',
-    email: user?.email || 'leandro@exemplo.com'
+  // Pricing state (dynamic from server)
+  const [config, setConfig] = useState({
+    pricePerKmCar: 2.00, pricePerKmMoto: 1.50,
+    minFareCar: 8.40, minFareMoto: 7.20,
+    minKmPriceImbativel: 1.50, discountImbativel: 2.00
   })
 
-  // State machine: IDLE -> PRICED -> SCHEDULING | SEARCHING -> ACCEPTED
-  const [rideState, setRideState] = useState('IDLE')
-  const [isLoading, setIsLoading] = useState(false)
-  const [scheduleData, setScheduleData] = useState({ date: '', time: '' })
-  const [activeRideId, setActiveRideId] = useState(null)
-  
-  // Intercity Trips State
-  const [isIntercity, setIsIntercity] = useState(false)
-  const [isAnalyzingPrint, setIsAnalyzingPrint] = useState(false)
-  const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
-  const [compPriceRead, setCompPriceRead] = useState(0)
-  const [compPlatform, setCompPlatform] = useState('') // 'Uber' | '99' | 'Desconhecida'
-  const [compCategory, setCompCategory] = useState('') // 'UberX' | 'Pop' | 'Nenhuma'
-  const [passengersCount, setPassengersCount] = useState(1)
-  const [manualPriceInput, setManualPriceInput] = useState('')
-  const [manualPriceError, setManualPriceError] = useState('')
-
-  // Freight State
-  const [freightType, setFreightType] = useState(null) // 'caixas' | 'sacos'
-  const [freightDescription, setFreightDescription] = useState('')
-  const [freightContactName, setFreightContactName] = useState('')
-  const [freightContactPhone, setFreightContactPhone] = useState('')
-  const [freightSecurityCode, setFreightSecurityCode] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('PIX') // 'PIX' | 'DINHEIRO'
-  const FREIGHT_PRICE_PER_KM = 2.70
-
-  // Active Ride Extra States
-  const [cancelCountdown, setCancelCountdown] = useState(119)
-  const [isChatOpen, setIsChatOpen] = useState(false)
-  const [chatMessages, setChatMessages] = useState([])
-  const [chatInput, setChatInput] = useState('')
-  const [ratingStars, setRatingStars] = useState(0)
-  const [tempDriverFav, setTempDriverFav] = useState(false)
+  useEffect(() => {
+    async function loadConfig() {
+      try {
+        const { getGlobalConfig } = await import('../services/api');
+        const cfg = await getGlobalConfig();
+        setConfig(cfg);
+      } catch (e) {
+        console.warn('Failed to load global config, using defaults');
+      }
+    }
+    loadConfig();
+  }, []);
 
   // Manage 60-second countdown when ACCEPTED
   useEffect(() => {
@@ -239,11 +213,12 @@ export default function PassengerDashboard() {
     if (isTripIntercity && type === 'car') {
       calculated = parseFloat(km) * 1.70; // Taxa fixa Viagens Longas
     } else {
-      calculated = parseFloat(km) * PRICE_PER_KM[type];
+      calculated = parseFloat(km) * (type === 'car' ? config.pricePerKmCar : config.pricePerKmMoto);
     }
     
     const extraPsg = (type === 'car' && passengersCount > 1) ? (passengersCount - 1) * 2.50 : 0;
-    const basePrice = Math.max(calculated, MIN_PRICE[type]) + stopsFee + extraPsg
+    const basePrice = Math.max(calculated, type === 'car' ? config.minFareCar : config.minFareMoto) + stopsFee + extraPsg
+
     let finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
     
     // REGRA PREÇO IMBATÍVEL: se tivermos um print validado ou entrada manual

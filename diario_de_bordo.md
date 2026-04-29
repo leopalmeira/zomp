@@ -241,14 +241,26 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - SEGURANCA: configurar no Render Dashboard: ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME
 
 
+
 ### [29/04/2026] - Governança Master & Preço Imbatível 2.0
 **Feito:**
 - **Preço Imbatível S/ Burocracia:** Removida a necessidade de print de tela no app do passageiro. Agora a validação é 100% via input de valor e lógica de teto de segurança no sistema.
 - **Visual Agressivo:** Redesign do feedback de oferta no app do passageiro, com animações e destaque de economia real (savings).
 - **Suspensão Automática (IA/Métricas):** Implementada lógica no backend que monitora Nota (Estrelas) e Taxa de Aceitação. Motoristas abaixo do limite (configurável pelo admin) são suspensos automaticamente.
-- **Painel Admin Consolidado:** Seção de configurações agora detalha todas as regras de negócio da plataforma (Preço, Royalties, Suspensão).
+- **Painel Admin Consolidado:** Seção de configurações agora detalha todas as regras de negócio da plataforma (Preço, Royalties, Suspensão). Ajustada terminologia para "Prazo Definido".
 - **Informe de Rendimentos:** Implementado gerador de informe anual em HTML/Print para conformidade fiscal dos motoristas.
 - **Deploy:** Atualização técnica completa e restauração de acessos aos servidores.
+
+### 📅 29/04/2026 - Gestão Master e Sistema de Créditos
+- **Nacionalização Total:** Painel Admin traduzido 100% para o Português, eliminando termos técnicos em inglês (IRP, Profit Margin, etc) para clareza absoluta.
+- **Sistema de Créditos Operacionais:**
+    - Implementação de rastreamento de compras de créditos (Diário, Semanal, Mensal).
+    - Autonomia administrativa para configurar o preço por crédito via PIX.
+    - Integração de receitas de créditos no Demonstrativo Financeiro Geral.
+- **Central de Documentação Integrada:** Criada uma enciclopédia operacional dentro do painel, detalhando regras de suspensão, precificação e fluxos técnicos.
+- **Onboarding Purificado:** Ajuste na jornada do motorista para focar 100% na sua operação, removendo referências irrelevantes a passageiros durante o cadastro.
+- **Blindagem Financeira:** Adição de 'Optional Chaining' e proteções numéricas no frontend para prevenir crashes por falta de dados históricos.
+- **Banco de Dados (Prisma):** Adição do modelo `CreditTransaction` e novos campos de configuração global.
 
 **Decisões Técnicas:**
 - **Fim do Print:** A análise de print (Gemini/OCR) era um ponto de fricção. Optamos por uma regra de negócio baseada em "Teto de Segurança por KM", permitindo que o passageiro apenas informe o valor e o sistema decida se cobre ou não instantaneamente.

@@ -34,9 +34,9 @@ O core do aplicativo para os usuários solicitarem ou agendarem corridas com uma
 ### 4. Governança & Qualidade (Driver Care)
 *   **Suspensão Automática:** Monitoramento em tempo real de Avaliação (Estrelas) e Taxa de Aceitação. Motoristas abaixo do padrão são suspensos instantaneamente pelo sistema.
 *   **Transparência Fiscal:** Geração de Informe de Rendimentos anual (HTML/PDF) para facilitar a declaração de imposto de renda dos parceiros.
-*   **Vínculo Vitalício:** Sistema de Royalties de 60 meses para indicações de novos passageiros.
+*   **Vínculo com Prazo Definido:** Sistema de Royalties com validade e condições específicas para indicações de novos passageiros.
 
-### 5. Painel Administrativo Master
+### 5. Painel Administrativo Master (Faturamento Real & Créditos)
 *   **Monitoramento Real-Time:** Fluxo de pedidos, corridas em andamento e faturamento global.
 *   **Gestão Financeira:** Controle de Fundo de Royalties, Saldo da Empresa e Processamento de Saques.
 *   **Configuração Global:** Alteração dinâmica de tarifas, limites de suspensão e parâmetros de rede.
