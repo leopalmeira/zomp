@@ -90,7 +90,7 @@ export default function LandingPage() {
 
           <motion.p className="lp-hero-sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }}>
             A Zomp não é apenas um app de transporte. É um ecossistema de investimento para motoristas. 
-            Garanta sua fatia do mercado com <strong>royalties recorrentes</strong> de cada passageiro que você trouxer para a rede.
+            Garanta sua fatia do mercado com <strong>royalties recorrentes</strong> de cada cliente que você trouxer para a rede.
           </motion.p>
 
           <motion.div className="lp-hero-actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
@@ -173,7 +173,7 @@ export default function LandingPage() {
 
             <motion.div className="lp-calc-table" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               <div className="lp-calc-header"><span>Métrica Operacional</span><span>Valor Estimado</span></div>
-              <div className="lp-calc-row"><span>Passageiros Ativos na Rede</span><strong>400</strong></div>
+              <div className="lp-calc-row"><span>Clientes Ativos na Rede</span><strong>400</strong></div>
               <div className="lp-calc-row"><span>Frequência Semanal Média</span><strong>2 viagens</strong></div>
               <div className="lp-calc-row"><span>Royalty por Operação</span><strong className="lp-accent">R$ 0,30</strong></div>
               <div className="lp-calc-divider" />
@@ -257,7 +257,7 @@ export default function LandingPage() {
               R$ 2.880 na conta<br /><span className="lp-accent">a cada 3 meses</span>
             </motion.h2>
             <motion.p className="lp-section-sub lp-left-sub" variants={fadeUp}>
-              Sem dirigir uma corrida sequer. Esse é o poder de ter 400 passageiros fazendo 2 corridas por semana na Zomp. Enquanto você descansa, R$ 0,30 por corrida vai direto pra sua carteira.
+              Sem dirigir uma corrida sequer. Esse é o poder de ter 400 clientes vinculados fazendo 2 corridas por semana na Zomp. Enquanto você descansa, R$ 0,30 por corrida vai direto pra sua carteira.
             </motion.p>
             <motion.div className="lp-wallet-stats" variants={fadeUp}>
               <div className="lp-wstat"><span className="lp-wstat-val">R$ 960</span><span className="lp-wstat-lbl">por mês</span></div>
@@ -279,7 +279,7 @@ export default function LandingPage() {
         <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>Por que escolher a Zomp?</motion.h2>
         <motion.div className="lp-features-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {[
-            { icon: <Gift size={26} />, title: 'Royalties Reais', desc: 'R$ 0,30 por corrida de cada passageiro indicado. Acumula 24h por dia, 7 dias por semana.' },
+            { icon: <Gift size={26} />, title: 'Royalties Reais', desc: 'R$ 0,30 por corrida de cada cliente indicado. Acumula 24h por dia, 7 dias por semana.' },
             { icon: <Shield size={26} />, title: 'Segurança Total', desc: 'Monitoramento em tempo real e suporte humanizado 24h por dia.' },
             { icon: <Zap size={26} />, title: 'Preço Imbatível', desc: 'Cobrimos qualquer preço da concorrência e ainda damos desconto adicional.' },
             { icon: <Smartphone size={26} />, title: 'App Premium', desc: 'Interface fluida, GPS em tempo real e experiência mobile de alto nível.' },
