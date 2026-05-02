@@ -19,9 +19,20 @@ export default function DriverOnboarding() {
     carPlate: '',
     carModel: '',
     carColor: '',
+    photo: null,
     cnh: null,
     crlv: null
   })
+
+  // Helper to convert file to base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = error => reject(error)
+    })
+  }
 
   // Redirect if not driver or already approved (though onboarding can be forced)
   useEffect(() => {
@@ -56,26 +67,28 @@ export default function DriverOnboarding() {
     setLoading(true)
     try {
       // Logic to send documents and profile data to backend
-      // Using existing /user/profile endpoint as seen in DriverDashboard.jsx
+      const payload = { ...formData };
+
+      // Convert files to base64 if they are actual File objects
+      if (formData.photo instanceof File) payload.photo = await fileToBase64(formData.photo);
+      if (formData.cnh instanceof File) payload.cnh = await fileToBase64(formData.cnh);
+      if (formData.crlv instanceof File) payload.crlv = await fileToBase64(formData.crlv);
+
       const res = await fetch(`${API}/user/profile`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json' 
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          ...formData,
-          cnh: formData.cnh ? 'uploaded' : '', // simplified for mock
-          crlv: formData.crlv ? 'uploaded' : ''
-        })
+        body: JSON.stringify(payload)
       })
 
       if (!res.ok) throw new Error('Erro ao salvar dados')
-      
-      const updatedUser = { ...user, ...formData, isApproved: false }
+
+      const updatedUser = { ...user, ...payload, isApproved: false }
       localStorage.setItem('zomp_user', JSON.stringify(updatedUser))
       setUser(updatedUser)
-      
+
       setStep(5) // Final step
     } catch (err) {
       alert(err.message)
@@ -87,20 +100,20 @@ export default function DriverOnboarding() {
   return (
     <div className="onboarding-page">
       <div className="onboarding-bg"></div>
-      
+
       <header className="onboarding-header">
         <img src="/logo.svg" alt="Zomp" className="onboarding-logo" />
-        
+
         <div className="progress-container">
           <div className="progress-line">
-            <div 
-              className="progress-line-fill" 
+            <div
+              className="progress-line-fill"
               style={{ width: `${((step - 1) / 3) * 100}%` }}
             ></div>
           </div>
           {[1, 2, 3, 4].map(s => (
-            <div 
-              key={s} 
+            <div
+              key={s}
               className={`progress-step ${step === s ? 'active' : step > s ? 'completed' : ''}`}
             >
               {step > s ? '✓' : s}
@@ -116,34 +129,34 @@ export default function DriverOnboarding() {
             <p className="step-description">
               Você está a poucos passos de se tornar um motorista investidor na Zomp. Vamos configurar seu perfil.
             </p>
-            
+
             <div className="feature-badge">
-               <div className="feature-icon"><Zap size={20} /></div>
-               <div className="feature-info">
-                 <h4>Sua Rede de Indicações</h4>
-                 <p>Ganhe royalties por cada corrida realizada pela sua rede de indicados.</p>
-               </div>
-             </div>
+              <div className="feature-icon"><Zap size={20} /></div>
+              <div className="feature-info">
+                <h4>Sua Rede de Indicações</h4>
+                <p>Ganhe royalties por cada corrida realizada pela sua rede de indicados.</p>
+              </div>
+            </div>
 
-             <div className="feature-badge">
-               <div className="feature-icon"><Wallet size={20} /></div>
-               <div className="feature-info">
-                 <h4>Liberdade Financeira</h4>
-                 <p>Sem comissões abusivas. Você é dono dos seus ganhos e do seu tempo.</p>
-               </div>
-             </div>
+            <div className="feature-badge">
+              <div className="feature-icon"><Wallet size={20} /></div>
+              <div className="feature-info">
+                <h4>Liberdade Financeira</h4>
+                <p>Sem comissões abusivas. Você é dono dos seus ganhos e do seu tempo.</p>
+              </div>
+            </div>
 
-             <div className="feature-badge">
-               <div className="feature-icon"><ShieldCheck size={20} /></div>
-               <div className="feature-info">
-                 <h4>Tecnologia de Ponta</h4>
-                 <p>Suporte prioritário e monitoramento inteligente em tempo real.</p>
-               </div>
-             </div>
+            <div className="feature-badge">
+              <div className="feature-icon"><ShieldCheck size={20} /></div>
+              <div className="feature-info">
+                <h4>Tecnologia de Ponta</h4>
+                <p>Suporte prioritário e monitoramento inteligente em tempo real.</p>
+              </div>
+            </div>
 
             <div className="button-row">
               <button className="btn-onboarding btn-next" onClick={handleNext}>
-                Começar Agora <ArrowRight size={18} style={{marginLeft: '8px', verticalAlign: 'middle'}} />
+                Começar Agora <ArrowRight size={18} style={{ marginLeft: '8px', verticalAlign: 'middle' }} />
               </button>
             </div>
           </div>
@@ -158,10 +171,10 @@ export default function DriverOnboarding() {
 
             <div className="form-group">
               <label className="form-label">Modelo do Carro</label>
-              <input 
+              <input
                 name="carModel"
-                className="form-input" 
-                placeholder="Ex: Toyota Corolla" 
+                className="form-input"
+                placeholder="Ex: Toyota Corolla"
                 value={formData.carModel}
                 onChange={handleInputChange}
               />
@@ -169,21 +182,21 @@ export default function DriverOnboarding() {
 
             <div className="form-group">
               <label className="form-label">Placa do Veículo</label>
-              <input 
+              <input
                 name="carPlate"
-                className="form-input" 
-                placeholder="ABC-1234" 
+                className="form-input"
+                placeholder="ABC-1234"
                 value={formData.carPlate}
-                onChange={e => setFormData({...formData, carPlate: e.target.value.toUpperCase()})}
+                onChange={e => setFormData({ ...formData, carPlate: e.target.value.toUpperCase() })}
               />
             </div>
 
             <div className="form-group">
               <label className="form-label">Cor</label>
-              <input 
+              <input
                 name="carColor"
-                className="form-input" 
-                placeholder="Ex: Prata" 
+                className="form-input"
+                placeholder="Ex: Prata"
                 value={formData.carColor}
                 onChange={handleInputChange}
               />
@@ -191,8 +204,8 @@ export default function DriverOnboarding() {
 
             <div className="button-row">
               <button className="btn-onboarding btn-back" onClick={handleBack}>Voltar</button>
-              <button 
-                className="btn-onboarding btn-next" 
+              <button
+                className="btn-onboarding btn-next"
                 onClick={handleNext}
                 disabled={!formData.carModel || !formData.carPlate}
               >
@@ -210,41 +223,56 @@ export default function DriverOnboarding() {
             </p>
 
             <div className="form-group">
+              <label className="form-label">Foto de Perfil (Rosto)</label>
+              <input
+                type="file"
+                id="photo-upload"
+                hidden
+                onChange={(e) => handleFileUpload(e, 'photo')}
+              />
+              <label htmlFor="photo-upload" className={`upload-box ${formData.photo ? 'has-file' : ''}`}>
+                <span className="upload-icon">📸</span>
+                <p className="upload-text">{formData.photo ? 'Foto Selecionada' : 'Clique para enviar Foto de Perfil'}</p>
+                <p className="upload-subtext">{formData.photo ? formData.photo.name : 'Sua melhor foto para o app'}</p>
+              </label>
+            </div>
+
+            <div className="form-group">
               <label className="form-label">Foto da CNH</label>
-              <input 
-                type="file" 
-                id="cnh-upload" 
-                hidden 
-                onChange={(e) => handleFileUpload(e, 'cnh')} 
+              <input
+                type="file"
+                id="cnh-upload"
+                hidden
+                onChange={(e) => handleFileUpload(e, 'cnh')}
               />
               <label htmlFor="cnh-upload" className={`upload-box ${formData.cnh ? 'has-file' : ''}`}>
                 <span className="upload-icon">🪪</span>
                 <p className="upload-text">{formData.cnh ? 'CNH Selecionada' : 'Clique para enviar CNH'}</p>
-                <p className="upload-subtext">{formData.cnh ? formData.cnh.name : 'Formatos: JPG, PNG ou PDF'}</p>
+                <p className="upload-subtext">{formData.cnh ? formData.cnh.name : 'Formatos: JPG ou PNG'}</p>
               </label>
             </div>
 
             <div className="form-group">
               <label className="form-label">Foto do CRLV</label>
-              <input 
-                type="file" 
-                id="crlv-upload" 
-                hidden 
-                onChange={(e) => handleFileUpload(e, 'crlv')} 
+              <input
+                type="file"
+                id="crlv-upload"
+                hidden
+                onChange={(e) => handleFileUpload(e, 'crlv')}
               />
               <label htmlFor="crlv-upload" className={`upload-box ${formData.crlv ? 'has-file' : ''}`}>
                 <span className="upload-icon">📄</span>
                 <p className="upload-text">{formData.crlv ? 'CRLV Selecionado' : 'Clique para enviar CRLV'}</p>
-                <p className="upload-subtext">{formData.crlv ? formData.crlv.name : 'Documento do veículo atualizado'}</p>
+                <p className="upload-subtext">{formData.crlv ? formData.crlv.name : 'Documento do veículo'}</p>
               </label>
             </div>
 
             <div className="button-row">
               <button className="btn-onboarding btn-back" onClick={handleBack}>Voltar</button>
-              <button 
-                className="btn-onboarding btn-next" 
+              <button
+                className="btn-onboarding btn-next"
                 onClick={handleNext}
-                disabled={!formData.cnh || !formData.crlv}
+                disabled={!formData.cnh || !formData.crlv || !formData.photo}
               >
                 Próximo
               </button>
@@ -261,10 +289,10 @@ export default function DriverOnboarding() {
 
             <div className="form-group">
               <label className="form-label">Telefone de Contato</label>
-              <input 
+              <input
                 name="phone"
-                className="form-input" 
-                placeholder="(00) 00000-0000" 
+                className="form-input"
+                placeholder="(00) 00000-0000"
                 value={formData.phone}
                 onChange={handleInputChange}
               />
@@ -272,25 +300,25 @@ export default function DriverOnboarding() {
 
             <div className="form-group">
               <label className="form-label">Chave PIX (CPF, E-mail ou Celular)</label>
-              <input 
+              <input
                 name="pixKey"
-                className="form-input" 
-                placeholder="Sua chave PIX para repasses" 
+                className="form-input"
+                placeholder="Sua chave PIX para repasses"
                 value={formData.pixKey}
                 onChange={handleInputChange}
               />
             </div>
 
-            <div className="tip-card" style={{marginTop: '20px', padding: '16px', background: 'rgba(151, 233, 0, 0.05)', borderRadius: '12px', border: '1px solid var(--primary-subtle)'}}>
-              <p style={{fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600}}>
+            <div className="tip-card" style={{ marginTop: '20px', padding: '16px', background: 'rgba(151, 233, 0, 0.05)', borderRadius: '12px', border: '1px solid var(--primary-subtle)' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
                 💡 Dica: Mantenha seus dados atualizados para não haver atrasos no pagamento.
               </p>
             </div>
 
             <div className="button-row">
               <button className="btn-onboarding btn-back" onClick={handleBack}>Voltar</button>
-              <button 
-                className="btn-onboarding btn-next" 
+              <button
+                className="btn-onboarding btn-next"
                 onClick={handleSubmit}
                 disabled={loading || !formData.pixKey || !formData.phone}
               >
@@ -301,7 +329,7 @@ export default function DriverOnboarding() {
         )}
 
         {step === 5 && (
-          <div className="step-card" style={{textAlign: 'center'}}>
+          <div className="step-card" style={{ textAlign: 'center' }}>
             <div className="animate-check">
               <CheckCircle size={40} />
             </div>
@@ -310,9 +338,9 @@ export default function DriverOnboarding() {
               Seus dados foram enviados com sucesso. Nossa equipe analisará seus documentos em até 12 horas.
             </p>
 
-            <div style={{background: 'rgba(255, 255, 255, 0.03)', padding: '20px', borderRadius: '16px', marginBottom: '24px', textAlign: 'left'}}>
-              <h4 style={{fontSize: '0.9rem', marginBottom: '8px'}}>O que acontece agora?</h4>
-              <ul style={{fontSize: '0.85rem', color: 'var(--text-muted)', paddingLeft: '20px', lineHeight: '1.6'}}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '20px', borderRadius: '16px', marginBottom: '24px', textAlign: 'left' }}>
+              <h4 style={{ fontSize: '0.9rem', marginBottom: '8px' }}>O que acontece agora?</h4>
+              <ul style={{ fontSize: '0.85rem', color: 'var(--text-muted)', paddingLeft: '20px', lineHeight: '1.6' }}>
                 <li>Análise técnica dos documentos.</li>
                 <li>Ativação do seu perfil no mapa.</li>
                 <li>Você receberá uma notificação quando for aprovado.</li>
@@ -326,7 +354,7 @@ export default function DriverOnboarding() {
         )}
       </main>
 
-      <footer style={{textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.75rem', position: 'relative', zindex: 1}}>
+      <footer style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.75rem', position: 'relative', zindex: 1 }}>
         Zomp &copy; 2026 - Todos os direitos reservados
       </footer>
     </div>

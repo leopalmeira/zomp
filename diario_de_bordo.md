@@ -499,3 +499,9 @@ esetFlow()
 ### [02/05/2026] - Ajuste de Permissão de Admin (v8.1.0)
 **Feito:**
 - **Sincronização de Role:** Refatorada a função `initAdmin()` para garantir que o papel (role) do usuário administrador seja forçadamente definido como `ADMIN`. Isso corrige o problema onde usuários existentes com o mesmo e-mail eram tratados como motoristas, impedindo o acesso ao painel.
+
+### [02/05/2026] - Upload Real de Documentos (v8.3.0)
+**Feito:**
+- **Base64 Document Storage:** Implementada conversão de arquivos para Base64 no `DriverOnboarding.jsx`. Isso permite que fotos reais de Perfil, CNH e CRLV sejam enviadas e persistidas no banco de dados, eliminando o erro de "imagem quebrada" no painel administrativo.
+- **Campo de Foto de Perfil:** Adicionado o campo obrigatório de foto de rosto no fluxo de onboarding do motorista, completando os requisitos de auditoria.
+- **UX de Upload:** Melhorado o feedback visual durante a seleção de arquivos no onboarding.
