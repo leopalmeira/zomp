@@ -16,7 +16,7 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && node seed.js && (pip install easyocr opencv-python-headless pillow || python3 -m pip install easyocr opencv-python-headless pillow || echo 'Pip not found')
+    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && node seed.js
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
@@ -34,6 +34,8 @@ services:
         value: 3001
       - key: PRISMA_CLI_BINARY_TARGETS
         value: "native,debian-openssl-3.0.x"
+      - key: PRISMA_QUERY_ENGINE_LIBRARY
+        value: "./node_modules/@prisma/engines/libquery_engine-debian-openssl-3.0.x.so.node"
 
   # ==========================================
   # FRONTEND - React + Vite (Static Site)

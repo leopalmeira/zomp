@@ -283,7 +283,16 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Vínculo de 2 anos:** Decisão estratégica para aumentar a rotatividade e renovação da base, mantendo a atratividade para novos motoristas.
 - **Lock de Dependências:** Fixar as versões do Prisma (sem `^`) evitou a quebra silenciosa causada por atualizações automáticas de submódulos no ambiente do Render.
 
+### [02/05/2026] - Tentativa de Resiliência Máxima Prisma & Limpeza de Build (v5.1.0)
+**Feito:**
+- **Injeção Direta de Engines:** Adicionados `@prisma/engines` e `@prisma/internals` como dependências diretas para forçar a inclusão dos arquivos binários necessários no Render.
+- **Configuração de Engine Library:** Definida a variável `PRISMA_QUERY_ENGINE_LIBRARY` apontando diretamente para o arquivo `.so.node`, evitando que o Prisma tente localizar o binário dinamicamente e falhe.
+- **Remoção de OCR do Build:** Excluídos os comandos de instalação do `pip`, `easyocr` e `opencv` do `render.yaml` para simplificar o processo de build e evitar timeouts ou estouro de memória no plano gratuito do Render. O sistema usará o fallback do Google Gemini Vision para qualquer análise de imagem necessária.
+
+**Decisões Técnicas:**
+- **Prioridade Prisma:** Como o banco de dados é vital, optamos por sacrificar a instalação local do OCR (Python) no servidor para garantir que o processo de build foque 100% na estabilização do banco de dados PostgreSQL.
+- **Lock de Caminho:** Apontar o caminho da engine manualmente é uma medida extrema para resolver o erro de "módulo não encontrado" persistente no ambiente do Render.
+
 **A Fazer:**
-- Validar o novo fluxo de onboarding com os textos persuasivos.
-- Confirmar se o deploy no Render estabilizou com as novas flags de binary targets.
-- Implementar a exportação de PDF server-side para o Informe de Rendimentos.
+- Verificar se o deploy conclui sem o erro de chunk do Prisma.
+- Se persistir, avaliar a migração de Prisma para um cliente SQL nativo (`pg`).

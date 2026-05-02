@@ -16,6 +16,8 @@
     "@google/genai": "^1.50.1",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "5.22.0",
+    "@prisma/engines": "5.22.0",
+    "@prisma/internals": "5.22.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
