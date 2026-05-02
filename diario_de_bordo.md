@@ -266,13 +266,24 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Fim do Print:** A análise de print (Gemini/OCR) era um ponto de fricção. Optamos por uma regra de negócio baseada em "Teto de Segurança por KM", permitindo que o passageiro apenas informe o valor e o sistema decida se cobre ou não instantaneamente.
 - **Gatilho de Suspensão:** O check de suspensão ocorre em cada evento crítico (aceitação, rejeição ou avaliação), garantindo resposta rápida à baixa qualidade.
 
-### [02/05/2026] - Correções Críticas de Deploy e Estabilidade do Admin
+### [02/05/2026] - Redesign Estratégico da Landing Page e Estabilidade de Build (v5.0.0)
 **Feito:**
-- **Bug Fix (Backend):** Corrigido ReferenceError na rota `/api/admin/stats`. A variável `creditTransactions` não estava sendo desestruturada do `Promise.all`, causando crash no servidor ao abrir o dashboard.
-- **Compatibilidade Render:** Alterado o provider do Prisma de `sqlite` para `postgresql` no `schema.prisma`, garantindo compatibilidade com o banco de dados gerenciado do Render.
-- **Sincronização de Deploy:** Atualizadas as diretrizes de configuração no Render (Necessário configurar `ADMIN_EMAIL`, `ADMIN_PASSWORD` e `ADMIN_NAME`).
+- **Landing Page Profissional:**
+    - **Foco Exclusivo em Motoristas:** Removidas todas as comunicações com passageiros da página inicial para otimizar o onboarding de parceiros.
+    - **Persuasão de Renda Passiva:** Mensagens atualizadas para focar em "Sócio da Plataforma", "Patrimônio Digital" e "Renda Recorrente a Médio Prazo".
+    - **Ajuste de Vínculo:** Alterado o período de vínculo garantido de **5 anos** para **2 anos** (24 meses) em toda a plataforma.
+    - **Tom Corporativo:** Removido tom infantilizado ("Feito com ❤️"). Rodapé agora segue padrão de empresa de tecnologia: "Zomp Mobilidade Tecnológica. Todos os direitos reservados."
+    - **UX:** Simplificada a navegação e adicionado atalho para o Painel Administrativo.
+- **Estabilização de Deploy (Render):**
+    - **Fix Prisma Module Error:** Corrigido erro `Cannot find module './chunk-2BCLJS3M.js'` travando versões do Prisma no `package.json` (v5.22.0) e ajustando o `render.yaml`.
+    - **Otimização de Build:** Removido comandos agressivos de limpeza de cache que causavam corrupção de arquivos no Render.
+    - **Binary Targets:** Adicionada variável `PRISMA_CLI_BINARY_TARGETS` para garantir que o motor de consulta correto seja baixado no ambiente Linux.
+
+**Decisões Técnicas:**
+- **Vínculo de 2 anos:** Decisão estratégica para aumentar a rotatividade e renovação da base, mantendo a atratividade para novos motoristas.
+- **Lock de Dependências:** Fixar as versões do Prisma (sem `^`) evitou a quebra silenciosa causada por atualizações automáticas de submódulos no ambiente do Render.
 
 **A Fazer:**
-- Monitorar logs do Render no primeiro deploy com PostgreSQL.
-- Testar criação automática do Admin via `seed.js`.
-- Exportação do Informe de Rendimentos diretamente para PDF (server-side).
+- Validar o novo fluxo de onboarding com os textos persuasivos.
+- Confirmar se o deploy no Render estabilizou com as novas flags de binary targets.
+- Implementar a exportação de PDF server-side para o Informe de Rendimentos.

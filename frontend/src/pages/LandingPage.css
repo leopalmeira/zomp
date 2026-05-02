@@ -444,11 +444,41 @@
 
 /* ── FOOTER ── */
 .lp-footer {
-  padding: 50px 5% 36px; text-align: center;
-  border-top: 1px solid var(--border); position: relative; z-index: 1;
+  padding: 60px 5% 40px;
+  border-top: 1px solid var(--border);
+  position: relative;
+  z-index: 1;
+  background: rgba(4,10,22,0.6);
 }
-.lp-footer-logo { height: 26px; margin-bottom: 14px; opacity: 0.6; }
-.lp-footer p { color: var(--txt2); font-size: 0.85rem; }
+.lp-footer-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.lp-footer-logo {
+  height: 28px;
+  opacity: 0.8;
+  filter: grayscale(100%) brightness(1.5);
+}
+.lp-footer-info {
+  text-align: center;
+}
+.lp-footer-info p {
+  color: var(--txt2);
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.lp-footer-tagline {
+  font-size: 0.72rem !important;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.5;
+  margin-top: 12px;
+}
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
