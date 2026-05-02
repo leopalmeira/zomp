@@ -131,8 +131,8 @@ const LandingDriver = () => {
         </motion.div>
         <motion.div className="glass-card benefit-card" variants={fadeUp}>
           <div className="icon-wrapper green-bg"><Users size={32} /></div>
-          <h3>ROYALTIES DE PASSAGEIROS <br/><span>R$ 0,50</span></h3>
-          <p>por cada corrida feita por seus passageiros vinculados</p>
+          <h3>ROYALTIES RECORRENTES <br/><span>R$ 0,50</span></h3>
+          <p>por cada corrida feita por clientes vinculados à sua rede</p>
         </motion.div>
         <motion.div className="glass-card benefit-card" variants={fadeUp}>
           <div className="icon-wrapper green-bg"><TrendingUp size={32} /></div>
@@ -196,7 +196,7 @@ const LandingDriver = () => {
         </div>
       </section>
 
-      {/* APP DO PASSAGEIRO - ARGUMENTO DE VENDAS PARA O MOTORISTA */}
+      {/* ARGUMENTO DE VENDAS PARA O MOTORISTA */}
       <section className="sales-pitch-section">
         <motion.div
            initial="hidden"
@@ -204,8 +204,8 @@ const LandingDriver = () => {
            viewport={{ once: true }}
            variants={staggerContainer}
         >
-          <motion.h2 className="section-title" variants={fadeUp}>UMA PLATAFORMA PARA VOCÊ CONQUISTAR SEUS PASSAGEIROS</motion.h2>
-          <motion.p className="pitch-subtitle" variants={fadeUp}>Veja por que o app do passageiro é imbatível. Use isso para trazer seus clientes e gerar a sua renda passiva!</motion.p>
+          <motion.h2 className="section-title" variants={fadeUp}>UMA PLATAFORMA PARA VOCÊ CONQUISTAR UMA CARTEIRA DE CLIENTES</motion.h2>
+          <motion.p className="pitch-subtitle" variants={fadeUp}>Veja por que o sistema é imbatível. Use isso para expandir sua rede e gerar a sua renda passiva!</motion.p>
           
           <motion.div className="price-match-banner" variants={fadeUp}>
             <h3>PREÇO IMBATÍVEL! SEMPRE O MAIS BARATO.</h3>
@@ -228,21 +228,21 @@ const LandingDriver = () => {
             </div>
             
             <div className="pitch-highlight">
-              <h4>O PASSAGEIRO PAGA MENOS E AINDA AJUDA O MOTORISTA!</h4>
+              <h4>O CLIENTE PAGA MENOS E VOCÊ LUCRA MAIS!</h4>
               <p>Parte dos nossos lucros volta para os motoristas todos os dias em forma de <strong>ROYALTIES</strong>. ISSO NENHUM OUTRO APP FAZ!</p>
             </div>
           </motion.div>
           
-          <motion.div className="passenger-features" variants={staggerContainer}>
+            <motion.div className="passenger-features" variants={staggerContainer}>
             <motion.div className="p-feat" variants={fadeUp}>
                <CalendarCheck className="feat-icon" size={32} />
                <h4>Agendamento de Corridas</h4>
-               <p>Passageiro programa corridas com antecedência.</p>
+               <p>O cliente programa corridas com antecedência.</p>
             </motion.div>
             <motion.div className="p-feat" variants={fadeUp}>
                <Heart className="feat-icon" size={32} />
                <h4>Motoristas Favoritos</h4>
-               <p>Passageiro salva os preferidos. Você fideliza clientes!</p>
+               <p>O cliente salva você como preferido. Fidelização real!</p>
             </motion.div>
             <motion.div className="p-feat" variants={fadeUp}>
                <MapPin className="feat-icon" size={32} />
