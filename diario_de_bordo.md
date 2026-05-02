@@ -294,7 +294,20 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Redução de Fricção:** A análise automática de prints era um ponto de falha e complexidade desnecessária. A nova métrica baseada em valor/km percorrido é mais justa, rápida e à prova de erros técnicos.
 - **Segurança de Dados:** Com a remoção do Gemini, não há mais tráfego de dados (imagens) para APIs externas, aumentando a privacidade do usuário.
 
+### [02/05/2026] - Estabilização de Deploy e Configuração de Acessos de Produção (v7.1.0)
+**Feito:**
+- Deploy realizado com sucesso no Render após forçar a regeneração do `package-lock.json` para limpar scripts antigos do Prisma que estavam no cache do npm.
+- Registrados oficialmente todos os links da aplicação em produção.
+
+**Links de Produção:**
+- **Landing Page (Site Institucional):** [https://zomp-app.onrender.com/](https://zomp-app.onrender.com/)
+- **App do Passageiro:** [https://zomp-app.onrender.com/passageiro](https://zomp-app.onrender.com/passageiro)
+- **App do Motorista:** [https://zomp-app.onrender.com/motorista](https://zomp-app.onrender.com/motorista)
+- **Painel Administrativo:** [https://zomp-app.onrender.com/admin/login](https://zomp-app.onrender.com/admin/login)
+
+**Credenciais Administrativas:**
+- O acesso ao painel é gerenciado exclusivamente pelas variáveis de ambiente configuradas no servidor Render: `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
+
 **A Fazer:**
-- Ajustar o frontend (`PassengerDashboard.jsx`) para refletir a remoção do botão de upload de print.
-- Testar a nova lógica de cálculo de desconto manual no app do passageiro.
-- Deploy final no Render com a arquitetura simplificada.
+- Realizar simulações de corrida fim-a-fim nos apps de produção.
+- Monitorar a integridade dos dados na nova arquitetura SQL.
