@@ -89,7 +89,7 @@ export default function LandingPage() {
           </motion.h1>
 
           <motion.p className="lp-hero-sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }}>
-            A Zomp não é apenas um app de transporte. É um ecossistema de investimento para motoristas. 
+            A Zomp não é apenas um app de transporte. É um ecossistema de investimento para motoristas.
             Garanta sua fatia do mercado com <strong>royalties recorrentes</strong> de cada cliente que você trouxer para a rede.
           </motion.p>
 
@@ -123,8 +123,8 @@ export default function LandingPage() {
             <div className="lp-entry-icon"><TrendingUp size={32} /></div>
             <h3>Motorista Parceiro & Sócio</h3>
             <p>
-              Mude sua trajetória financeira. Ganhe a tarifa integral das suas viagens 
-              e construa uma <strong>carteira de royalties</strong> que paga R$ 0,30 por cada viagem 
+              Mude sua trajetória financeira. Ganhe a tarifa integral das suas viagens
+              e construa uma <strong>carteira de royalties</strong> que paga R$ 0,30 por cada viagem
               da sua rede, gerando lucro mesmo com o veículo parado.
             </p>
             <div className="lp-entry-pill">💎 Ativo Financeiro Digital</div>
@@ -142,7 +142,7 @@ export default function LandingPage() {
           Um processo <span className="lp-accent">rigoroso e profissional</span><br />para garantir a qualidade.
         </motion.h2>
         <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          Nosso objetivo é ter apenas motoristas de alto nível. O processo é simples, porém rigoroso. 
+          Nosso objetivo é ter apenas motoristas de alto nível. O processo é simples, porém rigoroso.
           Siga os passos abaixo para se tornar um sócio da plataforma.
         </motion.p>
         <motion.div className="lp-how-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -247,6 +247,11 @@ export default function LandingPage() {
                 <li key={i}><XCircle size={16} className="lp-x" /><span>{item}</span></li>
               ))}
             </ul>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      <section className="lp-wallet-section">
         <div className="lp-wallet-wrap">
           <motion.div className="lp-wallet-img-wrap" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <img src="/zomp_driver_realistic.png" alt="Motorista Zomp" className="lp-wallet-img" />
