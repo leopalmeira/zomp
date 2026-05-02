@@ -15,15 +15,18 @@ async function initAdmin() {
     const adminName = process.env.ADMIN_NAME || 'Leandro Palmeira';
 
     const { rows } = await query('SELECT id FROM "User" WHERE email = $1', [adminEmail]);
+    const hash = await bcrypt.hash(adminPassword, 10);
+
     if (rows.length === 0) {
-      const hash = await bcrypt.hash(adminPassword, 10);
       await query(
         'INSERT INTO "User" (id, name, email, password, role, balance, rating, "totalRatings", "ridesAccepted", "ridesMissed", "ridesCompleted", "isApproved", "createdAt", "updatedAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, 0, 5, 0, 0, 0, 0, true, NOW(), NOW())',
         [adminName, adminEmail, hash, 'ADMIN']
       );
       console.log('✅ Admin initialized:', adminEmail);
     } else {
-      console.log('ℹ️ Admin already exists');
+      // Forçar sincronização de senha caso tenha mudado
+      await query('UPDATE "User" SET password = $1, name = $2 WHERE email = $3', [hash, adminName, adminEmail]);
+      console.log('ℹ️ Admin credentials synchronized:', adminEmail);
     }
 
     // Config singleton
