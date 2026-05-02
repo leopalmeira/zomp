@@ -54,6 +54,13 @@ function Countdown() {
 
 export default function LandingPage() {
   const navigate = useNavigate()
+  const [passengers, setPassengers] = useState(400)
+
+  // Simulation Logic: 2 rides/week per passenger, 4 weeks/month, R$ 0.30 royalty
+  const monthlyPassive = passengers * 2 * 4 * 0.30
+  const quarterlyPassive = monthlyPassive * 3
+  const yearlyPassive = monthlyPassive * 12
+
   const fadeUp = { hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { duration: 0.7, ease: 'easeOut' } } }
   const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.12 } } }
 
@@ -67,7 +74,6 @@ export default function LandingPage() {
         <div className="lp-nav-links">
           <button onClick={() => navigate('/motorista')}>Parceria</button>
           <button onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button>
-          <button onClick={() => navigate('/admin/login')}>Acesso Administrativo</button>
         </div>
         <button className="lp-cta-btn" onClick={() => navigate('/motorista/cadastro')}>Cadastrar agora</button>
       </nav>
@@ -172,17 +178,30 @@ export default function LandingPage() {
             </motion.h2>
 
             <motion.div className="lp-calc-table" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+              <div className="lp-simulator-header">
+                <span>Clientes na sua Rede: <strong>{passengers}</strong></span>
+                <input
+                  type="range"
+                  min="0"
+                  max="1000"
+                  step="10"
+                  value={passengers}
+                  onChange={(e) => setPassengers(parseInt(e.target.value))}
+                  className="lp-slider"
+                />
+              </div>
+
               <div className="lp-calc-header"><span>Métrica Operacional</span><span>Valor Estimado</span></div>
-              <div className="lp-calc-row"><span>Clientes Ativos na Rede</span><strong>400</strong></div>
+              <div className="lp-calc-row"><span>Clientes Ativos na Rede</span><strong>{passengers}</strong></div>
               <div className="lp-calc-row"><span>Frequência Semanal Média</span><strong>2 viagens</strong></div>
               <div className="lp-calc-row"><span>Royalty por Operação</span><strong className="lp-accent">R$ 0,30</strong></div>
               <div className="lp-calc-divider" />
-              <div className="lp-calc-row"><span>Volume de Viagens/Mês</span><strong>3.200</strong></div>
-              <div className="lp-calc-row lp-calc-sub"><span>Rendimento Mensal Passivo</span><strong className="lp-accent">R$ 960,00</strong></div>
+              <div className="lp-calc-row"><span>Volume de Viagens/Mês</span><strong>{(passengers * 2 * 4).toLocaleString('pt-BR')}</strong></div>
+              <div className="lp-calc-row lp-calc-sub"><span>Rendimento Mensal Passivo</span><strong className="lp-accent">R$ {monthlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
               <div className="lp-calc-divider" />
               <div className="lp-calc-row lp-calc-total">
                 <span>💰 Acúmulo para Saque Trimestral</span>
-                <strong className="lp-gold-val"><CountUp target={2880} prefix="R$ " suffix=",00" duration={2000} /></strong>
+                <strong className="lp-gold-val">R$ {quarterlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
               </div>
             </motion.div>
 
@@ -197,7 +216,7 @@ export default function LandingPage() {
           <motion.div className="lp-sim-right" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <img src="/zomp_driver_network.png" alt="Zomp Business Model" className="lp-sim-img" />
             <div className="lp-sim-pill">
-              <span className="lp-sim-pill-val">+R$ 11.520 / ano</span>
+              <span className="lp-sim-pill-val">+R$ {yearlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / ano</span>
               <span className="lp-sim-pill-lbl">Renda Extra Passiva Estimada</span>
             </div>
           </motion.div>
