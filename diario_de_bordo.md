@@ -504,4 +504,9 @@ esetFlow()
 **Feito:**
 - **Base64 Document Storage:** Implementada conversão de arquivos para Base64 no `DriverOnboarding.jsx`. Isso permite que fotos reais de Perfil, CNH e CRLV sejam enviadas e persistidas no banco de dados, eliminando o erro de "imagem quebrada" no painel administrativo.
 - **Campo de Foto de Perfil:** Adicionado o campo obrigatório de foto de rosto no fluxo de onboarding do motorista, completando os requisitos de auditoria.
-- **UX de Upload:** Melhorado o feedback visual durante a seleção de arquivos no onboarding.
+
+### [02/05/2026] - Cache-Bypass e Redesign Administrativo Final (v8.5.0)
+**Feito:**
+- **Inertia CSS Fix:** Alterada a classe base do Admin para `sistema-admin-v8` para forçar atualização de cache.
+- **Redesign Corporativo:** Novo layout side-by-side (Formulário/Imagem) exclusivo para desktop admin.
+- **Full Screen:** Forçada largura total em monitores widescreen.
