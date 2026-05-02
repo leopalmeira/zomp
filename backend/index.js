@@ -721,7 +721,8 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
       royaltyFundBalance,
       allCompletedRides,
       totalWithdrawals,
-      config
+      config,
+      creditTransactions
     ] = await Promise.all([
       prisma.user.count({ where: { role: 'DRIVER' } }),
       prisma.user.count({ where: { role: 'PASSENGER' } }),

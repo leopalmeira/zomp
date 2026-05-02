@@ -266,6 +266,13 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Fim do Print:** A análise de print (Gemini/OCR) era um ponto de fricção. Optamos por uma regra de negócio baseada em "Teto de Segurança por KM", permitindo que o passageiro apenas informe o valor e o sistema decida se cobre ou não instantaneamente.
 - **Gatilho de Suspensão:** O check de suspensão ocorre em cada evento crítico (aceitação, rejeição ou avaliação), garantindo resposta rápida à baixa qualidade.
 
+### [02/05/2026] - Correções Críticas de Deploy e Estabilidade do Admin
+**Feito:**
+- **Bug Fix (Backend):** Corrigido ReferenceError na rota `/api/admin/stats`. A variável `creditTransactions` não estava sendo desestruturada do `Promise.all`, causando crash no servidor ao abrir o dashboard.
+- **Compatibilidade Render:** Alterado o provider do Prisma de `sqlite` para `postgresql` no `schema.prisma`, garantindo compatibilidade com o banco de dados gerenciado do Render.
+- **Sincronização de Deploy:** Atualizadas as diretrizes de configuração no Render (Necessário configurar `ADMIN_EMAIL`, `ADMIN_PASSWORD` e `ADMIN_NAME`).
+
 **A Fazer:**
-- Automação de envio de e-mails/notificações para motoristas suspensos.
+- Monitorar logs do Render no primeiro deploy com PostgreSQL.
+- Testar criação automática do Admin via `seed.js`.
 - Exportação do Informe de Rendimentos diretamente para PDF (server-side).
