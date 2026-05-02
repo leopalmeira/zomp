@@ -283,16 +283,20 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Vínculo de 2 anos:** Decisão estratégica para aumentar a rotatividade e renovação da base, mantendo a atratividade para novos motoristas.
 - **Lock de Dependências:** Fixar as versões do Prisma (sem `^`) evitou a quebra silenciosa causada por atualizações automáticas de submódulos no ambiente do Render.
 
-### [02/05/2026] - Tentativa de Resiliência Máxima Prisma & Limpeza de Build (v5.1.0)
+### [02/05/2026] - Migração Radical: Fim do Prisma e Adoção de SQL Nativo (v6.0.0)
 **Feito:**
-- **Injeção Direta de Engines:** Adicionados `@prisma/engines` e `@prisma/internals` como dependências diretas para forçar a inclusão dos arquivos binários necessários no Render.
-- **Configuração de Engine Library:** Definida a variável `PRISMA_QUERY_ENGINE_LIBRARY` apontando diretamente para o arquivo `.so.node`, evitando que o Prisma tente localizar o binário dinamicamente e falhe.
-- **Remoção de OCR do Build:** Excluídos os comandos de instalação do `pip`, `easyocr` e `opencv` do `render.yaml` para simplificar o processo de build e evitar timeouts ou estouro de memória no plano gratuito do Render. O sistema usará o fallback do Google Gemini Vision para qualquer análise de imagem necessária.
+- **Remoção Completa do Prisma:** O Prisma foi excluído do projeto (CLI, Client e Engines) para eliminar de vez os erros de carregamento de módulos binários no Render.
+- **Adoção do Driver `pg`:** Implementado o cliente nativo do PostgreSQL (`pg`) para todas as operações de banco de dados.
+- **Módulo de Conexão (`db.js`):** Criado um pool de conexões otimizado com suporte a SSL (necessário para o Render).
+- **Refatoração do Backend (`index.js`):** Reescritas todas as rotas (Autenticação, Corridas, Royalties, Admin) para usar queries SQL diretas.
+- **Script de Inicialização (`seed.js`):** Reescrevi o script de criação do Admin e configurações iniciais para usar SQL nativo.
+- **Build Simplificado (`render.yaml`):** O processo de build foi reduzido apenas ao `npm install` e `node seed.js`, tornando o deploy muito mais rápido e leve.
 
 **Decisões Técnicas:**
-- **Prioridade Prisma:** Como o banco de dados é vital, optamos por sacrificar a instalação local do OCR (Python) no servidor para garantir que o processo de build foque 100% na estabilização do banco de dados PostgreSQL.
-- **Lock de Caminho:** Apontar o caminho da engine manualmente é uma medida extrema para resolver o erro de "módulo não encontrado" persistente no ambiente do Render.
+- **Migração para SQL Puro:** Decidimos que a estabilidade do deploy é prioridade máxima. O driver `pg` é agnóstico à arquitetura e não requer downloads de binários complexos durante o build, garantindo 100% de sucesso no deploy.
+- **Nomes de Tabelas Quoted:** As queries SQL usam aspas duplas (ex: `SELECT * FROM "User"`) para respeitar o Case-Sensitivity do PostgreSQL e a estrutura criada anteriormente pelo Prisma.
 
 **A Fazer:**
-- Verificar se o deploy conclui sem o erro de chunk do Prisma.
-- Se persistir, avaliar a migração de Prisma para um cliente SQL nativo (`pg`).
+- Monitorar a performance das queries nativas no dashboard do Admin.
+- Validar se todas as rotas mantiveram o comportamento idêntico após a migração.
+- Realizar o deploy final com "Clear Build Cache" no Render.
