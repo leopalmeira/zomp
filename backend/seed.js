@@ -2,8 +2,8 @@ const { query, pool } = require('./db');
 const bcrypt = require('bcrypt');
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminEmail = process.env.ADMIN_EMAIL || 'leandro2703palmeira@gmail.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'Lps27031981@';
   const adminName = process.env.ADMIN_NAME || 'Administrador Zomp';
 
   if (!adminEmail || !adminPassword) {

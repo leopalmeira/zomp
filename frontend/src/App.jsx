@@ -45,7 +45,7 @@ function App() {
         {/* ==================================
             ADMIN
             ================================== */}
-        <Route path="/admin/login" element={<MobileLayout><LoginPage forceRole="ADMIN" /></MobileLayout>} />
+        <Route path="/admin/login" element={<LoginPage forceRole="ADMIN" />} />
         <Route
           path="/admin"
           element={
