@@ -38,24 +38,24 @@ export default function LoginPage({ forceRole }) {
   const registerLink = isDriver ? '/motorista/cadastro' : '/passageiro/cadastro'
 
   return (
-    <div className={`auth-page ${isDriver ? 'driver-theme' : ''} ${isAdmin ? 'admin-theme' : ''}`}>
+    <div className={`auth-page ${isDriver ? 'driver-theme' : ''} ${isAdmin ? 'sistema-admin-v8' : ''}`}>
       <AuthMapBg />
 
       <div className="auth-container animate-fade-in">
-        
-          <div className="logo-container">
-            <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
-          </div>
-          <h1>{isAdmin ? 'Painel Admin' : isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
-          {isAdmin && <span className="driver-slogan" style={{color:'#97E900'}}>Acesso restrito ao administrador</span>}
-          {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
-          <p className="auth-subtitle">
-            {isAdmin ? 'Digite suas credenciais de administrador para continuar.' : isDriver ? 'Acesse o portal do motorista.' : 'Corridas mais justas, sem taxas abusivas para os motoristas.'}
-          </p>
-        
+
+        <div className="logo-container">
+          <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
+        </div>
+        <h1>{isAdmin ? 'Painel Admin' : isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
+        {isAdmin && <span className="driver-slogan" style={{ color: '#97E900' }}>Acesso restrito ao administrador</span>}
+        {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
+        <p className="auth-subtitle">
+          {isAdmin ? 'Digite suas credenciais de administrador para continuar.' : isDriver ? 'Acesse o portal do motorista.' : 'Corridas mais justas, sem taxas abusivas para os motoristas.'}
+        </p>
+
 
         <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-accent' : ''}`}>
-          
+
           {error && <div className="auth-error">⚠ {error}</div>}
 
           <div className="input-group">

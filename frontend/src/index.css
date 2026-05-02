@@ -209,11 +209,11 @@ a:hover {
 
 /* Global Admin Override to ensure full-screen on desktop */
 body:has(.ap-root),
-body:has(.admin-theme) {
+body:has(.sistema-admin-v8) {
   background-color: #060d1a !important;
 }
 
-.admin-theme .auth-page {
+.sistema-admin-v8 .auth-page {
   width: 100% !important;
   max-width: 100% !important;
   left: 0 !important;
