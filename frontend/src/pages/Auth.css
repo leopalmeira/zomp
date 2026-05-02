@@ -19,7 +19,10 @@
 .auth-page::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: radial-gradient(circle at 50% 30%, rgba(12, 15, 20, 0) 0%, rgba(12, 15, 20, 0.85) 90%);
   pointer-events: none;
   z-index: 2;
@@ -32,7 +35,8 @@
   padding: 40px 24px;
   position: relative;
   z-index: 10;
-  justify-content: flex-end; /* Push form down for map visibility */
+  justify-content: flex-end;
+  /* Push form down for map visibility */
   padding-bottom: 50px;
 }
 
@@ -81,7 +85,7 @@
   line-height: 1;
   margin-bottom: 8px;
   color: #fff;
-  text-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
   font-weight: 900;
   letter-spacing: -1px;
 }
@@ -103,14 +107,14 @@
   color: #94a3b8;
   max-width: 280px;
   margin: 0 auto 16px;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  
+
   /* Premium Dark Glassmorphism */
   background: rgba(20, 25, 30, 0.7);
   backdrop-filter: blur(24px);
@@ -118,7 +122,7 @@
   padding: 32px 24px;
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
 }
 
 .auth-form label {
@@ -193,10 +197,12 @@
   color: #000;
   box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
 }
+
 .driver-accent .btn-submit:hover {
   background: #f1f5f9;
   box-shadow: 0 10px 25px rgba(255, 255, 255, 0.3);
 }
+
 .driver-accent .auth-link a {
   color: #ffffff;
 }
@@ -212,8 +218,31 @@
   font-style: italic;
 }
 
+/* --- ADMIN FULL SCREEN UI --- */
+.admin-theme .auth-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  justify-content: center;
+  padding-bottom: 0;
+  height: 100%;
+}
+
+.admin-theme .auth-form {
+  max-width: 450px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.admin-theme .auth-subtitle {
+  max-width: none;
+}
+
+.admin-theme .logo-img-auth {
+  height: 80px;
+}
+
 /* Hide Leaflet Attribution and Logos globally */
-.leaflet-control-attribution, 
+.leaflet-control-attribution,
 .leaflet-control-attribution a,
 .leaflet-bottom.leaflet-right,
 .leaflet-bottom.leaflet-left,

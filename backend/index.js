@@ -8,6 +8,38 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+async function initAdmin() {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL || 'leandro2703palmeira@gmail.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Lps27031981@';
+    const adminName = process.env.ADMIN_NAME || 'Leandro Palmeira';
+
+    const { rows } = await query('SELECT id FROM "User" WHERE email = $1', [adminEmail]);
+    if (rows.length === 0) {
+      const hash = await bcrypt.hash(adminPassword, 10);
+      await query(
+        'INSERT INTO "User" (id, name, email, password, role, balance, rating, "totalRatings", "ridesAccepted", "ridesMissed", "ridesCompleted", "isApproved", "createdAt", "updatedAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, 0, 5, 0, 0, 0, 0, true, NOW(), NOW())',
+        [adminName, adminEmail, hash, 'ADMIN']
+      );
+      console.log('✅ Admin initialized:', adminEmail);
+    } else {
+      console.log('ℹ️ Admin already exists');
+    }
+
+    // Config singleton
+    const { rows: configRows } = await query('SELECT id FROM "AdminConfig" WHERE id = $1', ['singleton']);
+    if (configRows.length === 0) {
+      await query(
+        'INSERT INTO "AdminConfig" (id, "pricePerKmCar", "pricePerKmMoto", "minFareCar", "minFareMoto", "royaltyPerRide", "royaltyMonthlyLimit", "maxPassengersPerDriver", "bindingMonthsFirst", "bindingMonthsRenew", "autoSuspendMinAcceptance", "autoSuspendMinRating") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)',
+        ['singleton', 2.00, 1.50, 8.40, 7.20, 0.30, 8, 700, 36, 24, 70, 4.5]
+      );
+      console.log('✅ AdminConfig initialized');
+    }
+  } catch (e) {
+    console.error("❌ Error initializing admin:", e);
+  }
+}
+
 const app = express();
 
 // CORS explÃ­cito
@@ -31,7 +63,7 @@ async function checkDriverSuspension(driverId) {
     const driver = driverRows[0];
     const { rows: configRows } = await query('SELECT * FROM "AdminConfig" WHERE id = $1', ['singleton']);
     const config = configRows[0];
-    
+
     if (!driver || !config) return;
 
     const totalRequests = (driver.ridesAccepted || 0) + (driver.ridesMissed || 0);
@@ -70,7 +102,7 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password, role, referrerQrCode } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    
+
     const qrCode = role === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null;
     const initialCredits = role === 'DRIVER' ? 10 : 0;
     const initialRole = role || 'PASSENGER';
@@ -86,7 +118,7 @@ app.post('/api/auth/register', async (req, res) => {
       const referrer = referrers[0];
       if (referrer) {
         const expiresAt = new Date();
-        expiresAt.setFullYear(expiresAt.getFullYear() + 2); 
+        expiresAt.setFullYear(expiresAt.getFullYear() + 2);
         await query('INSERT INTO "Referral" (id, "referrerId", "referredId", "expiresAt", "createdAt") VALUES (gen_random_uuid(), $1, $2, $3, NOW())', [referrer.id, user.id, expiresAt]);
       }
     }
@@ -103,7 +135,7 @@ app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     const { rows } = await query('SELECT * FROM "User" WHERE email = $1', [email]);
     const user = rows[0];
-    
+
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -246,4 +278,7 @@ function authenticate(req, res, next) {
   }
 }
 
-app.listen(process.env.PORT || 3001, '0.0.0.0', () => console.log('Server running on port 3001'));
+app.listen(process.env.PORT || 3001, '0.0.0.0', () => {
+  console.log('Server running on port 3001');
+  initAdmin();
+});
