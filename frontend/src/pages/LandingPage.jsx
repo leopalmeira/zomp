@@ -133,23 +133,23 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── ROYALTIES HOW-IT-WORKS ── */}
+      {/* ── COMO FUNCIONA O ONBOARDING ── */}
       <section className="lp-how-section" id="royalties-sec">
         <motion.div className="lp-section-tag" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-          📊 Estrutura de Rendimentos
+          📋 Processo de Credenciamento
         </motion.div>
         <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          Uma Plataforma Planejada para<br /><span className="lp-accent">Sua Independência Financeira</span>
+          Um processo <span className="lp-accent">rigoroso e profissional</span><br />para garantir a qualidade.
         </motion.h2>
         <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          O modelo Zomp é baseado na retenção e fidelização. Cada indicação gera um vínculo de <strong>2 anos</strong>,
-          garantindo previsibilidade e escala para seus ganhos a médio e longo prazo.
+          Nosso objetivo é ter apenas motoristas de alto nível. O processo é simples, porém rigoroso. 
+          Siga os passos abaixo para se tornar um sócio da plataforma.
         </motion.p>
         <motion.div className="lp-how-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {[
-            { n: '01', title: 'Expansão de Rede', desc: 'Sincronize sua base de passageiros através do seu identificador exclusivo (QR Code).' },
-            { n: '02', title: 'Vínculo Contratual Digital', desc: 'O passageiro torna-se um ativo da sua rede por 24 meses, gerando royalties em cada operação realizada.' },
-            { n: '03', title: 'Liquidação de Lucros', desc: 'Acompanhe seu saldo em tempo real e realize saques trimestrais programados diretamente via PIX.' },
+            { n: '01', title: 'Pré-Cadastro Rápido', desc: 'Crie sua conta na plataforma utilizando seu e-mail e crie uma senha segura de acesso.' },
+            { n: '02', title: 'Envio de Documentação', desc: 'Acesse o aplicativo (via navegador) e envie fotos nítidas da sua CNH, CRLV do veículo e uma foto de perfil.' },
+            { n: '03', title: 'Aprovação Administrativa', desc: 'Nossa equipe irá verificar seus documentos no painel de controle. Após a liberação, você estará apto a dirigir e lucrar.' },
           ].map((s, i) => (
             <motion.div key={i} className="lp-how-step" variants={fadeUp}>
               <div className="lp-how-num">{s.n}</div>
