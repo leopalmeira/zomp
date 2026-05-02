@@ -283,20 +283,18 @@ Este documento deve **sempre** ser lido antes de qualquer nova implementaÃ§Ã�
 - **Vínculo de 2 anos:** Decisão estratégica para aumentar a rotatividade e renovação da base, mantendo a atratividade para novos motoristas.
 - **Lock de Dependências:** Fixar as versões do Prisma (sem `^`) evitou a quebra silenciosa causada por atualizações automáticas de submódulos no ambiente do Render.
 
-### [02/05/2026] - Migração Radical: Fim do Prisma e Adoção de SQL Nativo (v6.0.0)
+### [02/05/2026] - Simplificação Máxima: Remoção de OCR e IA (v7.0.0)
 **Feito:**
-- **Remoção Completa do Prisma:** O Prisma foi excluído do projeto (CLI, Client e Engines) para eliminar de vez os erros de carregamento de módulos binários no Render.
-- **Adoção do Driver `pg`:** Implementado o cliente nativo do PostgreSQL (`pg`) para todas as operações de banco de dados.
-- **Módulo de Conexão (`db.js`):** Criado um pool de conexões otimizado com suporte a SSL (necessário para o Render).
-- **Refatoração do Backend (`index.js`):** Reescritas todas as rotas (Autenticação, Corridas, Royalties, Admin) para usar queries SQL diretas.
-- **Script de Inicialização (`seed.js`):** Reescrevi o script de criação do Admin e configurações iniciais para usar SQL nativo.
-- **Build Simplificado (`render.yaml`):** O processo de build foi reduzido apenas ao `npm install` e `node seed.js`, tornando o deploy muito mais rápido e leve.
+- **Remoção do OCR (Optical Character Recognition):** Eliminados todos os scripts Python (`ocr_service.py`), pastas temporárias e dependências locais de processamento de imagem.
+- **Exclusão do Google Gemini:** Removida a integração com o Google Generative AI. O backend não possui mais chaves de API nem endpoints de análise de visão.
+- **Novo Fluxo de Preço Imbatível:** A lógica foi simplificada para remover a necessidade de upload/leitura de prints. Agora o sistema foca 100% na verificação de preço por KM informado pelo cliente.
+- **Limpeza de Dependências:** Desinstalados os pacotes `@google/generative-ai` e `@google/genai`.
 
 **Decisões Técnicas:**
-- **Migração para SQL Puro:** Decidimos que a estabilidade do deploy é prioridade máxima. O driver `pg` é agnóstico à arquitetura e não requer downloads de binários complexos durante o build, garantindo 100% de sucesso no deploy.
-- **Nomes de Tabelas Quoted:** As queries SQL usam aspas duplas (ex: `SELECT * FROM "User"`) para respeitar o Case-Sensitivity do PostgreSQL e a estrutura criada anteriormente pelo Prisma.
+- **Redução de Fricção:** A análise automática de prints era um ponto de falha e complexidade desnecessária. A nova métrica baseada em valor/km percorrido é mais justa, rápida e à prova de erros técnicos.
+- **Segurança de Dados:** Com a remoção do Gemini, não há mais tráfego de dados (imagens) para APIs externas, aumentando a privacidade do usuário.
 
 **A Fazer:**
-- Monitorar a performance das queries nativas no dashboard do Admin.
-- Validar se todas as rotas mantiveram o comportamento idêntico após a migração.
-- Realizar o deploy final com "Clear Build Cache" no Render.
+- Ajustar o frontend (`PassengerDashboard.jsx`) para refletir a remoção do botão de upload de print.
+- Testar a nova lógica de cálculo de desconto manual no app do passageiro.
+- Deploy final no Render com a arquitetura simplificada.
