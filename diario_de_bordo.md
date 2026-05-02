@@ -495,3 +495,7 @@ esetFlow()
 **Decisões Técnicas:**
 - **Inertia Admin:** O admin e a configuração inicial agora "se auto-corrigem" em cada reboot do servidor, facilitando desastres e migrações de banco de dados.
 - **CSS por Escopo:** Usamos classes específicas (`.admin-theme`) para não afetar a experiência mobile-first dos apps de motorista e passageiro.
+
+### [02/05/2026] - Ajuste de Permissão de Admin (v8.1.0)
+**Feito:**
+- **Sincronização de Role:** Refatorada a função `initAdmin()` para garantir que o papel (role) do usuário administrador seja forçadamente definido como `ADMIN`. Isso corrige o problema onde usuários existentes com o mesmo e-mail eram tratados como motoristas, impedindo o acesso ao painel.

@@ -24,9 +24,9 @@ async function initAdmin() {
       );
       console.log('✅ Admin initialized:', adminEmail);
     } else {
-      // Forçar sincronização de senha caso tenha mudado
-      await query('UPDATE "User" SET password = $1, name = $2 WHERE email = $3', [hash, adminName, adminEmail]);
-      console.log('ℹ️ Admin credentials synchronized:', adminEmail);
+      // Forçar sincronização de senha e cargo caso tenha mudado
+      await query('UPDATE "User" SET password = $1, name = $2, role = $3 WHERE email = $4', [hash, adminName, 'ADMIN', adminEmail]);
+      console.log('ℹ️ Admin credentials and role synchronized:', adminEmail);
     }
 
     // Config singleton
