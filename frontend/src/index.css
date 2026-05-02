@@ -3,7 +3,9 @@
    ======================================== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -14,12 +16,12 @@
   --primary: #00E676;
   --primary-hover: #00C853;
   --primary-subtle: #e8fbed;
-  
+
   --bg-app: #f8f9fa;
   --bg-input: rgba(255, 255, 255, 0.9);
   --text-dark: #09090b;
   --text-muted: #52525b;
-  --border-subtle: rgba(0,0,0,0.08);
+  --border-subtle: rgba(0, 0, 0, 0.08);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -27,16 +29,17 @@
   --radius-xl: 32px;
   --radius-full: 9999px;
 
-  --shadow-input: 0 0 0 1px rgba(0,0,0,0.05);
-  --shadow-float: 0 20px 40px rgba(0,0,0,0.08);
+  --shadow-input: 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --shadow-float: 0 20px 40px rgba(0, 0, 0, 0.08);
 
   --font: 'Inter', -apple-system, sans-serif;
   --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-html, body {
+html,
+body {
   font-family: var(--font);
-  background-color: #000000; 
+  background-color: #000000;
   color: var(--text-dark);
   -webkit-font-smoothing: antialiased;
   min-height: 100%;
@@ -68,25 +71,51 @@ html, body {
 /* Container mobile-first para os aplicativos de motorista e passageiro */
 .app-container {
   width: 100%;
-  max-width: 480px; 
+  max-width: 480px;
   height: 100vh;
   margin: 0 auto;
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   background-color: #ffffff;
-  box-shadow: 0 0 80px rgba(0,0,0,0.1); 
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 /* Typography */
-h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--text-dark); }
-h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; color: var(--text-dark); }
-p { font-size: 0.95rem; line-height: 1.5; color: var(--text-muted); }
-a { color: var(--text-dark); text-decoration: underline; font-weight: 600; text-underline-offset: 4px; }
-a:hover { color: var(--primary); text-decoration-color: var(--primary); }
+h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--text-dark);
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-dark);
+}
+
+p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+a {
+  color: var(--text-dark);
+  text-decoration: underline;
+  font-weight: 600;
+  text-underline-offset: 4px;
+}
+
+a:hover {
+  color: var(--primary);
+  text-decoration-color: var(--primary);
+}
 
 /* Buttons */
 .btn {
@@ -118,7 +147,9 @@ a:hover { color: var(--primary); text-decoration-color: var(--primary); }
   box-shadow: 0 8px 24px rgba(0, 230, 118, 0.4);
 }
 
-.btn-primary:active { transform: translateY(0); }
+.btn-primary:active {
+  transform: translateY(0);
+}
 
 /* Inputs */
 .input-group {
@@ -127,26 +158,77 @@ a:hover { color: var(--primary); text-decoration-color: var(--primary); }
   gap: 8px;
   text-align: left;
 }
+
 .input-group label {
-  font-size: 0.85rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.05em;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
+
 .input {
-  width: 100%; padding: 16px; background-color: var(--bg-input);
-  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-  font-family: var(--font); font-size: 1rem; font-weight: 500; color: var(--text-dark);
+  width: 100%;
+  padding: 16px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-dark);
   transition: var(--transition);
   backdrop-filter: blur(8px);
 }
-.input::placeholder { color: #9ca3af; }
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
 .input:focus {
-  outline: none; border-color: var(--primary); background-color: #ffffff;
+  outline: none;
+  border-color: var(--primary);
+  background-color: #ffffff;
   box-shadow: 0 4px 12px rgba(0, 230, 118, 0.1);
 }
 
 /* Animations */
-.animate-fade-in { animation: fadeIn 0.4s ease forwards; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.animate-fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
 
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Global Admin Override to ensure full-screen on desktop */
+body:has(.ap-root),
+body:has(.admin-theme) {
+  background-color: #060d1a !important;
+}
+
+.admin-theme .auth-page {
+  width: 100% !important;
+  max-width: 100% !important;
+  left: 0 !important;
+  transform: none !important;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
