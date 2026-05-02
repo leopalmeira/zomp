@@ -89,19 +89,23 @@ export default function LoginPage({ forceRole }) {
             type="submit"
             className="btn btn-primary btn-submit"
             disabled={loading}
-            style={{ marginTop: '16px' }}
+            style={{ marginTop: '24px', width: '100%' }}
           >
-            {loading ? 'Acessando...' : 'Entrar na Conta'}
+            {loading ? 'Autenticando...' : 'Acessar Terminal Admin'}
           </button>
 
-          <p className="auth-link">
-            Novo na Zomp? <Link to={registerLink}>Criar uma conta</Link>
-          </p>
+          {!isAdmin && (
+            <p className="auth-link">
+              Novo na Zomp? <Link to={registerLink}>Criar uma conta</Link>
+            </p>
+          )}
         </form>
 
-        <div className="auth-footer-phrase">
-          {isAdmin ? '🔒 Área restrita — Zomp Admin' : isDriver ? 'Preparado para o seu próximo lucro?' : 'Para onde será nossa próxima viagem?'}
-        </div>
+        {!isAdmin && (
+          <div className="auth-footer-phrase">
+            {isDriver ? 'Preparado para o seu próximo lucro?' : 'Para onde será nossa próxima viagem?'}
+          </div>
+        )}
       </div>
     </div>
   )

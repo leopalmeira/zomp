@@ -191,11 +191,11 @@
   text-decoration: none;
 }
 
-/* --- ADMIN PROFESSIONAL DESKTOP UI (v8.5.0) --- */
+/* --- ADMIN PROFESSIONAL DESKTOP UI (v8.7.0) --- */
 .sistema-admin-v8.auth-page {
   display: flex !important;
   flex-direction: row !important;
-  background: #060d1a !important;
+  background: #020617 !important;
   width: 100vw !important;
   height: 100vh !important;
   position: fixed !important;
@@ -212,22 +212,51 @@
   width: 480px !important;
   max-width: 480px !important;
   flex: none !important;
-  background: #0c121e !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
-  padding: 60px 40px !important;
+  background: #0b1120 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+  padding: 80px 50px !important;
+  display: flex !important;
+  flex-direction: column !important;
   justify-content: center !important;
-  box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 40px 0 100px rgba(0, 0, 0, 0.5) !important;
   height: 100vh !important;
   margin: 0 !important;
 }
 
 .sistema-admin-v8 .auth-header {
-  margin-bottom: 40px !important;
+  margin-bottom: 48px !important;
   text-align: left !important;
 }
 
 .sistema-admin-v8 .logo-container {
   justify-content: flex-start !important;
+  margin-bottom: 32px !important;
+}
+
+.sistema-admin-v8 h1 {
+  font-size: 2.2rem !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  letter-spacing: -1.5px !important;
+  margin-bottom: 8px !important;
+}
+
+.sistema-admin-v8 .driver-slogan {
+  color: #94a3b8 !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+  margin-bottom: 24px !important;
+}
+
+.sistema-admin-v8 .auth-subtitle {
+  text-align: left !important;
+  color: #64748b !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  margin-bottom: 0 !important;
+  max-width: 100% !important;
 }
 
 .sistema-admin-v8 .auth-form {
@@ -238,12 +267,6 @@
   padding: 0 !important;
 }
 
-.sistema-admin-v8 .auth-subtitle {
-  text-align: left !important;
-  margin-left: 0 !important;
-  max-width: 100% !important;
-}
-
 .sistema-admin-v8 .logo-img-auth {
   height: 60px !important;
   filter: none !important;
@@ -252,7 +275,7 @@
 .sistema-admin-v8::after {
   content: '';
   flex: 1 !important;
-  background: linear-gradient(rgba(6, 13, 26, 0.4), rgba(6, 13, 26, 0.4)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000') no-repeat center center;
+  background: linear-gradient(rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 0.6)), url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2000') no-repeat center center !important;
   background-size: cover !important;
 }
 
