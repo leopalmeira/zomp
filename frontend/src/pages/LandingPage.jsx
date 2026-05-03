@@ -113,7 +113,21 @@ export default function LandingPage() {
             transition={{ delay: 0.7 }}
           >
             <p className="lp-reflection-text">
-              "Para que rodar na Uber ou 99 se ao chegar em casa seus ganhos param? <span className="lp-reflection-highlight">Onde está a lógica nisso?</span>"
+              "Para que rodar na Uber ou 99 se ao chegar em casa seus ganhos param? 
+              <motion.span 
+                className="lp-reflection-highlight"
+                animate={{ 
+                  scale: [1, 1.05, 1],
+                  opacity: [0.8, 1, 0.8],
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                ONDE ESTÁ A LÓGICA NISSO?
+              </motion.span>"
             </p>
           </motion.div>
 
