@@ -64,6 +64,15 @@ export default function LandingPage() {
   const fadeUp = { hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { duration: 0.7, ease: 'easeOut' } } }
   const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.12 } } }
 
+  const handleCta = async () => {
+    // Attempt PWA Install
+    if (window.deferredPrompt) {
+      window.deferredPrompt.prompt();
+      window.deferredPrompt = null;
+    }
+    navigate('/motorista/cadastro')
+  }
+
   return (
     <div className="lp-root">
       <div className="lp-ambient a1" /><div className="lp-ambient a2" />
@@ -75,7 +84,6 @@ export default function LandingPage() {
           <button onClick={() => navigate('/motorista')}>Parceria</button>
           <button onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button>
         </div>
-        <button className="lp-cta-btn" onClick={() => navigate('/motorista/cadastro')}>Cadastrar agora</button>
       </nav>
 
       {/* ── HERO BANNER ── */}
@@ -87,20 +95,31 @@ export default function LandingPage() {
 
         <div className="lp-hero-content">
           <motion.div className="lp-badge" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            💎 Plataforma de Mobilidade Tecnológica
+            💎 Invista no seu Futuro
           </motion.div>
 
           <motion.h1 className="lp-hero-h1" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, delay: 0.2 }}>
-            Sua Renda Passiva<br /><span className="lp-accent">a Médio Prazo.</span><br />Construa seu<br /><span className="lp-gold-text">Patrimônio Direcional.</span>
+            Sua Renda Passiva.<br />Construa seu<br /><span className="lp-gold-text">Patrimônio Direcional.</span>
           </motion.h1>
 
           <motion.p className="lp-hero-sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }}>
-            A Zomp não é apenas um app de transporte. É um ecossistema de investimento para motoristas.
+            A Zomp não é apenas um app de transporte. É um ecossistema de investimento para você.
             Garanta sua fatia do mercado com <strong>royalties recorrentes</strong> de cada cliente que você trouxer para a rede.
           </motion.p>
 
+          <motion.div 
+            className="lp-reflection-box"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <p className="lp-reflection-text">
+              "Para que rodar na Uber ou 99 se ao chegar em casa seus ganhos param? <span className="lp-reflection-highlight">Onde está a lógica nisso?</span>"
+            </p>
+          </motion.div>
+
           <motion.div className="lp-hero-actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
-            <button className="lp-cta-btn lp-cta-lg" onClick={() => navigate('/motorista/cadastro')}>
+            <button className="lp-cta-btn lp-cta-lg" onClick={handleCta}>
               Seja Sócio da Plataforma →
             </button>
           </motion.div>
@@ -127,7 +146,7 @@ export default function LandingPage() {
           <motion.div className="lp-entry-card lp-entry-driver" style={{ gridColumn: '1 / -1', maxWidth: '600px', margin: '0 auto' }} variants={fadeUp} onClick={() => navigate('/motorista')}>
             <div className="lp-entry-badge">⭐ Oportunidade Única</div>
             <div className="lp-entry-icon"><TrendingUp size={32} /></div>
-            <h3>Motorista Parceiro & Sócio</h3>
+            <h3>Sócio da Plataforma</h3>
             <p>
               Mude sua trajetória financeira. Ganhe a tarifa integral das suas viagens
               e construa uma <strong>carteira de royalties</strong> que paga R$ 0,30 por cada viagem
@@ -145,11 +164,11 @@ export default function LandingPage() {
           📋 Processo de Credenciamento
         </motion.div>
         <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          Um processo <span className="lp-accent">rigoroso e profissional</span><br />para garantir a qualidade.
+          O caminho para se tornar<br /><span className="lp-accent">um Sócio Zomp.</span>
         </motion.h2>
         <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          Nosso objetivo é ter apenas motoristas de alto nível. O processo é simples, porém rigoroso.
-          Siga os passos abaixo para se tornar um sócio da plataforma.
+          Nosso objetivo é ter os melhores parceiros. O processo é simples e direto.
+          Siga os passos abaixo para começar a construir seu patrimônio.
         </motion.p>
         <motion.div className="lp-how-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {[
@@ -208,7 +227,7 @@ export default function LandingPage() {
             <motion.p className="lp-sim-disclaimer" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               * Projeções baseadas em dados históricos de mobilidade urbana. Ganhos reais dependem da conversão e retenção da sua rede.
             </motion.p>
-            <motion.button className="lp-cta-btn lp-cta-lg" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} onClick={() => navigate('/motorista/cadastro')}>
+            <motion.button className="lp-cta-btn lp-cta-lg" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} onClick={handleCta}>
               Iniciar Construção de Ativos →
             </motion.button>
           </div>
@@ -229,7 +248,7 @@ export default function LandingPage() {
           Vantagem Competitiva Zomp
         </motion.h2>
         <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          Diferente das plataformas convencionais de gig economy, a Zomp opera em um modelo de parceria real, transformando o motorista em um ponto de lucro central.
+          Diferente das plataformas convencionais de gig economy, a Zomp opera em um modelo de sociedade real, transformando você em um ponto de lucro central.
         </motion.p>
 
         <motion.div className="lp-compare-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -291,7 +310,7 @@ export default function LandingPage() {
             <motion.p className="lp-sim-disclaimer" variants={fadeUp}>
               * Projeção estimada de exemplo. Ganhos reais dependem da atividade da sua rede.
             </motion.p>
-            <motion.button className="lp-cta-btn lp-cta-lg" variants={fadeUp} onClick={() => navigate('/motorista/cadastro')}>
+            <motion.button className="lp-cta-btn lp-cta-lg" variants={fadeUp} onClick={handleCta}>
               Abrir minha Carteira Zomp →
             </motion.button>
           </motion.div>
@@ -331,9 +350,9 @@ export default function LandingPage() {
       <section className="lp-final-cta">
         <motion.div className="lp-final-wrap" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.h2 variants={fadeUp}>Vagas limitadas.<br /><span className="lp-accent">Garanta a sua agora.</span></motion.h2>
-          <motion.p variants={fadeUp}>Seja um dos primeiros motoristas parceiros da Zomp no Rio de Janeiro e construa sua renda passiva enquanto outros ficam pra trás.</motion.p>
+          <motion.p variants={fadeUp}>Seja um dos primeiros sócios da Zomp no Rio de Janeiro e construa sua renda passiva enquanto outros ficam pra trás.</motion.p>
           <Countdown />
-          <motion.button className="lp-cta-btn lp-cta-xl" variants={fadeUp} onClick={() => navigate('/motorista/cadastro')}>
+          <motion.button className="lp-cta-btn lp-cta-xl" variants={fadeUp} onClick={handleCta}>
             🚀 Fazer meu Pré-Cadastro Gratuito
           </motion.button>
         </motion.div>

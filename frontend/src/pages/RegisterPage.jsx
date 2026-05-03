@@ -26,6 +26,15 @@ export default function RegisterPage({ forceRole }) {
     setLoading(true)
     try {
       await register(form)
+      
+      // Trigger PWA Install if available
+      if (window.deferredPrompt) {
+        window.deferredPrompt.prompt();
+        const { outcome } = await window.deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        window.deferredPrompt = null;
+      }
+
       navigate(isDriver ? '/motorista/onboarding' : '/passageiro')
     } catch (err) {
       setError(err.message)
