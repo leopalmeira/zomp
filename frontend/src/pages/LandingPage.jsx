@@ -81,7 +81,6 @@ export default function LandingPage() {
       <nav className="lp-nav">
         <img src="/logo.svg" alt="Zomp" className="lp-nav-logo" />
         <div className="lp-nav-links">
-          <button onClick={() => navigate('/motorista')}>Parceria</button>
           <button onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button>
         </div>
       </nav>
@@ -167,7 +166,8 @@ export default function LandingPage() {
         </motion.h2>
         <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           Nosso objetivo é ter os melhores parceiros. O processo é simples e direto.
-          Siga os passos abaixo para garantir sua Renda Passiva vinda de passageiros.
+          Siga os passos abaixo para garantir sua Renda Passiva vinda de passageiros. 
+          <br/><strong>* Requisito: Completar 75 corridas por semana para manter o direito aos Royalties.</strong>
         </motion.p>
         <motion.div className="lp-how-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {[
@@ -258,6 +258,7 @@ export default function LandingPage() {
               {[
                 'Taxa Operacional Fixa e Transparente',
                 'Royalties de Rede (R$ 0,30 por viagem)',
+                'Manutenção de Royalties: Mínimo 75 corridas/semana',
                 'Patrimônio Digital Vinculado (2 anos)',
                 'Liquidação Trimestral de Dividendos',
                 'Sistema Anti-Concorrência (Preço Imbatível)',
