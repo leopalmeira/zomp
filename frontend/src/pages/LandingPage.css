@@ -198,11 +198,12 @@
 }
 
 .lp-hero-h1 {
-  font-size: clamp(2.4rem, 6vw, 4.8rem);
+  font-size: clamp(2rem, 5vw, 3.8rem);
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1.05;
   margin-bottom: 22px;
   color: var(--txt);
+  text-transform: uppercase;
 }
 
 .lp-accent {
@@ -211,6 +212,31 @@
 
 .lp-gold-text {
   color: var(--gold);
+}
+
+.lp-hero-red-block {
+  background: #e11d48;
+  color: #fff;
+  display: inline-block;
+  padding: 8px 20px;
+  margin: 10px 0;
+  font-size: 0.7em;
+  transform: skewX(-5deg);
+  box-shadow: 8px 8px 0 rgba(0,0,0,0.3);
+}
+
+.lp-text-mude {
+  color: var(--green);
+  font-weight: 800;
+  display: block;
+  margin-top: 12px;
+  font-size: 1.2rem;
+  text-shadow: 0 0 15px var(--green-glow);
+}
+
+.lp-text-outline {
+  color: var(--txt);
+  -webkit-text-stroke: 1px rgba(255,255,255,0.2);
 }
 
 .lp-hero-sub {

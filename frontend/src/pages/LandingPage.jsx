@@ -98,12 +98,14 @@ export default function LandingPage() {
           </motion.div>
 
           <motion.h1 className="lp-hero-h1" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, delay: 0.2 }}>
-            Sua Renda Passiva.<br />Construa seu<br /><span className="lp-gold-text">Patrimônio Direcional.</span>
+            POR QUE VOCÊ AINDA VAI FICAR <span className="lp-text-outline">FAZENDO CORRIDAS PELOS CONCORRENTES,</span><br />
+            <div className="lp-hero-red-block">QUE NÃO TE DÁ RENDA PASSIVA</div>
+            <span className="lp-gold-text">DE ROYALTIES TODOS OS DIAS?</span>
           </motion.h1>
 
           <motion.p className="lp-hero-sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }}>
-            A Zomp não é apenas um app de transporte. É um ecossistema de investimento para você.
-            Garanta sua fatia do mercado com <strong>royalties recorrentes</strong> de cada cliente que você trouxer para a rede.
+            No final do dia, você se cansa, o aplicativo lucra, e você começa do zero no dia seguinte.<br/>
+            <strong className="lp-text-mude">MUDE ISSO. MUDE PARA A ZOMP!</strong>
           </motion.p>
 
           <motion.div 
