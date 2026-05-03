@@ -120,7 +120,7 @@ export default function LandingPage() {
 
           <motion.div className="lp-hero-actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
             <button className="lp-cta-btn lp-cta-lg" onClick={handleCta}>
-              Seja Sócio da Plataforma →
+              Ativar minha Renda Passiva →
             </button>
           </motion.div>
 
@@ -143,17 +143,16 @@ export default function LandingPage() {
       {/* ── ENTRADA ── */}
       <section className="lp-entry-section">
         <motion.div className="lp-entry-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          <motion.div className="lp-entry-card lp-entry-driver" style={{ gridColumn: '1 / -1', maxWidth: '600px', margin: '0 auto' }} variants={fadeUp} onClick={() => navigate('/motorista')}>
-            <div className="lp-entry-badge">⭐ Oportunidade Única</div>
+          <motion.div className="lp-entry-card lp-entry-driver" style={{ gridColumn: '1 / -1', maxWidth: '600px', margin: '0 auto' }} variants={fadeUp} onClick={handleCta}>
+            <div className="lp-entry-badge">💎 Única no Brasil</div>
             <div className="lp-entry-icon"><TrendingUp size={32} /></div>
-            <h3>Sócio da Plataforma</h3>
+            <h3>Renda Passiva de Verdade</h3>
             <p>
-              Mude sua trajetória financeira. Ganhe a tarifa integral das suas viagens
-              e construa uma <strong>carteira de royalties</strong> que paga R$ 0,30 por cada viagem
-              da sua rede, gerando lucro mesmo com o veículo parado.
+              Ganhe dinheiro com cada corrida que seus passageiros fizerem, <br/>
+              <strong>mesmo quando você não estiver dirigindo.</strong>
             </p>
-            <div className="lp-entry-pill">💎 Ativo Financeiro Digital</div>
-            <div className="lp-entry-btn">Iniciar Onboarding Profissional <ArrowRight size={18} /></div>
+            <div className="lp-entry-pill">Royalties de Passageiros</div>
+            <div className="lp-entry-btn">Iniciar Onboarding Agora <ArrowRight size={18} /></div>
           </motion.div>
         </motion.div>
       </section>
@@ -161,14 +160,14 @@ export default function LandingPage() {
       {/* ── COMO FUNCIONA O ONBOARDING ── */}
       <section className="lp-how-section" id="royalties-sec">
         <motion.div className="lp-section-tag" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-          📋 Processo de Credenciamento
+          📋 Como Ativar seus Royalties
         </motion.div>
         <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          O caminho para se tornar<br /><span className="lp-accent">um Sócio Zomp.</span>
+          Somos a única que permite ganhar<br /><span className="lp-accent">mesmo sem estar dirigindo.</span>
         </motion.h2>
         <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           Nosso objetivo é ter os melhores parceiros. O processo é simples e direto.
-          Siga os passos abaixo para começar a construir seu patrimônio.
+          Siga os passos abaixo para garantir sua Renda Passiva vinda de passageiros.
         </motion.p>
         <motion.div className="lp-how-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {[
@@ -189,8 +188,8 @@ export default function LandingPage() {
       <section className="lp-sim-section">
         <div className="lp-sim-wrap">
           <div className="lp-sim-left">
-            <motion.div className="lp-section-tag" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-              📉 Projeção de Renda Recorrente
+            <motion.div className="lp-section-tag lp-tag-vibrant" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+              💰 Simulado de Ganhos
             </motion.div>
             <motion.h2 className="lp-section-title lp-left-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               Alavancagem de Ganhos<br /><span className="lp-accent">sem aumento de jornada.</span>
@@ -248,7 +247,7 @@ export default function LandingPage() {
           Vantagem Competitiva Zomp
         </motion.h2>
         <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          Diferente das plataformas convencionais de gig economy, a Zomp opera em um modelo de sociedade real, transformando você em um ponto de lucro central.
+          Diferente das plataformas convencionais de gig economy, a Zomp opera em um modelo de ganho real, transformando você em um ponto de lucro central.
         </motion.p>
 
         <motion.div className="lp-compare-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -350,7 +349,7 @@ export default function LandingPage() {
       <section className="lp-final-cta">
         <motion.div className="lp-final-wrap" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.h2 variants={fadeUp}>Vagas limitadas.<br /><span className="lp-accent">Garanta a sua agora.</span></motion.h2>
-          <motion.p variants={fadeUp}>Seja um dos primeiros sócios da Zomp no Rio de Janeiro e construa sua renda passiva enquanto outros ficam pra trás.</motion.p>
+          <motion.p variants={fadeUp}>Seja um dos primeiros a garantir Royalties na Zomp no Rio de Janeiro e construa sua renda passiva enquanto outros ficam pra trás.</motion.p>
           <Countdown />
           <motion.button className="lp-cta-btn lp-cta-xl" variants={fadeUp} onClick={handleCta}>
             🚀 Fazer meu Pré-Cadastro Gratuito
