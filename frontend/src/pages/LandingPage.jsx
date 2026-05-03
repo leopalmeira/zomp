@@ -100,10 +100,8 @@ export default function LandingPage() {
           <motion.h1 className="lp-hero-h1" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, delay: 0.2 }}>
             <span className="lp-text-white">POR QUE VOCÊ AINDA VAI FICAR</span><br />
             <span className="lp-text-green">FAZENDO CORRIDAS PELOS CONCORRENTES,</span><br />
-            <div className="lp-hero-red-block">
-              <span className="lp-text-white">QUE NÃO TE DÁ</span> <br/>
-              <span className="lp-text-yellow">RENDA PASSIVA</span>
-            </div><br/>
+            <span className="lp-text-red">QUE NÃO TE DÁ</span> <br/>
+            <span className="lp-text-yellow">RENDA PASSIVA</span> <br/>
             <span className="lp-text-white">DE ROYALTIES TODOS OS DIAS?</span>
           </motion.h1>
 
