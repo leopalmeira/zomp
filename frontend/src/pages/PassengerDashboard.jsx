@@ -100,12 +100,34 @@ export default function PassengerDashboard() {
   const [routeDuration, setRouteDuration] = useState(0)
   const [vehicleType, setVehicleType] = useState('car') // 'car' | 'moto'
 
+  // Missing States added to fix ReferenceError
+  const [rideState, setRideState] = useState('IDLE')
+  const [cancelCountdown, setCancelCountdown] = useState(119)
+  const [isIntercity, setIsIntercity] = useState(false)
+  const [passengersCount, setPassengersCount] = useState(1)
+  const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
+  const [compPriceRead, setCompPriceRead] = useState(0)
+  const [compPlatform, setCompPlatform] = useState('')
+  const [compCategory, setCompCategory] = useState('')
+  const [isAnalyzingPrint, setIsAnalyzingPrint] = useState(false)
+  const [activeRideId, setActiveRideId] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [chatMessages, setChatMessages] = useState([])
+  const [scheduleData, setScheduleData] = useState({ date: '', time: '' })
+  const [freightType, setFreightType] = useState('')
+  const [freightDescription, setFreightDescription] = useState('')
+  const [freightSecurityCode, setFreightSecurityCode] = useState('')
+
   // Pricing state (dynamic from server)
   const [config, setConfig] = useState({
     pricePerKmCar: 2.00, pricePerKmMoto: 1.50,
     minFareCar: 8.40, minFareMoto: 7.20,
     minKmPriceImbativel: 1.50, discountImbativel: 2.00
   })
+
+  // Min price object
+  const MIN_PRICE = { car: 8.40, moto: 7.20 }
 
   useEffect(() => {
     async function loadConfig() {

@@ -126,8 +126,8 @@ export default function DriverOnboarding() {
         {step === 1 && (
           <div className="step-card">
             <h2 className="step-title">Bem-vindo, Parceiro!</h2>
-            <p className="step-description">
-              Você está a poucos passos de se tornar um motorista investidor na Zomp. Vamos configurar seu perfil.
+            <p className="step-description" style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', marginBottom: '24px', padding: '16px', background: 'linear-gradient(135deg, rgba(0, 230, 118, 0.15), transparent)', borderLeft: '4px solid #00E676', borderRadius: '8px' }}>
+              Até quando vai fazer corridas para quem <span style={{color: '#f87171', fontWeight: 800}}>não te dá renda passiva</span> enquanto você descansa? A Zomp te transforma em um Motorista Investidor.
             </p>
 
             <div className="feature-badge">

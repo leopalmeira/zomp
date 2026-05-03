@@ -85,20 +85,6 @@ export default function LoginPage({ forceRole }) {
             <h1 className="driver-hero-title">
               Sua jornada como <br/><span className="text-glow-green">Investidor</span> começa aqui.
             </h1>
-            
-            <motion.div 
-              className="driver-persuasive-card"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-            >
-              <div className="card-icon-wrapper">
-                <TrendingUp size={24} color="#00E676" />
-              </div>
-              <div className="card-content">
-                <p>Até quando vai fazer corridas para quem <strong>não te dá renda passiva</strong> enquanto você descansa?</p>
-              </div>
-            </motion.div>
           </motion.div>
         )}
 
