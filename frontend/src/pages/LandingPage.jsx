@@ -98,9 +98,13 @@ export default function LandingPage() {
           </motion.div>
 
           <motion.h1 className="lp-hero-h1" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, delay: 0.2 }}>
-            POR QUE VOCÊ AINDA VAI FICAR <span className="lp-text-outline">FAZENDO CORRIDAS PELOS CONCORRENTES,</span><br />
-            <div className="lp-hero-red-block">QUE NÃO TE DÁ RENDA PASSIVA</div>
-            <span className="lp-gold-text">DE ROYALTIES TODOS OS DIAS?</span>
+            <span className="lp-text-white">POR QUE VOCÊ AINDA VAI FICAR</span><br />
+            <span className="lp-text-green">FAZENDO CORRIDAS PELOS CONCORRENTES,</span><br />
+            <div className="lp-hero-red-block">
+              <span className="lp-text-white">QUE NÃO TE DÁ</span> <br/>
+              <span className="lp-text-yellow">RENDA PASSIVA</span>
+            </div><br/>
+            <span className="lp-text-white">DE ROYALTIES TODOS OS DIAS?</span>
           </motion.h1>
 
           <motion.p className="lp-hero-sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }}>

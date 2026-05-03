@@ -214,37 +214,65 @@
   color: var(--gold);
 }
 
+.lp-text-white {
+  color: #ffffff;
+}
+
+.lp-text-green {
+  color: var(--green);
+}
+
+.lp-text-yellow {
+  color: #ffff00;
+}
+
 .lp-hero-red-block {
-  background: #e11d48;
+  background: linear-gradient(90deg, #b91c1c 0%, #dc2626 50%, #b91c1c 100%);
   color: #fff;
   display: inline-block;
-  padding: 8px 20px;
-  margin: 10px 0;
-  font-size: 0.7em;
-  transform: skewX(-5deg);
-  box-shadow: 8px 8px 0 rgba(0,0,0,0.3);
+  padding: 12px 25px;
+  margin: 15px 0;
+  line-height: 1.1;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(220, 38, 38, 0.4);
+  border-radius: 4px;
+}
+
+.lp-hero-red-block .lp-text-white {
+  font-size: 0.65em;
+  display: block;
+}
+
+.lp-hero-red-block .lp-text-yellow {
+  font-size: 1em;
+  display: block;
+  font-weight: 950;
+}
+
+.lp-hero-h1 {
+  font-size: clamp(2rem, 5.5vw, 3.6rem);
+  font-weight: 950;
+  line-height: 1.0;
+  margin-bottom: 25px;
+  letter-spacing: -1.5px;
+  text-transform: uppercase;
 }
 
 .lp-text-mude {
   color: var(--green);
-  font-weight: 800;
+  font-weight: 900;
   display: block;
-  margin-top: 12px;
-  font-size: 1.2rem;
-  text-shadow: 0 0 15px var(--green-glow);
-}
-
-.lp-text-outline {
-  color: var(--txt);
-  -webkit-text-stroke: 1px rgba(255,255,255,0.2);
+  margin-top: 15px;
+  font-size: 1.3rem;
+  text-shadow: 0 0 20px var(--green-glow);
 }
 
 .lp-hero-sub {
-  font-size: 1.1rem;
-  color: var(--txt2);
-  line-height: 1.7;
+  font-size: 1.15rem;
+  color: #cbd5e1;
+  line-height: 1.6;
   margin-bottom: 36px;
-  max-width: 560px;
+  max-width: 600px;
 }
 
 .lp-hero-sub strong {
