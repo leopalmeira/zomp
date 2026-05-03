@@ -510,3 +510,9 @@ esetFlow()
 - **Inertia CSS Fix:** Alterada a classe base do Admin para `sistema-admin-v8` para forçar atualização de cache.
 - **Redesign Corporativo:** Novo layout side-by-side (Formulário/Imagem) exclusivo para desktop admin.
 - **Full Screen:** Forçada largura total em monitores widescreen.
+
+### [03/05/2026] - Otimização de Persuasão (Onboarding Motorista)
+**Feito:**
+- **Onboarding Mais Persuasivo:** Adicionada chamada de alto impacto na rota `/motorista` ("Até quando vai ficar fazendo corridas com quem não te dá renda passiva mesmo quando não está dirigindo?").
+- **Animações e Microinterações:** Utilizado Framer Motion para construir um Hero Animado e persuasivo, reforçando o branding de "Motorista Investidor".
+- **Identidade Visual:** Efeitos de vidro (Glassmorphism) e Animação de Shine Loop aplicados na caixa de texto destacando a falta de renda passiva da concorrência.

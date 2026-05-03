@@ -7,7 +7,7 @@ import './Auth.css'
 
 export default function RegisterPage({ forceRole }) {
   const navigate = useNavigate()
-  
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -41,19 +41,14 @@ export default function RegisterPage({ forceRole }) {
       <AuthMapBg />
 
       <div className="auth-container animate-fade-in">
-        
-          <div className="logo-container">
-            <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
-          </div>
-          <h1>{isDriver ? 'Dirija.' : 'Viaje.'}</h1>
-          {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
-          <p className="auth-subtitle">
-            {isDriver ? 'Crie sua conta como motorista parceiro.' : 'Corridas mais justas, sem taxas abusivas para os motoristas.'}
-          </p>
-        
+
+        <div className="logo-container" style={{ marginBottom: '40px', transform: 'scale(1.2)' }}>
+          <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
+        </div>
+
 
         <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-accent' : ''}`}>
-          
+
           {error && <div className="auth-error">⚠ {error}</div>}
 
           <div className="input-group">
@@ -98,7 +93,7 @@ export default function RegisterPage({ forceRole }) {
 
           {!isDriver && (
             <div className="input-group" style={{ marginTop: '8px' }}>
-              <label htmlFor="reg-referral" style={{color: 'var(--primary-hover)'}}>Código Promocional (Opcional)</label>
+              <label htmlFor="reg-referral" style={{ color: 'var(--primary-hover)' }}>Código Promocional (Opcional)</label>
               <input
                 id="reg-referral"
                 className="input"
@@ -120,7 +115,7 @@ export default function RegisterPage({ forceRole }) {
           >
             {loading ? 'Processando...' : 'Finalizar Cadastro'}
           </button>
-          
+
           <p className="auth-link">
             Já possui uma conta Zomp? <Link to={loginLink}>Entrar</Link>
           </p>

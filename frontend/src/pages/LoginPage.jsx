@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { login } from '../services/api'
 import logoImage from '../assets/logo.png'
 import AuthMapBg from '../components/AuthMapBg'
@@ -43,16 +44,40 @@ export default function LoginPage({ forceRole }) {
 
       <div className="auth-container animate-fade-in">
 
-        <div className="logo-container">
+        <div className="logo-container" style={!isAdmin ? { marginBottom: '20px', transform: 'scale(1.2)' } : {}}>
           <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
         </div>
-        <h1>{isAdmin ? 'Painel Admin' : isDriver ? 'Parceiros.' : 'Vamos lá.'}</h1>
-        {isAdmin && <span className="driver-slogan" style={{ color: '#97E900' }}>Acesso restrito ao administrador</span>}
-        {isDriver && <span className="driver-slogan">Aqui você também é investidor</span>}
-        <p className="auth-subtitle">
-          {isAdmin ? 'Digite suas credenciais de administrador para continuar.' : isDriver ? 'Acesse o portal do motorista.' : 'Corridas mais justas, sem taxas abusivas para os motoristas.'}
-        </p>
 
+        {isAdmin && (
+          <>
+            <h1>Painel Admin</h1>
+            <span className="driver-slogan" style={{ color: '#97E900' }}>Acesso restrito ao administrador</span>
+            <p className="auth-subtitle">
+              Digite suas credenciais de administrador para continuar.
+            </p>
+          </>
+        )}
+
+        {isDriver && (
+          <motion.div 
+            className="driver-persuasive-block"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className="driver-hero-title">Parceiros.</h1>
+            <h2 className="driver-hero-subtitle">AQUI VOCÊ TAMBÉM É INVESTIDOR</h2>
+            
+            <motion.div 
+              className="driver-persuasive-text"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
+            >
+              <p>Até quando vai ficar fazendo corridas com quem <span className="highlight-red">não te dá renda passiva</span> mesmo quando não está dirigindo?</p>
+            </motion.div>
+          </motion.div>
+        )}
 
         <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-accent' : ''}`}>
 
@@ -91,7 +116,7 @@ export default function LoginPage({ forceRole }) {
             disabled={loading}
             style={{ marginTop: '24px', width: '100%' }}
           >
-            {loading ? 'Autenticando...' : 'Acessar Terminal Admin'}
+            {loading ? 'Processando...' : (isAdmin ? 'Acessar Terminal Admin' : 'Entrar na Conta')}
           </button>
 
           {!isAdmin && (
@@ -100,12 +125,6 @@ export default function LoginPage({ forceRole }) {
             </p>
           )}
         </form>
-
-        {!isAdmin && (
-          <div className="auth-footer-phrase">
-            {isDriver ? 'Preparado para o seu próximo lucro?' : 'Para onde será nossa próxima viagem?'}
-          </div>
-        )}
       </div>
     </div>
   )
