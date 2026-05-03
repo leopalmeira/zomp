@@ -5,6 +5,7 @@ import { login } from '../services/api'
 import logoImage from '../assets/logo.png'
 import AuthMapBg from '../components/AuthMapBg'
 import './Auth.css'
+import { TrendingUp, ArrowRight, ShieldCheck } from 'lucide-react'
 
 export default function LoginPage({ forceRole }) {
   const navigate = useNavigate()
@@ -42,14 +43,22 @@ export default function LoginPage({ forceRole }) {
     <div className={`auth-page ${isDriver ? 'driver-theme' : ''} ${isAdmin ? 'sistema-admin-v8' : ''}`}>
       <AuthMapBg />
 
+      {/* Decorative Gradient Overlay for Driver */}
+      {isDriver && <div className="driver-ambient-glow"></div>}
+
       <div className="auth-container animate-fade-in">
 
-        <div className="logo-container" style={!isAdmin ? { marginBottom: '20px', transform: 'scale(1.2)' } : {}}>
-          <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
-        </div>
+        {!isDriver && !isAdmin && (
+          <div className="logo-container" style={{ marginBottom: '20px', transform: 'scale(1.2)' }}>
+            <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
+          </div>
+        )}
 
         {isAdmin && (
           <>
+            <div className="logo-container" style={{ marginBottom: '32px' }}>
+              <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" style={{ height: '60px' }} />
+            </div>
             <h1>Painel Admin</h1>
             <span className="driver-slogan" style={{ color: '#97E900' }}>Acesso restrito ao administrador</span>
             <p className="auth-subtitle">
@@ -60,36 +69,50 @@ export default function LoginPage({ forceRole }) {
 
         {isDriver && (
           <motion.div 
-            className="driver-persuasive-block"
-            initial={{ opacity: 0, y: 20 }}
+            className="driver-premium-header"
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
           >
-            <h1 className="driver-hero-title">Parceiros.</h1>
-            <h2 className="driver-hero-subtitle">AQUI VOCÊ TAMBÉM É INVESTIDOR</h2>
+            <div className="driver-logo-wrapper">
+              <img src="/logo.svg" alt="Zomp" className="driver-logo" />
+              <div className="driver-badge">
+                <ShieldCheck size={14} className="badge-icon" />
+                <span>Para Parceiros</span>
+              </div>
+            </div>
+
+            <h1 className="driver-hero-title">
+              Sua jornada como <br/><span className="text-glow-green">Investidor</span> começa aqui.
+            </h1>
             
             <motion.div 
-              className="driver-persuasive-text"
+              className="driver-persuasive-card"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
+              transition={{ delay: 0.4, duration: 0.6 }}
             >
-              <p>Até quando vai ficar fazendo corridas com quem <span className="highlight-red">não te dá renda passiva</span> mesmo quando não está dirigindo?</p>
+              <div className="card-icon-wrapper">
+                <TrendingUp size={24} color="#00E676" />
+              </div>
+              <div className="card-content">
+                <p>Até quando vai fazer corridas para quem <strong>não te dá renda passiva</strong> enquanto você descansa?</p>
+              </div>
             </motion.div>
           </motion.div>
         )}
 
-        <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-accent' : ''}`}>
+        <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-form-enhanced' : ''}`}>
 
           {error && <div className="auth-error">⚠ {error}</div>}
 
           <div className="input-group">
-            <label htmlFor="login-email">Endereço de E-mail</label>
+            <label htmlFor="login-email">E-mail de Acesso</label>
             <input
               id="login-email"
-              className="input"
+              className="input premium-input"
               type="email"
-              placeholder="nome@email.com.br"
+              placeholder="seu@email.com"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
@@ -97,10 +120,10 @@ export default function LoginPage({ forceRole }) {
           </div>
 
           <div className="input-group">
-            <label htmlFor="login-password">Senha de Acesso</label>
+            <label htmlFor="login-password">Senha</label>
             <input
               id="login-password"
-              className="input"
+              className="input premium-input"
               type="password"
               placeholder="••••••••"
               value={form.password}
@@ -112,16 +135,22 @@ export default function LoginPage({ forceRole }) {
           <button
             id="login-submit"
             type="submit"
-            className="btn btn-primary btn-submit"
+            className="btn btn-primary btn-submit enhanced-submit"
             disabled={loading}
-            style={{ marginTop: '24px', width: '100%' }}
           >
-            {loading ? 'Processando...' : (isAdmin ? 'Acessar Terminal Admin' : 'Entrar na Conta')}
+            {loading ? 'Autenticando...' : (
+              isAdmin ? 'Acessar Terminal' : (
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  Entrar na Conta <ArrowRight size={20} />
+                </span>
+              )
+            )}
           </button>
 
           {!isAdmin && (
             <p className="auth-link">
-              Novo na Zomp? <Link to={registerLink}>Criar uma conta</Link>
+              Ainda não é parceiro? <br/>
+              <Link to={registerLink} className="register-highlight">Criar minha conta agora</Link>
             </p>
           )}
         </form>
