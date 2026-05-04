@@ -235,6 +235,16 @@ app.post('/api/rides/request', authenticate, async (req, res) => {
   }
 });
 
+app.get('/api/rides/pending', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers' });
+    const { rows } = await query('SELECT * FROM "Ride" WHERE status = $1 AND "driverId" IS NULL ORDER BY "createdAt" DESC', ['PENDING']);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching pending rides' });
+  }
+});
+
 app.get('/api/rides', authenticate, async (req, res) => {
   try {
     const col = req.user.role === 'PASSENGER' ? 'passengerId' : 'driverId';
@@ -242,6 +252,16 @@ app.get('/api/rides', authenticate, async (req, res) => {
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: 'Error fetching rides' });
+  }
+});
+
+app.get('/api/rides/:id', authenticate, async (req, res) => {
+  try {
+    const { rows } = await query('SELECT * FROM "Ride" WHERE id = $1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Ride not found' });
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching ride' });
   }
 });
 
@@ -263,27 +283,63 @@ app.post('/api/rides/:id/accept', authenticate, async (req, res) => {
   }
 });
 
+app.post('/api/rides/:id/reject', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers' });
+    // In a real app, we might store that THIS driver rejected THIS ride.
+    // For now, we just return success so the frontend hides it.
+    res.json({ message: 'Ride rejected' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error rejecting ride' });
+  }
+});
+
 app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers can complete a ride' });
     const { rows: rideRows } = await query('UPDATE "Ride" SET status = $1, "updatedAt" = NOW() WHERE id = $2 RETURNING *', ['COMPLETED', req.params.id]);
     const ride = rideRows[0];
 
+    const { rows: configRows } = await query('SELECT * FROM "AdminConfig" WHERE id = $1', ['singleton']);
+    const config = configRows[0];
+    const royaltyVal = config?.royaltyPerRide || 0.30;
+    const monthlyLimit = config?.royaltyMonthlyLimit || 8;
+
     const { rows: refRows } = await query('SELECT * FROM "Referral" WHERE "referredId" = $1', [ride.passengerId]);
     const referral = refRows[0];
-    const isExpired = referral ? new Date(referral.expiresAt) < new Date() : true;
+    
+    // Check monthly usage for this passenger
+    const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
+    const { rows: countRows } = await query(
+      'SELECT COUNT(*) FROM "Ride" WHERE "passengerId" = $1 AND status = $2 AND "createdAt" >= $3',
+      [ride.passengerId, 'COMPLETED', startOfMonth]
+    );
+    const monthlyCount = parseInt(countRows[0].count);
 
-    if (referral && !isExpired) {
-      await query('UPDATE "User" SET balance = balance + 0.30 WHERE id = $1', [referral.referrerId]);
+    if (referral && (new Date(referral.expiresAt) > new Date())) {
+      if (monthlyCount <= monthlyLimit) {
+        await query('UPDATE "User" SET balance = balance + $1 WHERE id = $2', [royaltyVal, referral.referrerId]);
+      } else {
+        // Limit reached: goes to Global Fund
+        await query('INSERT INTO "RoyaltyFund" (id, amount, reason, "fromRideId", "createdAt") VALUES (gen_random_uuid(), $1, $2, $3, NOW())', [royaltyVal, 'Limite mensal atingido', ride.id]);
+      }
     } else {
+      // No active referral: current driver gets the commission and becomes the new referrer
       if (referral) await query('DELETE FROM "Referral" WHERE "referredId" = $1', [ride.passengerId]);
       const expiresAt = new Date(); expiresAt.setFullYear(expiresAt.getFullYear() + 2);
       await query('INSERT INTO "Referral" (id, "referrerId", "referredId", "expiresAt", "createdAt") VALUES (gen_random_uuid(), $1, $2, $3, NOW())', [req.user.id, ride.passengerId, expiresAt]);
-      await query('UPDATE "User" SET balance = balance + 0.30 WHERE id = $1', [req.user.id]);
+      
+      if (monthlyCount <= monthlyLimit) {
+        await query('UPDATE "User" SET balance = balance + $1 WHERE id = $2', [royaltyVal, req.user.id]);
+      } else {
+        await query('INSERT INTO "RoyaltyFund" (id, amount, reason, "fromRideId", "createdAt") VALUES (gen_random_uuid(), $1, $2, $3, NOW())', [royaltyVal, 'Limite mensal atingido (novo vÃ­nculo)', ride.id]);
+      }
     }
+
     await query('UPDATE "User" SET "ridesCompleted" = "ridesCompleted" + 1 WHERE id = $1', [req.user.id]);
     res.json({ message: 'Ride completed', ride });
   } catch (error) {
+    console.error('Complete ride error:', error);
     res.status(500).json({ error: 'Error completing ride' });
   }
 });

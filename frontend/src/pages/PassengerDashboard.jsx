@@ -164,7 +164,40 @@ export default function PassengerDashboard() {
     return () => clearInterval(timer)
   }, [rideState, cancelCountdown])
 
+  // Real-time Ride Polling (No mock)
+  useEffect(() => {
+    let interval;
+    if (activeRideId && (rideState === 'PENDING' || rideState === 'ACCEPTED')) {
+      const poll = async () => {
+        try {
+          const res = await fetch(`${API_BASE}/rides/${activeRideId}`, { headers: getHeaders() });
+          const ride = await res.json();
+          if (ride.status === 'ACCEPTED' && rideState === 'PENDING') {
+            setRideState('ACCEPTED');
+          } else if (ride.status === 'COMPLETED') {
+            setRideState('COMPLETED');
+            setActiveRideId(null);
+            showToast('Corrida finalizada com sucesso!');
+            loadHistory();
+          } else if (ride.status === 'CANCELLED') {
+            setRideState('IDLE');
+            setActiveRideId(null);
+            alert('A corrida foi cancelada.');
+          }
+        } catch (e) {}
+      }
+      poll();
+      interval = setInterval(poll, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [activeRideId, rideState]);
+
   // UI
+  const [toast, setToast] = useState(null)
+  const showToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
   const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [menuScreen, setMenuScreen] = useState('MAIN') // 'MAIN' | 'SCHEDULED'
@@ -2131,6 +2164,15 @@ export default function PassengerDashboard() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)',
+          background: '#000', color: '#fff', padding: '12px 24px', borderRadius: '100px',
+          zIndex: 10000, fontWeight: 700, fontSize: '0.9rem', boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+        }}>
+          {toast}
         </div>
       )}
     </div>
