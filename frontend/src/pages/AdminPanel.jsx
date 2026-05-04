@@ -366,33 +366,6 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
-                    {/* Data de Estreia */}
-                    <div style={{marginTop:'24px',padding:'20px',background:'rgba(245,158,11,0.05)',border:'1px solid rgba(245,158,11,0.2)',borderRadius:'16px'}}>
-                      <h4 style={{fontSize:'0.9rem',marginBottom:'12px',color:'#fbbf24'}}>📅 Data de Estreia do Motorista</h4>
-                      <div style={{display:'flex',gap:'12px',alignItems:'center'}}>
-                        <input 
-                          type="date" 
-                          className="ap-input" 
-                          style={{flex:1,padding:'10px 14px',borderRadius:'10px',background:'rgba(0,0,0,0.3)',border:'1px solid rgba(255,255,255,0.1)',color:'#fff',fontSize:'0.9rem'}}
-                          defaultValue={selectedDriver.launchDate ? selectedDriver.launchDate.split('T')[0] : ''}
-                          onChange={(e) => setSelectedDriver({...selectedDriver, _newLaunchDate: e.target.value})}
-                        />
-                        <button 
-                          className="ap-btn-primary" 
-                          style={{padding:'10px 20px',borderRadius:'10px',whiteSpace:'nowrap'}}
-                          onClick={async () => {
-                            const date = selectedDriver._newLaunchDate;
-                            if (!date) return alert('Selecione uma data');
-                            await api(`/admin/drivers/${selectedDriver.id}/launch-date`, { method: 'PUT', body: JSON.stringify({ launchDate: date }) });
-                            showToast('Data de estreia definida!');
-                            load();
-                          }}
-                        >
-                          Definir Data
-                        </button>
-                      </div>
-                    </div>
-
                     <div style={{marginTop:24,display:'flex',gap:'12px'}}>
                        <button className={`ap-btn-primary ${selectedDriver.isApproved ? '' : 'ap-btn-success'}`} style={{flex:1}} onClick={() => { approveDriver(selectedDriver.id, !selectedDriver.isApproved); setSelectedDriver(null) }}>
                          {selectedDriver.isApproved ? '🔴 Suspender Motorista' : '🟢 Aprovar e Ativar'}
@@ -437,6 +410,21 @@ export default function AdminPanel() {
         {/* ── CONFIGURAÇÕES ── */}
         {tab === 'Configurações' && config && (
           <div className="ap-config-grid">
+            {/* DATA DE ESTREIA GLOBAL */}
+            <div className="ap-config-section" style={{ borderLeft: '4px solid #f59e0b', background: 'rgba(245,158,11,0.03)' }}>
+              <h3>🚀 Data de Estreia da Plataforma</h3>
+              <p className="ap-section-desc">
+                Esta é a data <strong>global</strong> em que todos os motoristas aprovados poderão começar a operar. Todos os motoristas verão esta data no app.
+              </p>
+              <div className="ap-form-row">
+                <div className="ap-form-group">
+                  <label>Data de Estreia</label>
+                  <input type="date" value={config.launchDate ? String(config.launchDate).split('T')[0] : '2026-07-30'} onChange={e => setConfig({ ...config, launchDate: e.target.value })} />
+                  <small>Visível para todos os motoristas cadastrados.</small>
+                </div>
+              </div>
+            </div>
+
             <div className="ap-config-section">
               <h3>💵 Configurações de Preço</h3>
               <div className="ap-form-row">

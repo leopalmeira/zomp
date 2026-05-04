@@ -129,6 +129,17 @@ export default function PassengerDashboard() {
   // Min price object
   const MIN_PRICE = { car: 8.40, moto: 7.20 }
 
+  // Selfie Logic
+  const [showSelfiePrompt, setShowSelfiePrompt] = useState(false)
+  const [selfiePreview, setSelfiePreview] = useState(null)
+  const [isUploadingSelfie, setIsUploadingSelfie] = useState(false)
+
+  useEffect(() => {
+    if (user && !user.photo) {
+      setShowSelfiePrompt(true)
+    }
+  }, [user])
+
   useEffect(() => {
     async function loadConfig() {
       try {
@@ -2017,6 +2028,106 @@ export default function PassengerDashboard() {
                 }}
               >
                 ➤
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* --- SELFIE PROMPT OVERLAY (SIMPLIFIED ONBOARDING) --- */}
+      {showSelfiePrompt && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          background: 'rgba(0,0,0,0.9)', zIndex: 9999, display: 'flex', 
+          alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '24px', width: '100%', maxWidth: '400px', 
+            padding: '32px', textAlign: 'center', position: 'relative',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+          }}>
+            <div style={{
+              width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(0,230,118,0.1)', 
+              color: '#00E676', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              margin: '0 auto 20px'
+            }}>
+              <Camera size={32} />
+            </div>
+            
+            <h2 style={{fontSize: '1.5rem', fontWeight: 800, color: '#18181b', marginBottom: '12px'}}>
+              Validar Perfil Zomp
+            </h2>
+            <p style={{fontSize: '0.95rem', color: '#52525b', lineHeight: 1.5, marginBottom: '24px'}}>
+              Para sua seguranÃ§a e de nossos motoristas, precisamos de uma selfie nÃ­tida para validar seu perfil antes da primeira corrida.
+            </p>
+
+            <div style={{
+              width: '180px', height: '180px', borderRadius: '50%', background: '#f4f4f5',
+              margin: '0 auto 24px', overflow: 'hidden', border: '4px solid #fff',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.1)', position: 'relative'
+            }}>
+              {selfiePreview ? (
+                <img src={selfiePreview} alt="Preview" style={{width:'100%', height:'100%', objectFit:'cover'}} />
+              ) : (
+                <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', color:'#a1a1aa'}}>
+                  <User size={64} opacity={0.3} />
+                </div>
+              )}
+            </div>
+
+            <input 
+              type="file" 
+              accept="image/*" 
+              capture="user" 
+              id="selfie-input"
+              hidden
+              onChange={async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => setSelfiePreview(ev.target.result);
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+
+            <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+              <button 
+                onClick={() => document.getElementById('selfie-input').click()}
+                style={{
+                  padding: '16px', borderRadius: '16px', border: '2.5px solid #18181b', 
+                  background: 'none', color: '#18181b', fontWeight: 800, fontSize: '1rem',
+                  cursor: 'pointer'
+                }}
+              >
+                {selfiePreview ? '📷 Trocar Foto' : '🤳 Abrir CÃ¢mera'}
+              </button>
+
+              <button 
+                disabled={!selfiePreview || isUploadingSelfie}
+                onClick={async () => {
+                  setIsUploadingSelfie(true);
+                  try {
+                    const { updateProfile } = await import('../services/api');
+                    await updateProfile({ photo: selfiePreview });
+                    setShowSelfiePrompt(false);
+                    // Force update local storage user if needed
+                    const u = JSON.parse(localStorage.getItem('zomp_user') || '{}');
+                    u.photo = selfiePreview;
+                    localStorage.setItem('zomp_user', JSON.stringify(u));
+                  } catch (e) {
+                    alert('Erro ao enviar foto. Tente novamente.');
+                  }
+                  setIsUploadingSelfie(false);
+                }}
+                style={{
+                  padding: '16px', borderRadius: '16px', border: 'none', 
+                  background: selfiePreview ? 'linear-gradient(135deg, #059669, #00E676)' : '#e4e4e7', 
+                  color: selfiePreview ? '#000' : '#a1a1aa', fontWeight: 800, fontSize: '1rem',
+                  cursor: selfiePreview ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.3s'
+                }}
+              >
+                {isUploadingSelfie ? 'Enviando...' : '🚀 Finalizar ValidaÃ§Ã£o'}
               </button>
             </div>
           </div>

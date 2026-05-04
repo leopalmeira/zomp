@@ -127,6 +127,7 @@ export default function DriverDashboard() {
   const [wallet, setWallet] = useState({ balance: 0 })
   const [credits, setCredits] = useState(0)
   const [linkedPassengers, setLinkedPassengers] = useState(0)
+  const [globalLaunchDate, setGlobalLaunchDate] = useState(null)
 
   const fetchWallet = async () => {
     try { const d = await getWallet(); setWallet(d) } catch (e) {}
@@ -145,7 +146,14 @@ export default function DriverDashboard() {
       if (d.linkedPassengers !== undefined) setLinkedPassengers(d.linkedPassengers)
     } catch (e) {}
   }
-  useEffect(() => { fetchWallet(); fetchCredits(); fetchLinkedPassengers() }, [])
+  const fetchGlobalConfig = async () => {
+    try {
+      const res = await fetch(`${API}/config`)
+      const d = await res.json()
+      if (d.launchDate) setGlobalLaunchDate(d.launchDate)
+    } catch (e) {}
+  }
+  useEffect(() => { fetchWallet(); fetchCredits(); fetchLinkedPassengers(); fetchGlobalConfig() }, [])
 
   // Pending Rides
   const [pendingRides, setPendingRides] = useState([])
@@ -396,9 +404,9 @@ export default function DriverDashboard() {
                 <div style={{background:'linear-gradient(135deg, #1e293b, #0f172a)',padding:'16px 20px',borderRadius:'16px',marginBottom:'16px',border:'1px solid rgba(245,158,11,0.3)',textAlign:'center'}}>
                   <div style={{fontSize:'0.7rem',fontWeight:800,color:'#f59e0b',textTransform:'uppercase',letterSpacing:'1.5px',marginBottom:'6px'}}>⚓ Status: Embarcando</div>
                   <p style={{fontSize:'0.85rem',color:'#cbd5e1',fontWeight:600,margin:0,lineHeight:1.5}}>Seus documentos estão em análise. Você pode explorar o app, mas ficar online será liberado após aprovação.</p>
-                  {user?.launchDate && (
+                  {globalLaunchDate && (
                     <div style={{marginTop:'12px',padding:'8px 14px',background:'rgba(245,158,11,0.1)',borderRadius:'10px',display:'inline-block'}}>
-                      <span style={{fontSize:'0.75rem',color:'#fbbf24',fontWeight:700}}>📅 Previsão de Estreia: {new Date(user.launchDate).toLocaleDateString('pt-BR')}</span>
+                      <span style={{fontSize:'0.75rem',color:'#fbbf24',fontWeight:700}}>📅 Estreia da Plataforma: {new Date(globalLaunchDate).toLocaleDateString('pt-BR')}</span>
                     </div>
                   )}
                 </div>

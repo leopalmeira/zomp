@@ -33,10 +33,15 @@ async function initAdmin() {
     const { rows: configRows } = await query('SELECT id FROM "AdminConfig" WHERE id = $1', ['singleton']);
     if (configRows.length === 0) {
       await query(
-        'INSERT INTO "AdminConfig" (id, "pricePerKmCar", "pricePerKmMoto", "minFareCar", "minFareMoto", "royaltyPerRide", "royaltyMonthlyLimit", "maxPassengersPerDriver", "bindingMonthsFirst", "bindingMonthsRenew", "autoSuspendMinAcceptance", "autoSuspendMinRating") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)',
-        ['singleton', 2.00, 1.50, 8.40, 7.20, 0.30, 8, 700, 36, 24, 70, 4.5]
+        'INSERT INTO "AdminConfig" (id, "pricePerKmCar", "pricePerKmMoto", "minFareCar", "minFareMoto", "royaltyPerRide", "royaltyMonthlyLimit", "maxPassengersPerDriver", "bindingMonthsFirst", "bindingMonthsRenew", "autoSuspendMinAcceptance", "autoSuspendMinRating", "launchDate") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)',
+        ['singleton', 2.00, 1.50, 8.40, 7.20, 0.30, 8, 700, 36, 24, 70, 4.5, '2026-07-30']
       );
-      console.log('✅ AdminConfig initialized');
+      console.log('✅ AdminConfig initialized with launch date 2026-07-30');
+    } else {
+      // Ensure launchDate column exists with default
+      try {
+        await query('ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "launchDate" DATE DEFAULT \'2026-07-30\'');
+      } catch(e) { /* column might already exist */ }
     }
   } catch (e) {
     console.error("❌ Error initializing admin:", e);
@@ -130,6 +135,43 @@ app.post('/api/auth/register', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: 'Error creating user', details: error.message });
+  }
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { name, email, googleId, photo, role, referrerQrCode } = req.body;
+    
+    // Check if user exists
+    let { rows } = await query('SELECT * FROM "User" WHERE email = $1', [email]);
+    let user = rows[0];
+
+    if (!user) {
+      // Create new user if not exists
+      const qrCode = role === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null;
+      const initialCredits = role === 'DRIVER' ? 10 : 0;
+      const { rows: newRows } = await query(
+        'INSERT INTO "User" (id, name, email, role, "qrCode", credits, balance, photo, "isApproved", "createdAt", "updatedAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 0, $6, true, NOW(), NOW()) RETURNING *',
+        [name, email, role || 'PASSENGER', qrCode, initialCredits, photo]
+      );
+      user = newRows[0];
+
+      // Handle referral for new passengers
+      if (referrerQrCode && user.role === 'PASSENGER') {
+        const { rows: referrers } = await query('SELECT id FROM "User" WHERE "qrCode" = $1 AND role = $2', [referrerQrCode, 'DRIVER']);
+        if (referrers[0]) {
+          const expiresAt = new Date();
+          expiresAt.setFullYear(expiresAt.getFullYear() + 2);
+          await query('INSERT INTO "Referral" (id, "referrerId", "referredId", "expiresAt", "createdAt") VALUES (gen_random_uuid(), $1, $2, $3, NOW())', [referrers[0].id, user.id, expiresAt]);
+        }
+      }
+    }
+
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance, credits: user.credits, photo: user.photo, isApproved: user.isApproved } });
+  } catch (error) {
+    console.error('Google Auth Error:', error);
+    res.status(500).json({ error: 'Error during Google authentication' });
   }
 });
 
@@ -252,6 +294,39 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
+app.put('/api/admin/config', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { 
+      pricePerKmCar, pricePerKmMoto, minFareCar, minFareMoto, 
+      royaltyPerRide, royaltyMonthlyLimit, maxPassengersPerDriver,
+      bindingMonthsFirst, bindingMonthsRenew, autoSuspendMinAcceptance, 
+      autoSuspendMinRating, launchDate, pricePerCredit, minKmPriceImbativel,
+      discountImbativel
+    } = req.body;
+
+    await query(
+      `UPDATE "AdminConfig" SET 
+        "pricePerKmCar" = $1, "pricePerKmMoto" = $2, "minFareCar" = $3, "minFareMoto" = $4, 
+        "royaltyPerRide" = $5, "royaltyMonthlyLimit" = $6, "maxPassengersPerDriver" = $7,
+        "bindingMonthsFirst" = $8, "bindingMonthsRenew" = $9, "autoSuspendMinAcceptance" = $10, 
+        "autoSuspendMinRating" = $11, "launchDate" = $12, "pricePerCredit" = $13, 
+        "minKmPriceImbativel" = $14, "discountImbativel" = $15
+      WHERE id = $16`,
+      [
+        pricePerKmCar, pricePerKmMoto, minFareCar, minFareMoto, 
+        royaltyPerRide, royaltyMonthlyLimit, maxPassengersPerDriver,
+        bindingMonthsFirst, bindingMonthsRenew, autoSuspendMinAcceptance, 
+        autoSuspendMinRating, launchDate, pricePerCredit, minKmPriceImbativel,
+        discountImbativel, 'singleton'
+      ]
+    );
+    res.json({ message: 'ConfiguraÃ§Ãµes atualizadas com sucesso' });
+  } catch (e) {
+    console.error("Erro ao salvar config:", e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
   try {
     const [d, p, r, f] = await Promise.all([
@@ -291,15 +366,12 @@ app.get('/api/admin/drivers/:id/documents', authenticate, isAdmin, async (req, r
   }
 });
 
-// Admin: set launch date for driver
-app.put('/api/admin/drivers/:id/launch-date', authenticate, isAdmin, async (req, res) => {
+// Admin: set GLOBAL launch date
+app.put('/api/admin/launch-date', authenticate, isAdmin, async (req, res) => {
   try {
     const { launchDate } = req.body;
-    const { rows } = await query(
-      'UPDATE "User" SET "launchDate" = $1, "updatedAt" = NOW() WHERE id = $2 RETURNING id, name, "launchDate"',
-      [launchDate, req.params.id]
-    );
-    res.json(rows[0]);
+    await query('UPDATE "AdminConfig" SET "launchDate" = $1 WHERE id = $2', [launchDate, 'singleton']);
+    res.json({ message: 'Data de estreia global atualizada', launchDate });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
