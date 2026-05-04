@@ -25,7 +25,12 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
     *   R$ 0,30 por corrida creditados na hora.
     *   Redirecionamento automático para o Fundo Global após atingir o limite mensal de bônus por passageiro.
 
+### 🎨 v12.1.0 - Refinamento Estético e Clareza
+*   **Menu Light (Clean Style)**: Substituímos o fundo preto dos menus (Driver e Admin) por um branco puro com elementos em cinza e verde esmeralda. Isso melhora a leitura sob luz solar e traz um ar mais profissional e moderno.
+*   **Remoção de Redundâncias**: O botão "Outros Apps" foi removido para simplificar a navegação e manter o foco total na operação Zomp.
+*   **Interface Unificada**: Agora, tanto o app do passageiro quanto o do motorista seguem a mesma linguagem visual de "clareza e alta fidelidade".
+
 ---
-**Status Atual**: Pronto para Produção. 🚀
-**Versão**: 12.0.0
+**Status Atual**: Produção Refinada. 🚀
+**Versão**: 12.1.0
 **Responsável**: Antigravity AI
