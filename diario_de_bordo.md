@@ -48,7 +48,12 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 *   **Gestão Financeira Direta**: Adicionada seção de gestão financeira no modal do motorista, permitindo **Adicionar Créditos** e **Resetar Taxa de Aceitação** manualmente.
 *   **Correção de Estatísticas**: Implementado endpoint para correção manual de `ridesMissed` e `ridesAccepted` para garantir que a performance do motorista reflita a realidade operacional.
 
+### 🚀 v12.2.4 - Acesso Facilitado & Estabilidade Mobile
+*   **Fix Login Google**: Corrigido o erro visual onde o botão de Login com Google desaparecia em dispositivos móveis. A página agora é rolável, garantindo acesso total aos botões mesmo com o teclado aberto.
+*   **Novo Botão de Cadastro**: Adicionado um botão de "Criar Conta de Motorista" destacado na tela inicial, tornando o onboarding de novos parceiros muito mais intuitivo.
+*   **Otimização de Layout**: Ajustes finos no CSS do fluxo de autenticação para evitar quebras visuais e garantir uma experiência premium em qualquer tamanho de tela.
+
 ---
 **Status Atual**: Produção Estabilizada. 🏁
-**Versão**: 12.2.3
+**Versão**: 12.2.4
 **Responsável**: Antigravity AI

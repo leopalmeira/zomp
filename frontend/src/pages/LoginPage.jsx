@@ -134,33 +134,26 @@ export default function LoginPage({ forceRole }) {
           </button>
 
           {!isAdmin && (
-            <div style={{marginTop:'24px', display:'flex', flexDirection:'column', gap:'12px'}}>
-              <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                <div style={{flex:1, height:'1px', background:'rgba(255,255,255,0.1)'}}></div>
-                <span style={{fontSize:'0.7rem', color:'#71717a', fontWeight:700, textTransform:'uppercase'}}>ou entrar com</span>
-                <div style={{flex:1, height:'1px', background:'rgba(255,255,255,0.1)'}}></div>
+            <div className="auth-extra-actions">
+              <div className="auth-divider">
+                <span>ou entrar com</span>
               </div>
               
               <button 
                 type="button" 
-                onClick={async () => {
-                  alert('Integrando com Google Account...');
-                  // Em produÃ§Ã£o aqui viria o token do Google
-                }}
-                style={{
-                  width:'100%', padding:'14px', borderRadius:'14px', background:'#fff', border:'none',
-                  display:'flex', alignItems:'center', justifyContent:'center', gap:'10px',
-                  color:'#18181b', fontWeight:700, cursor:'pointer', fontSize:'0.95rem'
-                }}
+                className="btn-google"
+                onClick={() => alert('Integrando com Google Account...')}
               >
-                <img src="https://www.google.com/favicon.ico" alt="G" style={{width:'18px'}} />
-                Conta Google
+                <img src="https://www.google.com/favicon.ico" alt="G" />
+                Entrar com Google
               </button>
 
-              <p className="auth-link">
-                Ainda nÃ£o Ã© parceiro? <br/>
-                <Link to={registerLink} className="register-highlight">Criar minha conta agora</Link>
-              </p>
+              <div className="auth-footer-links">
+                <p>Ainda não é parceiro?</p>
+                <Link to={registerLink} className="btn-secondary-outline">
+                  Criar Conta de Motorista
+                </Link>
+              </div>
             </div>
           )}
         </form>
