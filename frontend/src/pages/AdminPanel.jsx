@@ -305,23 +305,40 @@ export default function AdminPanel() {
                         <div className="ap-doc-item"><span>Taxa de Aceitação:</span><strong>{selectedDriver.acceptanceRate}%</strong></div>
                         <div className="ap-doc-item"><span>Rede Vinculada:</span><strong>{selectedDriver.linkedPassengers || 0} Passageiros</strong></div>
                         <div className="ap-doc-item"><span>Total de Corridas:</span><strong>{selectedDriver.completedRides || 0}</strong></div>
-                        <div className="ap-doc-item" style={{background:'rgba(151,233,0,0.05)', padding:'8px', borderRadius:'8px', marginTop:'8px'}}>
-                          <span>Saldo de Créditos:</span>
-                          <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                            <strong>R$ {Number(selectedDriver.credits || 0).toFixed(2)}</strong>
-                            <button className="ap-btn-sm ap-btn-success" onClick={() => {
-                              const amt = prompt('Valor em créditos a adicionar (R$):', '10.00');
+                        
+                        {/* SEÇÃO DE CRÉDITOS E GESTÃO MANUAL */}
+                        <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--ap-border)', borderRadius: '16px' }}>
+                          <h4 style={{ fontSize: '0.8rem', color: var(--ap-green), textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '1px' }}>💰 Gestão Financeira & Créditos</h4>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                            <span style={{ fontSize: '0.9rem', color: 'var(--ap-txt2)' }}>Saldo Atual:</span>
+                            <strong style={{ fontSize: '1.2rem', color: 'var(--ap-txt)' }}>R$ {Number(selectedDriver.credits || 0).toFixed(2)}</strong>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button className="ap-btn ap-btn-primary ap-btn-sm" style={{ flex: 1 }} onClick={() => {
+                              const amt = prompt('Valor em créditos a ADICIONAR (R$):', '10.00');
                               if (amt && !isNaN(amt)) {
                                 api(`/admin/drivers/${selectedDriver.id}/add-credits`, {
                                   method: 'POST',
                                   body: JSON.stringify({ amount: parseFloat(amt) })
                                 }).then(r => {
-                                  showToast(r.message || 'Créditos adicionados');
+                                  showToast(r.message || 'Créditos atualizados');
                                   load();
                                   setSelectedDriver(null);
                                 });
                               }
-                            }}>+ Adicionar</button>
+                            }}>+ Adicionar Créditos</button>
+                            <button className="ap-btn ap-btn-sm" style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid var(--ap-border)' }} onClick={() => {
+                              if (window.confirm('Deseja resetar a taxa de aceitação para 100% (Zerando Missed)?')) {
+                                api(`/admin/drivers/${selectedDriver.id}/reset-stats`, {
+                                  method: 'POST',
+                                  body: JSON.stringify({ ridesAccepted: selectedDriver.ridesAccepted || 1, ridesMissed: 0 })
+                                }).then(r => {
+                                  showToast(r.message || 'Estatísticas resetadas');
+                                  load();
+                                  setSelectedDriver(null);
+                                });
+                              }
+                            }}>Resetar Taxa</button>
                           </div>
                         </div>
                       </div>

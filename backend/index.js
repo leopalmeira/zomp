@@ -508,9 +508,20 @@ app.get('/api/admin/drivers/:id/documents', authenticate, isAdmin, async (req, r
 app.post('/api/admin/drivers/:id/add-credits', authenticate, isAdmin, async (req, res) => {
   try {
     const { amount } = req.body;
-    const { rows } = await query('UPDATE "User" SET credits = credits + $1 WHERE id = $2 RETURNING credits', [amount, req.params.id]);
+    const { rows } = await query('UPDATE "User" SET credits = COALESCE(credits, 0) + $1 WHERE id = $2 RETURNING credits', [amount, req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Motorista não encontrado' });
     res.json({ message: `R$ ${amount} em créditos adicionados`, newBalance: rows[0].credits });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin: reset or update driver performance stats
+app.post('/api/admin/drivers/:id/reset-stats', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { ridesAccepted, ridesMissed } = req.body;
+    await query('UPDATE "User" SET "ridesAccepted" = $1, "ridesMissed" = $2 WHERE id = $3', [ridesAccepted || 0, ridesMissed || 0, req.params.id]);
+    res.json({ message: 'Estatísticas de desempenho atualizadas com sucesso' });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

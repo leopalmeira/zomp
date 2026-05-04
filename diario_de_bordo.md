@@ -43,7 +43,12 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 *   **Gestão Manual de Créditos**: Administradores agora podem adicionar créditos manualmente para qualquer motorista diretamente pelo painel.
 *   **Sincronização de Produção**: Ajustes finais nos PWAs para garantir que todas as solicitações sejam processadas apenas por motoristas reais.
 
+### 🚀 v12.2.3 - Restauração Premium & Gestão Avançada
+*   **Volta do Dark Mode**: Atendendo ao feedback, restauramos o tema "Premium Dark" (Slate/Zinc) para os painéis Admin e Driver, mantendo a clareza e alto contraste.
+*   **Gestão Financeira Direta**: Adicionada seção de gestão financeira no modal do motorista, permitindo **Adicionar Créditos** e **Resetar Taxa de Aceitação** manualmente.
+*   **Correção de Estatísticas**: Implementado endpoint para correção manual de `ridesMissed` e `ridesAccepted` para garantir que a performance do motorista reflita a realidade operacional.
+
 ---
-**Status Atual**: Produção Autêntica. 🏁
-**Versão**: 12.2.1
+**Status Atual**: Produção Estabilizada. 🏁
+**Versão**: 12.2.3
 **Responsável**: Antigravity AI
