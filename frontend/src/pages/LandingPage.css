@@ -1175,7 +1175,7 @@
   }
 
   .lp-sim-right {
-    order: -1;
+    order: 1;
   }
 
   .lp-wallet-stats {
