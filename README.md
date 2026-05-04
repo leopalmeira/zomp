@@ -39,14 +39,20 @@ O core do aplicativo para os usuários solicitarem ou agendarem corridas com uma
 *   **Desconto Instantâneo:** O sistema aplica automaticamente um desconto inteligente.
 *   **Teto de Segurança:** Algoritmo protege o motorista, garantindo que o valor final por KM nunca fique abaixo do custo operacional mínimo.
 
-### 4. Governança & Qualidade (Driver Care)
-*   **Suspensão Automática:** Monitoramento em tempo real de Avaliação (Estrelas) e Taxa de Aceitação. Motoristas abaixo do padrão são suspensos automaticamente pelo sistema.
-*   **Transparência Fiscal:** Geração de Informe de Rendimentos anual (HTML/PDF) para imposto de renda dos parceiros.
+### 4. Background Care & Notificações (Driver Production Mode)
+*   **Modo Segundo Plano:** O app do motorista funciona via Service Worker, notificando novas corridas mesmo com a tela bloqueada.
+*   **Haptic & Sound:** Sistema de toque (ringtone sintetizado) e vibração personalizada para novas solicitações.
+*   **Foco Automático:** Clicar na notificação traz o PWA instantaneamente para o primeiro plano.
 
-### 5. Painel Administrativo Master
+### 5. Segurança & Onboarding Digital
+*   **Validação por Selfie:** Passageiros devem validar o perfil com uma selfie obrigatória antes de solicitar a primeira viagem.
+*   **Status Embarcando:** Motoristas em análise possuem interface dedicada e acompanham a **Data de Estreia Global** definida pelo admin.
+*   **Login Social:** Suporte inicial para Google Auth, simplificando a conversão de novos usuários.
+
+### 6. Painel Administrativo Master (v12)
 *   **Monitoramento Real-Time:** Fluxo de pedidos, corridas em andamento e faturamento global.
 *   **Gestão Financeira:** Controle de Fundo de Royalties, Saldo da Empresa e Processamento de Saques.
-*   **Configuração Global:** Alteração dinâmica de tarifas, limites de suspensão e parâmetros de rede.
+*   **Configuração Master:** Alteração dinâmica de tarifas, data de lançamento, limites de suspensão e parâmetros de rede.
 
 ## 💻 Stack Tecnológico
 

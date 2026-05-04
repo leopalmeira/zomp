@@ -155,6 +155,32 @@ export default function DriverDashboard() {
   }
   useEffect(() => { fetchWallet(); fetchCredits(); fetchLinkedPassengers(); fetchGlobalConfig() }, [])
 
+  // Notification & Vibration
+  useEffect(() => {
+    if ("Notification" in window) {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  const sendNotification = (title, body) => {
+    if ("Notification" in window && Notification.permission === "granted") {
+      const n = new Notification(title, {
+        body,
+        icon: '/logo.svg',
+        vibrate: [200, 100, 200],
+        tag: 'new-ride',
+        renotify: true
+      });
+      n.onclick = () => {
+        window.focus();
+        n.close();
+      };
+    }
+    if ("vibrate" in navigator) {
+      navigator.vibrate([500, 200, 500]);
+    }
+  }
+
   // Pending Rides
   const [pendingRides, setPendingRides] = useState([])
   const [activeRide, setActiveRide] = useState(null)
@@ -166,8 +192,9 @@ export default function DriverDashboard() {
       const poll = async () => {
         try { 
           const r = await getPendingRides();
-          if (r.length > 0 && prevRideCountRef.current === 0) {
+          if (r.length > 0 && r.length > prevRideCountRef.current) {
             playRingSound();
+            sendNotification('🚀 Nova Solicitação!', `Corrida disponível: ${r[0].origin.split(',')[0]} → ${r[0].destination.split(',')[0]}`);
           }
           prevRideCountRef.current = r.length;
           setPendingRides(r) 
