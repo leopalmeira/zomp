@@ -42,6 +42,19 @@ export async function login({ email, password }) {
   return data;
 }
 
+export async function googleLogin(token, role) {
+  const res = await fetch(`${API_BASE}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, role }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro na autenticação com Google');
+  localStorage.setItem('zomp_token', data.token);
+  localStorage.setItem('zomp_user', JSON.stringify(data.user));
+  return data;
+}
+
 export function logout() {
   localStorage.removeItem('zomp_token');
   localStorage.removeItem('zomp_user');

@@ -53,7 +53,11 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 *   **Novo Botão de Cadastro**: Adicionado um botão de "Criar Conta de Motorista" destacado na tela inicial, tornando o onboarding de novos parceiros muito mais intuitivo.
 *   **Otimização de Layout**: Ajustes finos no CSS do fluxo de autenticação para evitar quebras visuais e garantir uma experiência premium em qualquer tamanho de tela.
 
+### 🚀 v12.2.5 - Login com Google Real
+*   **Integração OAuth Oficial**: Substituído o botão de alerta (mock) pelo fluxo de autenticação real usando `@react-oauth/google`.
+*   **Segurança Backend**: Adicionado endpoint no servidor para receber e validar o token do Google e gerar a sessão de usuário.
+
 ---
 **Status Atual**: Produção Estabilizada. 🏁
-**Versão**: 12.2.4
+**Versão**: 12.2.5
 **Responsável**: Antigravity AI

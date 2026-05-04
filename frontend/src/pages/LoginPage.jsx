@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { login } from '../services/api'
+import { useGoogleLogin } from '@react-oauth/google'
+import { login, googleLogin } from '../services/api'
 import logoImage from '../assets/logo.png'
 import AuthMapBg from '../components/AuthMapBg'
 import './Auth.css'
@@ -15,6 +16,32 @@ export default function LoginPage({ forceRole }) {
 
   const isDriver = forceRole === 'DRIVER'
   const isAdmin = forceRole === 'ADMIN'
+
+  const handleGoogleSuccess = async (tokenResponse) => {
+    setLoading(true)
+    setError('')
+    try {
+      // Send access_token to backend
+      const data = await googleLogin(tokenResponse.access_token, forceRole || 'PASSENGER')
+      if (data.user.role === 'ADMIN') {
+        navigate('/admin')
+      } else if (data.user.role === 'DRIVER') {
+        const hasCompletedProfile = data.user.carPlate && data.user.cnh
+        navigate(hasCompletedProfile ? '/motorista/dashboard' : '/motorista/onboarding')
+      } else {
+        navigate('/passageiro/dashboard')
+      }
+    } catch (err) {
+      setError(err.message || 'Erro no login com Google')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const googleLoginAction = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: () => setError('Falha ao conectar com o Google')
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -142,7 +169,7 @@ export default function LoginPage({ forceRole }) {
               <button 
                 type="button" 
                 className="btn-google"
-                onClick={() => alert('Integrando com Google Account...')}
+                onClick={() => googleLoginAction()}
               >
                 <img src="https://www.google.com/favicon.ico" alt="G" />
                 Entrar com Google

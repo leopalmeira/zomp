@@ -140,8 +140,19 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/google', async (req, res) => {
   try {
-    const { name, email, googleId, photo, role, referrerQrCode } = req.body;
+    const { token, role, referrerQrCode } = req.body;
     
+    // Fetch user info from Google using the access token
+    const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!googleRes.ok) throw new Error('Invalid Google token');
+    const googleUser = await googleRes.json();
+    
+    const email = googleUser.email;
+    const name = googleUser.name;
+    const photo = googleUser.picture;
+
     // Check if user exists
     let { rows } = await query('SELECT * FROM "User" WHERE email = $1', [email]);
     let user = rows[0];
