@@ -21,7 +21,7 @@ const driverIcon = L.divIcon({
   iconSize: [24, 24], iconAnchor: [12, 12]
 })
 
-const API = 'http://localhost:3001/api'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 const getToken = () => localStorage.getItem('zomp_token')
 
 // --- Som de Notificação ---
@@ -126,6 +126,7 @@ export default function DriverDashboard() {
   // Wallet & Credits
   const [wallet, setWallet] = useState({ balance: 0 })
   const [credits, setCredits] = useState(0)
+  const [linkedPassengers, setLinkedPassengers] = useState(0)
 
   const fetchWallet = async () => {
     try { const d = await getWallet(); setWallet(d) } catch (e) {}
@@ -137,7 +138,14 @@ export default function DriverDashboard() {
       if (d.credits !== undefined) setCredits(d.credits)
     } catch (e) {}
   }
-  useEffect(() => { fetchWallet(); fetchCredits() }, [])
+  const fetchLinkedPassengers = async () => {
+    try {
+      const res = await fetch(`${API}/driver/linked-passengers`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
+      const d = await res.json()
+      if (d.linkedPassengers !== undefined) setLinkedPassengers(d.linkedPassengers)
+    } catch (e) {}
+  }
+  useEffect(() => { fetchWallet(); fetchCredits(); fetchLinkedPassengers() }, [])
 
   // Pending Rides
   const [pendingRides, setPendingRides] = useState([])
@@ -221,11 +229,11 @@ export default function DriverDashboard() {
   // FAQ
   const [openFaq, setOpenFaq] = useState(null)
   const faqs = [
-    { q: 'Como funciona o sistema de royalties?', a: 'A cada corrida de um passageiro vinculado a você, R$ 0,10 é creditado automaticamente na sua carteira de royalties. Este vínculo é permanente e você ganha para sempre.' },
+    { q: 'Como funciona o sistema de royalties?', a: 'A cada corrida de um passageiro vinculado a você, R$ 0,30 é creditado automaticamente na sua carteira de royalties. Este vínculo dura 2 anos e você ganha em todas as corridas dele.' },
     { q: 'Como funciona o sistema de créditos?', a: 'Cada crédito equivale a 1 corrida. Ao aceitar uma corrida, 1 crédito é descontado. Você inicia com 10 créditos grátis e depois pode comprar pacotes de 10, 20 ou 30 créditos.' },
     { q: 'Quando posso sacar meus royalties?', a: 'Saques são permitidos a cada 3 meses, com saldo mínimo de R$ 1,00. O valor é transferido para sua conta bancária cadastrada.' },
     { q: 'Como indicar um passageiro?', a: 'Compartilhe seu QR Code exclusivo. Ele pode escaneá-lo durante o cadastro e será vinculado permanentemente.' },
-    { q: 'E se o passageiro não veio por indicação?', a: 'Na primeira corrida que você concluir com um passageiro sem vínculo, ele é automaticamente vinculado a você!' },
+    { q: 'E se o passageiro não veio por indicação?', a: 'Na primeira corrida que você concluir com um passageiro sem vínculo, ele é automaticamente vinculado a você por 2 anos!' },
     { q: 'Posso pegar corridas de outros apps?', a: 'Em breve! Estamos trabalhando na integração com 99, Uber e InDriver.' }
   ]
 
@@ -383,6 +391,18 @@ export default function DriverDashboard() {
           /* Offline = slide to go online */
           !isOnline ? (
             <div className="slide-online-container">
+              {/* Banner Embarcando */}
+              {user?.cnh && user?.crlv && !user?.isApproved && (
+                <div style={{background:'linear-gradient(135deg, #1e293b, #0f172a)',padding:'16px 20px',borderRadius:'16px',marginBottom:'16px',border:'1px solid rgba(245,158,11,0.3)',textAlign:'center'}}>
+                  <div style={{fontSize:'0.7rem',fontWeight:800,color:'#f59e0b',textTransform:'uppercase',letterSpacing:'1.5px',marginBottom:'6px'}}>⚓ Status: Embarcando</div>
+                  <p style={{fontSize:'0.85rem',color:'#cbd5e1',fontWeight:600,margin:0,lineHeight:1.5}}>Seus documentos estão em análise. Você pode explorar o app, mas ficar online será liberado após aprovação.</p>
+                  {user?.launchDate && (
+                    <div style={{marginTop:'12px',padding:'8px 14px',background:'rgba(245,158,11,0.1)',borderRadius:'10px',display:'inline-block'}}>
+                      <span style={{fontSize:'0.75rem',color:'#fbbf24',fontWeight:700}}>📅 Previsão de Estreia: {new Date(user.launchDate).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                  )}
+                </div>
+              )}
               <div
                 className="slide-track"
                 onMouseMove={handleSlideMove}
@@ -682,12 +702,12 @@ export default function DriverDashboard() {
                   <span style={{fontSize:'1.2rem',color:'#9ca3af'}}>R$</span>
                   <span style={{fontSize:'3rem',fontWeight:800}}>{wallet.balance?.toFixed(2) || '0.00'}</span>
                 </div>
-                <div style={{fontSize:'0.8rem',color:'#6b7280'}}>R$ 0,10 por corrida de cada passageiro vinculado</div>
+                <div style={{fontSize:'0.8rem',color:'#6b7280'}}>R$ 0,30 por corrida de cada passageiro vinculado</div>
               </div>
             </div>
 
             <div className="stats-row">
-              <div className="stat-mini"><div className="stat-num">—</div><div className="stat-lbl">Vinculados</div></div>
+              <div className="stat-mini"><div className="stat-num">{linkedPassengers}</div><div className="stat-lbl">Vinculados</div></div>
               <div className="stat-mini"><div className="stat-num">3 meses</div><div className="stat-lbl">Ciclo saque</div></div>
             </div>
 
@@ -697,7 +717,7 @@ export default function DriverDashboard() {
 
             <div className="tip-card" style={{marginTop:'16px'}}>
               <span className="tip-icon">👑</span>
-              <div><div className="tip-title">Como funciona?</div><div className="tip-text">Cada passageiro que você transporta pela primeira vez fica vinculado por 3 anos a você. A cada corrida futura dele, R$ 0,10 é creditado na sua carteira.</div></div>
+              <div><div className="tip-title">Como funciona?</div><div className="tip-text">Cada passageiro que você transporta pela primeira vez fica vinculado por 2 anos a você. A cada corrida futura dele, R$ 0,30 é creditado na sua carteira.</div></div>
             </div>
           </div>
         </div>
@@ -723,7 +743,7 @@ export default function DriverDashboard() {
             <div className="section-title">Como funciona</div>
             <div className="premium-card">
               <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
-                {['Mostre o QR Code ao passageiro','Ele escaneia durante o cadastro','Vínculo de 3 anos criado!','Ganhe R$ 0,10 por corrida dele'].map((step, i) => (
+                {['Mostre o QR Code ao passageiro','Ele escaneia durante o cadastro','Vínculo de 2 anos criado!','Ganhe R$ 0,30 por corrida dele'].map((step, i) => (
                   <div key={i} style={{display:'flex',gap:'12px',alignItems:'center'}}>
                     <div style={{width:'28px',height:'28px',borderRadius:'50%',background: i < 4 ? '#ecfdf5' : '#f4f4f5',color:'#059669',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:'0.8rem',flexShrink:0}}>{i+1}</div>
                     <span style={{fontWeight:600,fontSize:'0.9rem',color:'#3f3f46'}}>{step}</span>

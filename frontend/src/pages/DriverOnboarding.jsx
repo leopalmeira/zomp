@@ -4,7 +4,7 @@ import { getCurrentUser } from '../services/api'
 import { Car, FileText, CheckCircle, User, ShieldCheck, Zap, Wallet, ArrowRight } from 'lucide-react'
 import './Onboarding.css'
 
-const API = 'http://localhost:3001/api'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 const getToken = () => localStorage.getItem('zomp_token')
 
 export default function DriverOnboarding() {

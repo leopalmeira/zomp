@@ -313,7 +313,7 @@ export default function AdminPanel() {
             {/* Modal de Detalhes do Motorista */}
             {selectedDriver && (
               <div className="ap-modal-overlay" onClick={() => setSelectedDriver(null)}>
-                <div className="ap-modal" onClick={e => e.stopPropagation()}>
+                <div className="ap-modal" onClick={e => e.stopPropagation()} style={{maxWidth:'900px'}}>
                   <div className="ap-modal-header">
                     <h2>Ficha Completa: {selectedDriver.name}</h2>
                     <button className="ap-modal-close" onClick={() => setSelectedDriver(null)}>×</button>
@@ -323,6 +323,7 @@ export default function AdminPanel() {
                       <div className="ap-doc-section">
                         <h4>👤 Dados Pessoais & Performance</h4>
                         <div className="ap-doc-item"><span>Email:</span><strong>{selectedDriver.email}</strong></div>
+                        <div className="ap-doc-item"><span>Telefone:</span><strong>{selectedDriver.phone || 'Não informado'}</strong></div>
                         <div className="ap-doc-item"><span>Chave PIX:</span><strong>{selectedDriver.pixKey || 'Não informada'}</strong></div>
                         <div className="ap-doc-item"><span>Avaliação:</span><strong>⭐ {selectedDriver.rating?.toFixed(1)} ({selectedDriver.totalRatings} votos)</strong></div>
                         <div className="ap-doc-item"><span>Taxa de Aceitação:</span><strong>{selectedDriver.acceptanceRate}%</strong></div>
@@ -330,18 +331,72 @@ export default function AdminPanel() {
                       </div>
                       <div className="ap-doc-section">
                         <h4>🚗 Veículo</h4>
-                        <div className="ap-doc-item"><span>Modelo:</span><strong>{selectedDriver.carModel}</strong></div>
-                        <div className="ap-doc-item"><span>Ano:</span><strong>{selectedDriver.carYear || '—'}</strong></div>
-                        <div className="ap-doc-item"><span>Placa:</span><strong>{selectedDriver.carPlate}</strong></div>
+                        <div className="ap-doc-item"><span>Modelo:</span><strong>{selectedDriver.carModel || '—'}</strong></div>
+                        <div className="ap-doc-item"><span>Cor:</span><strong>{selectedDriver.carColor || '—'}</strong></div>
+                        <div className="ap-doc-item"><span>Placa:</span><strong>{selectedDriver.carPlate || '—'}</strong></div>
                       </div>
                     </div>
-                    <div className="ap-images-grid">
-                      <div className="ap-img-box"><span>Foto de Perfil</span><img src={selectedDriver.photo || 'https://via.placeholder.com/150'} alt="Perfil" /></div>
-                      <div className="ap-img-box"><span>CNH</span><img src={selectedDriver.cnh || 'https://via.placeholder.com/150?text=CNH'} alt="CNH" /></div>
-                      <div className="ap-img-box"><span>CRLV</span><img src={selectedDriver.crlv || 'https://via.placeholder.com/150?text=CRLV'} alt="CRLV" /></div>
+
+                    {/* Documentos com Imagens Reais */}
+                    <h4 style={{marginTop:'24px',marginBottom:'16px',fontSize:'0.95rem'}}>📄 Documentos Enviados</h4>
+                    <div className="ap-images-grid" style={{gridTemplateColumns:'repeat(3, 1fr)',gap:'16px'}}>
+                      <div className="ap-img-box">
+                        <span>Foto de Perfil</span>
+                        {selectedDriver.photo ? (
+                          <img src={selectedDriver.photo} alt="Perfil" style={{maxWidth:'100%',maxHeight:'220px',objectFit:'contain',borderRadius:'12px',cursor:'pointer',border:'2px solid rgba(255,255,255,0.1)'}} onClick={() => window.open(selectedDriver.photo, '_blank')} />
+                        ) : (
+                          <div style={{padding:'40px',textAlign:'center',color:'#64748b',background:'rgba(255,255,255,0.03)',borderRadius:'12px',border:'1px dashed rgba(255,255,255,0.1)'}}>Não enviada</div>
+                        )}
+                      </div>
+                      <div className="ap-img-box">
+                        <span>CNH</span>
+                        {selectedDriver.cnh ? (
+                          <img src={selectedDriver.cnh} alt="CNH" style={{maxWidth:'100%',maxHeight:'220px',objectFit:'contain',borderRadius:'12px',cursor:'pointer',border:'2px solid rgba(255,255,255,0.1)'}} onClick={() => window.open(selectedDriver.cnh, '_blank')} />
+                        ) : (
+                          <div style={{padding:'40px',textAlign:'center',color:'#64748b',background:'rgba(255,255,255,0.03)',borderRadius:'12px',border:'1px dashed rgba(255,255,255,0.1)'}}>Não enviada</div>
+                        )}
+                      </div>
+                      <div className="ap-img-box">
+                        <span>CRLV</span>
+                        {selectedDriver.crlv ? (
+                          <img src={selectedDriver.crlv} alt="CRLV" style={{maxWidth:'100%',maxHeight:'220px',objectFit:'contain',borderRadius:'12px',cursor:'pointer',border:'2px solid rgba(255,255,255,0.1)'}} onClick={() => window.open(selectedDriver.crlv, '_blank')} />
+                        ) : (
+                          <div style={{padding:'40px',textAlign:'center',color:'#64748b',background:'rgba(255,255,255,0.03)',borderRadius:'12px',border:'1px dashed rgba(255,255,255,0.1)'}}>Não enviado</div>
+                        )}
+                      </div>
                     </div>
-                    <div style={{marginTop:24}}>
-                       <button className="ap-btn-primary" style={{width:'100%'}} onClick={() => window.open(`/api/user/income-report?year=2024&driverId=${selectedDriver.id}`, '_blank')}>📄 Gerar Informe de Rendimentos (Simulação)</button>
+
+                    {/* Data de Estreia */}
+                    <div style={{marginTop:'24px',padding:'20px',background:'rgba(245,158,11,0.05)',border:'1px solid rgba(245,158,11,0.2)',borderRadius:'16px'}}>
+                      <h4 style={{fontSize:'0.9rem',marginBottom:'12px',color:'#fbbf24'}}>📅 Data de Estreia do Motorista</h4>
+                      <div style={{display:'flex',gap:'12px',alignItems:'center'}}>
+                        <input 
+                          type="date" 
+                          className="ap-input" 
+                          style={{flex:1,padding:'10px 14px',borderRadius:'10px',background:'rgba(0,0,0,0.3)',border:'1px solid rgba(255,255,255,0.1)',color:'#fff',fontSize:'0.9rem'}}
+                          defaultValue={selectedDriver.launchDate ? selectedDriver.launchDate.split('T')[0] : ''}
+                          onChange={(e) => setSelectedDriver({...selectedDriver, _newLaunchDate: e.target.value})}
+                        />
+                        <button 
+                          className="ap-btn-primary" 
+                          style={{padding:'10px 20px',borderRadius:'10px',whiteSpace:'nowrap'}}
+                          onClick={async () => {
+                            const date = selectedDriver._newLaunchDate;
+                            if (!date) return alert('Selecione uma data');
+                            await api(`/admin/drivers/${selectedDriver.id}/launch-date`, { method: 'PUT', body: JSON.stringify({ launchDate: date }) });
+                            showToast('Data de estreia definida!');
+                            load();
+                          }}
+                        >
+                          Definir Data
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{marginTop:24,display:'flex',gap:'12px'}}>
+                       <button className={`ap-btn-primary ${selectedDriver.isApproved ? '' : 'ap-btn-success'}`} style={{flex:1}} onClick={() => { approveDriver(selectedDriver.id, !selectedDriver.isApproved); setSelectedDriver(null) }}>
+                         {selectedDriver.isApproved ? '🔴 Suspender Motorista' : '🟢 Aprovar e Ativar'}
+                       </button>
                     </div>
                   </div>
                 </div>

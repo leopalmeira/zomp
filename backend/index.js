@@ -144,7 +144,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance, credits: user.credits, cnh: user.cnh, crlv: user.crlv, carPlate: user.carPlate, carModel: user.carModel, carColor: user.carColor, isApproved: user.isApproved } });
+    res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance, credits: user.credits, cnh: user.cnh, crlv: user.crlv, photo: user.photo, carPlate: user.carPlate, carModel: user.carModel, carColor: user.carColor, phone: user.phone, pixKey: user.pixKey, isApproved: user.isApproved, launchDate: user.launchDate } });
   } catch (error) {
     res.status(500).json({ error: 'Internal error login' });
   }
@@ -165,13 +165,14 @@ app.get('/api/config', async (req, res) => {
 
 app.put('/api/user/profile', authenticate, async (req, res) => {
   try {
-    const { name, email, cnh, crlv, photo, carPlate, carModel, carColor } = req.body;
+    const { name, email, cnh, crlv, photo, carPlate, carModel, carColor, phone, pixKey } = req.body;
     const { rows } = await query(
-      'UPDATE "User" SET name = $1, email = $2, cnh = $3, crlv = $4, photo = $5, "carPlate" = $6, "carModel" = $7, "carColor" = $8, "updatedAt" = NOW() WHERE id = $9 RETURNING *',
-      [name, email, cnh, crlv, photo, carPlate, carModel, carColor, req.user.id]
+      'UPDATE "User" SET name = COALESCE($1, name), email = COALESCE($2, email), cnh = COALESCE($3, cnh), crlv = COALESCE($4, crlv), photo = COALESCE($5, photo), "carPlate" = COALESCE($6, "carPlate"), "carModel" = COALESCE($7, "carModel"), "carColor" = COALESCE($8, "carColor"), phone = COALESCE($9, phone), "pixKey" = COALESCE($10, "pixKey"), "updatedAt" = NOW() WHERE id = $11 RETURNING *',
+      [name, email, cnh, crlv, photo, carPlate, carModel, carColor, phone, pixKey, req.user.id]
     );
     res.json(rows[0]);
   } catch (error) {
+    console.error('Profile update error:', error);
     res.status(500).json({ error: 'Error updating profile' });
   }
 });
@@ -231,12 +232,12 @@ app.post('/api/rides/:id/complete', authenticate, async (req, res) => {
     const isExpired = referral ? new Date(referral.expiresAt) < new Date() : true;
 
     if (referral && !isExpired) {
-      await query('UPDATE "User" SET balance = balance + 0.10 WHERE id = $1', [referral.referrerId]);
+      await query('UPDATE "User" SET balance = balance + 0.30 WHERE id = $1', [referral.referrerId]);
     } else {
       if (referral) await query('DELETE FROM "Referral" WHERE "referredId" = $1', [ride.passengerId]);
       const expiresAt = new Date(); expiresAt.setFullYear(expiresAt.getFullYear() + 2);
       await query('INSERT INTO "Referral" (id, "referrerId", "referredId", "expiresAt", "createdAt") VALUES (gen_random_uuid(), $1, $2, $3, NOW())', [req.user.id, ride.passengerId, expiresAt]);
-      await query('UPDATE "User" SET balance = balance + 0.10 WHERE id = $1', [req.user.id]);
+      await query('UPDATE "User" SET balance = balance + 0.30 WHERE id = $1', [req.user.id]);
     }
     await query('UPDATE "User" SET "ridesCompleted" = "ridesCompleted" + 1 WHERE id = $1', [req.user.id]);
     res.json({ message: 'Ride completed', ride });
@@ -260,6 +261,45 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
       query('SELECT SUM(amount) FROM "RoyaltyFund"')
     ]);
     res.json({ totalDrivers: d.rows[0].count, totalPassengers: p.rows[0].count, completedRidesCount: r.rows[0].count, royaltyFundBalance: f.rows[0].sum || 0 });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Linked passengers count for driver
+app.get('/api/driver/linked-passengers', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'DRIVER') return res.status(403).json({ error: 'Only drivers' });
+    const { rows } = await query(
+      'SELECT COUNT(*) as count FROM "Referral" WHERE "referrerId" = $1 AND "expiresAt" > NOW()',
+      [req.user.id]
+    );
+    res.json({ linkedPassengers: parseInt(rows[0].count) || 0 });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin: get driver documents for review
+app.get('/api/admin/drivers/:id/documents', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { rows } = await query('SELECT id, name, email, photo, cnh, crlv, "carPlate", "carModel", "carColor", phone, "pixKey", "isApproved", "launchDate" FROM "User" WHERE id = $1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Motorista não encontrado' });
+    res.json(rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin: set launch date for driver
+app.put('/api/admin/drivers/:id/launch-date', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { launchDate } = req.body;
+    const { rows } = await query(
+      'UPDATE "User" SET "launchDate" = $1, "updatedAt" = NOW() WHERE id = $2 RETURNING id, name, "launchDate"',
+      [launchDate, req.params.id]
+    );
+    res.json(rows[0]);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
