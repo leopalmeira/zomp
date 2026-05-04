@@ -30,6 +30,8 @@ export default function AdminPanel() {
   const [toast, setToast] = useState(null)
   const [search, setSearch] = useState('')
   const [selectedDriver, setSelectedDriver] = useState(null)
+  const [selectedRide, setSelectedRide] = useState(null)
+  const [lightbox, setLightbox] = useState(null)
   const [linkPassId, setLinkPassId] = useState('')
 
   const showToast = (msg, type = 'success') => {
@@ -40,7 +42,11 @@ export default function AdminPanel() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      if (tab === 'Dashboard') setStats(await api('/admin/stats'))
+      if (tab === 'Dashboard') {
+        const s = await api('/admin/stats')
+        setStats(s)
+        setOperations(await api('/admin/operations'))
+      }
       if (tab === 'Financeiro') setStats(await api('/admin/stats'))
       if (tab === 'Operações') setOperations(await api('/admin/operations'))
       if (tab === 'Motoristas') setDrivers(await api('/admin/drivers'))
@@ -133,8 +139,22 @@ export default function AdminPanel() {
             <div className="ap-stats-grid">
               <div className="ap-stat-card"><span className="ap-stat-val">{stats.totalDrivers}</span><span className="ap-stat-lbl">Motoristas Ativos</span></div>
               <div className="ap-stat-card"><span className="ap-stat-val">{stats.totalPassengers}</span><span className="ap-stat-lbl">Passageiros Totais</span></div>
-              <div className="ap-stat-card"><span className="ap-stat-val">{stats.completedRides}</span><span className="ap-stat-lbl">Corridas Realizadas</span></div>
+              <div className="ap-stat-card ap-stat-blue"><span className="ap-stat-val">{stats.activeRidesCount || 0}</span><span className="ap-stat-lbl">Corridas em Tempo Real</span></div>
               <div className="ap-stat-card ap-stat-gold"><span className="ap-stat-val">R$ {Number(stats.royaltyFundBalance).toFixed(2)}</span><span className="ap-stat-lbl">Fundo Global</span></div>
+            </div>
+
+            <div className="ap-live-feed">
+              <h3>📡 Fluxo de Operações Recentes</h3>
+              {operations && operations.slice(0, 5).map(ride => (
+                <div key={ride.id} className="ap-feed-item" onClick={() => setSelectedRide(ride)} style={{cursor:'pointer'}}>
+                  <div className="ap-feed-icon"><Activity size={18} /></div>
+                  <div className="ap-feed-body">
+                    <strong>{ride.passengerName} → {ride.driverName || 'Aguardando...'}</strong>
+                    <span>{ride.origin.slice(0, 30)}...</span>
+                  </div>
+                  <div className="ap-feed-time">{new Date(ride.createdAt).toLocaleTimeString()}</div>
+                </div>
+              ))}
             </div>
             
             <div className="ap-rules-box">
@@ -156,88 +176,54 @@ export default function AdminPanel() {
         {/* ── FINANCEIRO (ESTILO IRP) ── */}
         {tab === 'Financeiro' && stats && (
           <div className="ap-finance">
-            <div className="ap-stats-grid">
-              <div className="ap-stat-card ap-stat-green">
-                <span className="ap-stat-val">R$ {Number(stats?.totalRevenue || 0).toFixed(2)}</span>
-                <span className="ap-stat-lbl">Receita Bruta Total</span>
+            <div className="ap-fin-grid">
+              <div className="ap-fin-card">
+                <span className="ap-fin-label">Faturamento Bruto (Créditos)</span>
+                <strong className="ap-fin-val">R$ {stats.financials.grossRevenue.toFixed(2)}</strong>
+                <span className="ap-fin-sub">Receita total via venda de créditos</span>
               </div>
-              <div className="ap-stat-card ap-stat-red">
-                <span className="ap-stat-val">R$ {Number(stats?.totalRoyaltiesExpenses || 0).toFixed(2)}</span>
-                <span className="ap-stat-lbl">Despesas c/ Royalties</span>
+              <div className="ap-fin-card">
+                <span className="ap-fin-label">Custos & Impostos</span>
+                <strong className="ap-fin-val" style={{color:'#ef4444'}}>- R$ {(stats.financials.taxes + stats.financials.serverFeesTotal).toFixed(2)}</strong>
+                <span className="ap-fin-sub">10% Impostos + R$ 0,10/corrida Servidor</span>
               </div>
-              <div className="ap-stat-card ap-stat-blue">
-                <span className="ap-stat-val">R$ {Number(stats?.netProfit || 0).toFixed(2)}</span>
-                <span className="ap-stat-lbl">Lucro Líquido Real</span>
+              <div className="ap-fin-card">
+                <span className="ap-fin-label">Royalties Pagos</span>
+                <strong className="ap-fin-val" style={{color:'#f59e0b'}}>- R$ {stats.financials.royaltiesTotal.toFixed(2)}</strong>
+                <span className="ap-fin-sub">R$ 0,30 por corrida (Rede)</span>
+              </div>
+              <div className="ap-fin-card vibrant">
+                <span className="ap-fin-label">Lucro Líquido Real</span>
+                <strong className="ap-fin-val">R$ {stats.financials.netProfit.toFixed(2)}</strong>
+                <span className="ap-fin-sub">Margem final de lucratividade</span>
               </div>
             </div>
 
-            <div className="ap-irp-grid">
+            <div className="ap-irp-grid" style={{marginTop:32}}>
               <div className="ap-irp-card">
-                <h3>📊 Demonstrativo de Receita (Corridas + Créditos)</h3>
+                <h3>📊 Demonstrativo de Receita (Últimos 15 dias)</h3>
                 <div className="ap-irp-chart">
-                  {stats?.dailyStats?.map((d, i) => (
+                  {stats.dailyStats?.map((d, i) => (
                     <div key={i} className="ap-irp-bar-wrap">
-                      <div className="ap-irp-bar" style={{ height: `${Math.min(150, (d.revenue / 200) * 150)}px` }}>
-                         {d.revenue > 0 && <span className="ap-irp-bar-tip">R$ {d.revenue.toFixed(0)}</span>}
+                      <div className="ap-irp-bar" style={{ height: `${Math.min(150, (Number(d.revenue) / (Math.max(...stats.dailyStats.map(x=>Number(x.revenue))) || 100)) * 150)}px` }}>
+                         {Number(d.revenue) > 0 && <span className="ap-irp-bar-tip">R$ {Number(d.revenue).toFixed(0)}</span>}
                       </div>
-                      <span className="ap-irp-bar-lbl">{d.date.slice(-2)}/{d.date.slice(5,7)}</span>
+                      <span className="ap-irp-bar-lbl">{d.date}</span>
                     </div>
                   ))}
-                  {(!stats?.dailyStats || stats.dailyStats.length === 0) && <div className="ap-no-data">Aguardando dados...</div>}
                 </div>
               </div>
 
               <div className="ap-irp-card ap-irp-center">
-                <h3>🎯 Margem de Lucro Líquida</h3>
+                <h3>🎯 Margem de Lucro</h3>
                 <div className="ap-irp-circle">
                   <div className="ap-irp-circle-inner">
-                    <span className="ap-irp-pct">{stats?.grossMargin || 0}%</span>
+                    <span className="ap-irp-pct">{stats.grossMargin}%</span>
                     <span className="ap-irp-sub">Lucratividade</span>
                   </div>
                 </div>
-                <small style={{marginTop:12, opacity:0.6, fontSize:'0.7rem'}}>Retorno sobre faturamento total</small>
+                <small style={{marginTop:12, opacity:0.6, fontSize:'0.7rem'}}>Retorno líquido real</small>
               </div>
-
-              <div className="ap-irp-card">
-                <h3>💰 Saldo em Caixa (Disponível)</h3>
-                <div className="ap-irp-balance">
-                   <div className="ap-irp-bal-row"><span>Total Recebido:</span> <strong>R$ {(stats?.totalRevenue || 0).toFixed(2)}</strong></div>
-                   <div className="ap-irp-bal-row"><span>Royalties Pagos:</span> <strong style={{color:'var(--ap-red)'}}>- R$ {(stats?.totalRoyaltiesExpenses || 0).toFixed(2)}</strong></div>
-                   <div className="ap-irp-bal-row"><span>Saques Aprovados:</span> <strong style={{color:'var(--ap-red)'}}>- R$ {((stats?.netProfit || 0) - (stats?.companyBalance || 0)).toFixed(2)}</strong></div>
-                   <div className="ap-irp-bal-total"><span>Saldo Líquido:</span> <strong>R$ {(stats?.companyBalance || 0).toFixed(2)}</strong></div>
-                </div>
-              </div>
-            </div>
-
-            <h3 style={{marginBottom:16, fontSize:'0.9rem', color:'var(--ap-txt2)'}}>💳 Gestão de Créditos de Motoristas</h3>
-            <div className="ap-stats-mini-grid" style={{marginBottom:24}}>
-              <div className="ap-mini-card">
-                <span>Comprado Hoje</span>
-                <strong>R$ {(stats?.creditStats?.day || 0).toFixed(2)}</strong>
-                <small>Vendas Diárias</small>
-              </div>
-              <div className="ap-mini-card">
-                <span>Comprado na Semana</span>
-                <strong>R$ {(stats?.creditStats?.week || 0).toFixed(2)}</strong>
-                <small>Ciclo Semanal</small>
-              </div>
-              <div className="ap-mini-card">
-                <span>Comprado no Mês</span>
-                <strong>R$ {(stats?.creditStats?.month || 0).toFixed(2)}</strong>
-                <small>Volume Mensal</small>
-              </div>
-              <div className="ap-mini-card">
-                <span>Preço do Crédito</span>
-                <strong>R$ {(stats?.creditStats?.pricePerCredit || 1).toFixed(2)}</strong>
-                <small>Valor p/ Motorista</small>
-              </div>
-            </div>
-
-            <div className="ap-stats-mini-grid">
-              <div className="ap-mini-card"><span>Contas a Pagar</span><strong>R$ 0,00</strong></div>
-              <div className="ap-mini-card"><span>Fundo Global (Receber)</span><strong>R$ {(stats?.royaltyFundBalance || 0).toFixed(2)}</strong><small>Reserva Técnica</small></div>
-              <div className="ap-mini-card"><span>Lucro Líquido</span><strong>{stats?.grossMargin || 0}%</strong></div>
-              <div className="ap-mini-card"><span>Índice de Liquidez</span><strong>1.0</strong></div>
             </div>
           </div>
         )}
@@ -245,25 +231,18 @@ export default function AdminPanel() {
         {/* ── OPERAÇÕES ── */}
         {tab === 'Operações' && operations && (
           <div className="ap-operations">
-            <div className="ap-stats-grid">
-              <div className="ap-stat-card"><span className="ap-stat-val">{operations.pendingCount}</span><span className="ap-stat-lbl">Pedidos Pendentes</span></div>
-              <div className="ap-stat-card ap-stat-green"><span className="ap-stat-val">{operations.activeCount}</span><span className="ap-stat-lbl">Corridas em Andamento</span></div>
-              <div className="ap-stat-card"><span className="ap-stat-val">2</span><span className="ap-stat-lbl">Agendadas</span></div>
-            </div>
-
-            <h3>📡 Fluxo de Pedidos em Tempo Real</h3>
             <div className="ap-table-wrap">
               <table className="ap-table">
-                <thead><tr><th>Hora</th><th>Passageiro</th><th>Motorista</th><th>Status</th><th>Valor</th><th>Origem/Destino</th></tr></thead>
+                <thead><tr><th>Data</th><th>Passageiro</th><th>Motorista</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
                 <tbody>
-                  {operations.recentRides.map(r => (
+                  {operations.map(r => (
                     <tr key={r.id}>
-                      <td>{new Date(r.createdAt).toLocaleTimeString('pt-BR')}</td>
-                      <td>{r.passenger?.name}</td>
-                      <td>{r.driver?.name || <span style={{opacity:0.5}}>Aguardando...</span>}</td>
-                      <td><span className={`ap-badge ${r.status === 'COMPLETED' ? 'ap-badge-green' : r.status === 'PENDING' ? 'ap-badge-yellow' : 'ap-badge-blue'}`}>{r.status}</span></td>
-                      <td>R$ {r.price?.toFixed(2)}</td>
-                      <td className="ap-td-sm">{r.origin?.slice(0,15)}... → {r.destination?.slice(0,15)}...</td>
+                      <td>{new Date(r.createdAt).toLocaleString('pt-BR')}</td>
+                      <td>{r.passengerName}</td>
+                      <td>{r.driverName || '—'}</td>
+                      <td>R$ {r.price.toFixed(2)}</td>
+                      <td><span className={`ap-status ap-status-${r.status.toLowerCase()}`}>{r.status}</span></td>
+                      <td><button className="ap-btn-sm ap-btn-blue" onClick={() => setSelectedRide(r)}>Detalhes</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -280,7 +259,7 @@ export default function AdminPanel() {
             </div>
             <div className="ap-table-wrap">
               <table className="ap-table">
-                <thead><tr><th>Motorista</th><th>Email</th><th>Avaliação</th><th>Aceitação</th><th>Corridas</th><th>Saldo</th><th>Status</th><th>Ações</th></tr></thead>
+                <thead><tr><th>Motorista</th><th>Email</th><th>Vínculos</th><th>Status</th><th>Ações</th></tr></thead>
                 <tbody>
                   {filteredDrivers.map(d => (
                     <tr key={d.id}>
@@ -291,10 +270,7 @@ export default function AdminPanel() {
                         </div>
                       </td>
                       <td className="ap-td-email">{d.email}</td>
-                      <td><span className="ap-star">⭐</span> {d.rating?.toFixed(1)} <small>({d.totalRatings})</small></td>
-                      <td><span className={`ap-p-rate ${d.acceptanceRate < 70 ? 'low' : ''}`}>{d.acceptanceRate}%</span></td>
-                      <td>{d.completedRides}</td>
-                      <td>R$ {Number(d.balance).toFixed(2)}</td>
+                      <td><span className="ap-badge-linked">{d.linkedPassengers || 0} passageiros</span></td>
                       <td><span className={`ap-badge ${d.isApproved ? 'ap-badge-green' : 'ap-badge-red'}`}>{d.isApproved ? 'Aprovado' : 'Suspenso'}</span></td>
                       <td>
                         <div className="ap-btn-group">
@@ -327,7 +303,27 @@ export default function AdminPanel() {
                         <div className="ap-doc-item"><span>Chave PIX:</span><strong>{selectedDriver.pixKey || 'Não informada'}</strong></div>
                         <div className="ap-doc-item"><span>Avaliação:</span><strong>⭐ {selectedDriver.rating?.toFixed(1)} ({selectedDriver.totalRatings} votos)</strong></div>
                         <div className="ap-doc-item"><span>Taxa de Aceitação:</span><strong>{selectedDriver.acceptanceRate}%</strong></div>
-                        <div className="ap-doc-item"><span>Total de Corridas:</span><strong>{selectedDriver.completedRides}</strong></div>
+                        <div className="ap-doc-item"><span>Rede Vinculada:</span><strong>{selectedDriver.linkedPassengers || 0} Passageiros</strong></div>
+                        <div className="ap-doc-item"><span>Total de Corridas:</span><strong>{selectedDriver.completedRides || 0}</strong></div>
+                        <div className="ap-doc-item" style={{background:'rgba(151,233,0,0.05)', padding:'8px', borderRadius:'8px', marginTop:'8px'}}>
+                          <span>Saldo de Créditos:</span>
+                          <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                            <strong>R$ {Number(selectedDriver.credits || 0).toFixed(2)}</strong>
+                            <button className="ap-btn-sm ap-btn-success" onClick={() => {
+                              const amt = prompt('Valor em créditos a adicionar (R$):', '10.00');
+                              if (amt && !isNaN(amt)) {
+                                api(`/admin/drivers/${selectedDriver.id}/add-credits`, {
+                                  method: 'POST',
+                                  body: JSON.stringify({ amount: parseFloat(amt) })
+                                }).then(r => {
+                                  showToast(r.message || 'Créditos adicionados');
+                                  load();
+                                  setSelectedDriver(null);
+                                });
+                              }
+                            }}>+ Adicionar</button>
+                          </div>
+                        </div>
                       </div>
                       <div className="ap-doc-section">
                         <h4>🚗 Veículo</h4>
@@ -343,7 +339,7 @@ export default function AdminPanel() {
                       <div className="ap-img-box">
                         <span>Foto de Perfil</span>
                         {selectedDriver.photo ? (
-                          <img src={selectedDriver.photo} alt="Perfil" style={{maxWidth:'100%',maxHeight:'220px',objectFit:'contain',borderRadius:'12px',cursor:'pointer',border:'2px solid rgba(255,255,255,0.1)'}} onClick={() => window.open(selectedDriver.photo, '_blank')} />
+                          <img src={selectedDriver.photo} alt="Perfil" style={{maxWidth:'100%',maxHeight:'220px',objectFit:'contain',borderRadius:'12px',cursor:'pointer',border:'2px solid rgba(255,255,255,0.1)'}} onClick={() => setLightbox(selectedDriver.photo)} />
                         ) : (
                           <div style={{padding:'40px',textAlign:'center',color:'#64748b',background:'rgba(255,255,255,0.03)',borderRadius:'12px',border:'1px dashed rgba(255,255,255,0.1)'}}>Não enviada</div>
                         )}
@@ -351,7 +347,7 @@ export default function AdminPanel() {
                       <div className="ap-img-box">
                         <span>CNH</span>
                         {selectedDriver.cnh ? (
-                          <img src={selectedDriver.cnh} alt="CNH" style={{maxWidth:'100%',maxHeight:'220px',objectFit:'contain',borderRadius:'12px',cursor:'pointer',border:'2px solid rgba(255,255,255,0.1)'}} onClick={() => window.open(selectedDriver.cnh, '_blank')} />
+                          <img src={selectedDriver.cnh} alt="CNH" style={{maxWidth:'100%',maxHeight:'220px',objectFit:'contain',borderRadius:'12px',cursor:'pointer',border:'2px solid rgba(255,255,255,0.1)'}} onClick={() => setLightbox(selectedDriver.cnh)} />
                         ) : (
                           <div style={{padding:'40px',textAlign:'center',color:'#64748b',background:'rgba(255,255,255,0.03)',borderRadius:'12px',border:'1px dashed rgba(255,255,255,0.1)'}}>Não enviada</div>
                         )}
@@ -359,7 +355,7 @@ export default function AdminPanel() {
                       <div className="ap-img-box">
                         <span>CRLV</span>
                         {selectedDriver.crlv ? (
-                          <img src={selectedDriver.crlv} alt="CRLV" style={{maxWidth:'100%',maxHeight:'220px',objectFit:'contain',borderRadius:'12px',cursor:'pointer',border:'2px solid rgba(255,255,255,0.1)'}} onClick={() => window.open(selectedDriver.crlv, '_blank')} />
+                          <img src={selectedDriver.crlv} alt="CRLV" style={{maxWidth:'100%',maxHeight:'220px',objectFit:'contain',borderRadius:'12px',cursor:'pointer',border:'2px solid rgba(255,255,255,0.1)'}} onClick={() => setLightbox(selectedDriver.crlv)} />
                         ) : (
                           <div style={{padding:'40px',textAlign:'center',color:'#64748b',background:'rgba(255,255,255,0.03)',borderRadius:'12px',border:'1px dashed rgba(255,255,255,0.1)'}}>Não enviado</div>
                         )}
@@ -384,21 +380,14 @@ export default function AdminPanel() {
             <input className="ap-search" placeholder="Buscar passageiro..." value={search} onChange={e => setSearch(e.target.value)} />
             <div className="ap-table-wrap">
               <table className="ap-table">
-                <thead><tr><th>Nome</th><th>Email</th><th>Avaliação</th><th>Corridas</th><th>Status Vínculo</th><th>Motorista Vinculado</th><th>Ação</th></tr></thead>
+                <thead><tr><th>Nome</th><th>Email</th><th>Vínculo</th><th>Status</th><th>Ações</th></tr></thead>
                 <tbody>
                   {filteredPassengers.map(p => (
                     <tr key={p.id}>
-                      <td>{p.name} {p.completedRides === 0 && <span className="ap-badge-new">Novo</span>}</td>
-                      <td className="ap-td-email">{p.email}</td>
-                      <td>⭐ {p.rating?.toFixed(1) || '—'}</td>
-                      <td>{p.completedRides}</td>
-                      <td>
-                        <span className={`ap-badge ${p.bindingStatus === 'active' ? 'ap-badge-green' : p.bindingStatus === 'expired' ? 'ap-badge-yellow' : 'ap-badge-gray'}`}>
-                          {p.bindingStatus === 'active' ? 'Ativo' : p.bindingStatus === 'expired' ? 'Expirado' : 'Livre'}
-                        </span>
-                      </td>
-                      <td>{p.linkedDriver?.name || '—'}</td>
-                      <td>{p.bindingStatus !== 'free' && <button className="ap-btn-sm ap-btn-danger" onClick={() => unlinkPassenger(p.id)}>Desvincular</button>}</td>
+                      <td>{p.name}</td>
+                      <td>{p.email}</td>
+                      <td><span className="ap-badge-linked">{p.linkedDriverName || 'Orgânico'}</span></td>
+                      <td><span className={`ap-status ap-status-approved`}>Ativo</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -536,10 +525,12 @@ export default function AdminPanel() {
 
         {/* ── SAQUES ── */}
         {tab === 'Saques' && (
-          <div className="ap-table-wrap">
-            <table className="ap-table">
-              <thead><tr><th>Motorista</th><th>Valor</th><th>Solicitado em</th><th>Ações</th></tr></thead>
-              <tbody>
+          <div>
+            <div className="ap-fund-total"><span>Total Estimado a Pagar (Royalties)</span><strong>R$ {withdrawals.reduce((acc, w) => acc + Number(w.amount), 0).toFixed(2)}</strong></div>
+            <div className="ap-table-wrap">
+              <table className="ap-table">
+                <thead><tr><th>Motorista</th><th>Valor</th><th>Solicitado em</th><th>Ações</th></tr></thead>
+                <tbody>
                 {withdrawals.length === 0 && <tr><td colSpan={4} style={{textAlign:'center', padding:'32px'}}>Sem saques pendentes</td></tr>}
                 {withdrawals.map(w => (
                   <tr key={w.id}>
@@ -613,6 +604,45 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
+        {/* Modal de Detalhes da Corrida */}
+        {selectedRide && (
+          <div className="ap-modal-overlay" onClick={() => setSelectedRide(null)}>
+            <div className="ap-modal" onClick={e => e.stopPropagation()}>
+              <div className="ap-modal-header">
+                <h2>Detalhes da Operação #{selectedRide.id.slice(0, 8)}</h2>
+                <button className="ap-modal-close" onClick={() => setSelectedRide(null)}>×</button>
+              </div>
+              <div className="ap-modal-content">
+                <div className="ap-doc-grid">
+                  <div className="ap-doc-section">
+                    <h4>👤 Passageiro</h4>
+                    <p><strong>Nome:</strong> {selectedRide.passengerName}</p>
+                    <p><strong>Tel:</strong> {selectedRide.passengerPhone || '—'}</p>
+                  </div>
+                  <div className="ap-doc-section">
+                    <h4>🚗 Motorista</h4>
+                    <p><strong>Nome:</strong> {selectedRide.driverName || 'Ninguém aceitou'}</p>
+                    <p><strong>Tel:</strong> {selectedRide.driverPhone || '—'}</p>
+                  </div>
+                </div>
+                <div className="ap-config-section" style={{marginTop:20}}>
+                  <h4>📡 Rota & Preço</h4>
+                  <p><strong>Origem:</strong> {selectedRide.origin}</p>
+                  <p><strong>Destino:</strong> {selectedRide.destination}</p>
+                  <p style={{fontSize:'1.2rem', color:'var(--ap-green)', marginTop:10}}><strong>Valor Final: R$ {selectedRide.price.toFixed(2)}</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Lightbox de Imagens */}
+        {lightbox && (
+          <div className="ap-lightbox" onClick={() => setLightbox(null)}>
+            <img src={lightbox} alt="Lightbox" />
+          </div>
+        )}
+
       </main>
     </div>
   )

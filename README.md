@@ -49,10 +49,11 @@ O core do aplicativo para os usuários solicitarem ou agendarem corridas com uma
 *   **Status Embarcando:** Motoristas em análise possuem interface dedicada e acompanham a **Data de Estreia Global** definida pelo admin.
 *   **Login Social:** Suporte inicial para Google Auth, simplificando a conversão de novos usuários.
 
-### 6. Painel Administrativo Master (v12)
-*   **Monitoramento Real-Time:** Fluxo de pedidos, corridas em andamento e faturamento global.
-*   **Gestão Financeira:** Controle de Fundo de Royalties, Saldo da Empresa e Processamento de Saques.
-*   **Configuração Master:** Alteração dinâmica de tarifas, data de lançamento, limites de suspensão e parâmetros de rede.
+### 6. Painel Administrativo Master (v12.2.0)
+*   **Monitoramento Real-Time:** Fluxo de pedidos, corridas em tempo real e faturamento detalhado (Bruto/Líquido).
+*   **Gestão Financeira Avançada:** Auditoria de custos (impostos, royalties e taxas de servidor) e processamento de saques.
+*   **Verificação de Documentos:** Verificação ágil de motoristas via lightbox interna no painel.
+*   **Configuração Master:** Alteração dinâmica de tarifas, valor do crédito (R$ 1,50), data de lançamento e limites de rede.
 
 ## 💻 Stack Tecnológico
 

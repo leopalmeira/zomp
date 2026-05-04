@@ -30,7 +30,20 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 *   **Remoção de Redundâncias**: O botão "Outros Apps" foi removido para simplificar a navegação e manter o foco total na operação Zomp.
 *   **Interface Unificada**: Agora, tanto o app do passageiro quanto o do motorista seguem a mesma linguagem visual de "clareza e alta fidelidade".
 
+### 🚀 v12.2.0 - Central de Comando Administrativa & Produção Financeira
+*   **Gestão Financeira Avançada**: Novo dashboard financeiro com cálculo de Lucro Líquido Real (Descontando Impostos, Royalties de R$ 0,30 e Taxa de Servidor de R$ 0,10 por crédito).
+*   **Créditos de Produção**: Valor do crédito operacional atualizado para **R$ 1,50**, com sistema de trava e auditoria.
+*   **Monitoramento em Tempo Real**: Dashboard Admin agora mostra corridas em andamento e fluxo de pedidos ao vivo.
+*   **Visibilidade de Rede**: Admin agora visualiza o número de passageiros vinculados a cada motorista e o motorista vinculado a cada passageiro.
+*   **Lightbox Interna**: Verificação de documentos agora abre em modal interno, sem sair do painel, garantindo agilidade.
+*   **Fundo Coletivo Automático**: Reforço da lógica de transbordo de royalties para o Fundo Global após a 8ª corrida mensal do passageiro.
+
+### 🚀 v12.2.1 - Autenticidade Total & Gestão de Créditos
+*   **Fim das Corridas Mock**: Removida a simulação de aceitação automática no app do passageiro. Agora a plataforma opera 100% com dados reais.
+*   **Gestão Manual de Créditos**: Administradores agora podem adicionar créditos manualmente para qualquer motorista diretamente pelo painel.
+*   **Sincronização de Produção**: Ajustes finais nos PWAs para garantir que todas as solicitações sejam processadas apenas por motoristas reais.
+
 ---
-**Status Atual**: Produção Refinada. 🚀
-**Versão**: 12.1.0
+**Status Atual**: Produção Autêntica. 🏁
+**Versão**: 12.2.1
 **Responsável**: Antigravity AI

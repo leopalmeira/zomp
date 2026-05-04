@@ -501,11 +501,6 @@ export default function PassengerDashboard() {
       setActiveRideId(newRide.id);
 
       setRideState('SEARCHING')
-      const delay = prioritizeFavs ? 4000 : 2000
-      setTimeout(() => {
-        setRideState('ACCEPTED')
-        setCancelCountdown(119) // Starts the cancel grace period
-      }, delay)
     } catch (e) {
       console.error(e)
       alert("Falha ao chamar motorista. Tente novamente.")

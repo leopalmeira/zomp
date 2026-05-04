@@ -33,10 +33,10 @@ async function initAdmin() {
     const { rows: configRows } = await query('SELECT id FROM "AdminConfig" WHERE id = $1', ['singleton']);
     if (configRows.length === 0) {
       await query(
-        'INSERT INTO "AdminConfig" (id, "pricePerKmCar", "pricePerKmMoto", "minFareCar", "minFareMoto", "royaltyPerRide", "royaltyMonthlyLimit", "maxPassengersPerDriver", "bindingMonthsFirst", "bindingMonthsRenew", "autoSuspendMinAcceptance", "autoSuspendMinRating", "launchDate") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)',
-        ['singleton', 2.00, 1.50, 8.40, 7.20, 0.30, 8, 700, 36, 24, 70, 4.5, '2026-07-30']
+        'INSERT INTO "AdminConfig" (id, "pricePerKmCar", "pricePerKmMoto", "minFareCar", "minFareMoto", "royaltyPerRide", "royaltyMonthlyLimit", "maxPassengersPerDriver", "bindingMonthsFirst", "bindingMonthsRenew", "autoSuspendMinAcceptance", "autoSuspendMinRating", "launchDate", "pricePerCredit") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
+        ['singleton', 2.00, 1.50, 8.40, 7.20, 0.30, 8, 700, 36, 24, 70, 4.5, '2026-07-30', 1.50]
       );
-      console.log('✅ AdminConfig initialized with launch date 2026-07-30');
+      console.log('✅ AdminConfig initialized with launch date 2026-07-30 and credit price 1.50');
     } else {
       // Ensure launchDate column exists with default
       try {
@@ -385,16 +385,98 @@ app.put('/api/admin/config', authenticate, isAdmin, async (req, res) => {
 
 app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
   try {
-    const [d, p, r, f] = await Promise.all([
+    const [d, p, r, f, c] = await Promise.all([
       query('SELECT COUNT(*) FROM "User" WHERE role = $1', ['DRIVER']),
       query('SELECT COUNT(*) FROM "User" WHERE role = $1', ['PASSENGER']),
       query('SELECT COUNT(*) FROM "Ride" WHERE status = $1', ['COMPLETED']),
-      query('SELECT SUM(amount) FROM "RoyaltyFund"')
+      query('SELECT SUM(amount) as sum FROM "RoyaltyFund"'),
+      query('SELECT COUNT(*) as count FROM "Ride" WHERE status = $1', ['ACCEPTED']) // Real-time active rides
     ]);
-    res.json({ totalDrivers: d.rows[0].count, totalPassengers: p.rows[0].count, completedRidesCount: r.rows[0].count, royaltyFundBalance: f.rows[0].sum || 0 });
+
+    // Financials
+    const { rows: configRows } = await query('SELECT "pricePerCredit" FROM "AdminConfig" WHERE id = $1', ['singleton']);
+    const creditPrice = configRows[0]?.pricePerCredit || 1.50;
+    
+    // Simulating sales based on accepted rides (each ride uses 1 credit)
+    const totalRides = parseInt(r.rows[0].count) + parseInt(c.rows[0].count);
+    const grossRevenue = totalRides * creditPrice;
+    
+    // Logic: Net = Gross - Taxes(10%) - Royalty(0.30) - Server(0.10)
+    const taxes = grossRevenue * 0.10;
+    const royaltiesTotal = totalRides * 0.30;
+    const serverFeesTotal = totalRides * 0.10;
+    const netProfit = grossRevenue - taxes - royaltiesTotal - serverFeesTotal;
+
+    // Real Daily Stats (Last 15 days)
+    const { rows: dailyRows } = await query(`
+      SELECT TO_CHAR(d, 'DD/MM') as date,
+      COALESCE((SELECT SUM(price) FROM "Ride" WHERE status = 'COMPLETED' AND TO_CHAR("createdAt", 'DD/MM') = TO_CHAR(d, 'DD/MM')), 0) as revenue
+      FROM generate_series(NOW() - INTERVAL '14 days', NOW(), '1 day') d
+      ORDER BY d ASC
+    `);
+
+    res.json({ 
+      totalDrivers: d.rows[0].count, 
+      totalPassengers: p.rows[0].count, 
+      completedRidesCount: r.rows[0].count, 
+      activeRidesCount: c.rows[0].count,
+      royaltyFundBalance: f.rows[0].sum || 0,
+      dailyStats: dailyRows,
+      grossMargin: grossRevenue > 0 ? ((netProfit / grossRevenue) * 100).toFixed(1) : 100,
+      financials: {
+        grossRevenue,
+        taxes,
+        royaltiesTotal,
+        serverFeesTotal,
+        netProfit
+      }
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+app.get('/api/admin/drivers', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(`
+      SELECT u.*, 
+      (SELECT COUNT(*) FROM "Referral" r WHERE r."referrerId" = u.id AND r."expiresAt" > NOW()) as "linkedPassengers"
+      FROM "User" u WHERE role = 'DRIVER' ORDER BY "createdAt" DESC
+    `);
+    // Fix acceptance rate display for admin
+    const drivers = rows.map(d => {
+      const total = (d.ridesAccepted || 0) + (d.ridesMissed || 0);
+      const rate = total > 0 ? (d.ridesAccepted / total) * 100 : 100;
+      return { ...d, acceptanceRate: rate.toFixed(1) };
+    });
+    res.json(drivers);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/passengers', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(`
+      SELECT u.*, 
+      (SELECT name FROM "User" d JOIN "Referral" r ON d.id = r."referrerId" WHERE r."referredId" = u.id LIMIT 1) as "linkedDriverName"
+      FROM "User" u WHERE role = 'PASSENGER' ORDER BY "createdAt" DESC
+    `);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/operations', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(`
+      SELECT r.*, 
+      p.name as "passengerName", p.phone as "passengerPhone",
+      d.name as "driverName", d.phone as "driverPhone"
+      FROM "Ride" r
+      JOIN "User" p ON r."passengerId" = p.id
+      LEFT JOIN "User" d ON r."driverId" = d.id
+      ORDER BY r."createdAt" DESC LIMIT 50
+    `);
+    res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Linked passengers count for driver
@@ -417,6 +499,18 @@ app.get('/api/admin/drivers/:id/documents', authenticate, isAdmin, async (req, r
     const { rows } = await query('SELECT id, name, email, photo, cnh, crlv, "carPlate", "carModel", "carColor", phone, "pixKey", "isApproved", "launchDate" FROM "User" WHERE id = $1', [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Motorista não encontrado' });
     res.json(rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Admin: add credits to driver manually
+app.post('/api/admin/drivers/:id/add-credits', authenticate, isAdmin, async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const { rows } = await query('UPDATE "User" SET credits = credits + $1 WHERE id = $2 RETURNING credits', [amount, req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Motorista não encontrado' });
+    res.json({ message: `R$ ${amount} em créditos adicionados`, newBalance: rows[0].credits });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
