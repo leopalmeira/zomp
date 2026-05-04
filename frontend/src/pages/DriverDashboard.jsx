@@ -533,9 +533,6 @@ export default function DriverDashboard() {
               <button className={`drawer-nav-item ${activeScreen === 'REFERRAL' ? 'active' : ''}`} onClick={() => openScreen('REFERRAL')}>
                 <span className="nav-icon"><UserPlus size={18} /></span> Indicar Passageiro
               </button>
-              <button className={`drawer-nav-item ${activeScreen === 'EXTERNAL' ? 'active' : ''}`} onClick={() => openScreen('EXTERNAL')}>
-                <span className="nav-icon"><RefreshCw size={18} /></span> Outros Apps
-              </button>
               <button className={`drawer-nav-item ${activeScreen === 'SUPPORT' ? 'active' : ''}`} onClick={() => openScreen('SUPPORT')}>
                 <span className="nav-icon"><Headset size={18} /></span> Suporte
               </button>

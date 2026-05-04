@@ -1,13 +1,13 @@
 /* ── Admin Panel CSS ── */
 :root {
-  --ap-bg: #060d1a;
-  --ap-sidebar: #0a1628;
-  --ap-card: rgba(12,26,46,0.9);
-  --ap-border: rgba(255,255,255,0.07);
-  --ap-txt: #f0f4f8;
-  --ap-txt2: #8a9bb5;
-  --ap-green: #97E900;
-  --ap-gold: #E8B84B;
+  --ap-bg: #f8fafc;
+  --ap-sidebar: #ffffff;
+  --ap-card: #ffffff;
+  --ap-border: #e2e8f0;
+  --ap-txt: #0f172a;
+  --ap-txt2: #64748b;
+  --ap-green: #059669;
+  --ap-gold: #b45309;
   --ap-red: #ef4444;
   --ap-blue: #3b82f6;
 }
@@ -61,8 +61,8 @@
   transition: all 0.2s;
   width: 100%;
 }
-.ap-nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--ap-txt); }
-.ap-nav-btn.active { background: rgba(151,233,0,0.1); color: var(--ap-green); border-left: 3px solid var(--ap-green); }
+.ap-nav-btn:hover { background: #f1f5f9; color: var(--ap-txt); }
+.ap-nav-btn.active { background: #ecfdf5; color: var(--ap-green); border-left: 3px solid var(--ap-green); }
 
 .ap-logout {
   background: none;
