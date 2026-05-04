@@ -162,19 +162,6 @@ export default function LoginPage({ forceRole }) {
 
           {!isAdmin && (
             <div className="auth-extra-actions">
-              <div className="auth-divider">
-                <span>ou entrar com</span>
-              </div>
-              
-              <button 
-                type="button" 
-                className="btn-google"
-                onClick={() => googleLoginAction()}
-              >
-                <img src="https://www.google.com/favicon.ico" alt="G" />
-                Entrar com Google
-              </button>
-
               <div className="auth-footer-links">
                 <p>Ainda não é parceiro?</p>
                 <Link to={registerLink} className="btn-secondary-outline">
