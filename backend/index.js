@@ -538,6 +538,25 @@ app.post('/api/admin/drivers/:id/reset-stats', authenticate, isAdmin, async (req
   }
 });
 
+// Admin: FACTORY RESET (Wipe Database)
+app.post('/api/admin/wipe-database', authenticate, isAdmin, async (req, res) => {
+  try {
+    // Apaga dados em ordem para respeitar chaves estrangeiras
+    await query('DELETE FROM "Ride"');
+    try { await query('DELETE FROM "Referral"'); } catch(e){}
+    try { await query('DELETE FROM "Withdrawal"'); } catch(e){}
+    try { await query('DELETE FROM "CreditTransaction"'); } catch(e){}
+    
+    // Apaga todos os usuários MENOS administradores
+    const { rowCount } = await query('DELETE FROM "User" WHERE role != $1', ['ADMIN']);
+    
+    res.json({ message: `Banco de dados limpo com sucesso. ${rowCount} contas deletadas.` });
+  } catch (e) {
+    console.error('Wipe error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Admin: set GLOBAL launch date
 app.put('/api/admin/launch-date', authenticate, isAdmin, async (req, res) => {
   try {

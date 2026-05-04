@@ -514,7 +514,25 @@ export default function AdminPanel() {
                 </div>
               </div>
             </div>
-            <button className="ap-btn-primary" style={{marginTop:'20px', padding:'18px'}} onClick={saveConfig}>💾 Consolidar e Salvar Estrutura de Negócio</button>
+            <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+              <button className="ap-btn-primary" style={{ flex: 1, padding: '18px' }} onClick={saveConfig}>💾 Consolidar e Salvar Estrutura de Negócio</button>
+              <button 
+                className="ap-btn-primary" 
+                style={{ flex: 1, padding: '18px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444' }} 
+                onClick={() => {
+                  if (window.confirm('⚠️ ATENÇÃO: Isso vai deletar todos os motoristas, passageiros e corridas do sistema. Somente o login Admin será mantido. Tem CERTEZA ABSOLUTA?')) {
+                    if (window.confirm('ÚLTIMO AVISO: Esta ação é IRREVERSÍVEL. Digite OK para confirmar.')) {
+                      api('/admin/wipe-database', { method: 'POST' }).then(r => {
+                        showToast(r.message || 'Banco resetado', 'success');
+                        setTimeout(() => window.location.reload(), 2000);
+                      }).catch(e => showToast('Erro: ' + e.message, 'error'));
+                    }
+                  }
+                }}
+              >
+                🗑️ WIPE DATABASE (Limpar Sistema)
+              </button>
+            </div>
           </div>
         )}
 
