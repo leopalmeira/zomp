@@ -53,11 +53,10 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 *   **Novo Botão de Cadastro**: Adicionado um botão de "Criar Conta de Motorista" destacado na tela inicial, tornando o onboarding de novos parceiros muito mais intuitivo.
 *   **Otimização de Layout**: Ajustes finos no CSS do fluxo de autenticação para evitar quebras visuais e garantir uma experiência premium em qualquer tamanho de tela.
 
-### 🚀 v12.2.7 - Wipe Database (Factory Reset)
-*   **Limpeza de Produção**: Adicionado um endpoint seguro (`/api/admin/wipe-database`) e um botão de ação "WIPE DATABASE" no painel de Configurações Administrativas.
-*   **Objetivo**: Permitir que o administrador apague todos os dados de simulação/mock (motoristas, passageiros, corridas e transações) com um clique, preparando o sistema para o lançamento oficial apenas com a conta Admin intacta.
+### 🚀 v12.2.8 - Correção de Build no Render
+*   **Fix Backend Syntax Error**: Resolvido o conflito de variáveis (SyntaxError: Identifier 'token' has already been declared) no endpoint de autenticação do Google, garantindo que o deploy no Render seja concluído com sucesso e o servidor suba normalmente.
 
 ---
 **Status Atual**: Produção Estabilizada. 🏁
-**Versão**: 12.2.7
+**Versão**: 12.2.8
 **Responsável**: Antigravity AI

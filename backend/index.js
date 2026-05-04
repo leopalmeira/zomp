@@ -178,8 +178,8 @@ app.post('/api/auth/google', async (req, res) => {
       }
     }
 
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance, credits: user.credits, photo: user.photo, isApproved: user.isApproved } });
+    const jwtToken = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token: jwtToken, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance, credits: user.credits, photo: user.photo, isApproved: user.isApproved } });
   } catch (error) {
     console.error('Google Auth Error:', error);
     res.status(500).json({ error: 'Error during Google authentication' });
