@@ -250,7 +250,7 @@ export default function LandingPage() {
           </div>
 
           <motion.div className="lp-sim-right" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <img src="/zomp_driver_network.png" alt="Zomp Business Model" className="lp-sim-img" />
+            <img src="/zomp_network_v5.png" alt="Modelo de Negócios Zomp" className="lp-sim-img" />
             <div className="lp-sim-pill">
               <span className="lp-sim-pill-val">+R$ {yearlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / ano</span>
               <span className="lp-sim-pill-lbl">Renda Extra Passiva Estimada</span>
