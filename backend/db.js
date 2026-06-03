@@ -4,8 +4,20 @@ require('dotenv').config();
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false // ObrigatÃ³rio para o Render
+  },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+// Log de conexÃ£o para diagnÃ³stico
+pool.on('connect', () => {
+  console.log('✅ Banco de Dados Conectado com Sucesso');
+});
+
+pool.on('error', (err) => {
+  console.error('❌ ERRO NO BANCO DE DADOS:', err);
 });
 
 const initSchema = async () => {
@@ -80,11 +92,13 @@ const initSchema = async () => {
   `;
   
   try {
-    await pool.query(schema);
-    console.log('✅ Database schema initialized/verified');
+    const client = await pool.connect();
+    await client.query(schema);
+    client.release();
+    console.log('✅ Esquema do banco verificado/criado');
   } catch (err) {
-    console.error('❌ Error initializing database schema:', err);
-    throw err;
+    console.error('❌ ERRO AO CRIAR TABELAS:', err.message);
+    // Não trava o processo, deixa tentar rodar a API
   }
 };
 
