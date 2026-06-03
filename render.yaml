@@ -3,7 +3,7 @@ services:
   # BACKEND - Node.js API
   # ==========================================
   - type: web
-    name: zomp-backend
+    name: zomp-api
     runtime: node
     plan: free
     rootDir: backend
@@ -24,7 +24,7 @@ services:
   # FRONTEND - React + Vite (Static Site)
   # ==========================================
   - type: static
-    name: zomp-app
+    name: zomp-web
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
@@ -33,7 +33,7 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: VITE_API_URL
-        value: https://zomp-backend.onrender.com/api
+        value: https://zomp-api.onrender.com/api
     routes:
       - type: rewrite
         source: /*
