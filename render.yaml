@@ -1,14 +1,14 @@
 services:
   # ==========================================
-  # BACKEND - Node.js API (Native SQL Mode)
+  # BACKEND - Node.js API
   # ==========================================
   - type: web
     name: zomp-backend
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && node seed.js
-    startCommand: npm start
+    buildCommand: npm install
+    startCommand: node seed.js && npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
@@ -25,15 +25,14 @@ services:
         value: 3001
 
   # ==========================================
-  # FRONTEND - React + Vite
+  # FRONTEND - React + Vite (Static Site)
   # ==========================================
-  - type: web
+  - type: static
     name: zomp-app
-    runtime: node
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
-    startCommand: npx serve -s dist
+    publishPath: dist
     envVars:
       - key: VITE_API_URL
         value: https://zomp-backend.onrender.com/api
