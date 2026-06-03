@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { query, pool } = require('./db');
+const { query, pool, initSchema } = require('./db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { exec } = require('child_process');
@@ -10,6 +10,8 @@ const fs = require('fs');
 
 async function initAdmin() {
   try {
+    await initSchema(); // Garante que as tabelas existam antes de qualquer coisa
+
     const adminEmail = process.env.ADMIN_EMAIL || 'leandro2703palmeira@gmail.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Lps27031981@';
     const adminName = process.env.ADMIN_NAME || 'Leandro Palmeira';
@@ -199,7 +201,8 @@ app.post('/api/auth/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance, credits: user.credits, cnh: user.cnh, crlv: user.crlv, photo: user.photo, carPlate: user.carPlate, carModel: user.carModel, carColor: user.carColor, phone: user.phone, pixKey: user.pixKey, isApproved: user.isApproved, launchDate: user.launchDate } });
   } catch (error) {
-    res.status(500).json({ error: 'Internal error login' });
+    console.error('❌ Login Error:', error);
+    res.status(500).json({ error: 'Internal server error during login', details: error.message });
   }
 });
 
