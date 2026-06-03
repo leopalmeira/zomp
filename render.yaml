@@ -27,7 +27,7 @@ services:
   # ==========================================
   # FRONTEND - React + Vite (Static Site)
   # ==========================================
-  - type: static
+  - type: static_site
     name: zomp-app
     runtime: node
     plan: free
