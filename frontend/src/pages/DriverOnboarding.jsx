@@ -310,7 +310,7 @@ export default function DriverOnboarding() {
             </div>
 
             <div className="tip-card" style={{ marginTop: '20px', padding: '16px', background: 'rgba(151, 233, 0, 0.05)', borderRadius: '12px', border: '1px solid var(--primary-subtle)' }}>
-              <p style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
+              <p style={{ fontSize: '0.85rem', color: '#97e900', fontWeight: 600 }}>
                 💡 Dica: Mantenha seus dados atualizados para não haver atrasos no pagamento.
               </p>
             </div>

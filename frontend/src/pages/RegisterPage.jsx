@@ -102,11 +102,11 @@ export default function RegisterPage({ forceRole }) {
 
           {!isDriver && (
             <div className="input-group" style={{ marginTop: '8px' }}>
-              <label htmlFor="reg-referral" style={{ color: 'var(--primary-hover)' }}>Código Promocional (Opcional)</label>
+              <label htmlFor="reg-referral" style={{ color: 'var(--primary-hover)' }}>Código de Indicação (Opcional)</label>
               <input
                 id="reg-referral"
                 className="input"
-                style={{ backgroundColor: 'var(--primary-subtle)', borderColor: 'transparent' }}
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.1)' }}
                 type="text"
                 placeholder="Código do motorista"
                 value={form.referrerQrCode}
