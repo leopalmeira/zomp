@@ -25,14 +25,15 @@ services:
         value: 3001
 
   # ==========================================
-  # FRONTEND - React + Vite (Static Site)
+  # FRONTEND - React + Vite
   # ==========================================
-  - type: static
+  - type: web
     name: zomp-app
+    runtime: node
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
-    publishPath: dist
+    startCommand: npx serve -s dist
     envVars:
       - key: VITE_API_URL
         value: https://zomp-backend.onrender.com/api
