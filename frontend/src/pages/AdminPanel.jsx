@@ -308,7 +308,7 @@ export default function AdminPanel() {
                         
                         {/* SEÇÃO DE CRÉDITOS E GESTÃO MANUAL */}
                         <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--ap-border)', borderRadius: '16px' }}>
-                          <h4 style={{ fontSize: '0.8rem', color: var(--ap-green), textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '1px' }}>💰 Gestão Financeira & Créditos</h4>
+                          <h4 style={{ fontSize: '0.8rem', color: 'var(--ap-green)', textTransform: 'uppercase', marginBottom: '16px', letterSpacing: '1px' }}>💰 Gestão Financeira & Créditos</h4>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                             <span style={{ fontSize: '0.9rem', color: 'var(--ap-txt2)' }}>Saldo Atual:</span>
                             <strong style={{ fontSize: '1.2rem', color: 'var(--ap-txt)' }}>R$ {Number(selectedDriver.credits || 0).toFixed(2)}</strong>

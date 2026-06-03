@@ -8,7 +8,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: npm install
-    startCommand: node seed.js && node index.js
+    startCommand: node index.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
