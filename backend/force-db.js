@@ -3,7 +3,10 @@ require('dotenv').config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost')
+    ? { rejectUnauthorized: false }
+    : false,
+  connectionTimeoutMillis: 10000
 });
 
 const schema = `
@@ -37,7 +40,7 @@ const schema = `
     );
 
     CREATE TABLE IF NOT EXISTS "AdminConfig" (
-      "id" TEXT PRIMARY KEY,
+      "id" TEXT PRIMARY KEY DEFAULT 'singleton',
       "pricePerKmCar" DECIMAL DEFAULT 2.00,
       "pricePerKmMoto" DECIMAL DEFAULT 1.50,
       "minFareCar" DECIMAL DEFAULT 8.40,
@@ -70,7 +73,7 @@ const schema = `
       "price" DECIMAL NOT NULL,
       "distanceKm" DECIMAL NOT NULL,
       "vehicleType" TEXT NOT NULL,
-      "status" TEXT NOT NULL,
+      "status" TEXT NOT NULL DEFAULT 'PENDING',
       "createdAt" TIMESTAMP DEFAULT NOW(),
       "updatedAt" TIMESTAMP DEFAULT NOW()
     );
@@ -78,15 +81,17 @@ const schema = `
 
 async function run() {
   console.log('🚀 INICIANDO CRIAÇÃO FORÇADA DE TABELAS...');
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query(schema);
     console.log('✅ TABELAS CRIADAS/VERIFICADAS COM SUCESSO!');
   } catch (err) {
-    console.error('❌ ERRO CRÍTICO NA CRIAÇÃO:', err.message);
+    console.error('⚠️ [force-db] Erro ao criar tabelas (não fatal):', err.message);
+    console.log('ℹ️ [force-db] O servidor vai iniciar mesmo assim. As tabelas serão criadas pelo index.js no startup.');
   } finally {
-    client.release();
-    await pool.end();
+    if (client) client.release();
+    try { await pool.end(); } catch {}
   }
 }
 
