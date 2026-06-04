@@ -4,27 +4,15 @@ require('dotenv').config();
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false // ObrigatÃ³rio para o Render
-  },
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
-
-// Log de conexÃ£o para diagnÃ³stico
-pool.on('connect', () => {
-  console.log('✅ Banco de Dados Conectado com Sucesso');
-});
-
-pool.on('error', (err) => {
-  console.error('❌ ERRO NO BANCO DE DADOS:', err);
+    rejectUnauthorized: false
+  }
 });
 
 const initSchema = async () => {
-  const schema = `
-    CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
-    CREATE TABLE IF NOT EXISTS "User" (
+  const statements = [
+    'CREATE EXTENSION IF NOT EXISTS "pgcrypto"',
+    
+    `CREATE TABLE IF NOT EXISTS "User" (
       "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       "name" TEXT NOT NULL,
       "email" TEXT UNIQUE NOT NULL,
@@ -49,9 +37,9 @@ const initSchema = async () => {
       "pixKey" TEXT,
       "createdAt" TIMESTAMP DEFAULT NOW(),
       "updatedAt" TIMESTAMP DEFAULT NOW()
-    );
+    )`,
 
-    CREATE TABLE IF NOT EXISTS "AdminConfig" (
+    `CREATE TABLE IF NOT EXISTS "AdminConfig" (
       "id" TEXT PRIMARY KEY,
       "pricePerKmCar" DECIMAL DEFAULT 2.00,
       "pricePerKmMoto" DECIMAL DEFAULT 1.50,
@@ -66,17 +54,17 @@ const initSchema = async () => {
       "autoSuspendMinRating" DECIMAL DEFAULT 4.5,
       "launchDate" DATE DEFAULT '2026-07-30',
       "pricePerCredit" DECIMAL DEFAULT 1.50
-    );
+    )`,
 
-    CREATE TABLE IF NOT EXISTS "Referral" (
+    `CREATE TABLE IF NOT EXISTS "Referral" (
       "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       "referrerId" UUID REFERENCES "User"(id),
       "referredId" UUID REFERENCES "User"(id),
       "expiresAt" TIMESTAMP,
       "createdAt" TIMESTAMP DEFAULT NOW()
-    );
+    )`,
 
-    CREATE TABLE IF NOT EXISTS "Ride" (
+    `CREATE TABLE IF NOT EXISTS "Ride" (
       "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       "passengerId" UUID REFERENCES "User"(id),
       "driverId" UUID REFERENCES "User"(id),
@@ -88,17 +76,19 @@ const initSchema = async () => {
       "status" TEXT NOT NULL,
       "createdAt" TIMESTAMP DEFAULT NOW(),
       "updatedAt" TIMESTAMP DEFAULT NOW()
-    );
-  `;
+    )`
+  ];
   
+  const client = await pool.connect();
   try {
-    const client = await pool.connect();
-    await client.query(schema);
-    client.release();
-    console.log('✅ Esquema do banco verificado/criado');
+    for (const sql of statements) {
+      await client.query(sql);
+    }
+    console.log('✅ Esquema do banco de dados sincronizado');
   } catch (err) {
-    console.error('❌ ERRO AO CRIAR TABELAS:', err.message);
-    // Não trava o processo, deixa tentar rodar a API
+    console.error('❌ ERRO AO SINCRONIZAR ESQUEMA:', err.message);
+  } finally {
+    client.release();
   }
 };
 

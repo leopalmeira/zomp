@@ -112,9 +112,9 @@ app.post('/api/auth/register', async (req, res) => {
     const { name, email, password, role, referrerQrCode } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const qrCode = role === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null;
-    const initialCredits = role === 'DRIVER' ? 10 : 0;
-    const initialRole = role || 'PASSENGER';
+    const initialRole = (role || 'PASSENGER').toUpperCase();
+    const qrCode = initialRole === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null;
+    const initialCredits = initialRole === 'DRIVER' ? 10 : 0;
 
     const { rows } = await query(
       'INSERT INTO "User" (id, name, email, password, role, "qrCode", credits, balance, rating, "totalRatings", "ridesAccepted", "ridesMissed", "ridesCompleted", "isApproved", "createdAt", "updatedAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 0, 5, 0, 0, 0, 0, true, NOW(), NOW()) RETURNING id, email, role',
@@ -160,11 +160,12 @@ app.post('/api/auth/google', async (req, res) => {
 
     if (!user) {
       // Create new user if not exists
-      const qrCode = role === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null;
-      const initialCredits = role === 'DRIVER' ? 10 : 0;
+      const initialRole = (role || 'PASSENGER').toUpperCase();
+      const qrCode = initialRole === 'DRIVER' ? Math.random().toString(36).substring(2, 15) : null;
+      const initialCredits = initialRole === 'DRIVER' ? 10 : 0;
       const { rows: newRows } = await query(
         'INSERT INTO "User" (id, name, email, role, "qrCode", credits, balance, photo, "isApproved", "createdAt", "updatedAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 0, $6, true, NOW(), NOW()) RETURNING *',
-        [name, email, role || 'PASSENGER', qrCode, initialCredits, photo]
+        [name, email, initialRole, qrCode, initialCredits, photo]
       );
       user = newRows[0];
 
@@ -191,8 +192,8 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // Garantir que as tabelas existem ANTES do login (Seguro CTO)
-    await initSchema(); 
+    // Garantir que as tabelas existem e o admin está pronto ANTES do login
+    await initAdmin(); 
 
     const { rows } = await query('SELECT * FROM "User" WHERE email = $1', [email]);
     const user = rows[0];
