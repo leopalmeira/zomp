@@ -4,7 +4,7 @@ import { LayoutDashboard, BarChart3, Activity, Users2, Settings2, Library, Arrow
 import './AdminPanel.css'
 
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const API = import.meta.env.VITE_API_URL || 'https://zomp-api.onrender.com/api'
 
 function api(path, opts = {}) {
   const token = localStorage.getItem('zomp_token')
