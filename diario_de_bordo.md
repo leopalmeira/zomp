@@ -1,4 +1,31 @@
-# 📓 Diário de Bordo - Evolução Zomp (v10.0.0 a v12.0.0)
+# 📓 Diário de Bordo — Zomp Mobilidade
+
+## 🔗 Links Rápidos de Produção
+
+| App | Link | Descrição |
+|-----|------|-----------|
+| 🌐 **Landing Page** | [zomp-app.onrender.com](https://zomp-app.onrender.com) | Site institucional |
+| 📱 **App Passageiro** | [zomp-app.onrender.com/passageiro](https://zomp-app.onrender.com/passageiro) | Solicitar corridas |
+| 🚗 **App Motorista** | [zomp-app.onrender.com/motorista](https://zomp-app.onrender.com/motorista) | Aceitar corridas |
+| 🖥️ **Painel Admin** | [zomp-app.onrender.com/admin/login](https://zomp-app.onrender.com/admin/login) | Painel de controle |
+| ⚡ **API Backend** | [zomp-api.onrender.com/api/health](https://zomp-api.onrender.com/api/health) | Health check |
+
+### 🔐 Credenciais Admin
+```
+Email: leandro2703palmeira@gmail.com
+Senha: Lps27031981@
+```
+
+### 🏗️ Arquitetura de Deploy (Render)
+```
+zomp-api  → Node.js (backend/index.js) — rootDir: backend
+zomp-app  → Static SPA (frontend/dist) — rootDir: frontend
+zomp-db   → PostgreSQL (plano free)
+```
+
+---
+
+# 📋 Histórico de Versões
 
 Este diário registra a transformação da Zomp em uma plataforma de mobilidade profissional, focada em segurança, automação e experiência de produção real.
 
@@ -56,7 +83,17 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 ### 🚀 v12.2.8 - Correção de Build no Render
 *   **Fix Backend Syntax Error**: Resolvido o conflito de variáveis (SyntaxError: Identifier 'token' has already been declared) no endpoint de autenticação do Google, garantindo que o deploy no Render seja concluído com sucesso e o servidor suba normalmente.
 
+### 🔧 v12.3.0 — Correção de Deploy no Render (2026-06-04)
+*   **Causa raiz identificada:** `force-db.js` crashava com `ENOTFOUND` ao tentar conectar ao banco antes do Render configurar o DNS. O `pool.connect()` sem `try-catch` matava o processo com `exit code 1`.
+*   **Fix force-db.js:** Adicionado `try-catch` completo em torno de `pool.connect()`. Agora o script falha silenciosamente e o servidor sobe normalmente.
+*   **render.yaml reestruturado:**
+    *   `zomp-api` com `rootDir: backend` + `startCommand: node index.js` (sem force-db)
+    *   `zomp-app` como Static SPA com SPA rewrite (`/* → /index.html`)
+    *   `VITE_API_URL` apontando corretamente para `zomp-api.onrender.com/api`
+*   **package-lock.json regenerado:** `@react-oauth/google` ausente no lockfile era causa de falha silenciosa no `vite build`.
+
 ---
-**Status Atual**: Produção Estabilizada. 🏁
-**Versão**: 12.2.8
-**Responsável**: Antigravity AI
+**Status Atual**: ✅ Deploy estável. API + SPA operacionais.
+**Versão**: 12.3.0
+**Responsável**: Leandro Palmeira + Antigravity AI
+

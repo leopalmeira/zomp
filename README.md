@@ -4,13 +4,23 @@ Zomp é uma plataforma de mobilidade urbana moderna (estilo Uber), focada na exp
 
 O projeto é dividido em **Frontend** (React + Vite) e **Backend** (Node.js + PostgreSQL). A arquitetura é totalmente agnóstica de ORMs complexos para garantir estabilidade máxima de deploy.
 
-## 🌐 Links de Produção (Acesso Oficial)
+## 🔗 Links de Produção — Acesso Rápido
 
-- **Landing Page (Site Institucional):** [https://zomp-app.onrender.com/](https://zomp-app.onrender.com/)
-- **App do Passageiro:** [https://zomp-app.onrender.com/passageiro](https://zomp-app.onrender.com/passageiro)
-- **App do Motorista:** [https://zomp-app.onrender.com/motorista](https://zomp-app.onrender.com/motorista)
-- **Painel Administrativo Master:** [https://zomp-app.onrender.com/admin/login](https://zomp-app.onrender.com/admin/login)
-  *(Credenciais de Admin: Utilize o e-mail e a senha configurados nas variáveis de ambiente `ADMIN_EMAIL` e `ADMIN_PASSWORD` no painel do Render).*
+| App | Link Direto | Descrição |
+|-----|-------------|-----------|
+| 🌐 **Landing Page** | [zomp-app.onrender.com](https://zomp-app.onrender.com) | Site institucional da Zomp |
+| 📱 **App Passageiro** | [zomp-app.onrender.com/passageiro](https://zomp-app.onrender.com/passageiro) | Login + solicitar corridas + mapa |
+| 🚗 **App Motorista** | [zomp-app.onrender.com/motorista](https://zomp-app.onrender.com/motorista) | Login + aceitar corridas + carteira |
+| 🖥️ **Painel Admin** | [zomp-app.onrender.com/admin/login](https://zomp-app.onrender.com/admin/login) | Painel de controle completo |
+| ⚡ **API Backend** | [zomp-api.onrender.com/api/health](https://zomp-api.onrender.com/api/health) | Health check da API |
+
+### 🔐 Credenciais Admin
+```
+Email: leandro2703palmeira@gmail.com
+Senha: Lps27031981@
+```
+
+> ⚠️ **Render Free Tier:** A instância hiberna após 15 min de inatividade. O primeiro acesso pode levar 50+ segundos para acordar — isso é normal.
 
 ## 🚀 Principais Funcionalidades
 
