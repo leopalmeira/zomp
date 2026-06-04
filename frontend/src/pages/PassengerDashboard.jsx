@@ -1444,7 +1444,7 @@ export default function PassengerDashboard() {
                     if (confirm(msg)) {
                       if (activeRideId) {
                         try {
-                           await fetch(`http://localhost:3001/api/rides/${activeRideId}/cancel`, {
+                           await fetch(`${import.meta.env.VITE_API_URL || '/api'}/rides/${activeRideId}/cancel`, {
                              method: 'PUT',
                              headers: {
                                'Content-Type': 'application/json',
