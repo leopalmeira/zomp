@@ -3,21 +3,19 @@ require('dotenv').config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
 const initSchema = async () => {
-  const statements = [
-    'CREATE EXTENSION IF NOT EXISTS "pgcrypto"',
-    
-    `CREATE TABLE IF NOT EXISTS "User" (
+  const schema = `
+    CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+    CREATE TABLE IF NOT EXISTS "User" (
       "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       "name" TEXT NOT NULL,
       "email" TEXT UNIQUE NOT NULL,
-      "password" TEXT,
-      "role" TEXT NOT NULL,
+      "password" TEXT NOT NULL,
+      "role" TEXT NOT NULL DEFAULT 'PASSENGER',
       "qrCode" TEXT UNIQUE,
       "credits" DECIMAL DEFAULT 0,
       "balance" DECIMAL DEFAULT 0,
@@ -37,10 +35,10 @@ const initSchema = async () => {
       "pixKey" TEXT,
       "createdAt" TIMESTAMP DEFAULT NOW(),
       "updatedAt" TIMESTAMP DEFAULT NOW()
-    )`,
+    );
 
-    `CREATE TABLE IF NOT EXISTS "AdminConfig" (
-      "id" TEXT PRIMARY KEY,
+    CREATE TABLE IF NOT EXISTS "AdminConfig" (
+      "id" TEXT PRIMARY KEY DEFAULT 'singleton',
       "pricePerKmCar" DECIMAL DEFAULT 2.00,
       "pricePerKmMoto" DECIMAL DEFAULT 1.50,
       "minFareCar" DECIMAL DEFAULT 8.40,
@@ -54,17 +52,9 @@ const initSchema = async () => {
       "autoSuspendMinRating" DECIMAL DEFAULT 4.5,
       "launchDate" DATE DEFAULT '2026-07-30',
       "pricePerCredit" DECIMAL DEFAULT 1.50
-    )`,
+    );
 
-    `CREATE TABLE IF NOT EXISTS "Referral" (
-      "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      "referrerId" UUID REFERENCES "User"(id),
-      "referredId" UUID REFERENCES "User"(id),
-      "expiresAt" TIMESTAMP,
-      "createdAt" TIMESTAMP DEFAULT NOW()
-    )`,
-
-    `CREATE TABLE IF NOT EXISTS "Ride" (
+    CREATE TABLE IF NOT EXISTS "Ride" (
       "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       "passengerId" UUID REFERENCES "User"(id),
       "driverId" UUID REFERENCES "User"(id),
@@ -73,20 +63,18 @@ const initSchema = async () => {
       "price" DECIMAL NOT NULL,
       "distanceKm" DECIMAL NOT NULL,
       "vehicleType" TEXT NOT NULL,
-      "status" TEXT NOT NULL,
+      "status" TEXT NOT NULL DEFAULT 'PENDING',
       "createdAt" TIMESTAMP DEFAULT NOW(),
       "updatedAt" TIMESTAMP DEFAULT NOW()
-    )`
-  ];
+    );
+  `;
   
   const client = await pool.connect();
   try {
-    for (const sql of statements) {
-      await client.query(sql);
-    }
-    console.log('✅ Esquema do banco de dados sincronizado');
+    await client.query(schema);
+    console.log('✅ [Database] Estrutura v12.2.8 verificada.');
   } catch (err) {
-    console.error('❌ ERRO AO SINCRONIZAR ESQUEMA:', err.message);
+    console.error('❌ [Database] Erro na sincronização:', err.message);
   } finally {
     client.release();
   }
