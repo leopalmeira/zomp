@@ -10,11 +10,11 @@ const fs = require('fs');
 
 async function initAdmin() {
   try {
-    await initSchema(); // Garante que as tabelas existam antes de qualquer coisa
+    await initSchema(); 
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'leandro2703palmeira@gmail.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'Lps27031981@';
-    const adminName = process.env.ADMIN_NAME || 'Leandro Palmeira';
+    const adminEmail = 'leandro2703palmeira@gmail.com';
+    const adminPassword = 'Lps27031981@';
+    const adminName = 'Leandro Palmeira';
 
     const { rows } = await query('SELECT id FROM "User" WHERE email = $1', [adminEmail]);
     const hash = await bcrypt.hash(adminPassword, 10);
@@ -24,29 +24,28 @@ async function initAdmin() {
         'INSERT INTO "User" (id, name, email, password, role, balance, rating, "totalRatings", "ridesAccepted", "ridesMissed", "ridesCompleted", "isApproved", "createdAt", "updatedAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, 0, 5, 0, 0, 0, 0, true, NOW(), NOW())',
         [adminName, adminEmail, hash, 'ADMIN']
       );
-      console.log('✅ Admin initialized:', adminEmail);
+      console.log('✅ NOVO ADMIN CRIADO COM SUCESSO');
     } else {
-      // Forçar sincronização de senha e cargo caso tenha mudado
+      // Forçar atualização de senha e cargo para garantir acesso total
       await query('UPDATE "User" SET password = $1, name = $2, role = $3 WHERE email = $4', [hash, adminName, 'ADMIN', adminEmail]);
-      console.log('ℹ️ Admin credentials and role synchronized:', adminEmail);
+      console.log('✅ ADMIN PRONTO PARA LOGIN (SENHA E CARGO SINCRONIZADOS)');
     }
 
-    // Config singleton
+    // Garantir Configurações Iniciais (Crucial para o Dashboard)
     const { rows: configRows } = await query('SELECT id FROM "AdminConfig" WHERE id = $1', ['singleton']);
     if (configRows.length === 0) {
       await query(
         'INSERT INTO "AdminConfig" (id, "pricePerKmCar", "pricePerKmMoto", "minFareCar", "minFareMoto", "royaltyPerRide", "royaltyMonthlyLimit", "maxPassengersPerDriver", "bindingMonthsFirst", "bindingMonthsRenew", "autoSuspendMinAcceptance", "autoSuspendMinRating", "launchDate", "pricePerCredit") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
         ['singleton', 2.00, 1.50, 8.40, 7.20, 0.30, 8, 700, 36, 24, 70, 4.5, '2026-07-30', 1.50]
       );
-      console.log('✅ AdminConfig initialized with launch date 2026-07-30 and credit price 1.50');
+      console.log('✅ CONFIGURAÇÕES INICIAIS GERADAS');
     } else {
-      // Ensure launchDate column exists with default
       try {
         await query('ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "launchDate" DATE DEFAULT \'2026-07-30\'');
-      } catch(e) { /* column might already exist */ }
+      } catch(e) {}
     }
-  } catch (e) {
-    console.error("❌ Error initializing admin:", e);
+  } catch (err) {
+    console.error('❌ ERRO AO INICIALIZAR ADMIN:', err.message);
   }
 }
 
