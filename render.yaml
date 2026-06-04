@@ -1,6 +1,6 @@
 services:
   # ==========================================
-  # ZOMP-API - Backend Node.js
+  # ZOMP-API  —  Backend Node.js
   # ==========================================
   - type: web
     name: zomp-api
@@ -27,7 +27,12 @@ services:
         value: Leandro Palmeira
 
   # ==========================================
-  # ZOMP-APP - Frontend React (Static)
+  # ZOMP-APP  —  PWA Passageiro + Motorista + Admin + Landing
+  # Rotas:
+  #   /            => Landing Page
+  #   /passageiro  => App PWA do Passageiro
+  #   /motorista   => App PWA do Motorista
+  #   /admin       => Painel de Controle Admin
   # ==========================================
   - type: web
     name: zomp-app
@@ -36,22 +41,14 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
-    envVars:
-      - key: NODE_VERSION
-        value: 20
-      - key: VITE_API_URL
-        value: https://zomp-api.onrender.com/api
-
-  # ==========================================
-  # ZOMP-WEB - Landing Page (Static)
-  # ==========================================
-  - type: web
-    name: zomp-web
-    runtime: static
-    plan: free
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: NODE_VERSION
         value: 20
