@@ -7,7 +7,7 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm install && node force-db.js
     startCommand: node index.js
     healthCheckPath: /api/health
     envVars:
