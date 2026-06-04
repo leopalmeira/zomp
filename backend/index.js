@@ -20,8 +20,11 @@ app.use(cors());
 app.use(express.json());
 
 // 1. SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND
-// O Render vai compilar o frontend para a pasta dist
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+// Usamos path.resolve para garantir que o Render encontre a pasta dist
+const distPath = path.resolve(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(distPath));
+
+console.log(`📂 [Sistema] Servindo frontend de: ${distPath}`);
 
 // 2. INICIALIZAÇÃO DO BANCO (ESQUEMA v12.2.8)
 async function initDB() {
@@ -96,9 +99,8 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // 4. SUPORTE A ROTAS DO REACT (SPA)
-// Qualquer rota que não seja da API, serve o index.html do frontend
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 app.listen(PORT, async () => {
