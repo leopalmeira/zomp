@@ -1,9 +1,41 @@
 services:
   # ==========================================
-  # ZOMP UNIFIED - API + FRONTEND + ADMIN
+  # ZOMP-API - Backend Node.js (API + Serve Frontend)
   # ==========================================
   - type: web
-    name: zomp-fullstack
+    name: zomp-api
+    runtime: node
+    plan: free
+    buildCommand: npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend
+    startCommand: node backend/index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATABASE_URL
+        fromDatabase:
+          name: zomp-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+
+  # ==========================================
+  # ZOMP-APP - Frontend Estático (React + Vite PWA)
+  # ==========================================
+  - type: web
+    name: zomp-app
+    runtime: static
+    plan: free
+    buildCommand: npm install --prefix frontend && npm run build --prefix frontend
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+
+  # ==========================================
+  # ZOMP-WEB - Landing Page / Site Institucional
+  # ==========================================
+  - type: web
+    name: zomp-web
     runtime: node
     plan: free
     buildCommand: npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend
