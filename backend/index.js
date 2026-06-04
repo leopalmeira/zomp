@@ -29,8 +29,9 @@ console.log(`📂 [Sistema] Servindo frontend de: ${distPath}`);
 // 2. INICIALIZAÇÃO DO BANCO (ESQUEMA v12.2.8)
 async function initDB() {
   console.log('🚀 [Sistema] Verificando integridade do banco...');
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query(`
       CREATE EXTENSION IF NOT EXISTS "pgcrypto";
       
@@ -67,7 +68,9 @@ async function initDB() {
   } catch (err) {
     console.error('❌ [Sistema] Erro no banco:', err.message);
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
 }
 
@@ -99,8 +102,8 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // 4. SUPORTE A ROTAS DO REACT (SPA)
-// No Express 5, usamos '/*' para capturar todas as rotas
-app.get('/*', (req, res) => {
+// No Express 5, usamos RegExp /.*/ para capturar todas as rotas de fallback
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
