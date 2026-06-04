@@ -191,18 +191,29 @@ app.post('/api/auth/google', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    
+    // Garantir que as tabelas existem ANTES do login (Seguro CTO)
+    await initSchema(); 
+
     const { rows } = await query('SELECT * FROM "User" WHERE email = $1', [email]);
     const user = rows[0];
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user) {
+      console.warn(`⚠️ Tentativa de login com email inexistente: ${email}`);
+      return res.status(401).json({ error: 'Usuário não encontrado' });
+    }
+
+    if (!(await bcrypt.compare(password, user.password))) {
+      console.warn(`⚠️ Senha incorreta para o email: ${email}`);
+      return res.status(401).json({ error: 'Senha inválida' });
     }
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    console.log(`✅ Login bem sucedido: ${email}`);
     res.json({ token, user: { id: user.id, name: user.name, role: user.role, qrCode: user.qrCode, balance: user.balance, credits: user.credits, cnh: user.cnh, crlv: user.crlv, photo: user.photo, carPlate: user.carPlate, carModel: user.carModel, carColor: user.carColor, phone: user.phone, pixKey: user.pixKey, isApproved: user.isApproved, launchDate: user.launchDate } });
   } catch (error) {
-    console.error('❌ Login Error:', error);
-    res.status(500).json({ error: 'Internal server error during login', details: error.message });
+    console.error('❌ ERRO CRÍTICO NO LOGIN:', error);
+    res.status(500).json({ error: 'Erro interno no servidor', details: error.message });
   }
 });
 
