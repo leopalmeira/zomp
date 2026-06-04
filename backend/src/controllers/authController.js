@@ -73,7 +73,7 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     console.error('Erro no login:', err.message);
-    res.status(500).json({ error: 'Erro interno' });
+    res.status(500).json({ error: `Erro interno: ${err.message}` });
   }
 };
 
