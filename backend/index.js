@@ -99,7 +99,8 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // 4. SUPORTE A ROTAS DO REACT (SPA)
-app.get('*', (req, res) => {
+// No Express 5, usamos '/*' para capturar todas as rotas
+app.get('/*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
