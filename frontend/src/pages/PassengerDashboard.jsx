@@ -2085,7 +2085,7 @@ export default function PassengerDashboard() {
               Validar Perfil Zomp
             </h2>
             <p style={{fontSize: '0.95rem', color: '#52525b', lineHeight: 1.5, marginBottom: '24px'}}>
-              Para sua seguranÃ§a e de nossos motoristas, precisamos de uma selfie nÃ­tida para validar seu perfil antes da primeira corrida.
+              Para sua segurança e de nossos motoristas, precisamos de uma selfie nítida para validar seu perfil antes da primeira corrida.
             </p>
 
             <div style={{
@@ -2105,7 +2105,7 @@ export default function PassengerDashboard() {
             <input 
               type="file" 
               accept="image/*" 
-              capture="user" 
+              capture="environment" 
               id="selfie-input"
               hidden
               onChange={async (e) => {
@@ -2127,7 +2127,7 @@ export default function PassengerDashboard() {
                   cursor: 'pointer'
                 }}
               >
-                {selfiePreview ? '📷 Trocar Foto' : '🤳 Abrir CÃ¢mera'}
+                {selfiePreview ? '📷 Trocar Foto' : '🤳 Abrir Câmera'}
               </button>
 
               <button 
@@ -2155,7 +2155,7 @@ export default function PassengerDashboard() {
                   transition: 'all 0.3s'
                 }}
               >
-                {isUploadingSelfie ? 'Enviando...' : '🚀 Finalizar ValidaÃ§Ã£o'}
+                {isUploadingSelfie ? 'Enviando...' : '🚀 Finalizar Validação'}
               </button>
             </div>
           </div>
