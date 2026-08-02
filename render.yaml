@@ -1,6 +1,6 @@
 services:
   # ==========================================
-  # ZOMP-API  —  Backend Node.js (API)
+  # ZOMP-API — Backend Node.js (API)
   # ==========================================
   - type: web
     name: zomp-api
@@ -13,8 +13,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
-             - key: DATABASE_URL
-  value: postgresql://zomp_db_whts_user:dsarX2dGuByNZah1tKMzrTb2bpcrEnsZ@dpg-d9njj3daeets73c365d0-a.oregon-postgres.render.com/zomp_db_whts
+      - key: DATABASE_URL
+        value: postgresql://zomp_db_whts_user:dsarX2dGuByNZah1tKMzrTb2bpcrEnsZ@dpg-d9njj3daeets73c365d0-a.oregon-postgres.render.com/zomp_db_whts
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN_EMAIL
@@ -25,8 +25,7 @@ services:
         value: Leandro Palmeira
 
   # ==========================================
-  # ZOMP-APP  —  Site Principal (Landing Page + SPA completa)
-  # URL: https://zomp-app.onrender.com
+  # ZOMP-APP — Site Principal (Landing Page + SPA)
   # ==========================================
   - type: web
     name: zomp-app
@@ -34,54 +33,39 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: no-cache
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
     envVars:
-      - key: NODE_VERSION
-        value: 20
       - key: VITE_API_URL
         value: https://zomp-api.onrender.com/api
 
   # ==========================================
-  # ZOMP-PASSAGEIRO  —  App do Passageiro (Redirect)
-  # URL: https://zomp-passageiro.onrender.com
-  #   -> Redireciona para zomp-app.onrender.com/passageiro
+  # ZOMP-PASSAGEIRO — Redirect para App Passageiro
   # ==========================================
   - type: web
     name: zomp-passageiro
     runtime: static
     rootDir: redirects/passageiro
-    buildCommand: echo "Redirect para App Passageiro"
     staticPublishPath: .
 
   # ==========================================
-  # ZOMP-MOTORISTA  —  App do Motorista (Redirect)
-  # URL: https://zomp-motorista.onrender.com
-  #   -> Redireciona para zomp-app.onrender.com/motorista
+  # ZOMP-MOTORISTA — Redirect para App Motorista
   # ==========================================
   - type: web
     name: zomp-motorista
     runtime: static
     rootDir: redirects/motorista
-    buildCommand: echo "Redirect para App Motorista"
     staticPublishPath: .
 
   # ==========================================
-  # ZOMP-ADMIN  —  Painel Administrativo (Redirect)
-  # URL: https://zomp-admin.onrender.com
-  #   -> Redireciona para zomp-app.onrender.com/admin/login
+  # ZOMP-ADMIN — Redirect para Painel Admin
   # ==========================================
   - type: web
     name: zomp-admin
     runtime: static
     rootDir: redirects/admin
-    buildCommand: echo "Redirect para Painel Admin"
     staticPublishPath: .
 
 databases:
