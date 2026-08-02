@@ -4,16 +4,36 @@
 
 | App | Link | Descrição |
 |-----|------|-----------|
+# 📓 Diário de Bordo — Zomp Mobilidade
+
+## 🔗 Links Rápidos de Produção
+
+| App | Link | Descrição |
+|-----|------|-----------|
 | 🌐 **Landing Page** | [zomp-app.onrender.com](https://zomp-app.onrender.com) | Site institucional |
 | 📱 **App Passageiro** | [zomp-app.onrender.com/passageiro](https://zomp-app.onrender.com/passageiro) | Solicitar corridas |
 | 🚗 **App Motorista** | [zomp-app.onrender.com/motorista](https://zomp-app.onrender.com/motorista) | Aceitar corridas |
 | 🖥️ **Painel Admin** | [zomp-app.onrender.com/admin/login](https://zomp-app.onrender.com/admin/login) | Painel de controle |
 | ⚡ **API Backend** | [zomp-api.onrender.com/api/health](https://zomp-api.onrender.com/api/health) | Health check |
 
-### 🔐 Credenciais Admin
+### 🔐 Credenciais de Teste
+
+#### 🖥️ Painel Admin
 ```
 Email: leandro2703palmeira@gmail.com
 Senha: Lps27031981@
+```
+
+#### 📱 Passageiro (Cliente)
+```
+Email: cliente@zomp.com
+Senha: teste123
+```
+
+#### 🚗 Motorista (Já Aprovado)
+```
+Email: motorista@zomp.com
+Senha: teste123
 ```
 
 ### 🏗️ Arquitetura de Deploy (Render)
@@ -41,7 +61,7 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 *   **Selfie Obrigatória (Passageiro)**: Implementado fluxo que exige uma selfie nítida do passageiro antes da primeira corrida. Zero mocks, validação real.
 *   **Google Auth**: Integração da interface de login via Google para agilizar a entrada de novos usuários.
 *   **Configuração Global de Estreia**: Admin agora define uma única data de lançamento para todos os motoristas (Ex: 30 de Julho).
-*   **Salvamento Dinâmico**: O backend agora permite que o administrador altere todas as regras de negócio em tempo real sem reiniciar o servidor.
+*   **Salvamento Dinâmico**: O backend agora permite que o administrador falhe todas as regras de negócio em tempo real sem reiniciar o servidor.
 
 ### ⚡ v12.0.0 - Produção Real (Uber/99 Style)
 *   **Fim dos Mocks**: Todo o fluxo de despacho de corridas agora é real. O app do motorista monitora o servidor e "toca" imediatamente ao receber um pedido.
@@ -85,19 +105,19 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 
 ### 🔧 v12.3.0 — Correção de Deploy no Render (2026-06-04)
 *   **Causa raiz identificada:** `force-db.js` crashava com `ENOTFOUND` ao tentar conectar ao banco antes do Render configurar o DNS. O `pool.connect()` sem `try-catch` matava o processo com `exit code 1`.
-*   **Fix force-db.js:** Adicionado `try-catch` completo em torno de `pool.connect()`. Agora o script falha silenciosamente e o servidor sobe normalmente.
+*   **Fix force-db.js:** Adicionado `try-catch` completo em torno de `pool.connect()`. Agora o script falha silenciosamente e o servidor suba normalmente.
 *   **render.yaml reestruturado:**
     *   `zomp-api` com `rootDir: backend` + `startCommand: node index.js` (sem force-db)
     *   `zomp-app` como Static SPA com SPA rewrite (`/* → /index.html`)
     *   `VITE_API_URL` apontando corretamente para `zomp-api.onrender.com/api`
 *   **package-lock.json regenerado:** `@react-oauth/google` ausente no lockfile era causa de falha silenciosa no `vite build`.
 
-### 🔧 v12.4.0 — Sincronização do Repositório e Correção de Banco (2026-08-02)
+### 🔧 v12.4.0 — Sincronização do Repositório, Correção de Banco e Contas de Teste (2026-08-02)
 *   **Sincronização com GitHub:** Repositório local atualizado e sincronizado com o commit mais recente (`7f2468b`).
 *   **Correção do Host de Banco (DATABASE_URL):**
     *   `backend/.env` corrigido localmente com o host de conexão externa correto (`dpg-d8guds48aovs73efq1a0-a.oregon-postgres.render.com/zomp_f1dk`).
     *   `render.yaml` alterado para injetar a URL estática correta do banco ativo, contornando o erro de banco inativo no Blueprint.
-*   **Validação de Cadastros:** Confirmado o funcionamento dos fluxos de pré-cadastro para Passageiros (aprovados automaticamente) e Motoristas (aguardando aprovação no painel Admin).
+*   **Injeção de Usuários de Teste:** Configurada a inicialização da API (`initDB`) para criar automaticamente uma conta de passageiro (`cliente@zomp.com`) e uma conta de motorista pré-aprovada (`motorista@zomp.com`), ambas com a senha `teste123`.
 
 ---
 **Status Atual**: ✅ Deploy atualizado e corrigido. API + SPA integrados.

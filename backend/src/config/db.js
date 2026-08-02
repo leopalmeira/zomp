@@ -96,6 +96,23 @@ async function initDB() {
       ON CONFLICT (email) DO UPDATE SET password = $3, role = 'ADMIN';
     `, [adminName, adminEmail, hash]);
 
+    // Injeção de Contas de Teste (Cliente e Motorista)
+    const testPasswordHash = await bcrypt.hash('teste123', 10);
+
+    // Cliente (PASSENGER)
+    await client.query(`
+      INSERT INTO "User" (name, email, password, role, "isApproved")
+      VALUES ($1, $2, $3, 'PASSENGER', true)
+      ON CONFLICT (email) DO UPDATE SET password = $3, role = 'PASSENGER';
+    `, ['Cliente Teste', 'cliente@zomp.com', testPasswordHash]);
+
+    // Motorista (DRIVER)
+    await client.query(`
+      INSERT INTO "User" (name, email, password, role, "isApproved", "qrCode", "carPlate", "carModel", "carColor", "cnh")
+      VALUES ($1, $2, $3, 'DRIVER', true, 'ZOMP-TEST-DRIVER', 'ZMP-2026', 'Toyota Corolla', 'Preto', '12345678900')
+      ON CONFLICT (email) DO UPDATE SET password = $3, role = 'DRIVER', "isApproved" = true, "qrCode" = 'ZOMP-TEST-DRIVER';
+    `, ['Motorista Teste', 'motorista@zomp.com', testPasswordHash]);
+
     // Garantir AdminConfig singleton
     await client.query(`
       INSERT INTO "AdminConfig" (id) VALUES ('singleton')
