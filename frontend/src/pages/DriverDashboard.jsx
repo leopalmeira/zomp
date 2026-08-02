@@ -92,6 +92,10 @@ export default function DriverDashboard() {
   const slideThreshold = slideTrackWidth - slideThumbWidth - 10
 
   const handleSlideStart = (e) => {
+    if (!user?.isApproved) {
+      alert("📳 Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
+      return;
+    }
     setIsSwiping(true)
   }
   const handleSlideMove = (e) => {
@@ -113,7 +117,7 @@ export default function DriverDashboard() {
       }
       if (!user?.isApproved) {
         setSlideX(0);
-        return alert("⏳ Estamos validando seus dados, isso pode levar até 12 horas. Aguarde a aprovação da Zomp para ficar online.");
+        return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
       }
 
       setIsOnline(true)
