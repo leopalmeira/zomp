@@ -160,7 +160,7 @@ export default function LoginPage({ forceRole }) {
             )}
           </button>
 
-          {!isAdmin && (
+          {isDriver && !isAdmin && (
             <div className="auth-extra-actions">
               <div className="auth-footer-links">
                 <p>Ainda não é parceiro?</p>
