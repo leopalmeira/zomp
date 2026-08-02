@@ -39,8 +39,26 @@ export async function login({ email, password }) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Credenciais inválidas');
-  localStorage.setItem('zomp_token', data.token);
-  localStorage.setItem('zomp_user', JSON.stringify(data.user));
+  
+  // Limpar localStorage para evitar quota exceeded
+  try {
+    localStorage.setItem('zomp_token', data.token);
+    // Salvar apenas dados essenciais
+    const essentialUser = {
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      role: data.user.role,
+      isApproved: data.user.isApproved,
+      qrCode: data.user.qrCode
+    };
+    localStorage.setItem('zomp_user', JSON.stringify(essentialUser));
+  } catch (storageError) {
+    localStorage.clear();
+    localStorage.setItem('zomp_token', data.token);
+    localStorage.setItem('zomp_user', JSON.stringify(data.user));
+  }
+  
   return data;
 }
 
@@ -52,8 +70,26 @@ export async function googleLogin(token, role) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Erro na autenticação com Google');
-  localStorage.setItem('zomp_token', data.token);
-  localStorage.setItem('zomp_user', JSON.stringify(data.user));
+  
+  // Salvar apenas dados essenciais
+  try {
+    localStorage.setItem('zomp_token', data.token);
+    const essentialUser = {
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      role: data.user.role,
+      isApproved: data.user.isApproved,
+      qrCode: data.user.qrCode,
+      photo: data.user.photo
+    };
+    localStorage.setItem('zomp_user', JSON.stringify(essentialUser));
+  } catch (storageError) {
+    localStorage.clear();
+    localStorage.setItem('zomp_token', data.token);
+    localStorage.setItem('zomp_user', JSON.stringify(data.user));
+  }
+  
   return data;
 }
 
@@ -76,7 +112,9 @@ export async function updateProfile(data) {
   if (!res.ok) throw new Error('Erro ao atualizar perfil');
   const d = await res.json();
   const c = getCurrentUser();
-  localStorage.setItem('zomp_user', JSON.stringify({ ...c, ...d }));
+  // Não salvar photo no localStorage para evitar quota exceeded
+  const { photo, ...userWithoutPhoto } = d;
+  localStorage.setItem('zomp_user', JSON.stringify({ ...c, ...userWithoutPhoto, photo: photo || c?.photo }));
   return d;
 }
 
