@@ -14,7 +14,7 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: DATABASE_URL
-        value: postgresql://zomp_user:8yv530quG8LpXypejVO0UDmiwVovjOnW@dpg-d8guds48aovs73efq1a0-a/zomp_f1dk
+        value: postgresql://zomp_user:8yv530quG8LpXypejVO0UDmiwVovjOnW@dpg-d8guds48aovs73efq1a0-a.oregon-postgres.render.com/zomp_f1dk
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN_EMAIL
