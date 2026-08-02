@@ -84,7 +84,6 @@ export default function LandingPage() {
           <button onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button>
           <button onClick={() => navigate('/passageiro')} style={{ color: '#33a3ff', fontSize: '0.85rem', background: 'rgba(51, 163, 255, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid rgba(51, 163, 255, 0.2)' }}>📱 Passageiro</button>
           <button onClick={() => navigate('/motorista')} style={{ color: 'var(--green)', fontSize: '0.85rem', background: 'rgba(151, 233, 0, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid var(--green-dim)' }}>🚗 Motorista</button>
-          <button onClick={() => navigate('/admin/login')} style={{ color: 'var(--gold)', fontSize: '0.85rem', background: 'rgba(232, 184, 75, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid rgba(232, 184, 75, 0.2)' }}>🖥️ Admin</button>
         </div>
       </nav>
 
@@ -241,34 +240,7 @@ export default function LandingPage() {
             <div className="lp-entry-btn" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--green)', fontWeight: 'bold', fontSize: '0.9rem' }}>Acessar Aplicativo <ArrowRight size={16} /></div>
           </motion.div>
 
-          {/* Card Admin */}
-          <motion.div 
-            className="lp-entry-card lp-entry-admin" 
-            variants={fadeUp} 
-            onClick={() => navigate('/admin/login')}
-            style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid var(--border)',
-              borderRadius: '16px',
-              padding: '30px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              minHeight: '260px'
-            }}
-          >
-            <div>
-              <div className="lp-entry-badge" style={{ backgroundColor: 'rgba(232, 184, 75, 0.15)', color: 'var(--gold)', display: 'inline-block', padding: '4px 8px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '15px' }}>🖥️ Administrativo</div>
-              <div className="lp-entry-icon" style={{ color: 'var(--gold)', marginBottom: '15px' }}><Shield size={32} /></div>
-              <h3 style={{ fontSize: '1.4rem', marginBottom: '10px' }}>Painel Admin</h3>
-              <p style={{ color: 'var(--txt2)', fontSize: '0.9rem', lineHeight: '1.4' }}>
-                Gerenciamento operacional e financeiro de motoristas, taxas e configurações globais.
-              </p>
-            </div>
-            <div className="lp-entry-btn" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold)', fontWeight: 'bold', fontSize: '0.9rem' }}>Entrar no Painel <ArrowRight size={16} /></div>
-          </motion.div>
+
         </motion.div>
       </section>
 

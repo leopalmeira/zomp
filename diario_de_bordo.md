@@ -4,25 +4,13 @@
 
 | App | Link | Descrição |
 |-----|------|-----------|
-# 📓 Diário de Bordo — Zomp Mobilidade
-
-## 🔗 Links Rápidos de Produção
-
-| App | Link | Descrição |
-|-----|------|-----------|
-| 🌐 **Landing Page** | [zomp-app.onrender.com](https://zomp-app.onrender.com) | Site institucional |
-| 📱 **App Passageiro** | [zomp-app.onrender.com/passageiro](https://zomp-app.onrender.com/passageiro) | Solicitar corridas |
-| 🚗 **App Motorista** | [zomp-app.onrender.com/motorista](https://zomp-app.onrender.com/motorista) | Aceitar corridas |
-| 🖥️ **Painel Admin** | [zomp-app.onrender.com/admin/login](https://zomp-app.onrender.com/admin/login) | Painel de controle |
-| ⚡ **API Backend** | [zomp-api.onrender.com/api/health](https://zomp-api.onrender.com/api/health) | Health check |
+| 🌐 **Site Principal** | [zomp-app.onrender.com](https://zomp-app.onrender.com) | Landing Page institucional |
+| 📱 **App Passageiro** | [zomp-passageiro.onrender.com](https://zomp-passageiro.onrender.com) | Solicitar corridas |
+| 🚗 **App Motorista** | [zomp-motorista.onrender.com](https://zomp-motorista.onrender.com) | Aceitar corridas e renda passiva |
+| 🖥️ **Painel Admin** | [zomp-admin.onrender.com](https://zomp-admin.onrender.com) | Gerenciar plataforma (link privado) |
+| ⚡ **API Backend** | [zomp-api.onrender.com/api/health](https://zomp-api.onrender.com/api/health) | Health check da API |
 
 ### 🔐 Credenciais de Teste
-
-#### 🖥️ Painel Admin
-```
-Email: leandro2703palmeira@gmail.com
-Senha: Lps27031981@
-```
 
 #### 📱 Passageiro (Cliente)
 ```
@@ -36,11 +24,20 @@ Email: motorista@zomp.com
 Senha: teste123
 ```
 
+#### 🖥️ Painel Admin
+```
+Email: leandro2703palmeira@gmail.com
+Senha: Lps27031981@
+```
+
 ### 🏗️ Arquitetura de Deploy (Render)
 ```
-zomp-api  → Node.js (backend/index.js) — rootDir: backend
-zomp-app  → Static SPA (frontend/dist) — rootDir: frontend
-zomp-db   → PostgreSQL (plano free)
+zomp-api         → Node.js (backend/index.js)       — Backend / API REST
+zomp-app         → Static SPA (frontend/dist)        — Site Principal (Landing + apps)
+zomp-passageiro  → Static Redirect                   — Redireciona para /passageiro
+zomp-motorista   → Static Redirect                   — Redireciona para /motorista
+zomp-admin       → Static Redirect                   — Redireciona para /admin/login
+zomp-db          → PostgreSQL (plano free)            — Banco de dados
 ```
 
 ---
@@ -119,7 +116,16 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
     *   `render.yaml` alterado para injetar a URL estática correta do banco ativo, contornando o erro de banco inativo no Blueprint.
 *   **Injeção de Usuários de Teste:** Configurada a inicialização da API (`initDB`) para criar automaticamente uma conta de passageiro (`cliente@zomp.com`) e uma conta de motorista pré-aprovada (`motorista@zomp.com`), ambas com a senha `teste123`.
 
+### 🚀 v12.5.0 — Separação de Serviços no Render e Segurança do Admin (2026-08-02)
+*   **Separação visual na Landing Page:** A seção de entrada do site agora exibe **dois cards dedicados** — App Passageiro (azul) e App Motorista (verde) — em vez de um único card genérico. Cada card redireciona para o respectivo aplicativo.
+*   **Remoção do link Admin da página pública:** Por segurança, o card e o botão do Painel Administrativo foram **completamente removidos** do site público. O acesso agora é feito apenas por link direto privado (`zomp-admin.onrender.com`).
+*   **Serviços separados no Render Dashboard:**
+    *   `zomp-passageiro` → Serviço estático dedicado que redireciona para o App do Passageiro.
+    *   `zomp-motorista` → Serviço estático dedicado que redireciona para o App do Motorista.
+    *   `zomp-admin` → Serviço estático dedicado que redireciona para o Painel Administrativo.
+*   **Documentação atualizada:** `CREDENCIAS.md`, `diario_de_bordo.md` e `README.md` sincronizados com os novos links e arquitetura.
+
 ---
-**Status Atual**: ✅ Deploy atualizado e corrigido. API + SPA integrados.
-**Versão**: 12.4.0
+**Status Atual**: ✅ Deploy atualizado. Serviços separados no Render. Admin protegido.
+**Versão**: 12.5.0
 **Responsável**: Leandro Palmeira + Antigravity AI

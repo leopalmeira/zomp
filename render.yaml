@@ -1,6 +1,6 @@
 services:
   # ==========================================
-  # ZOMP-API  —  Backend Node.js
+  # ZOMP-API  —  Backend Node.js (API)
   # ==========================================
   - type: web
     name: zomp-api
@@ -25,12 +25,8 @@ services:
         value: Leandro Palmeira
 
   # ==========================================
-  # ZOMP-APP  —  PWA Passageiro + Motorista + Admin + Landing
-  # Rotas:
-  #   /            => Landing Page
-  #   /passageiro  => App PWA do Passageiro
-  #   /motorista   => App PWA do Motorista
-  #   /admin       => Painel de Controle Admin
+  # ZOMP-APP  —  Site Principal (Landing Page + SPA completa)
+  # URL: https://zomp-app.onrender.com
   # ==========================================
   - type: web
     name: zomp-app
@@ -52,6 +48,45 @@ services:
         value: 20
       - key: VITE_API_URL
         value: https://zomp-api.onrender.com/api
+
+  # ==========================================
+  # ZOMP-PASSAGEIRO  —  App do Passageiro (Redirect)
+  # URL: https://zomp-passageiro.onrender.com
+  #   -> Redireciona para zomp-app.onrender.com/passageiro
+  # ==========================================
+  - type: web
+    name: zomp-passageiro
+    runtime: static
+    plan: free
+    rootDir: redirects/passageiro
+    buildCommand: echo "Redirect para App Passageiro"
+    staticPublishPath: .
+
+  # ==========================================
+  # ZOMP-MOTORISTA  —  App do Motorista (Redirect)
+  # URL: https://zomp-motorista.onrender.com
+  #   -> Redireciona para zomp-app.onrender.com/motorista
+  # ==========================================
+  - type: web
+    name: zomp-motorista
+    runtime: static
+    plan: free
+    rootDir: redirects/motorista
+    buildCommand: echo "Redirect para App Motorista"
+    staticPublishPath: .
+
+  # ==========================================
+  # ZOMP-ADMIN  —  Painel Administrativo (Redirect)
+  # URL: https://zomp-admin.onrender.com
+  #   -> Redireciona para zomp-app.onrender.com/admin/login
+  # ==========================================
+  - type: web
+    name: zomp-admin
+    runtime: static
+    plan: free
+    rootDir: redirects/admin
+    buildCommand: echo "Redirect para Painel Admin"
+    staticPublishPath: .
 
 databases:
   - name: zomp-db
