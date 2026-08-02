@@ -1,7 +1,4 @@
 services:
-  # ==========================================
-  # ZOMP-API — Backend Node.js (API)
-  # ==========================================
   - type: web
     name: zomp-api
     runtime: node
@@ -24,9 +21,6 @@ services:
       - key: ADMIN_NAME
         value: Leandro Palmeira
 
-  # ==========================================
-  # ZOMP-APP — Site Principal (Landing Page + SPA)
-  # ==========================================
   - type: web
     name: zomp-app
     runtime: static
@@ -41,27 +35,18 @@ services:
       - key: VITE_API_URL
         value: https://zomp-api.onrender.com/api
 
-  # ==========================================
-  # ZOMP-PASSAGEIRO — Redirect para App Passageiro
-  # ==========================================
   - type: web
     name: zomp-passageiro
     runtime: static
     rootDir: redirects/passageiro
     staticPublishPath: .
 
-  # ==========================================
-  # ZOMP-MOTORISTA — Redirect para App Motorista
-  # ==========================================
   - type: web
     name: zomp-motorista
     runtime: static
     rootDir: redirects/motorista
     staticPublishPath: .
 
-  # ==========================================
-  # ZOMP-ADMIN — Redirect para Painel Admin
-  # ==========================================
   - type: web
     name: zomp-admin
     runtime: static
