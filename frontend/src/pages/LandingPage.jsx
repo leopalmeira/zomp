@@ -78,10 +78,13 @@ export default function LandingPage() {
       <div className="lp-ambient a1" /><div className="lp-ambient a2" />
 
       {/* ── NAVBAR ── */}
-      <nav className="lp-nav">
+      <nav className="lp-nav" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
         <img src="/logo.svg" alt="Zomp" className="lp-nav-logo" />
-        <div className="lp-nav-links">
+        <div className="lp-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
           <button onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button>
+          <button onClick={() => navigate('/passageiro')} style={{ color: '#33a3ff', fontSize: '0.85rem', background: 'rgba(51, 163, 255, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid rgba(51, 163, 255, 0.2)' }}>📱 Passageiro</button>
+          <button onClick={() => navigate('/motorista')} style={{ color: 'var(--green)', fontSize: '0.85rem', background: 'rgba(151, 233, 0, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid var(--green-dim)' }}>🚗 Motorista</button>
+          <button onClick={() => navigate('/admin/login')} style={{ color: 'var(--gold)', fontSize: '0.85rem', background: 'rgba(232, 184, 75, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid rgba(232, 184, 75, 0.2)' }}>🖥️ Admin</button>
         </div>
       </nav>
 
@@ -157,19 +160,114 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── ENTRADA ── */}
-      <section className="lp-entry-section">
-        <motion.div className="lp-entry-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          <motion.div className="lp-entry-card lp-entry-driver" style={{ gridColumn: '1 / -1', maxWidth: '600px', margin: '0 auto' }} variants={fadeUp} onClick={handleCta}>
-            <div className="lp-entry-badge">💎 Única no Brasil</div>
-            <div className="lp-entry-icon"><TrendingUp size={32} /></div>
-            <h3>Renda Passiva de Verdade</h3>
-            <p>
-              Ganhe dinheiro com cada corrida que seus passageiros fizerem, <br/>
-              <strong>mesmo quando você não estiver dirigindo.</strong>
-            </p>
-            <div className="lp-entry-pill">Royalties de Passageiros</div>
-            <div className="lp-entry-btn">Iniciar Onboarding Agora <ArrowRight size={18} /></div>
+      {/* ── ENTRADA E ACESSOS RÁPIDOS ── */}
+      <section className="lp-entry-section" style={{ padding: '65px 5%' }}>
+        <motion.div className="lp-section-tag" style={{ textAlign: 'center', display: 'block', margin: '0 auto 20px auto' }}>
+          📱 Acessar a Plataforma Zomp
+        </motion.div>
+        <h2 style={{ textAlign: 'center', marginBottom: '40px', fontSize: '2rem', fontWeight: 'bold' }}>
+          Escolha como deseja acessar
+        </h2>
+        
+        <motion.div 
+          className="lp-entry-grid" 
+          variants={stagger} 
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: true }}
+          style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+            gap: '24px', 
+            maxWidth: '1200px', 
+            margin: '0 auto' 
+          }}
+        >
+          {/* Card Passageiro */}
+          <motion.div 
+            className="lp-entry-card lp-entry-passenger" 
+            variants={fadeUp} 
+            onClick={() => navigate('/passageiro')}
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid var(--border)',
+              borderRadius: '16px',
+              padding: '30px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              minHeight: '260px'
+            }}
+          >
+            <div>
+              <div className="lp-entry-badge" style={{ backgroundColor: 'rgba(51, 163, 255, 0.15)', color: '#33a3ff', display: 'inline-block', padding: '4px 8px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '15px' }}>📱 Passageiro</div>
+              <div className="lp-entry-icon" style={{ color: '#33a3ff', marginBottom: '15px' }}><Smartphone size={32} /></div>
+              <h3 style={{ fontSize: '1.4rem', marginBottom: '10px' }}>App Passageiro</h3>
+              <p style={{ color: 'var(--txt2)', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                Solicite corridas rápidas e baratas de carro ou moto. Acompanhe a rota em tempo real.
+              </p>
+            </div>
+            <div className="lp-entry-btn" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: '#33a3ff', fontWeight: 'bold', fontSize: '0.9rem' }}>Acessar Aplicativo <ArrowRight size={16} /></div>
+          </motion.div>
+
+          {/* Card Motorista */}
+          <motion.div 
+            className="lp-entry-card lp-entry-driver" 
+            variants={fadeUp} 
+            onClick={() => navigate('/motorista')}
+            style={{
+              background: 'rgba(151, 233, 0, 0.03)',
+              border: '1px solid var(--green-glow)',
+              borderRadius: '16px',
+              padding: '30px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              minHeight: '260px'
+            }}
+          >
+            <div>
+              <div className="lp-entry-badge" style={{ backgroundColor: 'rgba(151, 233, 0, 0.15)', color: 'var(--green)', display: 'inline-block', padding: '4px 8px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '15px' }}>💎 Renda Passiva</div>
+              <div className="lp-entry-icon" style={{ color: 'var(--green)', marginBottom: '15px' }}><TrendingUp size={32} /></div>
+              <h3 style={{ fontSize: '1.4rem', marginBottom: '10px' }}>App Motorista</h3>
+              <p style={{ color: 'var(--txt2)', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                Dirija, faça corridas e ganhe royalties diários indicando passageiros para sua rede.
+              </p>
+            </div>
+            <div className="lp-entry-btn" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--green)', fontWeight: 'bold', fontSize: '0.9rem' }}>Acessar Aplicativo <ArrowRight size={16} /></div>
+          </motion.div>
+
+          {/* Card Admin */}
+          <motion.div 
+            className="lp-entry-card lp-entry-admin" 
+            variants={fadeUp} 
+            onClick={() => navigate('/admin/login')}
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid var(--border)',
+              borderRadius: '16px',
+              padding: '30px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              minHeight: '260px'
+            }}
+          >
+            <div>
+              <div className="lp-entry-badge" style={{ backgroundColor: 'rgba(232, 184, 75, 0.15)', color: 'var(--gold)', display: 'inline-block', padding: '4px 8px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '15px' }}>🖥️ Administrativo</div>
+              <div className="lp-entry-icon" style={{ color: 'var(--gold)', marginBottom: '15px' }}><Shield size={32} /></div>
+              <h3 style={{ fontSize: '1.4rem', marginBottom: '10px' }}>Painel Admin</h3>
+              <p style={{ color: 'var(--txt2)', fontSize: '0.9rem', lineHeight: '1.4' }}>
+                Gerenciamento operacional e financeiro de motoristas, taxas e configurações globais.
+              </p>
+            </div>
+            <div className="lp-entry-btn" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold)', fontWeight: 'bold', fontSize: '0.9rem' }}>Entrar no Painel <ArrowRight size={16} /></div>
           </motion.div>
         </motion.div>
       </section>
