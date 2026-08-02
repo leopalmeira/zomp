@@ -89,15 +89,13 @@ async function initDB() {
     const adminPass = process.env.ADMIN_PASSWORD || 'Lps27031981@';
     const adminName = process.env.ADMIN_NAME || 'Leandro Palmeira';
     const hash = await bcrypt.hash(adminPass, 10);
+    const testPasswordHash = await bcrypt.hash('teste123', 10);
 
     await client.query(`
       INSERT INTO "User" (name, email, password, role, "isApproved")
       VALUES ($1, $2, $3, 'ADMIN', true)
       ON CONFLICT (email) DO UPDATE SET password = $3, role = 'ADMIN';
     `, [adminName, adminEmail, hash]);
-
-    // Injeção de Contas de Teste (Cliente e Motorista)
-    const testPasswordHash = await bcrypt.hash('teste123', 10);
 
     // Cliente (PASSENGER)
     await client.query(`
