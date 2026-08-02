@@ -92,6 +92,10 @@ export default function DriverDashboard() {
   const slideThreshold = slideTrackWidth - slideThumbWidth - 10
 
   const handleSlideStart = (e) => {
+    if (!user?.isApproved) {
+      alert("📳 Estamos validando seus dados, isso pode levar até 12 horas. Aguarde a aprovação da Zomp para ficar online.");
+      return;
+    }
     setIsSwiping(true)
   }
   const handleSlideMove = (e) => {
