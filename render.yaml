@@ -31,7 +31,6 @@ services:
   - type: web
     name: zomp-app
     runtime: static
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
@@ -57,7 +56,6 @@ services:
   - type: web
     name: zomp-passageiro
     runtime: static
-    plan: free
     rootDir: redirects/passageiro
     buildCommand: echo "Redirect para App Passageiro"
     staticPublishPath: .
@@ -70,7 +68,6 @@ services:
   - type: web
     name: zomp-motorista
     runtime: static
-    plan: free
     rootDir: redirects/motorista
     buildCommand: echo "Redirect para App Motorista"
     staticPublishPath: .
@@ -83,7 +80,6 @@ services:
   - type: web
     name: zomp-admin
     runtime: static
-    plan: free
     rootDir: redirects/admin
     buildCommand: echo "Redirect para Painel Admin"
     staticPublishPath: .
