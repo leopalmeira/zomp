@@ -92,8 +92,14 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
     *   `VITE_API_URL` apontando corretamente para `zomp-api.onrender.com/api`
 *   **package-lock.json regenerado:** `@react-oauth/google` ausente no lockfile era causa de falha silenciosa no `vite build`.
 
----
-**Status Atual**: ✅ Deploy estável. API + SPA operacionais.
-**Versão**: 12.3.0
-**Responsável**: Leandro Palmeira + Antigravity AI
+### 🔧 v12.4.0 — Sincronização do Repositório e Correção de Banco (2026-08-02)
+*   **Sincronização com GitHub:** Repositório local atualizado e sincronizado com o commit mais recente (`7f2468b`).
+*   **Correção do Host de Banco (DATABASE_URL):**
+    *   `backend/.env` corrigido localmente com o host de conexão externa correto (`dpg-d8guds48aovs73efq1a0-a.oregon-postgres.render.com/zomp_f1dk`).
+    *   `render.yaml` alterado para injetar a URL estática correta do banco ativo, contornando o erro de banco inativo no Blueprint.
+*   **Validação de Cadastros:** Confirmado o funcionamento dos fluxos de pré-cadastro para Passageiros (aprovados automaticamente) e Motoristas (aguardando aprovação no painel Admin).
 
+---
+**Status Atual**: ✅ Deploy atualizado e corrigido. API + SPA integrados.
+**Versão**: 12.4.0
+**Responsável**: Leandro Palmeira + Antigravity AI
