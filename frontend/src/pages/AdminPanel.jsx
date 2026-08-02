@@ -236,9 +236,41 @@ export default function AdminPanel() {
             </div>
             {selectedDriver && (
               <div className="ap-modal-overlay" onClick={() => setSelectedDriver(null)}>
-                <div className="ap-modal" onClick={e => e.stopPropagation()}>
-                   <h2>{selectedDriver.name}</h2>
-                   <button onClick={() => setSelectedDriver(null)}>Fechar</button>
+                <div className="ap-modal ap-driver-modal" onClick={e => e.stopPropagation()}>
+                  <div className="ap-modal-header">
+                    <h2>{selectedDriver.name}</h2>
+                    <button className="ap-modal-close" onClick={() => setSelectedDriver(null)}>×</button>
+                  </div>
+                  <div className="ap-modal-body">
+                    <div className="ap-driver-info">
+                      <p><strong>Email:</strong> {selectedDriver.email}</p>
+                      <p><strong>Status:</strong> <span className={`ap-badge ${selectedDriver.isApproved ? 'ap-badge-green' : 'ap-badge-red'}`}>{selectedDriver.isApproved ? 'Ativo' : 'Suspenso'}</span></p>
+                      <p><strong>Veículo:</strong> {selectedDriver.carModel || 'Não informado'} - {selectedDriver.carPlate || 'Não informado'}</p>
+                      <p><strong>Cor:</strong> {selectedDriver.carColor || 'Não informado'}</p>
+                    </div>
+                    <div className="ap-driver-docs">
+                      <h3>Documentos</h3>
+                      <div className="ap-docs-grid">
+                        {selectedDriver.cnh && (
+                          <div className="ap-doc-item">
+                            <strong>CNH:</strong>
+                            <img src={selectedDriver.cnh} alt="CNH" className="ap-doc-image" onClick={() => setLightbox({ type: 'CNH', url: selectedDriver.cnh })} />
+                          </div>
+                        )}
+                        {selectedDriver.crlv && (
+                          <div className="ap-doc-item">
+                            <strong>CRLV:</strong>
+                            <img src={selectedDriver.crlv} alt="CRLV" className="ap-doc-image" onClick={() => setLightbox({ type: 'CRLV', url: selectedDriver.crlv })} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="ap-modal-actions">
+                      <button className={`ap-btn-sm ${selectedDriver.isApproved ? 'ap-btn-danger' : 'ap-btn-success'}`} onClick={() => { approveDriver(selectedDriver.id, !selectedDriver.isApproved); setSelectedDriver(null); }}>
+                        {selectedDriver.isApproved ? 'Suspender Motorista' : 'Aprovar Motorista'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -317,6 +349,13 @@ export default function AdminPanel() {
           </div>
         )}
       </main>
+      
+      {/* Lightbox para visualização de documentos */}
+      {lightbox && (
+        <div className="ap-lightbox" onClick={() => setLightbox(null)}>
+          <img src={lightbox.url} alt={lightbox.type} onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   )
 }
