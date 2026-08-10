@@ -152,3 +152,16 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 **Status Atual**: ✅ Deploy atualizado. Correções de crashes e restauração visual da tela de motorista ativas.
 **Versão**: 12.6.0
 **Responsável**: Leandro Palmeira + Antigravity AI
+
+---
+### 📅 v12.6.1 - Sincronização e Limpeza de Repositório (2025-08-10)
+* **Sincronização Forçada com GitHub**: Projeto local resetado para `origin/master` (commit `aeff11d`) e alinhado com o repositório remoto.
+* **Remoção de Arquivo Corrompido**: O arquivo `frontend/diariodebordo.md` (10.7 KB) foi removido devido a encoding corrompido (UTF-8 mal interpretado).
+* **Commit de Limpeza**: Adicionado commit `28c8e68` para registrar a remoção do arquivo corrompido e garantir consistência do repositório.
+* **Verificação de Arquivos Críticos**: Todos os arquivos essenciais (`Driver.css`, `PassengerDashboard.jsx`, `backend/index.js`, `render.yaml`) estão intactos e presentes.
+
+---
+**Status Atual**: ✅ Repositório local e remoto sincronizados. Arquivo corrompido removido.
+**Versão**: 12.6.1
+**Responsável**: Vibe Code (Mistral AI) + Leandro Palmeira
+**Último Commit**: [28c8e68](https://github.com/leopalmeira/zomp/commit/28c8e68e30897f2cefe480bb2f0878884b7c96ed)
