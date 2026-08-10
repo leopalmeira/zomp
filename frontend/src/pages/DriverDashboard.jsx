@@ -297,6 +297,28 @@ export default function DriverDashboard() {
   // Credit purchase: Payment Initialization (PIX)
   const [pixModal, setPixModal] = useState(null)
   
+  // Modal de recarga de créditos (aparece quando credits <= 0)
+  const [showRechargeModal, setShowRechargeModal] = useState(false)
+  
+  // Verificar créditos ao tentar ficar online
+  const checkCreditsAndGoOnline = () => {
+    const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
+    if (!isTestDriver && (!user?.cnh || !user?.crlv)) {
+      return alert("⚠️ Envie seus documentos no menu 'Documentos & Veículo' antes de ficar online.");
+    }
+    if (!isTestDriver && !user?.isApproved) {
+      return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
+    }
+    
+    // Se não for conta de teste e não tiver créditos, mostrar modal de recarga
+    if (!isTestDriver && Number(credits || 0) <= 0) {
+      setShowRechargeModal(true);
+      return;
+    }
+    
+    setIsOnline(true);
+  }
+  
   const handleBuyCreditsInit = (qty) => {
     const price = (qty * 1.5).toFixed(2)
     const pixPayload = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2,15)}-zomp0204${qty}C5204000053039865405${price}5802BR5914ZOMP PAGAMENTOS6009SAO_PAULO62070503***6304ABCD`
@@ -437,16 +459,7 @@ export default function DriverDashboard() {
           !isOnline ? (
             <button
               className="btn-go-online"
-              onClick={() => {
-                const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
-                if (!isTestDriver && (!user?.cnh || !user?.crlv)) {
-                  return alert("⚠️ Envie seus documentos no menu 'Documentos & Veículo' antes de ficar online.");
-                }
-                if (!isTestDriver && !user?.isApproved) {
-                  return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
-                }
-                setIsOnline(true);
-              }}
+              onClick={checkCreditsAndGoOnline}
               disabled={isOnline}
             >
               Ficar Online
@@ -772,6 +785,63 @@ export default function DriverDashboard() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Modal de Recarga de Créditos */}
+      {showRechargeModal && (
+        <div className="modal-overlay" onClick={() => setShowRechargeModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2 style={{color: '#ef4444', marginBottom: '16px'}}>⚠️ Créditos Insuficientes</h2>
+            <p style={{marginBottom: '20px', fontSize: '1rem'}}>
+              Você não tem créditos suficientes para ficar online e receber corridas.
+            </p>
+            <p style={{marginBottom: '20px', fontSize: '0.9rem', color: '#6b7280'}}>
+              <b>1 crédito = 1 corrida</b> (R$ 1,50 por crédito)
+            </p>
+            <div style={{display: 'flex', gap: '12px', marginBottom: '16px'}}>
+              <button 
+                className="btn-premium btn-green" 
+                onClick={() => {
+                  setShowRechargeModal(false);
+                  handleBuyCreditsInit(10);
+                }}
+              >
+                Comprar 10 Créditos (R$ 15,00)
+              </button>
+            </div>
+            <div style={{display: 'flex', gap: '12px', marginBottom: '16px'}}>
+              <button 
+                className="btn-premium btn-green" 
+                onClick={() => {
+                  setShowRechargeModal(false);
+                  handleBuyCreditsInit(22);
+                }}
+              >
+                Comprar 22 Créditos (R$ 30,00)
+              </button>
+            </div>
+            <div style={{display: 'flex', gap: '12px', marginBottom: '20px'}}>
+              <button 
+                className="btn-premium btn-green" 
+                onClick={() => {
+                  setShowRechargeModal(false);
+                  handleBuyCreditsInit(35);
+                }}
+              >
+                Comprar 35 Créditos (R$ 45,00)
+              </button>
+            </div>
+            <button 
+              className="btn-secondary" 
+              onClick={() => setShowRechargeModal(false)}
+              style={{width: '100%'}}
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      </div>
   )
 }
