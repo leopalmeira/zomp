@@ -140,6 +140,11 @@ export default function DriverDashboard() {
   }
   const fetchCredits = async () => {
     try {
+      // Conta de teste sempre tem 1000 créditos
+      if (user?.email === 'motorista@zomp.com') {
+        setCredits(1000);
+        return;
+      }
       const res = await fetch(`${API}/credits`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
       const d = await res.json()
       if (d.credits !== undefined) setCredits(d.credits)

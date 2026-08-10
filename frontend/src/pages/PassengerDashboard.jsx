@@ -155,19 +155,21 @@ export default function PassengerDashboard() {
   const [freightContactPhone, setFreightContactPhone] = useState('')
   const [ratingStars, setRatingStars] = useState(0)
   const [tempDriverFav, setTempDriverFav] = useState(false)
+  const [manualPriceInput, setManualPriceInput] = useState('')
+  const [manualPriceError, setManualPriceError] = useState('')
 
   // Freight pricing constant
   const FREIGHT_PRICE_PER_KM = 3.50
 
   // Pricing state (dynamic from server)
   const [config, setConfig] = useState({
-    pricePerKmCar: 2.00, pricePerKmMoto: 1.50,
-    minFareCar: 8.40, minFareMoto: 7.20,
-    minKmPriceImbativel: 1.50, discountImbativel: 2.00
+    pricePerKmCar: 1.80, pricePerKmMoto: 1.40,
+    minFareCar: 7.00, minFareMoto: 5.50,
+    minKmPriceImbativel: 1.00, discountImbativel: 2.00
   })
 
   // Min price object
-  const MIN_PRICE = { car: 8.40, moto: 7.20 }
+  const MIN_PRICE = { car: 7.00, moto: 5.50 }
 
   // Selfie Logic
   const [showSelfiePrompt, setShowSelfiePrompt] = useState(false)
