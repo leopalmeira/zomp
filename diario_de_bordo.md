@@ -125,7 +125,7 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
     *   `zomp-admin` → Serviço estático dedicado que redireciona para o Painel Administrativo.
 *   **Documentação atualizada:** `CREDENCIAS.md`, `diario_de_bordo.md` e `README.md` sincronizados com os novos links e arquitetura.
 
-### 🚀 v12.6.0 — Garantia de Preço Imbatível, Autocomplete e Correção de Crash (2026-08-10)
+### 🚀 v12.6.0 — Garantia de Preço Imbatível, Autocomplete, Correção de Crash e Remoção de Favoritos (2026-08-10)
 *   **Correção de Crash Crítico (PRICE_PER_KM):** Resolvido o erro de JavaScript `PRICE_PER_KM is not defined` que crashava o app do passageiro ao carregar a tela de estimativa de preços/seleção de veículo. Os preços por km agora são mapeados dinamicamente das configurações ativas do servidor (`config.pricePerKmCar` / `config.pricePerKmMoto`).
 *   **Autocomplete Resiliente com Fallback:** Adicionada uma lista estática de endereços populares do Brasil (`LOCAL_ADDRESS_FALLBACK`) no autocomplete do painel do passageiro. Caso a API pública do Nominatim (OpenStreetMap) falhe por CORS, limites de taxa ou lentidão, o app filtra e exibe sugestões locais válidas e clicáveis imediatamente.
 *   **Nova Regra do Preço Imbatível Zomp:**
@@ -136,6 +136,7 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
         *   Distância `>= 1.4 km`: **10% de desconto**
         *   Distância `< 1.4 km`: **5% de desconto** (padrão)
     *   **Limite de 3 Corridas Promocionais:** Implementado controle persistente (`localStorage`) que limita o passageiro a usufruir de até 3 descontos de Preço Imbatível. A contagem é atualizada e exibida na UI em tempo real e decrementada ao solicitar uma corrida.
+*   **Remoção de Favoritos:** Removida visualmente toda a funcionalidade de Motoristas Favoritos da interface do passageiro (Widget da tela inicial, seletor de priorização de favoritos nas opções de preços, botão de favoritar na tela de avaliação de corrida, botão de favoritar na tela de aceitação de corrida e a aba de favoritos no menu sanduíche). O estado é mantido em background apenas para prover dados da simulação de motorista a caminho.
 
 ---
 **Status Atual**: ✅ Deploy atualizado. Correções de crash no passageiro e novo fluxo de Preço Imbatível ativos.

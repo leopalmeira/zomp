@@ -749,29 +749,7 @@ export default function PassengerDashboard() {
           {rideState === 'IDLE' && (
             <div className="state-idle animate-fade-in">
 
-              {/* Favorites */}
-              <div className="favorites-section" style={{marginTop:'20px'}}>
-                <div className="section-header">
-                  <h3>Motoristas Favoritos</h3>
-                  <span className="badge-nearby">PRIORIDADE</span>
-                </div>
-                {favoriteDriversState.length === 0 ? (
-                  <p className="hint-text" style={{marginTop: '8px'}}>Nenhum motorista favorito no momento.</p>
-                ) : (
-                  <div className="favorites-scroll">
-                    {favoriteDriversState.map(d => (
-                      <div key={d.id} className="fav-driver-card">
-                        <img src={d.img} className="fav-img" alt={d.name} />
-                        <div className="fav-info">
-                          <span className="fav-name">{d.name.split(' ')[0]}</span>
-                          <span className="fav-dist">Até 10min</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <p className="hint-text">Serão notificados primeiro para sua corrida.</p>
-              </div>
+
 
               {/* Viagens Longas */}
               <div className="intercity-section" style={{marginTop:'20px'}}>
@@ -1318,16 +1296,7 @@ export default function PassengerDashboard() {
                 </div>
               </div>
 
-              <div className="prioritize-toggle">
-                <div>
-                  <label>Priorizar Favoritos</label>
-                  <p>Toca para favoritos por 15s</p>
-                </div>
-                <label className="switch">
-                  <input type="checkbox" checked={prioritizeFavs} onChange={(e) => setPrioritizeFavs(e.target.checked)} />
-                  <span className="slider round"></span>
-                </label>
-              </div>
+
 
               <div className="action-buttons mt-4">
                 <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>
@@ -1426,7 +1395,7 @@ export default function PassengerDashboard() {
             <div className="state-searching animate-fade-in text-center">
               <div className="search-radar"></div>
               <h3 style={{marginTop:'24px'}}>
-                {prioritizeFavs ? 'Notificando favoritos...' : 'Buscando motoristas...'}
+                Buscando motoristas...
               </h3>
               <p className="hint-text">Aguarde enquanto conectamos você ao melhor parceiro próximo.</p>
               <button className="btn btn-secondary mt-4 w-full" onClick={() => setRideState('PRICED')}>
@@ -1447,12 +1416,6 @@ export default function PassengerDashboard() {
                 <div className="drv-info">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <h4>{favoriteDriversState[0].name}</h4>
-                    <button 
-                      onClick={() => setTempDriverFav(!tempDriverFav)}
-                      style={{background:'none',border:'none',fontSize:'1.2rem',cursor:'pointer',padding:0,color: tempDriverFav ? '#f59e0b' : '#cbd5e1'}}
-                    >
-                      ★
-                    </button>
                   </div>
                   <div className="drv-metrics" style={{display:'flex', gap:'12px', alignItems:'center'}}>
                     <div className="drv-rating">⭐ {favoriteDriversState[0].rating}</div>
@@ -1618,26 +1581,6 @@ export default function PassengerDashboard() {
                 ))}
               </div>
 
-              {ratingStars > 0 && (
-                <div style={{marginBottom: '24px', padding: '16px', background: '#f8fafc', borderRadius: '16px'}}>
-                  <p style={{fontWeight: 700, margin: '0 0 12px', color: '#334155'}}>Gostou do motorista?</p>
-                  <button 
-                    onClick={() => setTempDriverFav(!tempDriverFav)}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', 
-                      width: '100%', padding: '12px', borderRadius: '12px',
-                      background: tempDriverFav ? '#fef3c7' : '#fff',
-                      border: tempDriverFav ? '2px solid #f59e0b' : '1px solid #cbd5e1',
-                      color: tempDriverFav ? '#b45309' : '#475569',
-                      fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <span>{tempDriverFav ? '★ Favoritado' : '☆ Salvar como Favorito'}</span>
-                  </button>
-                  <p style={{fontSize: '0.7rem', color: '#64748b', margin: '8px 0 0'}}>Seus motoristas favoritos são notificados primeiro nas próximas viagens.</p>
-                </div>
-              )}
-
               <button 
                 className="btn btn-primary"
                 style={{width: '100%', padding: '16px', fontSize: '1.05rem'}}
@@ -1732,10 +1675,7 @@ export default function PassengerDashboard() {
                     Histórico
                   </button>
 
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('FAVORITES')}>
-                    <span className="nav-icon"><Star size={17} /></span>
-                    Favoritos
-                  </button>
+
 
                   <div className="menu-spacer"></div>
 
@@ -2002,46 +1942,7 @@ export default function PassengerDashboard() {
                 </div>
               )}
 
-              {menuScreen === 'FAVORITES' && (
-                <div className="animate-fade-in">
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
-                    ← Voltar
-                  </button>
-                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>Motoristas Favoritos</h3>
-                  <p className="hint-text" style={{marginBottom: '20px'}}>Sua lista de motoristas indicados e selecionados como favoritos.</p>
-                  
-                  {favoriteDriversState.length === 0 ? (
-                    <div style={{textAlign: 'center', padding: '32px 0'}}>
-                      <p style={{fontSize: '3rem', marginBottom: '12px'}}>⭐</p>
-                      <p style={{color: '#71717a', fontWeight: 600}}>Você não tem favoritos</p>
-                    </div>
-                  ) : (
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
-                      {favoriteDriversState.map(driver => (
-                        <div key={driver.id} style={{display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', background: '#f8fafc', border: '1px solid #e4e4e7', borderRadius: '12px'}}>
-                          <img src={driver.img} alt={driver.name} style={{width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover'}} />
-                          <div style={{flex: 1}}>
-                            <div style={{fontWeight: 800, color: 'var(--text-dark)'}}>{driver.name}</div>
-                            <div style={{fontSize: '0.85rem', color: '#f59e0b', fontWeight: 700}}>⭐ {driver.rating}</div>
-                            <div style={{fontSize: '0.8rem', color: '#71717a', marginTop: '2px'}}>{driver.car}</div>
-                          </div>
-                          <button 
-                            className="btn btn-secondary" 
-                            style={{padding: '8px', fontSize: '0.85rem', color: '#ef4444', borderColor: '#fecaca', background: '#fef2f2'}}
-                            onClick={() => {
-                              if (confirm(`Tem clareza em remover ${driver.name} dos seus favoritos?`)) {
-                                setFavoriteDriversState(prev => prev.filter(d => d.id !== driver.id))
-                              }
-                            }}
-                          >
-                            Remover
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+
 
             </div>
           </div>
