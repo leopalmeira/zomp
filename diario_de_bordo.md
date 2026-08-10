@@ -125,7 +125,19 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
     *   `zomp-admin` → Serviço estático dedicado que redireciona para o Painel Administrativo.
 *   **Documentação atualizada:** `CREDENCIAS.md`, `diario_de_bordo.md` e `README.md` sincronizados com os novos links e arquitetura.
 
+### 🚀 v12.6.0 — Garantia de Preço Imbatível, Autocomplete e Correção de Crash (2026-08-10)
+*   **Correção de Crash Crítico (PRICE_PER_KM):** Resolvido o erro de JavaScript `PRICE_PER_KM is not defined` que crashava o app do passageiro ao carregar a tela de estimativa de preços/seleção de veículo. Os preços por km agora são mapeados dinamicamente das configurações ativas do servidor (`config.pricePerKmCar` / `config.pricePerKmMoto`).
+*   **Autocomplete Resiliente com Fallback:** Adicionada uma lista estática de endereços populares do Brasil (`LOCAL_ADDRESS_FALLBACK`) no autocomplete do painel do passageiro. Caso a API pública do Nominatim (OpenStreetMap) falhe por CORS, limites de taxa ou lentidão, o app filtra e exibe sugestões locais válidas e clicáveis imediatamente.
+*   **Nova Regra do Preço Imbatível Zomp:**
+    *   A caixa de desconto agora aceita a entrada do preço da concorrência e calcula em tempo real o preço Zomp correspondente.
+    *   Tabela de desconto dinâmico baseada em distância:
+        *   Distância `>= 2.0 km`: **15% de desconto**
+        *   Distância `>= 1.8 km`: **12% de desconto**
+        *   Distância `>= 1.4 km`: **10% de desconto**
+        *   Distância `< 1.4 km`: **5% de desconto** (padrão)
+    *   **Limite de 3 Corridas Promocionais:** Implementado controle persistente (`localStorage`) que limita o passageiro a usufruir de até 3 descontos de Preço Imbatível. A contagem é atualizada e exibida na UI em tempo real e decrementada ao solicitar uma corrida.
+
 ---
-**Status Atual**: ✅ Deploy atualizado. Serviços separados no Render. Admin protegido.
-**Versão**: 12.5.0
+**Status Atual**: ✅ Deploy atualizado. Correções de crash no passageiro e novo fluxo de Preço Imbatível ativos.
+**Versão**: 12.6.0
 **Responsável**: Leandro Palmeira + Antigravity AI

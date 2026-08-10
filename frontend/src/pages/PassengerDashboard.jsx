@@ -34,6 +34,24 @@ async function resolveAddress(text) {
   return null
 }
 
+const LOCAL_ADDRESS_FALLBACK = [
+  { display_name: "Avenida Atlântica, Copacabana, Rio de Janeiro, RJ", lat: "-22.9711", lon: "-43.1822" },
+  { display_name: "Rua Barata Ribeiro, Copacabana, Rio de Janeiro, RJ", lat: "-22.9688", lon: "-43.1856" },
+  { display_name: "Avenida Rio Branco, Centro, Rio de Janeiro, RJ", lat: "-22.9035", lon: "-43.1794" },
+  { display_name: "Praça Floriano, Cinelândia, Rio de Janeiro, RJ", lat: "-22.9094", lon: "-43.1758" },
+  { display_name: "Avenida Vieira Souto, Ipanema, Rio de Janeiro, RJ", lat: "-22.9873", lon: "-43.2048" },
+  { display_name: "Aeroporto Santos Dumont, Centro, Rio de Janeiro, RJ", lat: "-22.9109", lon: "-43.1671" },
+  { display_name: "Aeroporto do Galeão, Rio de Janeiro, RJ", lat: "-22.8134", lon: "-43.2494" },
+  { display_name: "Avenida Paulista, São Paulo, SP", lat: "-23.5614", lon: "-46.6559" },
+  { display_name: "Rua Augusta, São Paulo, SP", lat: "-23.5592", lon: "-46.6583" },
+  { display_name: "Avenida Brigadeiro Faria Lima, Pinheiros, São Paulo, SP", lat: "-23.5684", lon: "-46.6811" },
+  { display_name: "Barra da Tijuca, Rio de Janeiro, RJ", lat: "-23.0003", lon: "-43.3658" },
+  { display_name: "Leblon, Rio de Janeiro, RJ", lat: "-22.9847", lon: "-43.2231" },
+  { display_name: "Rua das Laranjeiras, Rio de Janeiro, RJ", lat: "-22.9348", lon: "-43.1892" },
+  { display_name: "Botafogo, Rio de Janeiro, RJ", lat: "-22.9519", lon: "-43.1804" },
+  { display_name: "Niterói, Rio de Janeiro, RJ", lat: "-22.8856", lon: "-43.1153" }
+];
+
 // Helper: fetch real road route from OSRM
 async function fetchOSRMRoute(originCoords, destCoords, stopsCoords = []) {
   const allCoords = [originCoords, ...stopsCoords, destCoords].filter(Boolean)
@@ -118,6 +136,10 @@ export default function PassengerDashboard() {
   const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
   const [compPriceRead, setCompPriceRead] = useState(0)
   const [compPlatform, setCompPlatform] = useState('')
+  const [imbativelRidesLeft, setImbativelRidesLeft] = useState(() => {
+    const saved = localStorage.getItem('zomp_imbativel_rides_left');
+    return saved !== null ? parseInt(saved) : 3;
+  });
   const [compCategory, setCompCategory] = useState('')
   const [isAnalyzingPrint, setIsAnalyzingPrint] = useState(false)
   const [activeRideId, setActiveRideId] = useState(null)
@@ -299,12 +321,19 @@ export default function PassengerDashboard() {
     let finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
     
     // REGRA PREÇO IMBATÍVEL: se tivermos um print validado ou entrada manual
-    if (hasCompetitionDiscount && compPriceRead > 0 && type === 'car') {
-      // O preço deve ser o menor entre o nosso normal e (concorrência - 2)
-      const challengePrice = Math.max(compPriceRead - 2.00, MIN_PRICE[type]);
+    if (hasCompetitionDiscount && compPriceRead > 0) {
+      const distance = parseFloat(km) || 0;
+      let discountPct = 0.05; // 5% de desconto padrão para < 1.4 km
+      if (distance >= 2.0) {
+        discountPct = 0.15; // 15% acima de 2.0 km
+      } else if (distance >= 1.8) {
+        discountPct = 0.12; // 12% acima de 1.8 km
+      } else if (distance >= 1.4) {
+        discountPct = 0.10; // 10% acima de 1.4 km
+      }
+      
+      const challengePrice = Math.max(compPriceRead * (1 - discountPct), type === 'car' ? config.minFareCar : config.minFareMoto);
       finalPrice = Math.min(finalPrice, challengePrice);
-    } else if (hasCompetitionDiscount && type === 'car') {
-      finalPrice = Math.max(finalPrice - 2.00, MIN_PRICE[type]);
     }
     
     return finalPrice.toFixed(2)
@@ -346,14 +375,27 @@ export default function PassengerDashboard() {
     }
 
     debounceRef.current = setTimeout(async () => {
+      let data = [];
       try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&countrycodes=br&limit=5`
         )
-        const data = await res.json()
-        setSuggestions(data || [])
+        data = await res.json()
       } catch (e) {
-        console.error('Nominatim search error:', e)
+        console.error('Nominatim search error, using local fallback:', e)
+      }
+
+      const queryClean = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const localMatches = LOCAL_ADDRESS_FALLBACK.filter(addr => {
+        const nameClean = addr.display_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return nameClean.includes(queryClean);
+      });
+
+      if (!Array.isArray(data) || data.length === 0) {
+        setSuggestions(localMatches);
+      } else {
+        const combined = [...data, ...localMatches].slice(0, 5);
+        setSuggestions(combined);
       }
     }, 600) // 600ms debounce to respect API rate limits
   }, [])
@@ -510,6 +552,12 @@ export default function PassengerDashboard() {
       const newRide = await requestRide(ridePayload);
       console.log('Ride created via API:', newRide);
       setActiveRideId(newRide.id);
+
+      if (hasCompetitionDiscount) {
+        const nextCount = Math.max(0, imbativelRidesLeft - 1);
+        setImbativelRidesLeft(nextCount);
+        localStorage.setItem('zomp_imbativel_rides_left', nextCount.toString());
+      }
 
       setRideState('SEARCHING')
     } catch (e) {
@@ -1124,9 +1172,9 @@ export default function PassengerDashboard() {
                 <div className="dist-val">{routeKm} km estimado</div>
               </div>
 
-              {parseFloat(routeKm) * PRICE_PER_KM[vehicleType] < MIN_PRICE[vehicleType] && (
+              {parseFloat(routeKm) * (vehicleType === 'car' ? config.pricePerKmCar : config.pricePerKmMoto) < (vehicleType === 'car' ? config.minFareCar : config.minFareMoto) && (
                 <p className="hint-text" style={{marginBottom:'12px', color:'#f59e0b'}}>
-                  ⚠️ Tarifa mínima aplicada ({vehicleType === 'car' ? 'Carro: R$ 8,40' : 'Moto: R$ 7,20'})
+                  ⚠️ Tarifa mínima aplicada ({vehicleType === 'car' ? `Carro: R$ ${parseFloat(config.minFareCar).toFixed(2)}` : `Moto: R$ ${parseFloat(config.minFareMoto).toFixed(2)}`})
                 </p>
               )}
 
@@ -1171,9 +1219,11 @@ export default function PassengerDashboard() {
               <div className="price-challenge-box animate-fade-in" style={{ border: manualPriceError ? '1px solid #ef4444' : 'none' }}>
                 <div className="challenge-icon">🔥</div>
                 <div className="challenge-content">
-                  <h4 style={{fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c', margin: 0}}>PREÇO IMBATÍVEL ZOMP</h4>
+                  <h4 style={{fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c', margin: 0}}>
+                    PREÇO IMBATÍVEL ZOMP {imbativelRidesLeft > 0 ? `(${imbativelRidesLeft} restantes)` : '(Limite Esgotado)'}
+                  </h4>
                   <p style={{fontSize: '0.75rem', fontWeight: 600, color: '#7f1d1d', margin: '2px 0 8px'}}>
-                    Viu preço mais barato na Uber ou 99? Cobrimos! informe aqui para consultar:
+                    Viu preço mais barato na Uber ou 99? Cobrimos com desconto real!
                   </p>
                   
                   <div style={{display:'flex', gap:'8px', marginBottom:'8px'}}>
@@ -1182,13 +1232,20 @@ export default function PassengerDashboard() {
                       placeholder="R$ 0,00"
                       value={manualPriceInput}
                       onChange={(e) => setManualPriceInput(e.target.value)}
+                      disabled={imbativelRidesLeft <= 0}
                       style={{
                         flex:1, padding:'10px 14px', borderRadius:'10px', border:'2px solid #fca5a5',
-                        fontSize:'1rem', fontWeight:700, outline:'none'
+                        fontSize:'1rem', fontWeight:700, outline:'none',
+                        background: imbativelRidesLeft <= 0 ? '#f3f4f6' : '#fff',
+                        cursor: imbativelRidesLeft <= 0 ? 'not-allowed' : 'text'
                       }}
                     />
                     <button 
                       onClick={() => {
+                        if (imbativelRidesLeft <= 0) {
+                          setManualPriceError('Você já utilizou suas 3 corridas com garantia de Preço Imbatível.');
+                          return;
+                        }
                         const price = parseFloat(manualPriceInput);
                         const distance = parseFloat(routeKm);
                         if (isNaN(price) || price <= 0) {
@@ -1196,11 +1253,16 @@ export default function PassengerDashboard() {
                           return;
                         }
                         
-                        // Busca config do backend para aplicar as regras
-                        const minKmPrice = 1.50; // Mock ou buscar de state
-                        const discount = 2.00;
-                        
-                        if ((price - discount) / distance < minKmPrice) {
+                        let discountPct = 0.05;
+                        if (distance >= 2.0) discountPct = 0.15;
+                        else if (distance >= 1.8) discountPct = 0.12;
+                        else if (distance >= 1.4) discountPct = 0.10;
+
+                        const calculatedDiscount = price * discountPct;
+                        const challengePrice = price - calculatedDiscount;
+
+                        const minKmPrice = config.minKmPriceImbativel || 1.50;
+                        if (challengePrice / distance < minKmPrice) {
                           setManualPriceError('Não conseguimos bater esse valor (preço abaixo do teto de segurança).');
                           setHasCompetitionDiscount(false);
                           setCompPriceRead(0);
@@ -1211,9 +1273,13 @@ export default function PassengerDashboard() {
                           setCompPlatform('Concorrência');
                         }
                       }}
+                      disabled={imbativelRidesLeft <= 0}
                       style={{
-                        background:'#ef4444', color:'#fff', border:'none', padding:'10px 20px',
-                        borderRadius:'10px', fontWeight:800, cursor:'pointer', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+                        background: imbativelRidesLeft <= 0 ? '#9ca3af' : '#ef4444', 
+                        color:'#fff', border:'none', padding:'10px 20px',
+                        borderRadius:'10px', fontWeight:800, 
+                        cursor: imbativelRidesLeft <= 0 ? 'not-allowed' : 'pointer',
+                        boxShadow: imbativelRidesLeft <= 0 ? 'none' : '0 4px 12px rgba(239, 68, 68, 0.3)'
                       }}
                     >
                       Bater Preço!
@@ -1237,15 +1303,15 @@ export default function PassengerDashboard() {
                             Você informou: R$ {parseFloat(manualPriceInput).toFixed(2)} na concorrência
                           </p>
                           <p style={{margin:0, fontSize:'1.1rem', color:'#fff', fontWeight:900}}>
-                            Novo Preço Zomp: <span style={{fontSize:'1.4rem'}}>R$ {(compPriceRead - 2).toFixed(2)}</span>
+                            Novo Preço Zomp: <span style={{fontSize:'1.4rem'}}>R$ {(manualPriceInput * (1 - (parseFloat(routeKm) >= 2.0 ? 0.15 : (parseFloat(routeKm) >= 1.8 ? 0.12 : (parseFloat(routeKm) >= 1.4 ? 0.10 : 0.05))))).toFixed(2)}</span>
                           </p>
                         </div>
                         <div style={{background:'#fff', color:'#059669', padding:'4px 10px', borderRadius:'8px', fontWeight:900, fontSize:'0.8rem'}}>
-                          SALVOU R$ 2,00!
+                          {parseFloat(routeKm) >= 2.0 ? '15%' : (parseFloat(routeKm) >= 1.8 ? '12%' : (parseFloat(routeKm) >= 1.4 ? '10%' : '5%'))} OFF!
                         </div>
                       </div>
                       <p style={{margin:'8px 0 0', fontSize:'0.7rem', color:'#ecfdf5', fontWeight:700, fontStyle:'italic'}}>
-                        ✅ Preço garantido! Chame agora e aproveite a economia.
+                        ✅ Garantido mais barato que Uber/99! (Você tem {imbativelRidesLeft} corridas promocionais restantes).
                       </p>
                     </div>
                   )}
