@@ -222,3 +222,41 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 **Versão**: 12.6.4
 **Responsável**: Vibe Code (Mistral AI)
 **Último Commit**: [4f7dd83](https://github.com/leopalmeira/zomp/commit/4f7dd83)
+
+### 📅 v12.6.5 - Correções para Deploy no Render (2025-08-10)
+* **Problema Identificado**: Os serviços `zomp-web` (backend) e `zomp-app` (frontend) falharam no deploy no Render.
+* **Causas e Soluções**:
+  
+  **1. Backend (`zomp-web` / `zomp-api`):**
+  - **Problema**: O `backend/index.js` tentava servir arquivos estáticos do frontend (`public`), mas o frontend é um serviço separado no Render.
+  - **Solução**: Removido todo o código relacionado a `express.static` e `fs.existsSync` do `index.js`. Agora o backend **apenas serve a API** sem tentativas de servir frontend.
+  - **Arquivo Modificado**: `backend/index.js` (linhas removidas: 15-20).
+  
+  **2. Frontend (`zomp-app`):**
+  - **Problema**: O `frontend/package.json` usava versões **muito recentes** (`react@19.2.4`, `vite@6.0.0`), que podem não ser compatíveis com o ambiente do Render.
+  - **Solução**: Downgrade das dependências para versões estáveis:
+    - `react` e `react-dom`: **18.3.1** (antes: 19.2.4)
+    - `vite`: **5.4.10** (antes: 6.0.0)
+    - `@vitejs/plugin-react`: **4.3.3** (antes: 5.0.0)
+    - `lucide-react`: **0.413.0** (antes: 1.8.0)
+    - `react-router-dom`: **6.28.0** (antes: 7.14.1)
+  - **Arquivo Modificado**: `frontend/package.json`.
+  
+  **3. `render.yaml`:**
+  - **Verificação**: O arquivo já estava correto, com:
+    - `zomp-api`: `rootDir: backend`, `startCommand: node index.js`
+    - `zomp-app`: `rootDir: frontend`, `buildCommand: npm install && npm run build`
+    - `staticPublishPath: dist` para o frontend.
+  - **Nenhuma mudança necessária**.
+
+* **Testes Recomendados**:
+  - **Backend**: `cd backend && npm install && node index.js` (deve iniciar sem erros).
+  - **Frontend**: `cd frontend && npm install && npm run build` (deve buildar sem erros).
+
+---
+**Status Atual**: ✅ Correções aplicadas para compatibilidade com o Render.
+**Versão**: 12.6.5
+**Responsável**: Vibe Code (Mistral AI)
+**Últimos Commits**:
+- [e23d53b](https://github.com/leopalmeira/zomp/commit/e23d53b) (Downgrade do frontend/package.json)
+- [40a59f8](https://github.com/leopalmeira/zomp/commit/40a59f8) (Remoção do static serving do backend)
