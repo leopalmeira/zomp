@@ -65,6 +65,16 @@ function MapController({ center, markers }) {
   return null
 }
 
+// API Base URL and auth headers for direct fetch calls
+const API_BASE = import.meta.env.VITE_API_URL || 'https://zomp-api.onrender.com/api';
+function getHeaders() {
+  const token = localStorage.getItem('zomp_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 export default function PassengerDashboard() {
   const navigate = useNavigate()
   const user = getCurrentUser()
@@ -134,11 +144,11 @@ export default function PassengerDashboard() {
   const [selfiePreview, setSelfiePreview] = useState(null)
   const [isUploadingSelfie, setIsUploadingSelfie] = useState(false)
 
-  useEffect(() => {
-    if (user && !user.photo) {
-      setShowSelfiePrompt(true)
-    }
-  }, [user])
+  // useEffect(() => {
+  //   if (user && !user.photo) {
+  //     setShowSelfiePrompt(true)
+  //   }
+  // }, [user])
 
   useEffect(() => {
     async function loadConfig() {
@@ -167,7 +177,7 @@ export default function PassengerDashboard() {
   // Real-time Ride Polling (No mock)
   useEffect(() => {
     let interval;
-    if (activeRideId && (rideState === 'PENDING' || rideState === 'ACCEPTED')) {
+    if (activeRideId && (rideState === 'SEARCHING' || rideState === 'PENDING' || rideState === 'ACCEPTED')) {
       const poll = async () => {
         try {
           const res = await fetch(`${API_BASE}/rides/${activeRideId}`, { headers: getHeaders() });
@@ -226,40 +236,41 @@ export default function PassengerDashboard() {
   // History state from API
   const [rideHistory, setRideHistory] = useState([]);
 
-  useEffect(() => {
-    async function loadHistory() {
-      try {
-        const history = await getRideHistory();
-        if (!Array.isArray(history)) {
-          setRideHistory([]);
-          return;
-        }
-        const formatted = [];
-        for (const h of history) {
-          try {
-            const createdAt = h.createdAt || new Date().toISOString();
-            const datePart = createdAt.split('T')[0];
-            const dp = datePart.split('-');
-            formatted.push({
-              id: h.id,
-              rawDate: new Date(createdAt),
-              date: dp.length === 3 ? `${dp[2]}/${dp[1]}/${dp[0]}` : datePart,
-              origin: h.origin || '-',
-              dest: h.destination || '-',
-              price: h.price != null ? Number(h.price).toFixed(2) : '0.00',
-              vehicle: h.vehicleType === 'car' ? 'Carro' : 'Moto',
-              status: h.status || 'UNKNOWN'
-            });
-          } catch (itemErr) {
-            console.warn('Skipping malformed ride history item:', itemErr);
-          }
-        }
-        setRideHistory(formatted);
-      } catch (err) {
-        console.error('Failed to load history', err);
+  const loadHistory = async () => {
+    try {
+      const history = await getRideHistory();
+      if (!Array.isArray(history)) {
         setRideHistory([]);
+        return;
       }
+      const formatted = [];
+      for (const h of history) {
+        try {
+          const createdAt = h.createdAt || new Date().toISOString();
+          const datePart = createdAt.split('T')[0];
+          const dp = datePart.split('-');
+          formatted.push({
+            id: h.id,
+            rawDate: new Date(createdAt),
+            date: dp.length === 3 ? `${dp[2]}/${dp[1]}/${dp[0]}` : datePart,
+            origin: h.origin || '-',
+            dest: h.destination || '-',
+            price: h.price != null ? Number(h.price).toFixed(2) : '0.00',
+            vehicle: h.vehicleType === 'car' ? 'Carro' : 'Moto',
+            status: h.status || 'UNKNOWN'
+          });
+        } catch (itemErr) {
+          console.warn('Skipping malformed ride history item:', itemErr);
+        }
+      }
+      setRideHistory(formatted);
+    } catch (err) {
+      console.error('Failed to load history', err);
+      setRideHistory([]);
     }
+  };
+
+  useEffect(() => {
     loadHistory();
   }, [rideState]); // re-fetch history when ride state changes (e.g. after ride ends)
 

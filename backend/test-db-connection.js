@@ -42,7 +42,7 @@ async function testConnection() {
     // Teste 2: Verificar usuários de teste
     console.log('\n👥 Verificando usuários de teste...');
     const { rows: users } = await client.query(`
-      SELECT id, email, role, isApproved, password IS NOT NULL as has_password 
+      SELECT id, email, role, "isApproved", password IS NOT NULL as has_password 
       FROM "User" 
       WHERE email IN ('cliente@zomp.com', 'motorista@zomp.com', 'leandro2703palmeira@gmail.com')
       ORDER BY email

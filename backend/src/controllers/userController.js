@@ -24,3 +24,16 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ error: 'Erro ao atualizar perfil' });
   }
 };
+
+exports.getLinkedPassengers = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT COUNT(*) as count FROM "Referral" WHERE "referrerId" = $1',
+      [req.user.id]
+    );
+    res.json({ linkedPassengers: parseInt(rows[0].count) || 0 });
+  } catch (err) {
+    console.error('Erro ao buscar passageiros vinculados:', err.message);
+    res.json({ linkedPassengers: 0 });
+  }
+};

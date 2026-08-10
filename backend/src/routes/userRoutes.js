@@ -4,5 +4,6 @@ const userController = require('../controllers/userController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 router.put('/profile', authMiddleware, userController.updateProfile);
+router.get('/driver/linked-passengers', authMiddleware, userController.getLinkedPassengers);
 
 module.exports = router;

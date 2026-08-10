@@ -108,6 +108,28 @@ exports.completeRide = async (req, res) => {
   }
 };
 
+exports.getRideById = async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT r.*,
+        d.name as "driverName", d."carModel" as "driverCarModel",
+        d."carPlate" as "driverCarPlate", d."carColor" as "driverCarColor",
+        d.rating as "driverRating", d."ridesCompleted" as "driverRidesCompleted",
+        d.phone as "driverPhone",
+        p.name as "passengerName", p.phone as "passengerPhone"
+      FROM "Ride" r
+      LEFT JOIN "User" d ON r."driverId" = d.id
+      LEFT JOIN "User" p ON r."passengerId" = p.id
+      WHERE r.id = $1
+    `, [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Corrida não encontrada' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Erro ao buscar corrida:', err.message);
+    res.status(500).json({ error: 'Erro ao buscar corrida' });
+  }
+};
+
 exports.cancelRide = async (req, res) => {
   try {
     const { rows } = await pool.query(`

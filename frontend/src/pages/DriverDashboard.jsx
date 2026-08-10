@@ -21,7 +21,7 @@ const driverIcon = L.divIcon({
   iconSize: [24, 24], iconAnchor: [12, 12]
 })
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const API = import.meta.env.VITE_API_URL || 'https://zomp-api.onrender.com/api'
 const getToken = () => localStorage.getItem('zomp_token')
 
 // --- Som de Notificação ---
@@ -92,7 +92,8 @@ export default function DriverDashboard() {
   const slideThreshold = slideTrackWidth - slideThumbWidth - 10
 
   const handleSlideStart = (e) => {
-    if (!user?.isApproved) {
+    const isTestDriver = user?.email === 'motorista@zomp.com';
+    if (!isTestDriver && !user?.isApproved) {
       alert("📳 Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
       return;
     }
@@ -111,11 +112,12 @@ export default function DriverDashboard() {
   const handleSlideEnd = () => {
     setIsSwiping(false)
     if (slideX >= slideThreshold) {
-      if (!user?.cnh || !user?.crlv) {
+      const isTestDriver = user?.email === 'motorista@zomp.com';
+      if (!isTestDriver && (!user?.cnh || !user?.crlv)) {
         setSlideX(0);
         return alert("⚠️ Envie seus documentos no menu 'Documentos & Veículo' antes de ficar online.");
       }
-      if (!user?.isApproved) {
+      if (!isTestDriver && !user?.isApproved) {
         setSlideX(0);
         return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
       }
@@ -145,7 +147,7 @@ export default function DriverDashboard() {
   }
   const fetchLinkedPassengers = async () => {
     try {
-      const res = await fetch(`${API}/driver/linked-passengers`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
+      const res = await fetch(`${API}/user/driver/linked-passengers`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
       const d = await res.json()
       if (d.linkedPassengers !== undefined) setLinkedPassengers(d.linkedPassengers)
     } catch (e) {}
@@ -463,9 +465,9 @@ export default function DriverDashboard() {
               </div>
               <p style={{
                 textAlign:'center', marginTop:'14px', fontSize:'0.85rem', fontWeight:700,
-                color: (!user?.cnh || !user?.crlv) ? '#ef4444' : (!user?.isApproved ? '#f59e0b' : '#059669')
+                color: (user?.email !== 'motorista@zomp.com' && (!user?.cnh || !user?.crlv)) ? '#ef4444' : ((user?.email !== 'motorista@zomp.com' && !user?.isApproved) ? '#f59e0b' : '#059669')
               }}>
-                {(!user?.cnh || !user?.crlv) ? '⚠️ Envio de Documentos Pendente' : (!user?.isApproved ? '⏳ Estamos validando seus dados (até 12h)' : `🎫 ${credits} créditos disponíveis`)}
+                {(user?.email !== 'motorista@zomp.com' && (!user?.cnh || !user?.crlv)) ? '⚠️ Envio de Documentos Pendente' : ((user?.email !== 'motorista@zomp.com' && !user?.isApproved) ? '⏳ Estamos validando seus dados (até 12h)' : `🎫 ${credits} créditos disponíveis`)}
               </p>
             </div>
           ) : (

@@ -68,7 +68,16 @@ exports.login = async (req, res) => {
         email: user.email,
         qrCode: user.qrCode,
         isApproved: user.isApproved,
-        photo: user.photo
+        photo: user.photo,
+        cnh: user.cnh,
+        crlv: user.crlv,
+        carPlate: user.carPlate,
+        carModel: user.carModel,
+        carColor: user.carColor,
+        rating: user.rating,
+        ridesCompleted: user.ridesCompleted,
+        ridesAccepted: user.ridesAccepted,
+        ridesMissed: user.ridesMissed
       }
     });
   } catch (err) {
