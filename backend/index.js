@@ -1,7 +1,5 @@
 const express = require('express');
-const path = require('path');
 const cors = require('cors');
-const fs = require('fs');
 require('dotenv').config();
 
 const { initDB } = require('./src/config/db');
@@ -21,17 +19,8 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// 1. SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND
-const distPath = path.resolve(__dirname, 'public');
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
-  console.log(`📂 [Sistema] Servindo frontend de: ${distPath}`);
-} else {
-  console.log(`⚠️ [Sistema] Pasta dist não encontrada em: ${distPath} — rodando só como API`);
-}
-
 // ============================================
-// 2. MONTAGEM DAS ROTAS DA API
+// MONTAGEM DAS ROTAS DA API
 // ============================================
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
@@ -42,25 +31,16 @@ app.use('/api/config', configRoutes);
 app.use('/api/admin', adminRoutes);
 
 // ============================================
-// 3. HEALTH CHECK
+// HEALTH CHECK
 // ============================================
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '12.3.0', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', version: '12.6.4', timestamp: new Date().toISOString() });
 });
-
-// ============================================
-// 4. SUPORTE A ROTAS DO REACT (SPA FALLBACK)
-// ============================================
-if (fs.existsSync(distPath)) {
-  app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-}
 
 // ============================================
 // START SERVER
 // ============================================
 app.listen(PORT, async () => {
-  console.log(`📡 ZOMP API v12.3.0 ONLINE: http://localhost:${PORT}`);
+  console.log(`🚀 ZOMP API v12.6.4 ONLINE: http://localhost:${PORT}`);
   await initDB();
 });
