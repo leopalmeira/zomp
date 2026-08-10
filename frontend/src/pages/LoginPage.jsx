@@ -76,20 +76,23 @@ export default function LoginPage({ forceRole }) {
       <div className="auth-container animate-fade-in">
 
         {!isDriver && !isAdmin && (
-          <div className="logo-container" style={{ marginBottom: '24px', transform: 'scale(1.2)', textAlign: 'center' }}>
-            <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
+          <>
+            <div className="logo-container" style={{ marginBottom: '12px', transform: 'scale(1.2)' }}>
+              <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
+            </div>
             <p style={{ 
+              textAlign: 'center',
               fontSize: '0.85rem', 
               color: '#97E900', 
               fontWeight: 800, 
-              marginTop: '12px', 
+              marginBottom: '24px', 
               textTransform: 'uppercase', 
               letterSpacing: '1px',
               textShadow: '0 0 10px rgba(151, 233, 0, 0.3)'
             }}>
               Preço Imbatível Contra a Concorrência ⚡
             </p>
-          </div>
+          </>
         )}
 
         {isAdmin && (
