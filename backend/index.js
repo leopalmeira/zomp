@@ -22,7 +22,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 // 1. SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND
-const distPath = path.resolve(__dirname, '..', 'frontend', 'dist');
+const distPath = path.resolve(__dirname, 'public');
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
   console.log(`📂 [Sistema] Servindo frontend de: ${distPath}`);

@@ -1,0 +1,344 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:ital,wght@0,400;0,700;0,900;1,900&display=swap');
+
+:root {
+    --zomp-green: #97E900;
+    --zomp-dark: #000000;
+    --red-banner: #E30613;
+    --gray-text: #999999;
+    --uber-border: #333333;
+    --99-yellow: #FFB800;
+}
+
+* {
+    margin: 0; padding: 0; box-sizing: border-box;
+}
+
+body {
+    background-color: #000;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    overflow-x: hidden;
+}
+
+.onboarding-container {
+    max-width: 480px;
+    margin: 0 auto;
+    background: #000;
+    position: relative;
+    box-shadow: 0 0 50px rgba(0,0,0,1);
+}
+
+/* 1. HEADER */
+header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.logo-main {
+    display: flex;
+    flex-direction: column;
+}
+
+.logo-img {
+    height: 50px;
+    margin-bottom: 2px;
+}
+
+.brand-moto {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.brand-moto span { color: var(--zomp-green); }
+
+.rj-badge-circle {
+    width: 85px; height: 85px;
+    border: 2px solid var(--zomp-green);
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    text-align: center;
+    padding: 5px;
+}
+
+.rj-badge-circle .t1 { font-family: 'Bebas Neue'; font-size: 11px; color: #fff; }
+.rj-badge-circle .t2 { font-family: 'Bebas Neue'; font-size: 14px; color: var(--zomp-green); }
+
+/* 2. HERO TITLES */
+.hero-headings {
+    padding: 0 20px;
+}
+
+.hero-headings h1 {
+    font-size: 40px;
+    font-weight: 950;
+    line-height: 0.85;
+    font-style: italic;
+    text-transform: uppercase;
+}
+
+.hero-headings .green-text {
+    color: var(--zomp-green);
+}
+
+.hero-headings .red-skew {
+    display: table;
+    background: var(--red-banner);
+    color: #fff;
+    font-size: 38px;
+    padding: 2px 10px;
+    margin: 8px 0;
+    transform: rotate(-1deg);
+    font-weight: 950;
+    font-style: italic;
+}
+
+.hero-headings h2 {
+    font-size: 26px;
+    font-weight: 900;
+    color: #fff;
+    font-style: italic;
+}
+
+.hero-subtext {
+    padding: 20px;
+    font-size: 14px;
+    color: #fff;
+    line-height: 1.3;
+}
+
+.hero-subtext strong { color: var(--zomp-green); }
+
+/* 3. HERO IMAGE AREA */
+.hero-image-wrapper {
+    position: relative;
+    margin: 0 10px;
+}
+
+.hero-image-wrapper img {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(151, 233, 0, 0.2);
+}
+
+/* 4. VALUE PROPS (4 CIRCLES) */
+.value-props-flyer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    padding: 20px;
+}
+
+.prop-box {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.prop-box .prop-icon {
+    width: 45px; height: 45px;
+    border: 1px solid var(--zomp-green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--zomp-green);
+    flex-shrink: 0;
+}
+
+.prop-box .prop-text h3 {
+    font-size: 9px; font-weight: 700; color: var(--zomp-green);
+}
+
+.prop-box .prop-text .big-val {
+    font-size: 18px; font-weight: 900; color: #fff; display: block;
+}
+
+.prop-box .prop-text .sm-val {
+    font-size: 8px; color: var(--gray-text);
+}
+
+/* 5. COMPARISON SECTION */
+.comp-title-flyer {
+    background-color: #fff;
+    color: #000;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 950;
+    padding: 5px;
+    margin: 10px 20px;
+    border-radius: 2px;
+}
+
+.comp-grid-flyer {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px;
+    padding: 0 10px;
+}
+
+.comp-box-flyer {
+    border-radius: 5px;
+    padding: 10px 5px;
+    font-size: 9px;
+}
+
+.comp-box-flyer.zomp {
+    background-color: var(--zomp-green);
+    color: #000;
+    border: 1px solid var(--zomp-green);
+}
+
+.comp-box-flyer.others {
+    background-color: #121212;
+    border: 1px solid var(--uber-border);
+}
+
+.comp-box-flyer h4 {
+    text-align: center;
+    font-family: 'Bebas Neue';
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.comp-box-flyer.n99 h4 { color: var(--99-yellow); }
+
+.comp-box-flyer ul { list-style: none; }
+.comp-box-flyer li { margin-bottom: 6px; display: flex; gap: 3px; }
+.comp-box-flyer li i { flex-shrink: 0; margin-top: 1px; }
+
+.comp-box-flyer .footer-line {
+    border-top: 1px solid rgba(0,0,0,0.1);
+    margin-top: 10px;
+    padding-top: 5px;
+    text-align: center;
+    font-weight: 900;
+}
+
+.comp-box-flyer.others .footer-line { border-top-color: #333; }
+
+/* 6. QR CODE AREA */
+.qr-container-flyer {
+    border: 1px solid #333;
+    margin: 20px 10px;
+    border-radius: 12px;
+    padding: 20px 15px;
+}
+
+.qr-container-flyer h2 { font-size: 20px; font-weight: 900; margin-bottom: 5px; }
+.qr-container-flyer h3 { font-size: 16px; color: var(--zomp-green); margin-bottom: 15px; }
+
+.qr-flex {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.qr-box-img {
+    width: 100px; height: 100px;
+    background: #fff;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.qr-box-img img { width: 100%; height: 100%; }
+
+.qr-benefits-list {
+    flex: 1;
+    font-size: 10px;
+    list-style: none;
+}
+
+.qr-benefits-list li { display: flex; gap: 8px; margin-bottom: 8px; }
+.qr-benefits-list i { color: var(--zomp-green); }
+
+.btn-green-flyer {
+    background: var(--zomp-green);
+    color: #000;
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    text-decoration: none;
+    font-weight: 900;
+    font-size: 12px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+/* 7. ATTENTION & CALENDAR */
+.attention-v-flyer {
+    text-align: center;
+    padding: 20px;
+}
+
+.attention-v-flyer .att-t { color: var(--red-banner); font-size: 26px; font-weight: 900; }
+.attention-v-flyer .att-s { font-size: 18px; font-weight: 900; }
+
+.calendar-flyer {
+    background: #fff;
+    color: #000;
+    width: 110px;
+    margin: 15px auto;
+    border-radius: 10px;
+    box-shadow: 0 8px 0 var(--red-banner);
+}
+
+.cal-t { height: 8px; background: var(--red-banner); border-radius: 10px 10px 0 0; }
+.cal-b { padding: 10px; }
+.cal-b .d { font-size: 38px; font-weight: 900; line-height: 1; }
+.cal-b .m { font-size: 14px; font-weight: 700; }
+
+.last-opp { font-size: 13px; font-weight: 800; margin-top: 10px; }
+.vagas-s { color: var(--99-yellow); font-size: 11px; margin-top: 5px; font-weight: 700; }
+
+/* 8. EXCLUSIVITY */
+.exclusivity-flyer {
+    background-color: var(--dark);
+    text-align: center;
+    padding: 20px;
+}
+
+.ex-rj { background-color: var(--zomp-dark-green); border: 1px solid var(--zomp-green); padding: 20px; border-radius: 10px; }
+.ex-rj p { font-size: 12px; color: var(--zomp-green); font-weight: 800; }
+.ex-rj .num { font-size: 50px; font-weight: 950; color: var(--zomp-green); line-height: 1; }
+.ex-rj .label { font-size: 16px; font-weight: 950; }
+
+/* 9. FOOTER ICONS */
+.footer-flyer-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    padding: 30px 20px;
+    background: #000;
+    border-top: 2px solid #222;
+}
+
+.feat-f { display: flex; gap: 8px; align-items: center; font-size: 8px; text-transform: uppercase; }
+.feat-f i { color: var(--zomp-green); }
+
+.final-tagline-flyer {
+    text-align: center;
+    padding: 20px;
+    color: var(--zomp-green);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+/* 10. FIXED CTA BOTTOM */
+.fixed-btn-flyer {
+    background-color: var(--zomp-green);
+    color: #000;
+    padding: 15px;
+    text-align: center;
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+}
+
+.fixed-btn-flyer h2 { font-size: 14px; font-weight: 950; margin-bottom: 2px; }
+.fixed-btn-flyer p { font-size: 10px; font-weight: 600; }
+
+.float-z-final { text-align: right; padding: 20px; }
+.float-z-final img { height: 40px; }
