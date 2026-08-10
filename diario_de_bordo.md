@@ -125,8 +125,16 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
     *   `zomp-admin` → Serviço estático dedicado que redireciona para o Painel Administrativo.
 *   **Documentação atualizada:** `CREDENCIAS.md`, `diario_de_bordo.md` e `README.md` sincronizados com os novos links e arquitetura.
 
-### 🚀 v12.6.0 — Garantia de Preço Imbatível, Autocomplete, Correção de Crash e Remoção de Favoritos (2026-08-10)
+### 🚀 v12.6.0 — Garantia de Preço Imbatível, Autocomplete, Correção de Crashes e Restauração da Tela do Motorista (2026-08-10)
 *   **Correção de Crash Crítico (PRICE_PER_KM):** Resolvido o erro de JavaScript `PRICE_PER_KM is not defined` que crashava o app do passageiro ao carregar a tela de estimativa de preços/seleção de veículo. Os preços por km agora são mapeados dinamicamente das configurações ativas do servidor (`config.pricePerKmCar` / `config.pricePerKmMoto`).
+*   **Correção de Crashes Adicionais por Variáveis Indefinidas (Passenger):**
+    *   Declarados os estados `manualPriceInput` e `manualPriceError` via `useState` para sanar o ReferenceError ao abrir a caixa de "Preço Imbatível".
+    *   Declarados os estados `profileData` e `setProfileData` para sanar o crash ao abrir o menu "Meu Perfil".
+    *   Declarados os estados `chatInput` e `setChatInput` para sanar o crash ao interagir com o chat de mensagens do motorista.
+*   **Restauração Total da Interface do Motorista:**
+    *   Recuperado o arquivo [Driver.css](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/Driver.css) para a versão íntegra de 802 linhas. Isso resolveu o problema do mapa preto invisível, do layout quebrado do slider de online e reestabeleceu o design escuro e neon da dashboard do motorista.
+*   **Créditos de Teste Exclusivos (1000 Créditos):**
+    *   Ajustada a lógica em [DriverDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/DriverDashboard.jsx) para interceptar o email do usuário e forçar automaticamente `1000` créditos em tela apenas para a conta de teste oficial `motorista@zomp.com`, permitindo ficar online e aceitar corridas sem impedimentos de recarga. Qualquer outro email cadastrado continuará utilizando o saldo de créditos real comprado por PIX.
 *   **Autocomplete Resiliente com Fallback:** Adicionada uma lista estática de endereços populares do Brasil (`LOCAL_ADDRESS_FALLBACK`) no autocomplete do painel do passageiro. Caso a API pública do Nominatim (OpenStreetMap) falhe por CORS, limites de taxa ou lentidão, o app filtra e exibe sugestões locais válidas e clicáveis imediatamente.
 *   **Nova Regra do Preço Imbatível Zomp:**
     *   A caixa de desconto agora aceita a entrada do preço da concorrência e calcula em tempo real o preço Zomp correspondente.
@@ -139,6 +147,6 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 *   **Remoção de Favoritos:** Removida visualmente toda a funcionalidade de Motoristas Favoritos da interface do passageiro (Widget da tela inicial, seletor de priorização de favoritos nas opções de preços, botão de favoritar na tela de avaliação de corrida, botão de favoritar na tela de aceitação de corrida e a aba de favoritos no menu sanduíche). O estado é mantido em background apenas para prover dados da simulação de motorista a caminho.
 
 ---
-**Status Atual**: ✅ Deploy atualizado. Correções de crash no passageiro e novo fluxo de Preço Imbatível ativos.
+**Status Atual**: ✅ Deploy atualizado. Correções de crashes e restauração visual da tela de motorista ativas.
 **Versão**: 12.6.0
 **Responsável**: Leandro Palmeira + Antigravity AI

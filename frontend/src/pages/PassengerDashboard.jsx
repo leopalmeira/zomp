@@ -157,6 +157,8 @@ export default function PassengerDashboard() {
   const [tempDriverFav, setTempDriverFav] = useState(false)
   const [manualPriceInput, setManualPriceInput] = useState('')
   const [manualPriceError, setManualPriceError] = useState('')
+  const [profileData, setProfileData] = useState({ name: 'Passageiro de Teste', email: 'cliente@zomp.com' })
+  const [chatInput, setChatInput] = useState('')
 
   // Freight pricing constant
   const FREIGHT_PRICE_PER_KM = 3.50
