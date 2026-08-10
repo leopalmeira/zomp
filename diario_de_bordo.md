@@ -133,6 +133,8 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
     *   Declarados os estados `chatInput` e `setChatInput` para sanar o crash ao interagir com o chat de mensagens do motorista.
 *   **Restauração Total da Interface do Motorista:**
     *   Recuperado o arquivo [Driver.css](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/Driver.css) para a versão íntegra de 802 linhas. Isso resolveu o problema do mapa preto invisível, do layout quebrado do slider de online e reestabeleceu o design escuro e neon da dashboard do motorista.
+*   **Correção de Crash na Carteira do Motorista (wallet.balance):**
+    *   Sanado o erro `wallet.balance?.toFixed is not a function` fazendo o cast seguro para `Number(wallet.balance || 0)` em todos os renders e lógicas de botões. Isso previne crashes no React caso a API de carteira retorne o saldo em formato string.
 *   **Créditos de Teste Exclusivos (1000 Créditos):**
     *   Ajustada a lógica em [DriverDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/DriverDashboard.jsx) para interceptar o email do usuário e forçar automaticamente `1000` créditos em tela apenas para a conta de teste oficial `motorista@zomp.com`, permitindo ficar online e aceitar corridas sem impedimentos de recarga. Qualquer outro email cadastrado continuará utilizando o saldo de créditos real comprado por PIX.
 *   **Autocomplete Resiliente com Fallback:** Adicionada uma lista estática de endereços populares do Brasil (`LOCAL_ADDRESS_FALLBACK`) no autocomplete do painel do passageiro. Caso a API pública do Nominatim (OpenStreetMap) falhe por CORS, limites de taxa ou lentidão, o app filtra e exibe sugestões locais válidas e clicáveis imediatamente.

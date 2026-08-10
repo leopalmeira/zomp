@@ -514,7 +514,7 @@ export default function DriverDashboard() {
                 </div>
                 <div className="balance-item">
                   <span className="lbl">Royalties</span>
-                  <div className="val">R$ {wallet.balance?.toFixed(2)}</div>
+                  <div className="val">R$ {Number(wallet.balance || 0).toFixed(2)}</div>
                 </div>
               </div>
             </div>
@@ -743,7 +743,7 @@ export default function DriverDashboard() {
                 <div style={{fontSize:'0.75rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',color:'#9ca3af',marginBottom:'8px'}}>Saldo de Royalties</div>
                 <div style={{display:'flex',alignItems:'baseline',gap:'6px',marginBottom:'6px'}}>
                   <span style={{fontSize:'1.2rem',color:'#9ca3af'}}>R$</span>
-                  <span style={{fontSize:'3rem',fontWeight:800}}>{wallet.balance?.toFixed(2) || '0.00'}</span>
+                  <span style={{fontSize:'3rem',fontWeight:800}}>{Number(wallet.balance || 0).toFixed(2)}</span>
                 </div>
                 <div style={{fontSize:'0.8rem',color:'#6b7280'}}>R$ 0,30 por corrida de cada passageiro vinculado</div>
               </div>
@@ -754,8 +754,8 @@ export default function DriverDashboard() {
               <div className="stat-mini"><div className="stat-num">3 meses</div><div className="stat-lbl">Ciclo saque</div></div>
             </div>
 
-            <button className="btn-premium btn-green" style={{marginTop:'8px'}} disabled={wallet.balance < 1} onClick={() => alert('Saque solicitado!')}>
-              {wallet.balance >= 1 ? '💰 Solicitar Saque' : 'Saldo Insuficiente (mín. R$ 1,00)'}
+            <button className="btn-premium btn-green" style={{marginTop:'8px'}} disabled={Number(wallet.balance || 0) < 1} onClick={() => alert('Saque solicitado!')}>
+              {Number(wallet.balance || 0) >= 1 ? '💰 Solicitar Saque' : 'Saldo Insuficiente (mín. R$ 1,00)'}
             </button>
 
             <div className="tip-card" style={{marginTop:'16px'}}>
