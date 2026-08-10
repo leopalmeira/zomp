@@ -135,13 +135,10 @@ export default function PassengerDashboard() {
   const [passengersCount, setPassengersCount] = useState(1)
   const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
   const [compPriceRead, setCompPriceRead] = useState(0)
-  const [compPlatform, setCompPlatform] = useState('')
   const [imbativelRidesLeft, setImbativelRidesLeft] = useState(() => {
     const saved = localStorage.getItem('zomp_imbativel_rides_left');
     return saved !== null ? parseInt(saved) : 3;
   });
-  const [compCategory, setCompCategory] = useState('')
-  const [isAnalyzingPrint, setIsAnalyzingPrint] = useState(false)
   const [activeRideId, setActiveRideId] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
@@ -154,7 +151,6 @@ export default function PassengerDashboard() {
   const [freightContactName, setFreightContactName] = useState('')
   const [freightContactPhone, setFreightContactPhone] = useState('')
   const [ratingStars, setRatingStars] = useState(0)
-  const [tempDriverFav, setTempDriverFav] = useState(false)
   const [manualPriceInput, setManualPriceInput] = useState('')
   const [manualPriceError, setManualPriceError] = useState('')
   const [profileData, setProfileData] = useState({ name: 'Passageiro de Teste', email: 'cliente@zomp.com' })

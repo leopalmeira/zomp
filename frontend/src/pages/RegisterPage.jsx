@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { register } from '../services/api'
-import logoImage from '../assets/logo.png'
 import AuthMapBg from '../components/AuthMapBg'
 import './Auth.css'
 

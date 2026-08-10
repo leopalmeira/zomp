@@ -31,7 +31,6 @@ export default function AdminPanel() {
   const [search, setSearch] = useState('')
   const [selectedDriver, setSelectedDriver] = useState(null)
   const [selectedRide, setSelectedRide] = useState(null)
-  const [lightbox, setLightbox] = useState(null)
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -53,17 +52,20 @@ export default function AdminPanel() {
       if (tab === 'Configurações') setConfig(await api('/admin/config'))
       if (tab === 'Fundo') setFund(await api('/admin/royalty-fund'))
       if (tab === 'Saques') setWithdrawals(await api('/admin/withdrawals'))
-    } catch (e) { showToast('Erro ao carregar dados', 'error') }
+    } catch { showToast('Erro ao carregar dados', 'error') }
     setLoading(false)
   }, [tab])
 
   useEffect(() => {
-    load()
+    const initialLoad = setTimeout(load, 0)
     let interval
     if (tab === 'Operações') {
       interval = setInterval(load, 10000)
     }
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(initialLoad)
+      clearInterval(interval)
+    }
   }, [load, tab])
 
   const approveDriver = async (id, val) => {

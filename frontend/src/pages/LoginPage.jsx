@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useGoogleLogin } from '@react-oauth/google'
 import { login, googleLogin } from '../services/api'
-import logoImage from '../assets/logo.png'
 import AuthMapBg from '../components/AuthMapBg'
 import './Auth.css'
 import { TrendingUp, ArrowRight, ShieldCheck } from 'lucide-react'
@@ -176,6 +175,16 @@ export default function LoginPage({ forceRole }) {
 
           {!isAdmin && (
             <div className="auth-extra-actions">
+              <div className="auth-divider"><span>ou continue com</span></div>
+              <button
+                type="button"
+                className="btn-google"
+                onClick={() => googleLoginAction()}
+                disabled={loading}
+              >
+                <span style={{fontWeight: 900, fontSize: '1.05rem'}}>G</span>
+                Entrar com Google
+              </button>
               <div className="auth-footer-links">
                 <p>{isDriver ? 'Ainda não é parceiro?' : 'Novo no Zomp?'}</p>
                 <Link to={registerLink} className="btn-secondary-outline">

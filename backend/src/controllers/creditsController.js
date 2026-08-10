@@ -14,9 +14,15 @@ exports.getCredits = async (req, res) => {
 exports.purchaseCredits = async (req, res) => {
   try {
     const { quantity } = req.body;
+    const creditsToAdd = Number(quantity);
+
+    if (!Number.isInteger(creditsToAdd) || creditsToAdd <= 0 || creditsToAdd > 500) {
+      return res.status(400).json({ error: 'Quantidade de crÃ©ditos invÃ¡lida' });
+    }
+
     const { rows } = await pool.query(
       'UPDATE "User" SET credits = credits + $1 WHERE id = $2 RETURNING credits',
-      [quantity, req.user.id]
+      [creditsToAdd, req.user.id]
     );
     res.json({ credits: rows[0].credits });
   } catch (err) {

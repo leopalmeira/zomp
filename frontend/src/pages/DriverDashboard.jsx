@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet'
@@ -58,7 +58,7 @@ export default function DriverDashboard() {
 
   useEffect(() => {
     if (!user || user.role !== 'DRIVER') { navigate('/motorista'); return }
-  }, [])
+  }, [navigate, user])
 
   // GPS Tracking
   const [myPos, setMyPos] = useState([-22.9068, -43.1729])
@@ -91,7 +91,7 @@ export default function DriverDashboard() {
   const slideThumbWidth = 60
   const slideThreshold = slideTrackWidth - slideThumbWidth - 10
 
-  const handleSlideStart = (e) => {
+  const handleSlideStart = () => {
     const isTestDriver = user?.email === 'motorista@zomp.com';
     if (!isTestDriver && !user?.isApproved) {
       alert("📳 Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
@@ -135,10 +135,15 @@ export default function DriverDashboard() {
   const [linkedPassengers, setLinkedPassengers] = useState(0)
   const [globalLaunchDate, setGlobalLaunchDate] = useState(null)
 
-  const fetchWallet = async () => {
-    try { const d = await getWallet(); setWallet(d) } catch (e) {}
-  }
-  const fetchCredits = async () => {
+  const fetchWallet = useCallback(async () => {
+    try {
+      const d = await getWallet()
+      setWallet(d)
+    } catch (err) {
+      console.warn('Erro ao buscar carteira:', err)
+    }
+  }, [])
+  const fetchCredits = useCallback(async () => {
     try {
       // Conta de teste sempre tem 1000 créditos
       if (user?.email === 'motorista@zomp.com') {
@@ -148,23 +153,29 @@ export default function DriverDashboard() {
       const res = await fetch(`${API}/credits`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
       const d = await res.json()
       if (d.credits !== undefined) setCredits(d.credits)
-    } catch (e) {}
-  }
-  const fetchLinkedPassengers = async () => {
+    } catch (err) {
+      console.warn('Erro ao buscar creditos:', err)
+    }
+  }, [user?.email])
+  const fetchLinkedPassengers = useCallback(async () => {
     try {
       const res = await fetch(`${API}/user/driver/linked-passengers`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
       const d = await res.json()
       if (d.linkedPassengers !== undefined) setLinkedPassengers(d.linkedPassengers)
-    } catch (e) {}
-  }
-  const fetchGlobalConfig = async () => {
+    } catch (err) {
+      console.warn('Erro ao buscar passageiros vinculados:', err)
+    }
+  }, [])
+  const fetchGlobalConfig = useCallback(async () => {
     try {
       const res = await fetch(`${API}/config`)
       const d = await res.json()
       if (d.launchDate) setGlobalLaunchDate(d.launchDate)
-    } catch (e) {}
-  }
-  useEffect(() => { fetchWallet(); fetchCredits(); fetchLinkedPassengers(); fetchGlobalConfig() }, [])
+    } catch (err) {
+      console.warn('Erro ao buscar configuracao global:', err)
+    }
+  }, [])
+  useEffect(() => { fetchWallet(); fetchCredits(); fetchLinkedPassengers(); fetchGlobalConfig() }, [fetchWallet, fetchCredits, fetchLinkedPassengers, fetchGlobalConfig])
 
   // Notification & Vibration
   useEffect(() => {
@@ -209,7 +220,9 @@ export default function DriverDashboard() {
           }
           prevRideCountRef.current = r.length;
           setPendingRides(r) 
-        } catch (e) {}
+        } catch (err) {
+          console.warn('Erro ao buscar corridas pendentes:', err)
+        }
       }
       poll()
       interval = setInterval(poll, 3000)
@@ -239,7 +252,7 @@ export default function DriverDashboard() {
         fetchWallet()
         fetchCredits()
       }
-    } catch (e) { alert('Erro ao finalizar.') }
+    } catch (err) { alert(err.message || 'Erro ao finalizar.') }
   }
 
   // Menu & Screen
@@ -254,7 +267,9 @@ export default function DriverDashboard() {
         const res = await fetch(`${API}/rides`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
         const d = await res.json()
         if (Array.isArray(d)) setRideHistory(d)
-      } catch (e) {}
+      } catch (err) {
+        console.warn('Erro ao carregar historico do motorista:', err)
+      }
     }
     load()
   }, [activeRide])
@@ -297,13 +312,14 @@ export default function DriverDashboard() {
   // Credit purchase: Payment Initialization (PIX)
   const [pixModal, setPixModal] = useState(null)
   
-  const handleBuyCreditsInit = (qty) => {
-    const price = (qty * 1.5).toFixed(2)
-    const pixPayload = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2,15)}-zomp0204${qty}C5204000053039865405${price}5802BR5914ZOMP PAGAMENTOS6009SAO_PAULO62070503***6304ABCD`
-    setPixModal({ qty, price, pixKey: pixPayload })
+  const handleBuyCreditsInit = (qty, price) => {
+    const formattedPrice = Number(price).toFixed(2)
+    const pixPayload = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2,15)}-zomp0204${qty}C5204000053039865405${formattedPrice}5802BR5914ZOMP PAGAMENTOS6009SAO_PAULO62070503***6304ABCD`
+    setPixModal({ qty, price: formattedPrice, pixKey: pixPayload })
   }
 
   const handleConfirmPixPayment = async () => {
+    if (!pixModal) return
     try {
       const res = await fetch(`${API}/credits/purchase`, {
         method: 'POST',
@@ -313,7 +329,7 @@ export default function DriverDashboard() {
       const d = await res.json()
       if (!res.ok) throw new Error(d.error)
       setCredits(d.credits)
-      alert(d.message)
+      alert(d.message || 'Créditos adicionados com sucesso!')
       setPixModal(null)
     } catch (e) { alert(e.message || 'Erro na compra') }
   }
@@ -707,19 +723,19 @@ export default function DriverDashboard() {
 
             <div className="section-title" style={{marginTop:'20px'}}>Comprar Pacotes</div>
 
-            <div className="credit-package" onClick={() => handleBuyCreditsInit(10)}>
+            <div className="credit-package" onClick={() => handleBuyCreditsInit(10, 15)}>
               <div className="credit-pkg-icon" style={{background:'#ecfdf5'}}>🎫</div>
               <div className="credit-pkg-info"><h4>10 Créditos</h4><p>Pacote Básico • 10 corridas</p></div>
               <div className="credit-pkg-price"><div className="price">R$ 15,00</div><div className="unit">R$ 1,50/un</div></div>
             </div>
 
-            <div className="credit-package popular" onClick={() => handleBuyCreditsInit(22)}>
+            <div className="credit-package popular" onClick={() => handleBuyCreditsInit(22, 30)}>
               <div className="credit-pkg-icon" style={{background:'#d1fae5'}}>⭐</div>
               <div className="credit-pkg-info"><h4>22 Créditos</h4><p style={{color:'#059669',fontWeight:700}}>+2 Corridas Grátis</p></div>
               <div className="credit-pkg-price"><div className="price">R$ 30,00</div><div className="unit">R$ 1,36/un</div></div>
             </div>
 
-            <div className="credit-package" onClick={() => handleBuyCreditsInit(35)} style={{background: '#fef3c7', borderColor: '#f59e0b', transform: 'scale(1.02)'}}>
+            <div className="credit-package" onClick={() => handleBuyCreditsInit(35, 45)} style={{background: '#fef3c7', borderColor: '#f59e0b', transform: 'scale(1.02)'}}>
               <div className="credit-pkg-icon" style={{background:'#f59e0b', color:'#fff'}}>🏆</div>
               <div className="credit-pkg-info"><h4>35 Créditos</h4><p style={{color:'#b45309',fontWeight:800}}>+5 Corridas Grátis (Econômico)</p></div>
               <div className="credit-pkg-price"><div className="price" style={{color:'#92400e'}}>R$ 45,00</div><div className="unit" style={{color:'#b45309'}}>R$ 1,28/un</div></div>
@@ -729,6 +745,43 @@ export default function DriverDashboard() {
               <span className="tip-icon">🎁</span>
               <div><div className="tip-title">Presente de Cadastro!</div><div className="tip-text">Como cortesia por se cadastrar na plataforma Zomp, você recebeu automaticamente <b>10 créditos gratuitos</b> em sua conta. Aproveite para começar a gerar renda agora mesmo!</div></div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {pixModal && (
+        <div className="driver-side-overlay" style={{zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'}} onClick={() => setPixModal(null)}>
+          <div className="premium-card" style={{width: '100%', maxWidth: '360px', padding: '22px', boxShadow: '0 24px 70px rgba(0,0,0,0.35)'}} onClick={e => e.stopPropagation()}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '16px'}}>
+              <div>
+                <div style={{fontSize: '0.75rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '1px'}}>Pagamento PIX</div>
+                <h3 style={{margin: '4px 0 0', fontSize: '1.35rem', fontWeight: 900}}>Comprar {pixModal.qty} créditos</h3>
+              </div>
+              <button type="button" onClick={() => setPixModal(null)} style={{border: 'none', background: '#f4f4f5', borderRadius: '999px', width: '34px', height: '34px', cursor: 'pointer', fontWeight: 900}}>×</button>
+            </div>
+
+            <div style={{background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '14px', padding: '14px', marginBottom: '14px'}}>
+              <div style={{fontSize: '0.8rem', color: '#047857', fontWeight: 700, marginBottom: '4px'}}>Valor</div>
+              <div style={{fontSize: '2rem', fontWeight: 900, color: '#064e3b'}}>R$ {pixModal.price}</div>
+            </div>
+
+            <textarea
+              readOnly
+              value={pixModal.pixKey}
+              style={{width: '100%', minHeight: '96px', resize: 'none', border: '1px solid #e4e4e7', borderRadius: '12px', padding: '12px', fontSize: '0.78rem', fontWeight: 700, color: '#3f3f46', background: '#fafafa', marginBottom: '12px'}}
+            />
+
+            <button
+              type="button"
+              className="btn-premium btn-dark"
+              style={{marginBottom: '10px'}}
+              onClick={() => navigator.clipboard?.writeText(pixModal.pixKey)}
+            >
+              Copiar código PIX
+            </button>
+            <button type="button" className="btn-premium btn-green" onClick={handleConfirmPixPayment}>
+              Confirmar pagamento
+            </button>
           </div>
         </div>
       )}

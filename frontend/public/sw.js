@@ -1,3 +1,5 @@
+/* global clients */
+
 const CACHE_NAME = 'zomp-cache-v1';
 const urlsToCache = [
   '/',

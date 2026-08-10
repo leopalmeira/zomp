@@ -53,7 +53,7 @@ export async function login({ email, password }) {
       qrCode: data.user.qrCode
     };
     localStorage.setItem('zomp_user', JSON.stringify(essentialUser));
-  } catch (storageError) {
+  } catch {
     localStorage.clear();
     localStorage.setItem('zomp_token', data.token);
     localStorage.setItem('zomp_user', JSON.stringify(data.user));
@@ -84,7 +84,7 @@ export async function googleLogin(token, role) {
       photo: data.user.photo
     };
     localStorage.setItem('zomp_user', JSON.stringify(essentialUser));
-  } catch (storageError) {
+  } catch {
     localStorage.clear();
     localStorage.setItem('zomp_token', data.token);
     localStorage.setItem('zomp_user', JSON.stringify(data.user));
