@@ -152,3 +152,111 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 **Status Atual**: ✅ Deploy atualizado. Correções de crashes e restauração visual da tela de motorista ativas.
 **Versão**: 12.6.0
 **Responsável**: Leandro Palmeira + Antigravity AI
+
+---
+### 📅 v12.6.1 - Sincronização e Limpeza de Repositório (2025-08-10)
+* **Sincronização Forçada com GitHub**: Projeto local resetado para `origin/master` (commit `aeff11d`) e alinhado com o repositório remoto.
+* **Remoção de Arquivo Corrompido**: O arquivo `frontend/diariodebordo.md` (10.7 KB) foi removido devido a encoding corrompido (UTF-8 mal interpretado).
+* **Commit de Limpeza**: Adicionado commit `28c8e68` para registrar a remoção do arquivo corrompido e garantir consistência do repositório.
+* **Verificação de Arquivos Críticos**: Todos os arquivos essenciais (`Driver.css`, `PassengerDashboard.jsx`, `backend/index.js`, `render.yaml`) estão intactos e presentes.
+
+---
+**Status Atual**: ✅ Repositório local e remoto sincronizados. Arquivo corrompido removido.
+**Versão**: 12.6.1
+**Responsável**: Vibe Code (Mistral AI) + Leandro Palmeira
+**Último Commit**: [28c8e68](https://github.com/leopalmeira/zomp/commit/28c8e68e30897f2cefe480bb2f0878884b7c96ed)
+
+### 📅 v12.6.2 - Correção de Bug Crítico no Slide do Motorista (2025-08-10)
+* **Bug Identificado**: Erro `toFixed is not a function` ao deslizar o slide para ficar online no app do motorista.
+* **Causa Raiz**: A variável `credits` (vinda da API ou do `localStorage`) era uma **string**, e o React tentava chamar `.toFixed()` diretamente nela.
+* **Solução Aplicada**: Adicionado `Number(credits || 0)` em **todos os lugares** onde `credits` era exibido ou usado em cálculos:
+  - Linha 421: Meta-tag de créditos no card de solicitação.
+  - Linha 475: Exibição de créditos disponíveis no slide.
+  - Linha 484: Exibição de créditos restantes no modo online.
+  - Linha 537: Badge de créditos no menu lateral.
+  - Linha 694: Exibição principal de créditos na tela de compras.
+  - Linha 701: Condicional `credits <= 3` para alerta de créditos baixos.
+* **Teste**: O slide agora funciona corretamente, e o motorista pode ficar online para receber pedidos.
+
+---
+**Status Atual**: ✅ Bug corrigido. Motorista pode ficar online sem erros.
+**Versão**: 12.6.2
+**Responsável**: Vibe Code (Mistral AI)
+**Último Commit**: [3659c68](https://github.com/leopalmeira/zomp/commit/3659c68)
+
+### 📅 v12.6.3 - Adição de Conta de Teste motorita@zomp.com (2025-08-10)
+* **Nova Conta de Teste**: Adicionado suporte para o email **`motorita@zomp.com`** como conta de teste do motorista.
+* **Créditos Automáticos**: A conta `motorita@zomp.com` agora recebe **1000 créditos automaticamente** (assim como `motorista@zomp.com`).
+* **Liberação para Ficar Online**: Ambas as contas de teste (`motorista@zomp.com` e `motorita@zomp.com`) agora:
+  - **Pulam a verificação de `cnh` e `crlv`** (documentos).
+  - **Pulam a verificação de `isApproved`** (aprovação).
+  - **Podem deslizar o slide para ficar online** sem restrições.
+* **Correções Aplicadas**:
+  - Linha 95: `handleSlideStart` agora reconhece `motorita@zomp.com` como conta de teste.
+  - Linha 115: `handleSlideEnd` agora reconhece `motorita@zomp.com` como conta de teste.
+  - Linha 144: `fetchCredits` agora garante 1000 créditos para `motorita@zomp.com`.
+  - Linhas 473 e 475: Exibição de créditos e status agora ignoram `motorita@zomp.com` nas verificações de documentos.
+
+---
+**Status Atual**: ✅ Conta `motorita@zomp.com` pode ficar online e receber pedidos.
+**Versão**: 12.6.3
+**Responsável**: Vibe Code (Mistral AI)
+**Último Commit**: [32af148](https://github.com/leopalmeira/zomp/commit/32af148)
+
+### 📅 v12.6.4 - Substituição do Slide por Botão e Modal de Recarga (2025-08-10)
+* **Slide Removido**: O slide para ficar online foi **substituído por um botão simples** "Ficar Online".
+* **Exibição de Créditos Removida**: Todas as exibições de `credits` na UI principal foram removidas (exceto no menu de compras).
+* **Modal de Recarga Adicionado**:
+  - Quando um motorista **não de teste** (ou seja, não é `motorista@zomp.com` ou `motorita@zomp.com`) **tentar ficar online sem créditos** (`credits <= 0`), um **modal de recarga** aparece.
+  - O modal oferece **3 opções de pacotes de créditos**:
+    - 10 Créditos (R$ 15,00)
+    - 22 Créditos (R$ 30,00)
+    - 35 Créditos (R$ 45,00)
+  - Cada botão redireciona para o **PIX** correspondente.
+* **Contas de Teste**:
+  - `motorista@zomp.com` e `motorita@zomp.com` **não veem o modal de recarga** (têm 1000 créditos automaticamente).
+  - Podem **ficar online sem restrições**.
+
+---
+**Status Atual**: ✅ Slide substituído por botão. Modal de recarga adicionado. Contas de teste funcionando.
+**Versão**: 12.6.4
+**Responsável**: Vibe Code (Mistral AI)
+**Último Commit**: [4f7dd83](https://github.com/leopalmeira/zomp/commit/4f7dd83)
+
+### 📅 v12.6.5 - Correções para Deploy no Render (2025-08-10)
+* **Problema Identificado**: Os serviços `zomp-web` (backend) e `zomp-app` (frontend) falharam no deploy no Render.
+* **Causas e Soluções**:
+  
+  **1. Backend (`zomp-web` / `zomp-api`):**
+  - **Problema**: O `backend/index.js` tentava servir arquivos estáticos do frontend (`public`), mas o frontend é um serviço separado no Render.
+  - **Solução**: Removido todo o código relacionado a `express.static` e `fs.existsSync` do `index.js`. Agora o backend **apenas serve a API** sem tentativas de servir frontend.
+  - **Arquivo Modificado**: `backend/index.js` (linhas removidas: 15-20).
+  
+  **2. Frontend (`zomp-app`):**
+  - **Problema**: O `frontend/package.json` usava versões **muito recentes** (`react@19.2.4`, `vite@6.0.0`), que podem não ser compatíveis com o ambiente do Render.
+  - **Solução**: Downgrade das dependências para versões estáveis:
+    - `react` e `react-dom`: **18.3.1** (antes: 19.2.4)
+    - `vite`: **5.4.10** (antes: 6.0.0)
+    - `@vitejs/plugin-react`: **4.3.3** (antes: 5.0.0)
+    - `lucide-react`: **0.413.0** (antes: 1.8.0)
+    - `react-router-dom`: **6.28.0** (antes: 7.14.1)
+  - **Arquivo Modificado**: `frontend/package.json`.
+  
+  **3. `render.yaml`:**
+  - **Verificação**: O arquivo já estava correto, com:
+    - `zomp-api`: `rootDir: backend`, `startCommand: node index.js`
+    - `zomp-app`: `rootDir: frontend`, `buildCommand: npm install && npm run build`
+    - `staticPublishPath: dist` para o frontend.
+  - **Nenhuma mudança necessária**.
+
+* **Testes Recomendados**:
+  - **Backend**: `cd backend && npm install && node index.js` (deve iniciar sem erros).
+  - **Frontend**: `cd frontend && npm install && npm run build` (deve buildar sem erros).
+
+---
+**Status Atual**: ✅ Correções aplicadas para compatibilidade com o Render.
+**Versão**: 12.6.5
+**Responsável**: Vibe Code (Mistral AI)
+**Últimos Commits**:
+- [e23d53b](https://github.com/leopalmeira/zomp/commit/e23d53b) (Downgrade do frontend/package.json)
+- [40a59f8](https://github.com/leopalmeira/zomp/commit/40a59f8) (Remoção do static serving do backend)

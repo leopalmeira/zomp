@@ -91,8 +91,13 @@ export default function DriverDashboard() {
   const slideThumbWidth = 60
   const slideThreshold = slideTrackWidth - slideThumbWidth - 10
 
+<<<<<<< HEAD
   const handleSlideStart = () => {
     const isTestDriver = user?.email === 'motorista@zomp.com';
+=======
+  const handleSlideStart = (e) => {
+    const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
+>>>>>>> d33a4f8397f47bdbc5089a95e0637fdcb664a47d
     if (!isTestDriver && !user?.isApproved) {
       alert("📳 Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
       return;
@@ -112,7 +117,7 @@ export default function DriverDashboard() {
   const handleSlideEnd = () => {
     setIsSwiping(false)
     if (slideX >= slideThreshold) {
-      const isTestDriver = user?.email === 'motorista@zomp.com';
+      const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
       if (!isTestDriver && (!user?.cnh || !user?.crlv)) {
         setSlideX(0);
         return alert("⚠️ Envie seus documentos no menu 'Documentos & Veículo' antes de ficar online.");
@@ -146,7 +151,7 @@ export default function DriverDashboard() {
   const fetchCredits = useCallback(async () => {
     try {
       // Conta de teste sempre tem 1000 créditos
-      if (user?.email === 'motorista@zomp.com') {
+      if ((user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com')) {
         setCredits(1000);
         return;
       }
@@ -312,10 +317,39 @@ export default function DriverDashboard() {
   // Credit purchase: Payment Initialization (PIX)
   const [pixModal, setPixModal] = useState(null)
   
+<<<<<<< HEAD
   const handleBuyCreditsInit = (qty, price) => {
     const formattedPrice = Number(price).toFixed(2)
     const pixPayload = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2,15)}-zomp0204${qty}C5204000053039865405${formattedPrice}5802BR5914ZOMP PAGAMENTOS6009SAO_PAULO62070503***6304ABCD`
     setPixModal({ qty, price: formattedPrice, pixKey: pixPayload })
+=======
+  // Modal de recarga de créditos (aparece quando credits <= 0)
+  const [showRechargeModal, setShowRechargeModal] = useState(false)
+  
+  // Verificar créditos ao tentar ficar online
+  const checkCreditsAndGoOnline = () => {
+    const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
+    if (!isTestDriver && (!user?.cnh || !user?.crlv)) {
+      return alert("⚠️ Envie seus documentos no menu 'Documentos & Veículo' antes de ficar online.");
+    }
+    if (!isTestDriver && !user?.isApproved) {
+      return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
+    }
+    
+    // Se não for conta de teste e não tiver créditos, mostrar modal de recarga
+    if (!isTestDriver && Number(credits || 0) <= 0) {
+      setShowRechargeModal(true);
+      return;
+    }
+    
+    setIsOnline(true);
+  }
+  
+  const handleBuyCreditsInit = (qty) => {
+    const price = (qty * 1.5).toFixed(2)
+    const pixPayload = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2,15)}-zomp0204${qty}C5204000053039865405${price}5802BR5914ZOMP PAGAMENTOS6009SAO_PAULO62070503***6304ABCD`
+    setPixModal({ qty, price, pixKey: pixPayload })
+>>>>>>> d33a4f8397f47bdbc5089a95e0637fdcb664a47d
   }
 
   const handleConfirmPixPayment = async () => {
@@ -434,7 +468,6 @@ export default function DriverDashboard() {
                 {pendingRides[0].stops && pendingRides[0].stops.length > 0 && (
                   <span className="meta-tag" style={{background:'#fffbeb',color:'#b45309'}}>📍 {pendingRides[0].stops.length} parada{pendingRides[0].stops.length > 1 ? 's' : ''}</span>
                 )}
-                <span className="meta-tag" style={{background:'#ecfdf5',color:'#059669'}}>🎫 {credits} créditos</span>
               </div>
               <div className="request-actions">
                 <button className="btn-accept" onClick={() => handleAccept(pendingRides[0].id)}>Aceitar</button>
@@ -450,54 +483,17 @@ export default function DriverDashboard() {
             </div>
           </div>
         ) : (
-          /* Offline = slide to go online */
+          /* Offline = button to go online */
           !isOnline ? (
-            <div className="slide-online-container">
-              {/* Banner Embarcando */}
-              {user?.cnh && user?.crlv && !user?.isApproved && (
-                <div style={{background:'linear-gradient(135deg, #1e293b, #0f172a)',padding:'16px 20px',borderRadius:'16px',marginBottom:'16px',border:'1px solid rgba(245,158,11,0.3)',textAlign:'center'}}>
-                  <div style={{fontSize:'0.7rem',fontWeight:800,color:'#f59e0b',textTransform:'uppercase',letterSpacing:'1.5px',marginBottom:'6px'}}>⚓ Status: Embarcando</div>
-                  <p style={{fontSize:'0.85rem',color:'#cbd5e1',fontWeight:600,margin:0,lineHeight:1.5}}>Seus documentos estão em análise. Você pode explorar o app, mas ficar online será liberado após aprovação.</p>
-                  {globalLaunchDate && (
-                    <div style={{marginTop:'12px',padding:'8px 14px',background:'rgba(245,158,11,0.1)',borderRadius:'10px',display:'inline-block'}}>
-                      <span style={{fontSize:'0.75rem',color:'#fbbf24',fontWeight:700}}>📅 Estreia da Plataforma: {new Date(globalLaunchDate).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-              <div
-                className="slide-track"
-                onMouseMove={handleSlideMove}
-                onMouseUp={handleSlideEnd}
-                onMouseLeave={handleSlideEnd}
-                onTouchMove={handleSlideMove}
-                onTouchEnd={handleSlideEnd}
-                style={{width: slideTrackWidth}}
-              >
-                <div className="slide-label">Deslize para ficar online →</div>
-                <div
-                  className="slide-thumb"
-                  onMouseDown={handleSlideStart}
-                  onTouchStart={handleSlideStart}
-                  style={{transform: `translateX(${slideX}px)`}}
-                >
-                  <span>▶</span>
-                </div>
-              </div>
-              <p style={{
-                textAlign:'center', marginTop:'14px', fontSize:'0.85rem', fontWeight:700,
-                color: (user?.email !== 'motorista@zomp.com' && (!user?.cnh || !user?.crlv)) ? '#ef4444' : ((user?.email !== 'motorista@zomp.com' && !user?.isApproved) ? '#f59e0b' : '#059669')
-              }}>
-                {(user?.email !== 'motorista@zomp.com' && (!user?.cnh || !user?.crlv)) ? '⚠️ Envio de Documentos Pendente' : ((user?.email !== 'motorista@zomp.com' && !user?.isApproved) ? '⏳ Estamos validando seus dados (até 12h)' : `🎫 ${credits} créditos disponíveis`)}
-              </p>
-            </div>
+            <button
+              className="btn-go-online"
+              onClick={checkCreditsAndGoOnline}
+              disabled={isOnline}
+            >
+              Ficar Online
+            </button>
           ) : (
-            /* Online + no rides available = searching */
-            <div className="driver-idle-msg online-msg">
-              <div className="spinner-ring"></div>
               <h3>Conectado</h3>
-              <p>Buscando corridas na sua região...</p>
-              <p style={{marginTop:'8px',fontSize:'0.8rem',color:'#059669',fontWeight:700}}>🎫 {credits} créditos restantes</p>
             </div>
           )
         )}
@@ -548,10 +544,6 @@ export default function DriverDashboard() {
               </button>
               
               <div className="drawer-section-label">Financeiro</div>
-              <button className={`drawer-nav-item ${activeScreen === 'CREDITS' ? 'active' : ''}`} onClick={() => openScreen('CREDITS')}>
-                <span className="nav-icon"><Ticket size={18} /></span> Comprar Créditos
-                <span className="nav-badge">{credits}</span>
-              </button>
               <button className={`drawer-nav-item ${activeScreen === 'ROYALTIES' ? 'active' : ''}`} onClick={() => openScreen('ROYALTIES')}>
                 <span className="nav-icon"><Gem size={18} /></span> Extrato Royalties
               </button>
@@ -696,6 +688,7 @@ export default function DriverDashboard() {
             })}
           </div>
         </div>
+<<<<<<< HEAD
       )}
 
       {/* ===== CREDITS ===== */}
@@ -792,6 +785,8 @@ export default function DriverDashboard() {
           <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Royalties</h2></div>
           <div className="inner-body">
             <div className="premium-card-dark">
+=======
+>>>>>>> d33a4f8397f47bdbc5089a95e0637fdcb664a47d
               <div style={{position:'relative',zIndex:2}}>
                 <div style={{fontSize:'0.75rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',color:'#9ca3af',marginBottom:'8px'}}>Saldo de Royalties</div>
                 <div style={{display:'flex',alignItems:'baseline',gap:'6px',marginBottom:'6px'}}>
@@ -917,6 +912,63 @@ export default function DriverDashboard() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Modal de Recarga de Créditos */}
+      {showRechargeModal && (
+        <div className="modal-overlay" onClick={() => setShowRechargeModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2 style={{color: '#ef4444', marginBottom: '16px'}}>⚠️ Créditos Insuficientes</h2>
+            <p style={{marginBottom: '20px', fontSize: '1rem'}}>
+              Você não tem créditos suficientes para ficar online e receber corridas.
+            </p>
+            <p style={{marginBottom: '20px', fontSize: '0.9rem', color: '#6b7280'}}>
+              <b>1 crédito = 1 corrida</b> (R$ 1,50 por crédito)
+            </p>
+            <div style={{display: 'flex', gap: '12px', marginBottom: '16px'}}>
+              <button 
+                className="btn-premium btn-green" 
+                onClick={() => {
+                  setShowRechargeModal(false);
+                  handleBuyCreditsInit(10);
+                }}
+              >
+                Comprar 10 Créditos (R$ 15,00)
+              </button>
+            </div>
+            <div style={{display: 'flex', gap: '12px', marginBottom: '16px'}}>
+              <button 
+                className="btn-premium btn-green" 
+                onClick={() => {
+                  setShowRechargeModal(false);
+                  handleBuyCreditsInit(22);
+                }}
+              >
+                Comprar 22 Créditos (R$ 30,00)
+              </button>
+            </div>
+            <div style={{display: 'flex', gap: '12px', marginBottom: '20px'}}>
+              <button 
+                className="btn-premium btn-green" 
+                onClick={() => {
+                  setShowRechargeModal(false);
+                  handleBuyCreditsInit(35);
+                }}
+              >
+                Comprar 35 Créditos (R$ 45,00)
+              </button>
+            </div>
+            <button 
+              className="btn-secondary" 
+              onClick={() => setShowRechargeModal(false)}
+              style={{width: '100%'}}
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      </div>
   )
 }
