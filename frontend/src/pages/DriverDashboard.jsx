@@ -92,7 +92,7 @@ export default function DriverDashboard() {
   const slideThreshold = slideTrackWidth - slideThumbWidth - 10
 
   const handleSlideStart = (e) => {
-    const isTestDriver = user?.email === 'motorista@zomp.com';
+    const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
     if (!isTestDriver && !user?.isApproved) {
       alert("📳 Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
       return;
@@ -112,7 +112,7 @@ export default function DriverDashboard() {
   const handleSlideEnd = () => {
     setIsSwiping(false)
     if (slideX >= slideThreshold) {
-      const isTestDriver = user?.email === 'motorista@zomp.com';
+      const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
       if (!isTestDriver && (!user?.cnh || !user?.crlv)) {
         setSlideX(0);
         return alert("⚠️ Envie seus documentos no menu 'Documentos & Veículo' antes de ficar online.");
@@ -141,7 +141,7 @@ export default function DriverDashboard() {
   const fetchCredits = async () => {
     try {
       // Conta de teste sempre tem 1000 créditos
-      if (user?.email === 'motorista@zomp.com') {
+      if ((user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com')) {
         setCredits(1000);
         return;
       }
@@ -470,9 +470,9 @@ export default function DriverDashboard() {
               </div>
               <p style={{
                 textAlign:'center', marginTop:'14px', fontSize:'0.85rem', fontWeight:700,
-                color: (user?.email !== 'motorista@zomp.com' && (!user?.cnh || !user?.crlv)) ? '#ef4444' : ((user?.email !== 'motorista@zomp.com' && !user?.isApproved) ? '#f59e0b' : '#059669')
+                color: ((user?.email !== 'motorista@zomp.com' && user?.email !== 'motorita@zomp.com') && (!user?.cnh || !user?.crlv)) ? '#ef4444' : (((user?.email !== 'motorista@zomp.com' && user?.email !== 'motorita@zomp.com') && !user?.isApproved) ? '#f59e0b' : '#059669')
               }}>
-                {(user?.email !== 'motorista@zomp.com' && (!user?.cnh || !user?.crlv)) ? '⚠️ Envio de Documentos Pendente' : ((user?.email !== 'motorista@zomp.com' && !user?.isApproved) ? '⏳ Estamos validando seus dados (até 12h)' : `🎫 Number(credits || 0) créditos disponíveis`)}
+                {((user?.email !== 'motorista@zomp.com' && user?.email !== 'motorita@zomp.com') && (!user?.cnh || !user?.crlv)) ? '⚠️ Envio de Documentos Pendente' : (((user?.email !== 'motorista@zomp.com' && user?.email !== 'motorita@zomp.com') && !user?.isApproved) ? '⏳ Estamos validando seus dados (até 12h)' : `🎫 Number(credits || 0) créditos disponíveis`)}
               </p>
             </div>
           ) : (
