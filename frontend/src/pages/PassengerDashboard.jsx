@@ -150,6 +150,14 @@ export default function PassengerDashboard() {
   const [freightType, setFreightType] = useState('')
   const [freightDescription, setFreightDescription] = useState('')
   const [freightSecurityCode, setFreightSecurityCode] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('PIX')
+  const [freightContactName, setFreightContactName] = useState('')
+  const [freightContactPhone, setFreightContactPhone] = useState('')
+  const [ratingStars, setRatingStars] = useState(0)
+  const [tempDriverFav, setTempDriverFav] = useState(false)
+
+  // Freight pricing constant
+  const FREIGHT_PRICE_PER_KM = 3.50
 
   // Pricing state (dynamic from server)
   const [config, setConfig] = useState({
