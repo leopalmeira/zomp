@@ -202,3 +202,23 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 **Versão**: 12.6.3
 **Responsável**: Vibe Code (Mistral AI)
 **Último Commit**: [32af148](https://github.com/leopalmeira/zomp/commit/32af148)
+
+### 📅 v12.6.4 - Substituição do Slide por Botão e Modal de Recarga (2025-08-10)
+* **Slide Removido**: O slide para ficar online foi **substituído por um botão simples** "Ficar Online".
+* **Exibição de Créditos Removida**: Todas as exibições de `credits` na UI principal foram removidas (exceto no menu de compras).
+* **Modal de Recarga Adicionado**:
+  - Quando um motorista **não de teste** (ou seja, não é `motorista@zomp.com` ou `motorita@zomp.com`) **tentar ficar online sem créditos** (`credits <= 0`), um **modal de recarga** aparece.
+  - O modal oferece **3 opções de pacotes de créditos**:
+    - 10 Créditos (R$ 15,00)
+    - 22 Créditos (R$ 30,00)
+    - 35 Créditos (R$ 45,00)
+  - Cada botão redireciona para o **PIX** correspondente.
+* **Contas de Teste**:
+  - `motorista@zomp.com` e `motorita@zomp.com` **não veem o modal de recarga** (têm 1000 créditos automaticamente).
+  - Podem **ficar online sem restrições**.
+
+---
+**Status Atual**: ✅ Slide substituído por botão. Modal de recarga adicionado. Contas de teste funcionando.
+**Versão**: 12.6.4
+**Responsável**: Vibe Code (Mistral AI)
+**Último Commit**: [4f7dd83](https://github.com/leopalmeira/zomp/commit/4f7dd83)
