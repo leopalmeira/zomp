@@ -183,3 +183,22 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 **Versão**: 12.6.2
 **Responsável**: Vibe Code (Mistral AI)
 **Último Commit**: [3659c68](https://github.com/leopalmeira/zomp/commit/3659c68)
+
+### 📅 v12.6.3 - Adição de Conta de Teste motorita@zomp.com (2025-08-10)
+* **Nova Conta de Teste**: Adicionado suporte para o email **`motorita@zomp.com`** como conta de teste do motorista.
+* **Créditos Automáticos**: A conta `motorita@zomp.com` agora recebe **1000 créditos automaticamente** (assim como `motorista@zomp.com`).
+* **Liberação para Ficar Online**: Ambas as contas de teste (`motorista@zomp.com` e `motorita@zomp.com`) agora:
+  - **Pulam a verificação de `cnh` e `crlv`** (documentos).
+  - **Pulam a verificação de `isApproved`** (aprovação).
+  - **Podem deslizar o slide para ficar online** sem restrições.
+* **Correções Aplicadas**:
+  - Linha 95: `handleSlideStart` agora reconhece `motorita@zomp.com` como conta de teste.
+  - Linha 115: `handleSlideEnd` agora reconhece `motorita@zomp.com` como conta de teste.
+  - Linha 144: `fetchCredits` agora garante 1000 créditos para `motorita@zomp.com`.
+  - Linhas 473 e 475: Exibição de créditos e status agora ignoram `motorita@zomp.com` nas verificações de documentos.
+
+---
+**Status Atual**: ✅ Conta `motorita@zomp.com` pode ficar online e receber pedidos.
+**Versão**: 12.6.3
+**Responsável**: Vibe Code (Mistral AI)
+**Último Commit**: [32af148](https://github.com/leopalmeira/zomp/commit/32af148)
