@@ -418,7 +418,7 @@ export default function DriverDashboard() {
                 {pendingRides[0].stops && pendingRides[0].stops.length > 0 && (
                   <span className="meta-tag" style={{background:'#fffbeb',color:'#b45309'}}>📍 {pendingRides[0].stops.length} parada{pendingRides[0].stops.length > 1 ? 's' : ''}</span>
                 )}
-                <span className="meta-tag" style={{background:'#ecfdf5',color:'#059669'}}>🎫 {credits} créditos</span>
+                <span className="meta-tag" style={{background:'#ecfdf5',color:'#059669'}}>🎫 Number(credits || 0) créditos</span>
               </div>
               <div className="request-actions">
                 <button className="btn-accept" onClick={() => handleAccept(pendingRides[0].id)}>Aceitar</button>
@@ -472,7 +472,7 @@ export default function DriverDashboard() {
                 textAlign:'center', marginTop:'14px', fontSize:'0.85rem', fontWeight:700,
                 color: (user?.email !== 'motorista@zomp.com' && (!user?.cnh || !user?.crlv)) ? '#ef4444' : ((user?.email !== 'motorista@zomp.com' && !user?.isApproved) ? '#f59e0b' : '#059669')
               }}>
-                {(user?.email !== 'motorista@zomp.com' && (!user?.cnh || !user?.crlv)) ? '⚠️ Envio de Documentos Pendente' : ((user?.email !== 'motorista@zomp.com' && !user?.isApproved) ? '⏳ Estamos validando seus dados (até 12h)' : `🎫 ${credits} créditos disponíveis`)}
+                {(user?.email !== 'motorista@zomp.com' && (!user?.cnh || !user?.crlv)) ? '⚠️ Envio de Documentos Pendente' : ((user?.email !== 'motorista@zomp.com' && !user?.isApproved) ? '⏳ Estamos validando seus dados (até 12h)' : `🎫 Number(credits || 0) créditos disponíveis`)}
               </p>
             </div>
           ) : (
@@ -481,7 +481,7 @@ export default function DriverDashboard() {
               <div className="spinner-ring"></div>
               <h3>Conectado</h3>
               <p>Buscando corridas na sua região...</p>
-              <p style={{marginTop:'8px',fontSize:'0.8rem',color:'#059669',fontWeight:700}}>🎫 {credits} créditos restantes</p>
+              <p style={{marginTop:'8px',fontSize:'0.8rem',color:'#059669',fontWeight:700}}>🎫 Number(credits || 0) créditos restantes</p>
             </div>
           )
         )}
@@ -534,7 +534,7 @@ export default function DriverDashboard() {
               <div className="drawer-section-label">Financeiro</div>
               <button className={`drawer-nav-item ${activeScreen === 'CREDITS' ? 'active' : ''}`} onClick={() => openScreen('CREDITS')}>
                 <span className="nav-icon"><Ticket size={18} /></span> Comprar Créditos
-                <span className="nav-badge">{credits}</span>
+                <span className="nav-badge">Number(credits || 0)</span>
               </button>
               <button className={`drawer-nav-item ${activeScreen === 'ROYALTIES' ? 'active' : ''}`} onClick={() => openScreen('ROYALTIES')}>
                 <span className="nav-icon"><Gem size={18} /></span> Extrato Royalties
@@ -691,14 +691,14 @@ export default function DriverDashboard() {
               <div style={{position:'relative',zIndex:2}}>
                 <div style={{fontSize:'0.75rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',color:'#9ca3af',marginBottom:'8px'}}>Seus Créditos</div>
                 <div style={{display:'flex',alignItems:'baseline',gap:'6px',marginBottom:'6px'}}>
-                  <span style={{fontSize:'3rem',fontWeight:800}}>{credits}</span>
+                  <span style={{fontSize:'3rem',fontWeight:800}}>Number(credits || 0)</span>
                   <span style={{fontSize:'1rem',color:'#9ca3af',fontWeight:600}}>créditos</span>
                 </div>
                 <div style={{fontSize:'0.8rem',color:'#6b7280'}}>1 crédito = 1 corrida • R$ 1,50 cada</div>
               </div>
             </div>
 
-            {credits <= 3 && (
+            {Number(credits || 0) <= 3 && (
               <div className="tip-card" style={{background:'#fef2f2',borderColor:'#fecaca'}}>
                 <span className="tip-icon">⚠️</span>
                 <div><div className="tip-title" style={{color:'#b91c1c'}}>Créditos baixos!</div><div className="tip-text" style={{color:'#dc2626'}}>Compre um pacote para continuar aceitando corridas.</div></div>
