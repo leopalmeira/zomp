@@ -165,3 +165,21 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 **Versão**: 12.6.1
 **Responsável**: Vibe Code (Mistral AI) + Leandro Palmeira
 **Último Commit**: [28c8e68](https://github.com/leopalmeira/zomp/commit/28c8e68e30897f2cefe480bb2f0878884b7c96ed)
+
+### 📅 v12.6.2 - Correção de Bug Crítico no Slide do Motorista (2025-08-10)
+* **Bug Identificado**: Erro `toFixed is not a function` ao deslizar o slide para ficar online no app do motorista.
+* **Causa Raiz**: A variável `credits` (vinda da API ou do `localStorage`) era uma **string**, e o React tentava chamar `.toFixed()` diretamente nela.
+* **Solução Aplicada**: Adicionado `Number(credits || 0)` em **todos os lugares** onde `credits` era exibido ou usado em cálculos:
+  - Linha 421: Meta-tag de créditos no card de solicitação.
+  - Linha 475: Exibição de créditos disponíveis no slide.
+  - Linha 484: Exibição de créditos restantes no modo online.
+  - Linha 537: Badge de créditos no menu lateral.
+  - Linha 694: Exibição principal de créditos na tela de compras.
+  - Linha 701: Condicional `credits <= 3` para alerta de créditos baixos.
+* **Teste**: O slide agora funciona corretamente, e o motorista pode ficar online para receber pedidos.
+
+---
+**Status Atual**: ✅ Bug corrigido. Motorista pode ficar online sem erros.
+**Versão**: 12.6.2
+**Responsável**: Vibe Code (Mistral AI)
+**Último Commit**: [3659c68](https://github.com/leopalmeira/zomp/commit/3659c68)
