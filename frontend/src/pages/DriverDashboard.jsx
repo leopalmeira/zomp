@@ -91,13 +91,8 @@ export default function DriverDashboard() {
   const slideThumbWidth = 60
   const slideThreshold = slideTrackWidth - slideThumbWidth - 10
 
-<<<<<<< HEAD
   const handleSlideStart = () => {
-    const isTestDriver = user?.email === 'motorista@zomp.com';
-=======
-  const handleSlideStart = (e) => {
     const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
->>>>>>> d33a4f8397f47bdbc5089a95e0637fdcb664a47d
     if (!isTestDriver && !user?.isApproved) {
       alert("📳 Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
       return;
@@ -317,15 +312,9 @@ export default function DriverDashboard() {
   // Credit purchase: Payment Initialization (PIX)
   const [pixModal, setPixModal] = useState(null)
   
-<<<<<<< HEAD
-  const handleBuyCreditsInit = (qty, price) => {
-    const formattedPrice = Number(price).toFixed(2)
-    const pixPayload = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2,15)}-zomp0204${qty}C5204000053039865405${formattedPrice}5802BR5914ZOMP PAGAMENTOS6009SAO_PAULO62070503***6304ABCD`
-    setPixModal({ qty, price: formattedPrice, pixKey: pixPayload })
-=======
   // Modal de recarga de créditos (aparece quando credits <= 0)
   const [showRechargeModal, setShowRechargeModal] = useState(false)
-  
+
   // Verificar créditos ao tentar ficar online
   const checkCreditsAndGoOnline = () => {
     const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
@@ -335,21 +324,24 @@ export default function DriverDashboard() {
     if (!isTestDriver && !user?.isApproved) {
       return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
     }
-    
+
     // Se não for conta de teste e não tiver créditos, mostrar modal de recarga
     if (!isTestDriver && Number(credits || 0) <= 0) {
       setShowRechargeModal(true);
       return;
     }
-    
+
     setIsOnline(true);
   }
-  
-  const handleBuyCreditsInit = (qty) => {
-    const price = (qty * 1.5).toFixed(2)
-    const pixPayload = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2,15)}-zomp0204${qty}C5204000053039865405${price}5802BR5914ZOMP PAGAMENTOS6009SAO_PAULO62070503***6304ABCD`
-    setPixModal({ qty, price, pixKey: pixPayload })
->>>>>>> d33a4f8397f47bdbc5089a95e0637fdcb664a47d
+
+  // Tabela oficial de pacotes (mantém os descontos de 22 e 35 créditos)
+  const CREDIT_PACKAGE_PRICES = { 10: 15, 22: 30, 35: 45 }
+
+  const handleBuyCreditsInit = (qty, price) => {
+    const resolvedPrice = price ?? CREDIT_PACKAGE_PRICES[qty] ?? qty * 1.5
+    const formattedPrice = Number(resolvedPrice).toFixed(2)
+    const pixPayload = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2,15)}-zomp0204${qty}C5204000053039865405${formattedPrice}5802BR5914ZOMP PAGAMENTOS6009SAO_PAULO62070503***6304ABCD`
+    setPixModal({ qty, price: formattedPrice, pixKey: pixPayload })
   }
 
   const handleConfirmPixPayment = async () => {
@@ -493,7 +485,11 @@ export default function DriverDashboard() {
               Ficar Online
             </button>
           ) : (
+            /* Online + no rides available = searching */
+            <div className="driver-idle-msg online-msg">
+              <div className="spinner-ring"></div>
               <h3>Conectado</h3>
+              <p>Buscando corridas na sua região...</p>
             </div>
           )
         )}
@@ -688,7 +684,6 @@ export default function DriverDashboard() {
             })}
           </div>
         </div>
-<<<<<<< HEAD
       )}
 
       {/* ===== CREDITS ===== */}
@@ -785,8 +780,6 @@ export default function DriverDashboard() {
           <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Royalties</h2></div>
           <div className="inner-body">
             <div className="premium-card-dark">
-=======
->>>>>>> d33a4f8397f47bdbc5089a95e0637fdcb664a47d
               <div style={{position:'relative',zIndex:2}}>
                 <div style={{fontSize:'0.75rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',color:'#9ca3af',marginBottom:'8px'}}>Saldo de Royalties</div>
                 <div style={{display:'flex',alignItems:'baseline',gap:'6px',marginBottom:'6px'}}>
