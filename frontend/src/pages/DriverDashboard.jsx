@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide } from '../services/api'
+import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, updateOnlineStatus } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet'
 import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut } from 'lucide-react'
 import L from 'leaflet'
@@ -123,6 +123,12 @@ export default function DriverDashboard() {
       }
 
       setIsOnline(true)
+      updateOnlineStatus(true).catch(err => {
+        console.error("Erro ao atualizar status online:", err);
+        setIsOnline(false);
+        setSlideX(0);
+        alert("Erro ao conectar ao servidor. Tente novamente.");
+      });
       setSlideX(0)
     } else {
       setSlideX(0)
@@ -332,6 +338,12 @@ export default function DriverDashboard() {
     }
 
     setIsOnline(true);
+      // Atualizar status no backend
+      updateOnlineStatus(true).catch(err => {
+        console.error("Erro ao atualizar status online:", err);
+        setIsOnline(false);
+        alert("Erro ao conectar ao servidor. Tente novamente.");
+      });
   }
 
   // Tabela oficial de pacotes (mantém os descontos de 22 e 35 créditos)
@@ -378,7 +390,10 @@ export default function DriverDashboard() {
       <div className="driver-top-header">
         <button className="driver-menu-btn" onClick={() => setMenuOpen(true)}>☰</button>
         {isOnline && (
-          <button className="driver-status-pill online" onClick={() => setIsOnline(false)}>
+          <button className="driver-status-pill online" onClick={() => {
+              updateOnlineStatus(false).catch(err => console.error("Erro ao atualizar status offline:", err));
+              setIsOnline(false);
+            }}>
             <span className="status-dot"></span>
             Online
           </button>
