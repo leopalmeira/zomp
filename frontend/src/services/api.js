@@ -247,3 +247,15 @@ export async function getGlobalConfig() {
   if (!res.ok) throw new Error(data.error || 'Erro ao buscar configurações');
   return data;
 }
+
+
+export async function updateOnlineStatus(isOnline) {
+  const res = await fetch(`${API_BASE}/user/driver/online-status`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ isOnline })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao atualizar status online');
+  return data;
+}

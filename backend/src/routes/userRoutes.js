@@ -5,5 +5,6 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 router.put('/profile', authMiddleware, userController.updateProfile);
 router.get('/driver/linked-passengers', authMiddleware, userController.getLinkedPassengers);
+router.post('/driver/online-status', authMiddleware, userController.updateOnlineStatus);
 
 module.exports = router;

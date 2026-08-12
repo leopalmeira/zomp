@@ -32,6 +32,7 @@ async function initDB() {
         "ridesMissed" INTEGER DEFAULT 0,
         "ridesCompleted" INTEGER DEFAULT 0,
         "isApproved" BOOLEAN DEFAULT true,
+        "isOnline" BOOLEAN DEFAULT false,
         "photo" TEXT,
         "cnh" TEXT,
         "crlv" TEXT,

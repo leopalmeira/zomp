@@ -37,3 +37,29 @@ exports.getLinkedPassengers = async (req, res) => {
     res.json({ linkedPassengers: 0 });
   }
 };
+
+exports.updateOnlineStatus = async (req, res) => {
+  try {
+    const { isOnline } = req.body;
+    const { rows } = await pool.query(`
+      UPDATE "User" SET
+        "isOnline" = $2,
+        "updatedAt" = NOW()
+      WHERE id = $1 AND role = 'DRIVER'
+      RETURNING id, name, email, role, "isOnline"
+    `, [req.user.id, isOnline]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Motorista não encontrado' });
+    }
+    
+    res.json({ 
+      success: true, 
+      isOnline: rows[0].isOnline,
+      message: `Status ${rows[0].isOnline ? 'online' : 'offline'} atualizado com sucesso`
+    });
+  } catch (err) {
+    console.error('Erro ao atualizar status online:', err.message);
+    res.status(500).json({ error: 'Erro ao atualizar status online' });
+  }
+};
