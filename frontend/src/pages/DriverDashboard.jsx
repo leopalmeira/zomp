@@ -24,6 +24,11 @@ const driverIcon = L.divIcon({
 const API = import.meta.env.VITE_API_URL || 'https://zomp-api.onrender.com/api'
 const getToken = () => localStorage.getItem('zomp_token')
 
+function formatNumber(value, decimals = 1, fallback = '0.0') {
+  const number = Number(value)
+  return Number.isFinite(number) ? number.toFixed(decimals) : fallback
+}
+
 // --- Som de Notificação ---
 const playRingSound = () => {
   try {
@@ -400,7 +405,7 @@ export default function DriverDashboard() {
                   <div style={{textAlign:'right'}}>
                     <div className="info-value">{activeRide.passenger?.name || 'Passageiro'}</div>
                     <div style={{fontSize:'0.7rem', fontWeight:700, color:'#64748b'}}>
-                       ⭐ {activeRide.passenger?.rating?.toFixed(1) || '5.0'} • {activeRide.passenger?.ridesCompleted || 0} viagens
+                       ⭐ {formatNumber(activeRide.passenger?.rating, 1, '5.0')} • {activeRide.passenger?.ridesCompleted || 0} viagens
                     </div>
                   </div>
                 </div>
@@ -415,7 +420,7 @@ export default function DriverDashboard() {
                 <div className="info-row"><span className="info-label">Distância</span><span className="info-value">{activeRide.distanceKm} km</span></div>
                 <div className="info-row" style={{background:'#ecfdf5',padding:'10px 14px',borderRadius:'10px',marginTop:'4px'}}>
                   <span className="info-label" style={{color:'#065f46',fontWeight:700}}>Ganho</span>
-                  <span className="info-value" style={{color:'#059669',fontSize:'1.3rem'}}>R$ {activeRide.price?.toFixed(2)}</span>
+                  <span className="info-value" style={{color:'#059669',fontSize:'1.3rem'}}>R$ {formatNumber(activeRide.price, 2, '0.00')}</span>
                 </div>
               </div>
               <button className="btn-premium btn-green" onClick={handleComplete}>✓ Finalizar Corrida</button>
@@ -433,10 +438,10 @@ export default function DriverDashboard() {
                   )}
                 </div>
                 <div style={{fontSize:'0.7rem', color:'#9ca3af', fontWeight:600}}>
-                   ⭐ {pendingRides[0].passenger?.rating?.toFixed(1) || '5.0'} • {pendingRides[0].passenger?.ridesCompleted || 0} viagens
+                   ⭐ {formatNumber(pendingRides[0].passenger?.rating, 1, '5.0')} • {pendingRides[0].passenger?.ridesCompleted || 0} viagens
                 </div>
               </div>
-              <div className="price">R$ {pendingRides[0].price?.toFixed(2)}</div>
+              <div className="price">R$ {formatNumber(pendingRides[0].price, 2, '0.00')}</div>
             </div>
             <div className="request-body">
               <div className="request-route">
@@ -508,7 +513,7 @@ export default function DriverDashboard() {
                 <div className="drawer-user-info">
                   <h3>{user?.name}</h3>
                   <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
-                    <span style={{fontSize:'0.75rem', fontWeight:800, color:'#f59e0b'}}>⭐ {user?.rating?.toFixed(1) || '5.0'}</span>
+                    <span style={{fontSize:'0.75rem', fontWeight:800, color:'#f59e0b'}}>⭐ {formatNumber(user?.rating, 1, '5.0')}</span>
                     <span style={{fontSize:'0.65rem', fontWeight:700, color:'#9ca3af'}}>• {user?.ridesCompleted || 0} viagens</span>
                   </div>
                 </div>
@@ -671,7 +676,7 @@ export default function DriverDashboard() {
                 <div key={ride.id} className="history-card">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}>
                     <span style={{fontWeight:700,fontSize:'0.85rem',color:'#71717a'}}>{dt}</span>
-                    <span style={{fontWeight:800,color: ride.status==='COMPLETED' ? '#059669' : '#ef4444',fontSize:'1.05rem'}}>R$ {ride.price?.toFixed(2) || '0.00'}</span>
+                    <span style={{fontWeight:800,color: ride.status==='COMPLETED' ? '#059669' : '#ef4444',fontSize:'1.05rem'}}>R$ {formatNumber(ride.price, 2, '0.00')}</span>
                   </div>
                   <div style={{fontSize:'0.85rem',color:'#3f3f46',marginBottom:'4px',fontWeight:600}}>📍 {ride.origin || '-'}</div>
                   <div style={{fontSize:'0.85rem',color:'#3f3f46',marginBottom:'10px',fontWeight:600}}>🏁 {ride.destination || '-'}</div>
