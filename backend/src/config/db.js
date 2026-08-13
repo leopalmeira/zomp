@@ -106,9 +106,9 @@ async function initDB() {
 
     // Motorista (DRIVER)
     await client.query(`
-      INSERT INTO "User" (name, email, password, role, "isApproved", "qrCode", "carPlate", "carModel", "carColor", "cnh")
-      VALUES ($1, $2, $3, 'DRIVER', true, 'ZOMP-TEST-DRIVER', 'ZMP-2026', 'Toyota Corolla', 'Preto', '12345678900')
-      ON CONFLICT (email) DO UPDATE SET password = $3, role = 'DRIVER', "isApproved" = true, "qrCode" = 'ZOMP-TEST-DRIVER';
+      INSERT INTO "User" (name, email, password, role, "isApproved", "qrCode", "carPlate", "carModel", "carColor", "cnh", credits)
+      VALUES ($1, $2, $3, 'DRIVER', true, 'ZOMP-TEST-DRIVER', 'ZMP-2026', 'Toyota Corolla', 'Preto', '12345678900', 1000)
+      ON CONFLICT (email) DO UPDATE SET password = $3, role = 'DRIVER', "isApproved" = true, "qrCode" = 'ZOMP-TEST-DRIVER', credits = 1000;
     `, ['Motorista Teste', 'motorista@zomp.com', testPasswordHash]);
 
     // Garantir AdminConfig singleton

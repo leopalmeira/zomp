@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet'
-import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut } from 'lucide-react'
+import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Driver.css'
@@ -530,6 +530,12 @@ export default function DriverDashboard() {
                   <div className="val">R$ {Number(wallet.balance || 0).toFixed(2)}</div>
                 </div>
               </div>
+              <div className="drawer-credits-row">
+                <div className="balance-item" style={{width:'100%'}}>
+                  <span className="lbl">Créditos de Corrida</span>
+                  <div className="val" style={{color:'#059669', fontSize:'1.4rem'}}>{Number(credits || 0)} <span style={{fontSize:'0.8rem', fontWeight:600, color:'#71717a'}}>créditos</span></div>
+                </div>
+              </div>
             </div>
 
             <div className="drawer-section-label">Principal</div>
@@ -545,6 +551,10 @@ export default function DriverDashboard() {
               </button>
               
               <div className="drawer-section-label">Financeiro</div>
+              <button className={`drawer-nav-item ${activeScreen === 'CREDITS' ? 'active' : ''}`} onClick={() => openScreen('CREDITS')}>
+                <span className="nav-icon"><Ticket size={18} /></span> Meus Créditos
+                <span className="nav-badge">{Number(credits || 0)}</span>
+              </button>
               <button className={`drawer-nav-item ${activeScreen === 'ROYALTIES' ? 'active' : ''}`} onClick={() => openScreen('ROYALTIES')}>
                 <span className="nav-icon"><Gem size={18} /></span> Extrato Royalties
               </button>

@@ -401,6 +401,15 @@
   color: #059669;
 }
 
+.drawer-credits-row {
+  margin-top: 12px;
+}
+
+.drawer-credits-row .balance-item {
+  background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+  border-color: #bbf7d0;
+}
+
 /* Nav Groups */
 .drawer-section-label {
   padding: 24px 24px 8px;
