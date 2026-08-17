@@ -438,14 +438,10 @@ export default function PassengerDashboard() {
           const c = [pos.coords.latitude, pos.coords.longitude]
           setMapCenter(c)
           
-          // Só preenche o input de texto e coordenadas iniciais se for a primeira inicialização
+          // Só centraliza o mapa na posição do GPS, mas NÃO preenche o campo de origem
           if (!hasInitializedGps.current) {
             hasInitializedGps.current = true;
-            setOriginCoords(c)
-            
-            // Busca o endereço real e preciso via Nominatim
-            const realAddress = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-            setOriginAddr(realAddress);
+            // Campo de origem fica vazio para o passageiro digitar manualmente
           }
         },
         (err) => {
