@@ -1383,8 +1383,12 @@ const POPULAR_PLACES_RJ = [
                       marginTop: '12px',
                       boxShadow: '0 10px 25px -5px rgba(5, 150, 105, 0.4)'
                     }}>
-                      <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                         <Check size={18} strokeWidth={3} /> <span>PRINT UBER/99 VALIDADO COM SUCESSO!</span>
+                      </div>
+                      <div style={{ background: 'rgba(255,255,255,0.2)', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '100px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.9rem' }}>🏆</span>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#fff' }}>MAIS BARATO QUE UBER E 99!</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
@@ -1412,7 +1416,7 @@ const POPULAR_PLACES_RJ = [
                       }}>
                         <span style={{ fontSize: '1.2rem' }}>💡</span>
                         <p style={{ margin: 0, fontSize: '0.72rem', color: '#ecfdf5', fontWeight: 600, lineHeight: '1.4' }}>
-                          Cancele a corrida na Uber/99 e chame pelo Zomp com desconto garantido! Seu motorista está a poucos toques.
+                          Zomp é mais barato que Uber e 99! Cancele a corrida no outro app e chame agora pelo Zomp com desconto garantido.
                         </p>
                       </div>
 
@@ -1441,7 +1445,7 @@ const POPULAR_PLACES_RJ = [
                         }}
                       >
                         <span style={{ fontSize: '1.3rem' }}>⚡</span>
-                        {isLoading ? 'Chamando...' : `CHAMAR AGORA POR R$ ${(parseFloat(getPrice(routeKm, vehicleType, true)) - calculatedDiscountAmount).toFixed(2)}`}
+                        {isLoading ? 'Chamando...' : `CHAMAR ZOMP POR R$ ${(parseFloat(getPrice(routeKm, vehicleType, true)) - calculatedDiscountAmount).toFixed(2)} — MAIS BARATO!`}
                       </button>
                     </div>
                   )}
