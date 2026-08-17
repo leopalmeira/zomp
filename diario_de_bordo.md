@@ -291,6 +291,10 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Corridas longas (≥ 15km) ou agendadas tocam **som suave e grave apenas 1 vez** e aparecem **no máximo 1 vez** por motorista.
   - Temporizador regressivo de **10 segundos** no card do motorista com barra de progresso e auto-recusa.
 
+* 🔥 **Inteligência de Leitura do Print (Categoria Ticada / Repetida)**:
+  - A inteligência do Zomp prioriza o **valor da categoria selecionada / ticada** no print da Uber ou 99 (o valor que aparece repetido tanto no item ativo da lista quanto no botão inferior de confirmação de chamada).
+  - O desconto é aplicado diretamente sobre este valor exato (R$ 12-14: -R$ 2,00; R$ 18-25: -R$ 2,50; ≥ R$ 30: -R$ 3,00; outros > R$ 12: -R$ 2,00).
+
 * 🔥 **Preço Imbatível Visível Imediatamente na Tela Inicial (IDLE & PRICED)**:
   - O card do Preço Imbatível agora fica visível **logo na tela inicial** do passageiro (antes mesmo de digitar o destino) e também na tela de opções de viagem. O cliente pode tocar em *"📸 Toque aqui para Enviar Print da Uber ou 99"* a qualquer momento.
 
