@@ -359,7 +359,7 @@ exports.validateScreenshotAi = async (req, res) => {
     const base64Data = imageBase64.includes('base64,') ? imageBase64.split('base64,')[1] : imageBase64;
     const buffer = Buffer.from(base64Data, 'base64');
     
-    if (buffer.length < 10000) {
+    if (buffer.length < 500) {
       return res.status(400).json({
         valid: false,
         error: 'O print enviado é inválido ou está corrompido. Envie uma captura de tela nítida do app da Uber ou 99 contendo o percurso e o valor.'
@@ -368,12 +368,9 @@ exports.validateScreenshotAi = async (req, res) => {
 
     // 3. Regra de desconto aplicada DIRETAMENTE sobre o valor do print da concorrência
     // A IA prioriza o valor da categoria selecionada / ticada (que aparece repetido na opção ativa e no botão de confirmação)
-    const competitorPrice = parseFloat(req.body.printPrice || req.body.currentPrice) || 15.0;
-    if (competitorPrice < 12.00) {
-      return res.status(400).json({
-        valid: false,
-        error: 'O Preço Imbatível é exclusivo para corridas acima de R$ 12,00.'
-      });
+    let competitorPrice = parseFloat(req.body.printPrice || req.body.currentPrice) || 20.0;
+    if (competitorPrice < 8.00) {
+      competitorPrice = 15.00;
     }
 
     let discountAmount = 2.00;

@@ -388,24 +388,20 @@ export default function PassengerDashboard() {
     const extraPsg = (type === 'car' && passengersCount > 1) ? (passengersCount - 1) * 2.50 : 0;
     const basePrice = Math.max(calculated, type === 'car' ? config.minFareCar : config.minFareMoto) + stopsFee + extraPsg
 
-    let finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
-    
-    // REGRA PREÇO IMBATÍVEL: se tivermos um print validado ou entrada manual
-    if (hasCompetitionDiscount && compPriceRead > 0) {
-      const distance = parseFloat(km) || 0;
-      let discountPct = 0.05; // 5% de desconto padrão para < 1.4 km
-      if (distance >= 2.0) {
-        discountPct = 0.15; // 15% acima de 2.0 km
-      } else if (distance >= 1.8) {
-        discountPct = 0.12; // 12% acima de 1.8 km
-      } else if (distance >= 1.4) {
-        discountPct = 0.10; // 10% acima de 1.4 km
-      }
-      
-      const challengePrice = Math.max(compPriceRead * (1 - discountPct), type === 'car' ? config.minFareCar : config.minFareMoto);
-      finalPrice = Math.min(finalPrice, challengePrice);
+    // REGRA PREÇO IMBATÍVEL: se tivermos um print validado da concorrência (Uber/99)
+    if (hasCompetitionDiscount && competitorPrintPrice > 0) {
+      let discount = calculatedDiscountAmount || 2.00;
+      if (competitorPrintPrice >= 30.00) discount = 3.00;
+      else if (competitorPrintPrice >= 18.00 && competitorPrintPrice <= 25.00) discount = 2.50;
+      else if (competitorPrintPrice >= 12.00 && competitorPrintPrice <= 14.00) discount = 2.00;
+      else discount = 2.00;
+
+      const discountedPrintPrice = Math.max(competitorPrintPrice - discount, type === 'car' ? config.minFareCar : config.minFareMoto) + stopsFee + extraPsg;
+      const finalDiscounted = includeFee ? discountedPrintPrice + pendingFeeAmount : discountedPrintPrice;
+      return finalDiscounted.toFixed(2);
     }
-    
+
+    let finalPrice = includeFee ? basePrice + pendingFeeAmount : basePrice
     return finalPrice.toFixed(2)
   }
 
@@ -901,11 +897,14 @@ const POPULAR_PLACES_RJ = [
       const rideDistance = parseFloat(routeKm) || 1.0;
 
       // Se o desconto imbatível foi ativado, aplica o desconto diretamente SOBRE O VALOR DO PRINT
-      if (hasCompetitionDiscount) {
-        const basePrintPrice = competitorPrintPrice > 0 ? competitorPrintPrice : ridePrice;
-        if (basePrintPrice > 12) {
-          ridePrice = Math.max(basePrintPrice - calculatedDiscountAmount, 8.00);
-        }
+      if (hasCompetitionDiscount && competitorPrintPrice > 0) {
+        let discount = calculatedDiscountAmount || 2.00;
+        if (competitorPrintPrice >= 30.00) discount = 3.00;
+        else if (competitorPrintPrice >= 18.00 && competitorPrintPrice <= 25.00) discount = 2.50;
+        else if (competitorPrintPrice >= 12.00 && competitorPrintPrice <= 14.00) discount = 2.00;
+        else discount = 2.00;
+
+        ridePrice = Math.max(competitorPrintPrice - discount, 8.00);
       }
 
       // Fallback e garantia de coordenadas precisas de início e fim da corrida
