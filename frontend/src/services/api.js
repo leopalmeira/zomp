@@ -280,11 +280,11 @@ export async function rateRide(rideId, { rating, comment, role }) {
   return data;
 }
 
-export async function validateScreenshot(imageBase64, currentPrice) {
+export async function validateScreenshot(imageBase64, printPrice) {
   const res = await fetch(`${API_BASE}/rides/validate-screenshot`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify({ imageBase64, currentPrice }),
+    body: JSON.stringify({ imageBase64, printPrice, currentPrice: printPrice }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Print não validado');

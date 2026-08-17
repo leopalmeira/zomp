@@ -287,9 +287,9 @@ exports.validateScreenshotAi = async (req, res) => {
       });
     }
 
-    // 3. Regra de desconto por faixa de preço
-    const originalPrice = parseFloat(currentPrice) || 15.0;
-    if (originalPrice < 12.00) {
+    // 3. Regra de desconto aplicada DIRETAMENTE sobre o valor do print da concorrência
+    const competitorPrice = parseFloat(req.body.printPrice || req.body.currentPrice) || 15.0;
+    if (competitorPrice < 12.00) {
       return res.status(400).json({
         valid: false,
         error: 'O Preço Imbatível é exclusivo para corridas acima de R$ 12,00.'
@@ -297,15 +297,16 @@ exports.validateScreenshotAi = async (req, res) => {
     }
 
     let discountAmount = 2.00;
-    if (originalPrice >= 18.00 && originalPrice <= 25.00) {
-      discountAmount = 2.50; // R$ 2,50 para corridas de 18 a 25 reais
-    } else if (originalPrice >= 12.00 && originalPrice <= 14.00) {
-      discountAmount = 2.00; // R$ 2,00 para corridas de 12 a 14 reais
+    if (competitorPrice >= 18.00 && competitorPrice <= 25.00) {
+      discountAmount = 2.50; // R$ 2,50 de desconto para corridas de 18 a 25 reais
+    } else if (competitorPrice >= 12.00 && competitorPrice <= 14.00) {
+      discountAmount = 2.00; // R$ 2,00 de desconto para corridas de 12 a 14 reais
     } else {
       discountAmount = 2.00;
     }
 
-    const newPrice = Math.max(originalPrice - discountAmount, 8.00);
+    // Preço no Zomp é o preço do print do cliente MENOS o desconto
+    const newPrice = Math.max(competitorPrice - discountAmount, 8.00);
 
     // Registra o log de desconto no banco
     await pool.query(`
@@ -317,7 +318,8 @@ exports.validateScreenshotAi = async (req, res) => {
     res.json({
       valid: true,
       message: 'Print da Uber/99 validado com sucesso pela Inteligência Zomp!',
-      originalPrice,
+      printPrice: competitorPrice,
+      originalPrice: competitorPrice,
       discountAmount,
       newPrice,
       ridesLeftToday

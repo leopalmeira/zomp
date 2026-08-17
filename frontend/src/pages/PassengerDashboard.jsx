@@ -172,6 +172,7 @@ export default function PassengerDashboard() {
   const [freightContactName, setFreightContactName] = useState('')
   const [isAnalyzingScreenshot, setIsAnalyzingScreenshot] = useState(false)
   const [calculatedDiscountAmount, setCalculatedDiscountAmount] = useState(2.00)
+  const [competitorPrintPrice, setCompetitorPrintPrice] = useState(0)
   const [passengerRatingModalOpen, setPassengerRatingModalOpen] = useState(false)
   const [lastCompletedRide, setLastCompletedRide] = useState(null)
   const [passengerRatingStars, setPassengerRatingStars] = useState(5)
@@ -836,9 +837,12 @@ const POPULAR_PLACES_RJ = [
       let ridePrice = parseFloat(getPrice(routeKm, vehicleType, true)) || 10.0;
       const rideDistance = parseFloat(routeKm) || 1.0;
 
-      // Se o desconto imbatível foi ativado (print verificado), aplica o desconto calculado
-      if (hasCompetitionDiscount && ridePrice > 12) {
-        ridePrice = Math.max(ridePrice - calculatedDiscountAmount, 8.00);
+      // Se o desconto imbatível foi ativado, aplica o desconto diretamente SOBRE O VALOR DO PRINT
+      if (hasCompetitionDiscount) {
+        const basePrintPrice = competitorPrintPrice > 0 ? competitorPrintPrice : ridePrice;
+        if (basePrintPrice > 12) {
+          ridePrice = Math.max(basePrintPrice - calculatedDiscountAmount, 8.00);
+        }
       }
 
       const ridePayload = {
@@ -1458,6 +1462,8 @@ const POPULAR_PLACES_RJ = [
                             const result = await validateScreenshot(imageSrc, currentPrice);
                             
                             setIsAnalyzingScreenshot(false);
+                            const printVal = result.printPrice || currentPrice;
+                            setCompetitorPrintPrice(printVal);
                             setCalculatedDiscountAmount(result.discountAmount);
                             setManualPriceInput(imageSrc);
                             setHasCompetitionDiscount(true);
@@ -1482,7 +1488,7 @@ const POPULAR_PLACES_RJ = [
                             Inteligência Zomp analisando print...
                           </p>
                           <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 600, color: '#9ca3af' }}>
-                            Verificando percurso e valores da Uber / 99
+                            Lendo valores e percurso da Uber / 99
                           </p>
                         </div>
                       ) : manualPriceInput && manualPriceInput.startsWith('data:image') ? (
@@ -1538,13 +1544,58 @@ const POPULAR_PLACES_RJ = [
                         <span style={{ fontSize: '0.9rem' }}>🏆</span>
                         <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#fff' }}>MAIS BARATO QUE UBER E 99!</span>
                       </div>
+
+                      {/* Campo para conferir ou ajustar o valor lido do print */}
+                      <div style={{
+                        background: 'rgba(0,0,0,0.2)',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        marginBottom: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}>
+                        <span style={{ fontSize: '0.75rem', color: '#ecfdf5', fontWeight: 700 }}>
+                          📱 Valor no print (Uber/99):
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ color: '#fff', fontWeight: 800, fontSize: '0.85rem' }}>R$</span>
+                          <input
+                            type="number"
+                            step="0.10"
+                            value={competitorPrintPrice || ''}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              setCompetitorPrintPrice(val);
+                              // Recalcula o desconto com base no novo valor do print
+                              let disc = 2.00;
+                              if (val >= 18.00 && val <= 25.00) disc = 2.50;
+                              else if (val >= 12.00 && val <= 14.00) disc = 2.00;
+                              else disc = 2.00;
+                              setCalculatedDiscountAmount(disc);
+                            }}
+                            style={{
+                              width: '75px',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              border: '1px solid #34d399',
+                              background: '#fff',
+                              color: '#065f46',
+                              fontWeight: 900,
+                              fontSize: '0.95rem',
+                              textAlign: 'right'
+                            }}
+                          />
+                        </div>
+                      </div>
+
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                           <p style={{ margin: 0, fontSize: '0.75rem', color: '#ecfdf5', fontWeight: 600 }}>
-                            Preço original: R$ {parseFloat(getPrice(routeKm, vehicleType, true)).toFixed(2)}
+                            Valor no Print da Concorrência: R$ {competitorPrintPrice.toFixed(2)}
                           </p>
                           <p style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 900 }}>
-                            Novo Preço Zomp: <span style={{ fontSize: '1.4rem' }}>R$ {(parseFloat(getPrice(routeKm, vehicleType, true)) - calculatedDiscountAmount).toFixed(2)}</span>
+                            Novo Preço Zomp: <span style={{ fontSize: '1.4rem' }}>R$ {Math.max(competitorPrintPrice - calculatedDiscountAmount, 8.00).toFixed(2)}</span>
                           </p>
                         </div>
                         <div style={{ background: '#fff', color: '#059669', padding: '6px 14px', borderRadius: '10px', fontWeight: 900, fontSize: '0.9rem' }}>
@@ -1593,7 +1644,7 @@ const POPULAR_PLACES_RJ = [
                         }}
                       >
                         <span style={{ fontSize: '1.3rem' }}>⚡</span>
-                        {isLoading ? 'Chamando...' : `CHAMAR ZOMP POR R$ ${(parseFloat(getPrice(routeKm, vehicleType, true)) - calculatedDiscountAmount).toFixed(2)} — MAIS BARATO!`}
+                        {isLoading ? 'Chamando...' : `CHAMAR ZOMP POR R$ ${Math.max(competitorPrintPrice - calculatedDiscountAmount, 8.00).toFixed(2)} — MAIS BARATO!`}
                       </button>
                     </div>
                   )}
