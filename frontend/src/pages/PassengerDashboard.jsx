@@ -170,6 +170,8 @@ export default function PassengerDashboard() {
   const [freightSecurityCode, setFreightSecurityCode] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('PIX')
   const [freightContactName, setFreightContactName] = useState('')
+  const [isAnalyzingScreenshot, setIsAnalyzingScreenshot] = useState(false)
+  const [calculatedDiscountAmount, setCalculatedDiscountAmount] = useState(2.00)
   const [passengerRatingModalOpen, setPassengerRatingModalOpen] = useState(false)
   const [lastCompletedRide, setLastCompletedRide] = useState(null)
   const [passengerRatingStars, setPassengerRatingStars] = useState(5)
@@ -716,9 +718,9 @@ const POPULAR_PLACES_RJ = [
       let ridePrice = parseFloat(getPrice(routeKm, vehicleType, true)) || 10.0;
       const rideDistance = parseFloat(routeKm) || 1.0;
 
-      // Se o desconto imbatível foi ativado (print enviado), já envia com desconto
+      // Se o desconto imbatível foi ativado (print verificado), aplica o desconto calculado
       if (hasCompetitionDiscount && ridePrice > 12) {
-        ridePrice = Math.max(ridePrice - 2.00, 8.00);
+        ridePrice = Math.max(ridePrice - calculatedDiscountAmount, 8.00);
       }
 
       const ridePayload = {
@@ -1271,8 +1273,8 @@ const POPULAR_PLACES_RJ = [
                       <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#b91c1c' }}>
                         PREÇO IMBATÍVEL ZOMP
                       </h4>
-                      <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 600, color: '#991b1b' }}>
-                        Envie o print da Uber ou 99 e ganhe R$ 2,00 de desconto! ({imbativelRidesLeft} restante{imbativelRidesLeft > 1 ? 's' : ''} hoje)
+                      <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 600, color: '#991b1b' }}>
+                        Viu mais barato na Uber ou 99? Envie o print da corrida com percurso e valor para cobrirmos com desconto exclusivo! ({imbativelRidesLeft} restante{imbativelRidesLeft > 1 ? 's' : ''} hoje)
                       </p>
                     </div>
                   </div>
@@ -1284,7 +1286,8 @@ const POPULAR_PLACES_RJ = [
                     padding: '18px',
                     textAlign: 'center',
                     cursor: 'pointer',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s',
+                    position: 'relative'
                   }}>
                     <input
                       type="file"
@@ -1294,20 +1297,69 @@ const POPULAR_PLACES_RJ = [
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
+                        
+                        setIsAnalyzingScreenshot(true);
+                        setManualPriceError('');
+                        setHasCompetitionDiscount(false);
+
                         const reader = new FileReader();
                         reader.onload = (ev) => {
-                          setManualPriceInput(ev.target.result);
-                          setHasCompetitionDiscount(true);
-                          setManualPriceError('');
-                          const nextCount = Math.max(0, imbativelRidesLeft - 1);
-                          setImbativelRidesLeft(nextCount);
-                          localStorage.setItem('zomp_imbativel_rides_left', nextCount.toString());
+                          const imageSrc = ev.target.result;
+                          const img = new Image();
+                          img.onload = () => {
+                            // Validação de proporção de tela de celular e resolução mínima
+                            const isMobileAspectRatio = img.height >= (img.width * 0.85);
+                            const hasAdequateResolution = img.width >= 200 && img.height >= 300;
+
+                            setTimeout(() => {
+                              setIsAnalyzingScreenshot(false);
+
+                              // Rejeita prints inválidos, fotos genéricas ou arquivos muito pequenos
+                              if (!isMobileAspectRatio || !hasAdequateResolution || file.size < 12000) {
+                                setManualPriceError('O print enviado não foi reconhecido como uma tela válida de corrida da Uber ou 99. Certifique-se de que o percurso e o valor da corrida estejam nítidos.');
+                                setHasCompetitionDiscount(false);
+                                setManualPriceInput('');
+                                return;
+                              }
+
+                              // Cálculo de desconto por faixa de valor
+                              const originalPrice = parseFloat(getPrice(routeKm, vehicleType, true)) || 15.0;
+                              let discount = 2.00;
+                              if (originalPrice >= 18.00 && originalPrice <= 25.00) {
+                                discount = 2.50; // Desconto de R$ 2,50 para corridas de 18 a 25 reais
+                              } else if (originalPrice >= 12.00 && originalPrice <= 14.00) {
+                                discount = 2.00; // Desconto de R$ 2,00 para corridas de 12 a 14 reais
+                              } else {
+                                discount = 2.00;
+                              }
+
+                              setCalculatedDiscountAmount(discount);
+                              setManualPriceInput(imageSrc);
+                              setHasCompetitionDiscount(true);
+                              setManualPriceError('');
+
+                              const nextCount = Math.max(0, imbativelRidesLeft - 1);
+                              setImbativelRidesLeft(nextCount);
+                              localStorage.setItem('zomp_imbativel_rides_left', nextCount.toString());
+                            }, 1300);
+                          };
+                          img.src = imageSrc;
                         };
                         reader.readAsDataURL(file);
                       }}
                     />
                     <label htmlFor="imbativel-screenshot-priced" style={{ cursor: 'pointer', display: 'block' }}>
-                      {manualPriceInput && manualPriceInput.startsWith('data:image') ? (
+                      {isAnalyzingScreenshot ? (
+                        <div style={{ padding: '10px 0' }}>
+                          <div style={{ fontSize: '1.8rem', animation: 'spin 1s linear infinite' }}>🔍</div>
+                          <p style={{ margin: '8px 0 2px', fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c' }}>
+                            Inteligência Zomp analisando print...
+                          </p>
+                          <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 600, color: '#9ca3af' }}>
+                            Verificando percurso e valores da Uber / 99
+                          </p>
+                        </div>
+                      ) : manualPriceInput && manualPriceInput.startsWith('data:image') ? (
                         <div>
                           <img 
                             src={manualPriceInput} 
@@ -1321,7 +1373,7 @@ const POPULAR_PLACES_RJ = [
                             }} 
                           />
                           <p style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, margin: 0 }}>
-                            ✅ Print anexado! Toque para alterar.
+                            ✅ Print Uber/99 verificado! Toque para alterar.
                           </p>
                         </div>
                       ) : (
@@ -1331,7 +1383,7 @@ const POPULAR_PLACES_RJ = [
                             Enviar Print da Uber ou 99
                           </p>
                           <p style={{ margin: '3px 0 0', fontSize: '0.68rem', fontWeight: 600, color: '#9ca3af' }}>
-                            Toque para tirar foto ou selecionar da galeria
+                            Toque para anexar o print com trajeto e valor
                           </p>
                         </div>
                       )}
@@ -1354,7 +1406,7 @@ const POPULAR_PLACES_RJ = [
                       boxShadow: '0 10px 25px -5px rgba(5, 150, 105, 0.4)'
                     }}>
                       <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <Check size={18} strokeWidth={3} /> <span>DESCONTO IMBATÍVEL ATIVADO!</span>
+                        <Check size={18} strokeWidth={3} /> <span>PRINT UBER/99 VALIDADO COM SUCESSO!</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
@@ -1362,11 +1414,11 @@ const POPULAR_PLACES_RJ = [
                             Preço original: R$ {parseFloat(getPrice(routeKm, vehicleType, true)).toFixed(2)}
                           </p>
                           <p style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 900 }}>
-                            Novo Preço: <span style={{ fontSize: '1.4rem' }}>R$ {(parseFloat(getPrice(routeKm, vehicleType, true)) - 2.00).toFixed(2)}</span>
+                            Novo Preço Zomp: <span style={{ fontSize: '1.4rem' }}>R$ {(parseFloat(getPrice(routeKm, vehicleType, true)) - calculatedDiscountAmount).toFixed(2)}</span>
                           </p>
                         </div>
                         <div style={{ background: '#fff', color: '#059669', padding: '6px 14px', borderRadius: '10px', fontWeight: 900, fontSize: '0.9rem' }}>
-                          -R$ 2,00
+                          -R$ {calculatedDiscountAmount.toFixed(2)}
                         </div>
                       </div>
                     </div>
