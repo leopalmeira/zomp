@@ -1376,8 +1376,8 @@ const POPULAR_PLACES_RJ = [
 
                   {hasCompetitionDiscount && !manualPriceError && (
                     <div className="animate-bounce-subtle" style={{
-                      background: '#059669',
-                      padding: '14px',
+                      background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                      padding: '16px',
                       borderRadius: '14px',
                       border: '2px solid #34d399',
                       marginTop: '12px',
@@ -1399,6 +1399,50 @@ const POPULAR_PLACES_RJ = [
                           -R$ {calculatedDiscountAmount.toFixed(2)}
                         </div>
                       </div>
+
+                      {/* Dica para cancelar na concorrência */}
+                      <div style={{
+                        background: 'rgba(255,255,255,0.15)',
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        marginTop: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <span style={{ fontSize: '1.2rem' }}>💡</span>
+                        <p style={{ margin: 0, fontSize: '0.72rem', color: '#ecfdf5', fontWeight: 600, lineHeight: '1.4' }}>
+                          Cancele a corrida na Uber/99 e chame pelo Zomp com desconto garantido! Seu motorista está a poucos toques.
+                        </p>
+                      </div>
+
+                      {/* Botão de chamada rápida com desconto */}
+                      <button
+                        onClick={handleCallNow}
+                        disabled={isLoading}
+                        style={{
+                          width: '100%',
+                          marginTop: '12px',
+                          padding: '14px',
+                          borderRadius: '12px',
+                          border: 'none',
+                          background: 'linear-gradient(135deg, #fff 0%, #f0fdf4 100%)',
+                          color: '#047857',
+                          fontWeight: 900,
+                          fontSize: '1rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                          transition: 'all 0.2s',
+                          opacity: isLoading ? 0.7 : 1
+                        }}
+                      >
+                        <span style={{ fontSize: '1.3rem' }}>⚡</span>
+                        {isLoading ? 'Chamando...' : `CHAMAR AGORA POR R$ ${(parseFloat(getPrice(routeKm, vehicleType, true)) - calculatedDiscountAmount).toFixed(2)}`}
+                      </button>
                     </div>
                   )}
                 </div>
