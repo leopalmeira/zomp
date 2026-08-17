@@ -643,16 +643,16 @@ export default function DriverDashboard() {
         <MapContainer center={myPos} zoom={15} zoomControl={false} attributionControl={false} style={{ width: '100%', height: '100%' }}>
           <TileLayer url={darkMap ? darkTile : lightTile} />
           {/* Sonar de Raio de Atuação em volta do motorista */}
-          {isOnline && workRadiusKm > 0 && (
+          {workRadiusKm > 0 && (
             <Circle
               center={myPos}
               radius={workRadiusKm * 1000}
               pathOptions={{
                 color: '#00E676',
                 fillColor: '#00E676',
-                fillOpacity: 0.07,
-                weight: 2,
-                dashArray: '6, 8'
+                fillOpacity: isOnline ? 0.14 : 0.05,
+                weight: 2.5,
+                dashArray: '6, 6'
               }}
             />
           )}
@@ -661,26 +661,42 @@ export default function DriverDashboard() {
         </MapContainer>
       </div>
 
-      {/* TOP */}
-      <div className="driver-top-header">
-        <button className="driver-menu-btn" onClick={() => setMenuOpen(true)}>☰</button>
-        {isOnline && (
-          <button className="driver-status-pill online" onClick={() => setIsOnline(false)}>
-            <span className="status-dot"></span>
-            Online
-          </button>
-        )}
-      </div>
+      {/* TOP HEADER COM MENU, CLIMA, TRÂNSITO E STATUS ONLINE */}
+      <div className="driver-top-header-integrated">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <button className="driver-menu-btn" onClick={() => setMenuOpen(true)}>☰</button>
 
-      {/* OVERLAY WIDGET: CLIMA, TRÂNSITO & SONAR DE RAIO */}
-      {showWeatherTraffic && (
-        <div className="driver-widgets-overlay">
-          <div className="driver-widget-glass">
-            <div className="weather-traffic-info">
+          {/* Sonar / Raio de Atuação Rápido */}
+          <button
+            className="radius-badge-btn"
+            onClick={() => setShowRadiusSelector(prev => !prev)}
+            title="Ajustar Raio de Atuação (Sonar)"
+          >
+            <span>🎯</span>
+            <span>{workRadiusKm === 0 ? 'Sem Limite' : `${workRadiusKm} km`}</span>
+          </button>
+
+          {isOnline ? (
+            <button className="driver-status-pill online" onClick={() => setIsOnline(false)}>
+              <span className="status-dot"></span>
+              Online
+            </button>
+          ) : (
+            <button className="driver-status-pill" style={{ background: '#27272a', color: '#a1a1aa' }} onClick={checkCreditsAndGoOnline}>
+              <span className="status-dot" style={{ background: '#71717a' }}></span>
+              Offline
+            </button>
+          )}
+        </div>
+
+        {/* OVERLAY WIDGET: CLIMA & TRÂNSITO */}
+        {showWeatherTraffic && (
+          <div className="driver-widget-glass" style={{ marginTop: '10px' }}>
+            <div className="weather-traffic-info" style={{ width: '100%', justifyContent: 'space-between' }}>
               {/* Clima Gratuito Open-Meteo */}
               <div className="weather-badge" title={`${weather.desc} • Vento ${weather.wind} km/h`}>
-                <span>{weather.icon}</span>
-                <span>{weather.temp}°C</span>
+                <span style={{ fontSize: '1.1rem' }}>{weather.icon}</span>
+                <span>{weather.temp}°C {weather.desc}</span>
               </div>
               
               {/* Trânsito */}
@@ -689,56 +705,46 @@ export default function DriverDashboard() {
                 <span>{getTrafficInfo().label}</span>
               </div>
             </div>
-
-            {/* Sonar / Raio de Atuação */}
-            <button
-              className="radius-badge-btn"
-              onClick={() => setShowRadiusSelector(prev => !prev)}
-              title="Ajustar Raio de Atuação (Sonar)"
-            >
-              <span>🎯</span>
-              <span>{workRadiusKm === 0 ? 'Sem Limite' : `${workRadiusKm} km`}</span>
-            </button>
           </div>
+        )}
 
-          {/* Seletor Rápido de Raio de Atuação */}
-          {showRadiusSelector && (
-            <div className="radius-selector-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '1.2rem' }}>🎯</span>
-                  <strong style={{ fontSize: '0.9rem' }}>Raio de Atuação (Sonar)</strong>
-                </div>
-                <button
-                  onClick={() => setShowRadiusSelector(false)}
-                  style={{ background: 'none', border: 'none', color: '#a1a1aa', cursor: 'pointer', fontSize: '1.1rem' }}
-                >
-                  ✕
-                </button>
+        {/* Seletor Rápido de Raio de Atuação */}
+        {showRadiusSelector && (
+          <div className="radius-selector-card" style={{ marginTop: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1.2rem' }}>🎯</span>
+                <strong style={{ fontSize: '0.9rem' }}>Raio de Atuação (Sonar)</strong>
               </div>
-              <p style={{ margin: '4px 0 8px', fontSize: '0.75rem', color: '#a1a1aa' }}>
-                Defina o alcance máximo das corridas a partir da sua posição atual:
-              </p>
-
-              <div className="radius-options-grid">
-                {[3, 5, 10, 15, 20, 30, 50, 0].map(r => (
-                  <button
-                    key={r}
-                    className={`radius-chip ${workRadiusKm === r ? 'active' : ''}`}
-                    onClick={() => {
-                      setWorkRadiusKm(r);
-                      localStorage.setItem('zomp_driver_radius', String(r));
-                      setShowRadiusSelector(false);
-                    }}
-                  >
-                    {r === 0 ? 'Livre 🌐' : `${r} km`}
-                  </button>
-                ))}
-              </div>
+              <button
+                onClick={() => setShowRadiusSelector(false)}
+                style={{ background: 'none', border: 'none', color: '#a1a1aa', cursor: 'pointer', fontSize: '1.1rem' }}
+              >
+                ✕
+              </button>
             </div>
-          )}
-        </div>
-      )}
+            <p style={{ margin: '4px 0 8px', fontSize: '0.75rem', color: '#a1a1aa' }}>
+              Defina o alcance máximo das corridas a partir da sua posição atual:
+            </p>
+
+            <div className="radius-options-grid">
+              {[3, 5, 10, 15, 20, 30, 50, 0].map(r => (
+                <button
+                  key={r}
+                  className={`radius-chip ${workRadiusKm === r ? 'active' : ''}`}
+                  onClick={() => {
+                    setWorkRadiusKm(r);
+                    localStorage.setItem('zomp_driver_radius', String(r));
+                    setShowRadiusSelector(false);
+                  }}
+                >
+                  {r === 0 ? 'Livre 🌐' : `${r} km`}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* BOTTOM */}
       <div className="driver-bottom-bar">

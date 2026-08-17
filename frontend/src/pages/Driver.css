@@ -30,7 +30,17 @@
   z-index: 1;
 }
 
-/* TOP HEADER */
+/* TOP HEADER INTEGRATED */
+.driver-top-header-integrated {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 2500;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+}
+
 .driver-top-header {
   position: absolute;
   top: 0; left: 0; right: 0;
