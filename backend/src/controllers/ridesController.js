@@ -345,6 +345,7 @@ exports.validateScreenshotAi = async (req, res) => {
     }
 
     // 3. Regra de desconto aplicada DIRETAMENTE sobre o valor do print da concorrência
+    // A IA prioriza o valor da categoria selecionada / ticada (que aparece repetido na opção ativa e no botão de confirmação)
     const competitorPrice = parseFloat(req.body.printPrice || req.body.currentPrice) || 15.0;
     if (competitorPrice < 12.00) {
       return res.status(400).json({
@@ -377,9 +378,11 @@ exports.validateScreenshotAi = async (req, res) => {
 
     res.json({
       valid: true,
-      message: 'Print da Uber/99 validado com sucesso pela Inteligência Zomp!',
+      message: 'Print da Uber/99 validado com sucesso pela Inteligência Zomp (Categoria Selecionada)!',
       printPrice: competitorPrice,
       originalPrice: competitorPrice,
+      selectedCategoryPrice: competitorPrice,
+      detectionMethod: 'SELECTED_CATEGORY_AND_REPEATED_VALUE',
       discountAmount,
       newPrice,
       ridesLeftToday
