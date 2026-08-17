@@ -615,6 +615,34 @@ const POPULAR_PLACES_RJ = [
     }
   }
 
+  // ============= Enter seleciona primeira sugestão ou geocode direto =============
+  const handleEnterKey = async (e, target) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+
+    // Se há sugestões, seleciona a primeira
+    if (suggestions.length > 0) {
+      await handleSelectSuggestion(suggestions[0]);
+      return;
+    }
+
+    // Se não há sugestões, faz geocode direto do texto digitado
+    const text = target === 'origin' ? originAddr : target === 'dest' ? destAddr : '';
+    if (!text || text.trim().length < 3) return;
+
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=1&countrycodes=br`);
+      const data = await res.json();
+      if (data.length > 0) {
+        // Simula a seleção como se fosse uma sugestão
+        setSugTarget(target);
+        setTimeout(() => handleSelectSuggestion(data[0]), 50);
+      }
+    } catch (err) {
+      console.warn('Geocode direto falhou:', err);
+    }
+  }
+
   // ============= Calculate route (core function) =============
   const calculateRoute = async (oCoords, dCoords, sCoords = []) => {
     setIsLoading(true)
@@ -851,6 +879,7 @@ const POPULAR_PLACES_RJ = [
                   setOriginCoords(null)
                   searchAddress(v, 'origin')
                 }}
+                onKeyDown={(e) => handleEnterKey(e, 'origin')}
                 placeholder="Partida"
               />
               {stops.map((stop, si) => (
@@ -885,6 +914,7 @@ const POPULAR_PLACES_RJ = [
                   setDestCoords(null)
                   searchAddress(v, 'dest')
                 }}
+                onKeyDown={(e) => handleEnterKey(e, 'dest')}
                 placeholder="Destino"
               />
             </div>
@@ -967,6 +997,7 @@ const POPULAR_PLACES_RJ = [
                       setOriginCoords(null)
                       searchAddress(v, 'origin')
                     }}
+                    onKeyDown={(e) => handleEnterKey(e, 'origin')}
                     placeholder="Endereço de coleta"
                   />
                   <input
@@ -978,6 +1009,7 @@ const POPULAR_PLACES_RJ = [
                       setDestCoords(null)
                       searchAddress(v, 'dest')
                     }}
+                    onKeyDown={(e) => handleEnterKey(e, 'dest')}
                     placeholder="Endereço de entrega"
                   />
                 </div>
