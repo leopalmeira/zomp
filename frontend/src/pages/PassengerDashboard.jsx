@@ -390,29 +390,64 @@ export default function PassengerDashboard() {
     return finalPrice.toFixed(2)
   }
 
+  // Função para buscar endereço real com base na latitude e longitude (Geocodificação Reversa)
+  const reverseGeocode = async (lat, lon) => {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.address) {
+          const road = data.address.road || data.address.suburb || '';
+          const house = data.address.house_number || '';
+          const suburb = data.address.suburb || data.address.neighbourhood || '';
+          const city = data.address.city || data.address.town || '';
+          
+          if (road) {
+            const shortAddr = house 
+              ? `${road}, ${house} - ${suburb || city}` 
+              : `${road} - ${suburb || city}`;
+            return shortAddr;
+          }
+          return data.display_name.split(',').slice(0, 3).join(',');
+        }
+      }
+    } catch (e) {
+      console.warn('Erro na geocodificação reversa:', e);
+    }
+    return 'Sua Localização';
+  }
+
   // ============= GPS tracking =============
-  // Runs ONCE on mount only — no dependencies to prevent infinite re-creation
+  const hasInitializedGps = useRef(false);
+
   useEffect(() => {
     let watchId;
     if (navigator.geolocation) {
       watchId = navigator.geolocation.watchPosition(
-        (pos) => {
+        async (pos) => {
           const c = [pos.coords.latitude, pos.coords.longitude]
           setMapCenter(c)
-          setOriginCoords(c)
-          setOriginAddr(prev => prev ? prev : 'Sua Localização')
+          
+          // Só preenche o input de texto e coordenadas iniciais se for a primeira inicialização
+          if (!hasInitializedGps.current) {
+            hasInitializedGps.current = true;
+            setOriginCoords(c)
+            
+            // Busca o endereço real e preciso via Nominatim
+            const realAddress = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+            setOriginAddr(realAddress);
+          }
         },
         (err) => {
           console.error('GPS error:', err)
-          // Safe: no crash if originCoords is null
         },
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
       )
     }
     return () => {
-      if(watchId) navigator.geolocation.clearWatch(watchId);
+      if (watchId) navigator.geolocation.clearWatch(watchId);
     }
-  }, [])  // Empty deps = run only on mount
+  }, [])
 
 // Locais Populares e Fallback Rápido para o Rio de Janeiro e Região
 const POPULAR_PLACES_RJ = [
