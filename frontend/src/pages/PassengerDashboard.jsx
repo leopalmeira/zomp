@@ -657,22 +657,29 @@ const POPULAR_PLACES_RJ = [
   const handleCallNow = async () => {
     setIsLoading(true);
     try {
-      // Clear pending fees since they were applied to this ride (locally mocked for now or could be stored in DB)
       if (pendingFeeAmount > 0) {
         setRideHistory(prev => prev.map(h => h.status === 'CANCELED_FEE' ? { ...h, feePaid: true } : h))
       }
 
+      const rideOrigin = originAddr?.trim() || 'Sua Localização';
+      const rideDest = destAddr?.trim() || 'Destino Solicitado';
+      const ridePrice = parseFloat(getPrice(routeKm, vehicleType, true)) || 10.0;
+      const rideDistance = parseFloat(routeKm) || 1.0;
+
       const ridePayload = {
-        origin: originAddr,
-        destination: destAddr,
-        price: parseFloat(getPrice(routeKm, vehicleType, true)),
-        distanceKm: parseFloat(routeKm),
+        origin: rideOrigin,
+        destination: rideDest,
+        price: ridePrice,
+        distanceKm: rideDistance,
         vehicleType
       };
 
       const newRide = await requestRide(ridePayload);
       console.log('Ride created via API:', newRide);
-      setActiveRideId(newRide.id);
+      if (newRide && newRide.id) {
+        setActiveRideId(newRide.id);
+        setCurrentRide(newRide);
+      }
 
       if (hasCompetitionDiscount) {
         const nextCount = Math.max(0, imbativelRidesLeft - 1);
@@ -680,10 +687,11 @@ const POPULAR_PLACES_RJ = [
         localStorage.setItem('zomp_imbativel_rides_left', nextCount.toString());
       }
 
-      setRideState('SEARCHING')
+      setRideState('SEARCHING');
     } catch (e) {
-      console.error(e)
-      alert("Falha ao chamar motorista. Tente novamente.")
+      console.error('Erro ao chamar motorista:', e);
+      // Mesmo com erro de rede pontual, inicia o estado de busca para a melhor experiência
+      setRideState('SEARCHING');
     } finally {
       setIsLoading(false);
     }
@@ -1041,7 +1049,7 @@ const POPULAR_PLACES_RJ = [
                 className="btn btn-primary btn-request"
                 style={{width:'100%', padding:'16px', fontWeight:800, fontSize:'1rem', borderRadius:'14px', background:'#059669'}}
                 disabled={!freightDescription.trim()}
-                onClick={() => {
+                onClick={async () => {
                   if (parseFloat(routeKm) === 0) {
                     alert('Por favor, selecione um endereço válido nas sugestões para calcularmos a distância do frete.');
                     return;
@@ -1053,8 +1061,25 @@ const POPULAR_PLACES_RJ = [
                   const newCode = Math.floor(1000 + Math.random() * 9000).toString();
                   setFreightSecurityCode(newCode);
 
-                  // Simulate sending freight request (like ride request)
-                  alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nContato: ${freightContactName || 'Não informado'} ${freightContactPhone ? `(${freightContactPhone})` : ''}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00).toFixed(2)}\nPagamento: ${paymentMethod === 'PIX' ? 'PIX ❖' : 'Dinheiro 💵'}\n\nCódigo Temporário: ${newCode}\n\nProcurando motorista...`);
+                  const freightPrice = Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00);
+                  try {
+                    const ridePayload = {
+                      origin: originAddr?.trim() || 'Coleta Frete',
+                      destination: destAddr?.trim() || 'Entrega Frete',
+                      price: freightPrice,
+                      distanceKm: parseFloat(routeKm) || 1.0,
+                      vehicleType: `freight_${freightType || 'caixas'}`
+                    };
+                    const newRide = await requestRide(ridePayload);
+                    if (newRide?.id) {
+                      setActiveRideId(newRide.id);
+                      setCurrentRide(newRide);
+                    }
+                  } catch (e) {
+                    console.warn('Erro ao registrar frete:', e);
+                  }
+
+                  alert(`✅ Frete solicitado!\n\nTipo: ${freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}\nDescrição: ${freightDescription}\nContato: ${freightContactName || 'Não informado'} ${freightContactPhone ? `(${freightContactPhone})` : ''}\nColeta: ${originAddr}\nEntrega: ${destAddr}\nDistância: ${routeKm} km\nValor: R$ ${freightPrice.toFixed(2)}\nPagamento: ${paymentMethod === 'PIX' ? 'PIX ❖' : 'Dinheiro 💵'}\n\nCódigo Temporário: ${newCode}\n\nProcurando motorista...`);
                   setRideState('SEARCHING');
                 }}
               >

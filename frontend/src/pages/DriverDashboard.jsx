@@ -223,29 +223,77 @@ export default function DriverDashboard() {
   }, [])
   useEffect(() => { fetchWallet(); fetchCredits(); fetchLinkedPassengers(); fetchGlobalConfig() }, [fetchWallet, fetchCredits, fetchLinkedPassengers, fetchGlobalConfig])
 
-  // Notification & Vibration
+  // Notification, WakeLock & Background Sync
   useEffect(() => {
-    if ("Notification" in window) {
-      Notification.requestPermission();
-    }
-  }, []);
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && isOnline) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {}
+    };
 
-  const sendNotification = (title, body) => {
-    if ("Notification" in window && Notification.permission === "granted") {
-      const n = new Notification(title, {
-        body,
-        icon: '/logo.svg',
-        vibrate: [200, 100, 200],
-        tag: 'new-ride',
-        renotify: true
-      });
-      n.onclick = () => {
-        window.focus();
-        n.close();
-      };
+    if (isOnline) {
+      requestWakeLock();
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
+    return () => {
+      if (wakeLock) wakeLock.release().catch(() => {});
+    };
+  }, [isOnline]);
+
+  const sendNotification = async (title, body, ride) => {
+    try {
+      if ("Notification" in window) {
+        if (Notification.permission === "default") {
+          await Notification.requestPermission();
+        }
+        if (Notification.permission === "granted") {
+          // Dispara via Service Worker para funcionar em segundo plano / tela de bloqueio
+          if ('serviceWorker' in navigator) {
+            try {
+              const reg = await navigator.serviceWorker.ready;
+              if (reg && reg.showNotification) {
+                reg.showNotification(title, {
+                  body,
+                  icon: '/favicon.svg',
+                  badge: '/favicon.svg',
+                  tag: 'new-ride-' + (ride?.id || Date.now()),
+                  renotify: true,
+                  requireInteraction: true,
+                  vibrate: [500, 200, 500, 200, 500, 200, 500],
+                  data: { url: '/motorista', rideId: ride?.id }
+                });
+                return;
+              }
+            } catch (swErr) {
+              console.warn('SW notification fallback:', swErr);
+            }
+          }
+
+          // Fallback para Notification API padrão
+          const n = new Notification(title, {
+            body,
+            icon: '/favicon.svg',
+            vibrate: [500, 200, 500, 200, 500],
+            tag: 'new-ride-' + (ride?.id || Date.now()),
+            renotify: true,
+            requireInteraction: true
+          });
+          n.onclick = () => {
+            window.focus();
+            n.close();
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Notification error:', e);
     }
     if ("vibrate" in navigator) {
-      navigator.vibrate([500, 200, 500]);
+      try { navigator.vibrate([500, 200, 500, 200, 500]); } catch (e) {}
     }
   }
 
@@ -253,6 +301,20 @@ export default function DriverDashboard() {
   const [pendingRides, setPendingRides] = useState([])
   const [activeRide, setActiveRide] = useState(null)
   const prevRideCountRef = useRef(0)
+
+  // Alarme sonoro contínuo enquanto houver corrida pendente aguardando aceite
+  useEffect(() => {
+    let ringTimer;
+    if (isOnline && pendingRides.length > 0 && !activeRide) {
+      playRingSound();
+      ringTimer = setInterval(() => {
+        playRingSound();
+      }, 3500);
+    }
+    return () => {
+      if (ringTimer) clearInterval(ringTimer);
+    };
+  }, [isOnline, pendingRides.length, activeRide]);
 
   useEffect(() => {
     let interval
@@ -271,7 +333,12 @@ export default function DriverDashboard() {
 
           if (r.length > 0 && r.length > prevRideCountRef.current) {
             playRingSound();
-            sendNotification('🚀 Nova Solicitação!', `Corrida disponível: ${r[0].origin.split(',')[0]} → ${r[0].destination.split(',')[0]}`);
+            const first = r[0];
+            sendNotification(
+              `🚖 Nova Corrida — R$ ${Number(first.price).toFixed(2)}`,
+              `Passageiro: ${first.passengerName || first.passenger?.name || 'Passageiro'}\nOrigem: ${first.origin?.split(',')[0]} → ${first.destination?.split(',')[0]}\nDistância: ${first.distanceKm} km`,
+              first
+            );
           }
           prevRideCountRef.current = r.length;
           setPendingRides(r) 
@@ -532,55 +599,80 @@ export default function DriverDashboard() {
             </div>
           )
         ) : pendingRides.length > 0 ? (
-          <div className="ride-request-card">
-            <div className="request-header">
+          <div className="ride-request-card animate-fade-in-up" style={{ border: '2px solid #10b981', boxShadow: '0 8px 30px rgba(16, 185, 129, 0.25)' }}>
+            <div className="request-header" style={{ borderBottom: '1px solid #27272a', paddingBottom: '12px' }}>
               <div>
-                <div className="label">Nova Corrida</div>
-                <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'2px'}}>
-                  <div style={{fontSize:'0.85rem',fontWeight:600,color:'#d4d4d8'}}>{pendingRides[0].passenger?.name || 'Passageiro'}</div>
-                  {(!pendingRides[0].passenger?.ridesCompleted || pendingRides[0].passenger?.ridesCompleted === 0) && (
-                    <span className="ap-badge-new" style={{margin:0, padding:'1px 4px', fontSize:'0.55rem'}}>Novo</span>
+                <div className="label" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: 800 }}>
+                  <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
+                  {pendingRides[0].vehicleType?.includes('freight') ? '📦 NOVO FRETE SOLICITADO' : '🚖 NOVA CORRIDA'}
+                </div>
+                <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'4px'}}>
+                  <div style={{fontSize:'0.95rem',fontWeight:700,color:'#f4f4f5'}}>
+                    {pendingRides[0].passengerName || pendingRides[0].passenger?.name || 'Passageiro'}
+                  </div>
+                  {(!pendingRides[0].passengerRidesCompleted && !pendingRides[0].passenger?.ridesCompleted) && (
+                    <span className="ap-badge-new" style={{margin:0, padding:'1px 5px', fontSize:'0.6rem'}}>Novo</span>
                   )}
                 </div>
-                <div style={{fontSize:'0.7rem', color:'#9ca3af', fontWeight:600}}>
-                   ⭐ {formatNumber(pendingRides[0].passenger?.rating, 1, '5.0')} • {pendingRides[0].passenger?.ridesCompleted || 0} viagens
+                <div style={{fontSize:'0.72rem', color:'#a1a1aa', fontWeight:600, marginTop:'2px'}}>
+                   ⭐ {formatNumber(pendingRides[0].passengerRating || pendingRides[0].passenger?.rating, 1, '5.0')} • {(pendingRides[0].passengerRidesCompleted ?? pendingRides[0].passenger?.ridesCompleted) || 0} viagens
                 </div>
               </div>
-              <div className="price">R$ {formatNumber(pendingRides[0].price, 2, '0.00')}</div>
+              <div className="price" style={{ color: '#10b981', fontSize: '1.5rem', fontWeight: 900 }}>
+                R$ {formatNumber(pendingRides[0].price, 2, '0.00')}
+              </div>
             </div>
-            <div className="request-body">
+            <div className="request-body" style={{ marginTop: '12px' }}>
               <div className="request-route">
                 <div className="route-dots"><div className="dot-green"></div><div className="dot-line"></div><div className="dot-red"></div></div>
                 <div className="route-texts">
-                  <div className="route-label">Embarque</div>
-                  <div className="route-addr">{pendingRides[0].origin || 'Origem'}</div>
+                  <div className="route-label">Embarque / Coleta</div>
+                  <div className="route-addr" style={{ fontWeight: 600 }}>{pendingRides[0].origin || 'Origem'}</div>
                   {pendingRides[0].stops && pendingRides[0].stops.length > 0 && pendingRides[0].stops.map((stop, i) => (
                     <div key={i}>
                       <div className="route-label" style={{color:'#f59e0b'}}>📍 Parada {i+1}</div>
-                      <div className="route-addr" style={{color:'#b45309'}}>{stop}</div>
+                      <div className="route-addr" style={{color:'#fde68a'}}>{stop}</div>
                     </div>
                   ))}
-                  <div className="route-label">Destino</div>
-                  <div className="route-addr">{pendingRides[0].destination || 'Destino'}</div>
+                  <div className="route-label" style={{ marginTop: '6px' }}>Destino / Entrega</div>
+                  <div className="route-addr" style={{ fontWeight: 600 }}>{pendingRides[0].destination || 'Destino'}</div>
                 </div>
               </div>
-              <div className="request-meta">
+              <div className="request-meta" style={{ margin: '14px 0' }}>
                 <span className="meta-tag">📏 {pendingRides[0].distanceKm} km</span>
-                <span className="meta-tag">{pendingRides[0].vehicleType === 'car' ? '🚗 Carro' : '🏍️ Moto'}</span>
+                <span className="meta-tag">
+                  {pendingRides[0].vehicleType?.includes('freight')
+                    ? '🚚 Frete'
+                    : pendingRides[0].vehicleType === 'moto'
+                    ? '🏍️ Moto'
+                    : '🚗 Carro'}
+                </span>
                 {pendingRides[0].stops && pendingRides[0].stops.length > 0 && (
                   <span className="meta-tag" style={{background:'#fffbeb',color:'#b45309'}}>📍 {pendingRides[0].stops.length} parada{pendingRides[0].stops.length > 1 ? 's' : ''}</span>
                 )}
               </div>
-              <div className="request-actions">
-                <button className="btn-accept" onClick={() => handleAccept(pendingRides[0].id)}>Aceitar</button>
-                <button className="btn-reject" onClick={async () => {
-                  const rideId = pendingRides[0].id;
-                  setPendingRides(prev => prev.slice(1));
-                  try {
-                    const { rejectRide } = await import('../services/api');
-                    await rejectRide(rideId);
-                  } catch (e) { console.error('Erro ao rejeitar', e) }
-                }}>Recusar</button>
+              <div className="request-actions" style={{ gap: '10px' }}>
+                <button 
+                  className="btn-accept" 
+                  style={{ flex: 1.6, padding: '14px', fontSize: '1rem', fontWeight: 900, background: '#10b981', color: '#fff', borderRadius: '12px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)' }}
+                  onClick={() => handleAccept(pendingRides[0].id)}
+                >
+                  ✓ Aceitar Viagem
+                </button>
+                <button 
+                  className="btn-reject" 
+                  style={{ flex: 1, padding: '14px', fontSize: '0.9rem', fontWeight: 700, background: '#27272a', color: '#a1a1aa', borderRadius: '12px', border: '1px solid #3f3f46', cursor: 'pointer' }}
+                  onClick={async () => {
+                    const rideId = pendingRides[0].id;
+                    setPendingRides(prev => prev.slice(1));
+                    try {
+                      const { rejectRide } = await import('../services/api');
+                      await rejectRide(rideId);
+                    } catch (e) { console.error('Erro ao rejeitar', e) }
+                  }}
+                >
+                  Recusar
+                </button>
               </div>
             </div>
           </div>

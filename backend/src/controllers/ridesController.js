@@ -3,11 +3,17 @@ const { pool } = require('../config/db');
 exports.requestRide = async (req, res) => {
   try {
     const { origin, destination, price, distanceKm, vehicleType } = req.body;
+    const validOrigin = (origin && origin.trim()) || 'Origem';
+    const validDest = (destination && destination.trim()) || 'Destino';
+    const validPrice = parseFloat(price) || 10.0;
+    const validDistance = parseFloat(distanceKm) || 1.0;
+    const validVehicle = vehicleType || 'car';
+
     const { rows } = await pool.query(`
       INSERT INTO "Ride" ("passengerId", origin, destination, price, "distanceKm", "vehicleType", status)
       VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
       RETURNING *
-    `, [req.user.id, origin, destination, price, distanceKm, vehicleType]);
+    `, [req.user.id, validOrigin, validDest, validPrice, validDistance, validVehicle]);
     res.json(rows[0]);
   } catch (err) {
     console.error('Erro ao solicitar corrida:', err.message);
@@ -18,9 +24,14 @@ exports.requestRide = async (req, res) => {
 exports.getPendingRides = async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT r.*, u.name as "passengerName", u.photo as "passengerPhoto", u.phone as "passengerPhone"
+      SELECT r.*, 
+             COALESCE(u.name, 'Passageiro') as "passengerName", 
+             u.photo as "passengerPhoto", 
+             u.phone as "passengerPhone",
+             u.rating as "passengerRating",
+             u."ridesCompleted" as "passengerRidesCompleted"
       FROM "Ride" r
-      JOIN "User" u ON r."passengerId" = u.id
+      LEFT JOIN "User" u ON r."passengerId" = u.id
       WHERE r.status = 'PENDING'
         AND (
           r."createdAt" >= NOW() - INTERVAL '10 minutes'
