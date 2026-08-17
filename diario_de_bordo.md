@@ -316,6 +316,16 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - **Quitação Total no Passageiro**: Assim que a nova corrida é solicitada e concluída, o débito do passageiro é **100% zerado e nunca mais volta a aparecer para ele**.
   - **Repasse do Motorista na Compra de Créditos**: Como o motorista recebeu esse valor extra em mãos/PIX do passageiro (referente à corrida cancelada de outro motorista/sistema), o valor fica registrado no débito com o app (`driverAppDebt`) e é **somado automaticamente com aviso detalhado quando o motorista for comprar novos pacotes de créditos**, quitando a pendência com a plataforma!
 
+* ❓ **Central de Dúvidas (FAQ) Integrada no App do Motorista**:
+  - Nova tela interativa e didática no menu lateral `☰` (*FAQ*) respondendo às principais dúvidas dos parceiros:
+    - Como funciona o repasse de valores extras recebidos de corridas com débitos anteriores.
+    - Como configurar o Sonar de Radar no mapa e escolher o raio de atuação.
+    - Como interpretar a previsão de Clima e Trânsito em tempo real.
+    - Como adquirir pacotes de Créditos com desconto e bônus.
+    - Como funciona a Chave PIX rápida no início da corrida.
+    - Como funciona a cobertura do Preço Imbatível Zomp.
+    - Como acompanhar e sacar os Royalties de R$ 0,30 por passageiro.
+
 * ❖ **Chave PIX Visível no Início da Corrida**:
   - Assim que o motorista aceita/inicia a corrida (`ACCEPTED` / `IN_PROGRESS`), a chave PIX do motorista e o valor total já aparecem em destaque para o passageiro adiantar o pagamento com botão de cópia rápida.
 
@@ -328,11 +338,13 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 
 ---
 **Status Atual**: ✅ Todas as funcionalidades operacionais e validadas no Render.
-**Versão**: 13.0.0
+**Versão**: 14.0.0
 **Responsável**: Antigravity AI & Pair Programming
 **Últimos Commits**:
-- `47af92f` (Desconto de R$ 3,00 para corridas com print acima de R$ 30,00)
-- `689ea2a` (Desconto aplicado diretamente sobre o valor do print da concorrência)
-- `3fdc63a` (Inserção de endereço simples com Enter e botão de ação rápida)
-- `8625bc9` (Corridas longas com som suave, limite 1x e countdown 10s)
+- `d6d2037` (docs: atualiza diario de bordo com conciliacao financeira completa)
+- `0445aed` (feat: conciliacao de debitos quitados no passageiro e repasse para o motorista quitar na compra de creditos)
+- `e4b13c0` (docs: atualiza diario de bordo com priorizacao da categoria ticada no print)
+- `e7272ca` (feat: prioriza valor da categoria ticada e repetida no print para calculo do desconto)
+- `95571e0` (feat: integra preco imbativel na tela inicial IDLE do passageiro e widgets de clima/transito/sonar)
+
 

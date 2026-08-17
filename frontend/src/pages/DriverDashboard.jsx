@@ -129,9 +129,42 @@ const isLongOrScheduledRide = (ride) => {
   return dist >= 15 || vt.includes('long') || vt.includes('intercity') || vt.includes('scheduled') || vt.includes('freight');
 }
 
+// Lista Completa de FAQs para o Motorista Parceiro
+const DRIVER_FAQS = [
+  {
+    q: '💰 Recebi um valor a mais na corrida (débito anterior do passageiro). Como funciona?',
+    a: 'Quando um passageiro teve uma corrida anterior cancelada no percurso, o valor proporcional calculado é somado na próxima corrida dele. Como você recebeu esse valor total diretamente do passageiro (em dinheiro ou PIX), esse valor extra fica registrado no seu app como repasse à plataforma e será quitado de forma simples e automática quando você for comprar novos créditos na sua recarga!'
+  },
+  {
+    q: '🎯 O que é o Sonar de Radar no mapa e como escolher meu raio de atuação?',
+    a: 'O Sonar é o radar verde que envolve sua posição GPS no mapa. Você pode escolher a distância máxima que deseja trabalhar (3km, 5km, 10km, 15km, 20km, 30km, 50km ou Livre). O aplicativo priorizará e filtrará chamadas dentro do raio que você escolheu, garantindo que você rode apenas onde deseja!'
+  },
+  {
+    q: '🌦️ Como funciona a previsão de Clima e Trânsito em tempo real?',
+    a: 'No topo da tela do app você tem a previsão do tempo e temperatura em tempo real com base no seu GPS (via Open-Meteo) e o status do trânsito regional (🟢 Fluindo, 🟡 Moderado ou 🔴 Intenso em horários de pico). Você pode ocultar ou reexibir esse widget a qualquer momento no menu lateral em Preferências & Mapa.'
+  },
+  {
+    q: '🎫 Como funcionam os Créditos e os pacotes de recarga?',
+    a: 'Cada corrida concluída consome apenas 1 crédito (R$ 1,50). No menu "Meus Créditos" você pode adquirir pacotes com bônus e desconto: 10 créditos por R$ 15,00, 22 créditos por R$ 30,00 (+2 corridas grátis) ou 35 créditos por R$ 45,00 (+5 corridas grátis). O pagamento é confirmado via PIX na hora!'
+  },
+  {
+    q: '❖ Chave PIX rápida no início da corrida',
+    a: 'Assim que você aceita a corrida, o passageiro já tem acesso à sua chave PIX e ao valor total da viagem com botão de cópia rápida para poder adiantar o pagamento com segurança.'
+  },
+  {
+    q: '🔥 O que é o Preço Imbatível Zomp?',
+    a: 'É o compromisso da Zomp de cobrir os preços de Uber e 99. O passageiro envia o print da corrida no outro app e ganha desconto garantido. O motorista parceiro sempre recebe o valor integral e justo do seu trabalho!'
+  },
+  {
+    q: '👑 Como funcionam os Royalties de R$ 0,30 por passageiro?',
+    a: 'Ao indicar passageiros com seu QR Code ou transportá-los pela primeira vez, você ganha R$ 0,30 por cada corrida que eles fizerem no aplicativo durante 3 meses. Você pode solicitar o saque do saldo diretamente no menu Royalties!'
+  }
+];
+
 export default function DriverDashboard() {
   const navigate = useNavigate()
   const [user, setUser] = useState(getCurrentUser())
+  const [openFaq, setOpenFaq] = useState(null)
 
   useEffect(() => {
     if (!user || user.role !== 'DRIVER') { navigate('/motorista'); return }
@@ -561,16 +594,7 @@ export default function DriverDashboard() {
     pixKey: user?.pixKey || '',
   })
 
-  // FAQ
-  const [openFaq, setOpenFaq] = useState(null)
-  const faqs = [
-    { q: 'Como funciona o sistema de royalties?', a: 'A cada corrida de um passageiro vinculado a você, R$ 0,30 é creditado automaticamente na sua carteira de royalties. Este vínculo dura 2 anos e você ganha em todas as corridas dele.' },
-    { q: 'Como funciona o sistema de créditos?', a: 'Cada crédito equivale a 1 corrida. Ao aceitar uma corrida, 1 crédito é descontado. Você inicia com 10 créditos grátis e depois pode comprar pacotes de 10, 20 ou 30 créditos.' },
-    { q: 'Quando posso sacar meus royalties?', a: 'Saques são permitidos a cada 3 meses, com saldo mínimo de R$ 1,00. O valor é transferido para sua conta bancária cadastrada.' },
-    { q: 'Como indicar um passageiro?', a: 'Compartilhe seu QR Code exclusivo. Ele pode escaneá-lo durante o cadastro e será vinculado permanentemente.' },
-    { q: 'E se o passageiro não veio por indicação?', a: 'Na primeira corrida que você concluir com um passageiro sem vínculo, ele é automaticamente vinculado a você por 2 anos!' },
-    { q: 'Posso pegar corridas de outros apps?', a: 'Em breve! Estamos trabalhando na integração com 99, Uber e InDriver.' }
-  ]
+
 
   // QR
   const [copied, setCopied] = useState(false)
@@ -1448,15 +1472,72 @@ export default function DriverDashboard() {
       {/* ===== FAQ ===== */}
       {activeScreen === 'FAQ' && (
         <div className="driver-inner-screen">
-          <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>FAQ</h2></div>
+          <div className="inner-header">
+            <button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button>
+            <h2>Perguntas Frequentes (FAQ)</h2>
+          </div>
           <div className="inner-body">
-            {faqs.map((faq, i) => (
-              <div key={i} className="faq-item">
-                <div className="faq-question" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
-                  <span>{faq.q}</span>
-                  <span style={{fontSize:'1rem',transform: openFaq === i ? 'rotate(180deg)' : '',transition:'transform 0.2s',color:'#a1a1aa'}}>▾</span>
+            <div className="premium-card" style={{ textAlign: 'center', padding: '24px 16px', marginBottom: '16px' }}>
+              <span style={{ fontSize: '2.4rem', display: 'block', marginBottom: '8px' }}>💡</span>
+              <h3 style={{ fontWeight: 800, fontSize: '1.1rem', margin: '0 0 4px' }}>Central de Dúvidas</h3>
+              <p style={{ color: '#71717a', fontWeight: 600, fontSize: '0.82rem', margin: 0 }}>
+                Tudo o que você precisa saber para faturar mais com a Zomp
+              </p>
+            </div>
+
+            {DRIVER_FAQS.map((faq, i) => (
+              <div
+                key={i}
+                className="faq-item"
+                style={{
+                  background: '#fff',
+                  borderRadius: '14px',
+                  border: '1px solid #e4e4e7',
+                  marginBottom: '10px',
+                  overflow: 'hidden',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                }}
+              >
+                <div
+                  className="faq-question"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  style={{
+                    padding: '14px 16px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    gap: '12px'
+                  }}
+                >
+                  <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#18181b', lineHeight: 1.35 }}>
+                    {faq.q}
+                  </span>
+                  <span style={{
+                    fontSize: '1rem',
+                    transform: openFaq === i ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 0.2s ease',
+                    color: '#059669',
+                    fontWeight: 900
+                  }}>
+                    ▾
+                  </span>
                 </div>
-                {openFaq === i && <div className="faq-answer">{faq.a}</div>}
+                {openFaq === i && (
+                  <div
+                    className="faq-answer"
+                    style={{
+                      padding: '0 16px 16px',
+                      fontSize: '0.82rem',
+                      color: '#4b5563',
+                      lineHeight: 1.5,
+                      borderTop: '1px solid #f4f4f5',
+                      paddingTop: '12px'
+                    }}
+                  >
+                    {faq.a}
+                  </div>
+                )}
               </div>
             ))}
           </div>
