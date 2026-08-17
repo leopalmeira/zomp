@@ -259,7 +259,16 @@ export default function DriverDashboard() {
     if (isOnline && !activeRide) {
       const poll = async () => {
         try { 
-          const r = await getPendingRides();
+          const rawRides = await getPendingRides();
+          const now = Date.now();
+          const r = Array.isArray(rawRides) ? rawRides.filter(ride => {
+            if (!ride.createdAt) return true;
+            const isLongOrScheduled = (parseFloat(ride.distanceKm) >= 50) || (ride.vehicleType && (ride.vehicleType.includes('long') || ride.vehicleType.includes('intercity') || ride.vehicleType.includes('scheduled') || ride.vehicleType.includes('freight')));
+            if (isLongOrScheduled) return true;
+            const ageMs = now - new Date(ride.createdAt).getTime();
+            return ageMs <= 10 * 60 * 1000; // expira em 10 minutos
+          }) : [];
+
           if (r.length > 0 && r.length > prevRideCountRef.current) {
             playRingSound();
             sendNotification('🚀 Nova Solicitação!', `Corrida disponível: ${r[0].origin.split(',')[0]} → ${r[0].destination.split(',')[0]}`);

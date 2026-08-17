@@ -1157,3 +1157,164 @@ input:checked + .slider:before { transform: translateX(22px); }
   }
 }
 
+/* ========================================
+   ZOMP UI - Autocomplete Floating Dropdown
+   ======================================== */
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14), 0 4px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f1f5f9;
+  z-index: 1500;
+  overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
+  animation: dropdown-slide-down 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdown-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f8fafc;
+  transition: all 0.15s ease;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: #f0fdf4;
+}
+
+.suggestion-item:active {
+  background: #dcfce7;
+}
+
+.suggestion-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.suggestion-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.suggestion-main {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #18181b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestion-sub {
+  font-size: 0.73rem;
+  font-weight: 500;
+  color: #71717a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ========================================
+   ZOMP UI - Minimalist Intercity / Freight List
+   ======================================== */
+.intercity-dest-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.intercity-dest-item:hover {
+  background: #f8fafc;
+  border-color: #10b981;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+
+.intercity-dest-item:active {
+  transform: scale(0.98);
+}
+
+.intercity-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #f4f4f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.intercity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  text-align: left;
+}
+
+.intercity-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #18181b;
+}
+
+.intercity-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #059669;
+  letter-spacing: 0.3px;
+}
+
+.intercity-arrow {
+  font-size: 1.1rem;
+  color: #a1a1aa;
+  font-weight: 700;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.intercity-dest-item:hover .intercity-arrow {
+  color: #10b981;
+  transform: translateX(3px);
+}
+

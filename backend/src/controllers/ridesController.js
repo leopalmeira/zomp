@@ -22,6 +22,14 @@ exports.getPendingRides = async (req, res) => {
       FROM "Ride" r
       JOIN "User" u ON r."passengerId" = u.id
       WHERE r.status = 'PENDING'
+        AND (
+          r."createdAt" >= NOW() - INTERVAL '10 minutes'
+          OR r."distanceKm" >= 50
+          OR r."vehicleType" ILIKE '%long%'
+          OR r."vehicleType" ILIKE '%intercity%'
+          OR r."vehicleType" ILIKE '%scheduled%'
+          OR r."vehicleType" ILIKE '%freight%'
+        )
       ORDER BY r."createdAt" DESC
     `);
     res.json(rows);

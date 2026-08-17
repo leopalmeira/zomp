@@ -405,44 +405,122 @@ export default function PassengerDashboard() {
     return () => {
       if(watchId) navigator.geolocation.clearWatch(watchId);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])  // Empty deps = run only on mount
 
-  // ============= Address search with debounce =============
+// Locais Populares e Fallback Rápido para o Rio de Janeiro e Região
+const POPULAR_PLACES_RJ = [
+  { display_name: 'Copacabana, Rio de Janeiro - RJ', title: 'Copacabana', subtitle: 'Zona Sul • Rio de Janeiro, RJ', lat: -22.9698, lon: -43.1868 },
+  { display_name: 'Ipanema, Rio de Janeiro - RJ', title: 'Ipanema', subtitle: 'Zona Sul • Rio de Janeiro, RJ', lat: -22.9848, lon: -43.2003 },
+  { display_name: 'Leblon, Rio de Janeiro - RJ', title: 'Leblon', subtitle: 'Zona Sul • Rio de Janeiro, RJ', lat: -22.9839, lon: -43.2238 },
+  { display_name: 'Barra da Tijuca, Rio de Janeiro - RJ', title: 'Barra da Tijuca', subtitle: 'Zona Oeste • Rio de Janeiro, RJ', lat: -23.0004, lon: -43.3659 },
+  { display_name: 'Recreio dos Bandeirantes, Rio de Janeiro - RJ', title: 'Recreio dos Bandeirantes', subtitle: 'Zona Oeste • Rio de Janeiro, RJ', lat: -23.0272, lon: -43.4653 },
+  { display_name: 'Centro, Rio de Janeiro - RJ', title: 'Centro', subtitle: 'Centro • Rio de Janeiro, RJ', lat: -22.9068, lon: -43.1729 },
+  { display_name: 'Botafogo, Rio de Janeiro - RJ', title: 'Botafogo', subtitle: 'Zona Sul • Rio de Janeiro, RJ', lat: -22.9519, lon: -43.1857 },
+  { display_name: 'Flamengo, Rio de Janeiro - RJ', title: 'Flamengo', subtitle: 'Zona Sul • Rio de Janeiro, RJ', lat: -22.9329, lon: -43.1764 },
+  { display_name: 'Tijuca, Rio de Janeiro - RJ', title: 'Tijuca', subtitle: 'Zona Norte • Rio de Janeiro, RJ', lat: -22.9255, lon: -43.2356 },
+  { display_name: 'Estádio do Maracanã, Rio de Janeiro - RJ', title: 'Estádio do Maracanã', subtitle: 'Zona Norte • Rio de Janeiro, RJ', lat: -22.9121, lon: -43.2302 },
+  { display_name: 'Méier, Rio de Janeiro - RJ', title: 'Méier', subtitle: 'Zona Norte • Rio de Janeiro, RJ', lat: -22.8986, lon: -43.2777 },
+  { display_name: 'Madureira, Rio de Janeiro - RJ', title: 'Madureira', subtitle: 'Zona Norte • Rio de Janeiro, RJ', lat: -22.8732, lon: -43.3392 },
+  { display_name: 'Aeroporto Santos Dumont (SDU), Rio de Janeiro - RJ', title: 'Aeroporto Santos Dumont (SDU)', subtitle: 'Centro • Rio de Janeiro, RJ', lat: -22.9105, lon: -43.1631 },
+  { display_name: 'Aeroporto Internacional do Galeão (GIG), Rio de Janeiro - RJ', title: 'Aeroporto Galeão (GIG)', subtitle: 'Ilha do Governador • Rio de Janeiro, RJ', lat: -22.8148, lon: -43.2494 },
+  { display_name: 'Niterói, RJ', title: 'Niterói', subtitle: 'Região Metropolitana • RJ', lat: -22.8833, lon: -43.1036 },
+  { display_name: 'Rodoviária Novo Rio, Rio de Janeiro - RJ', title: 'Rodoviária Novo Rio', subtitle: 'Santo Cristo • Rio de Janeiro, RJ', lat: -22.8989, lon: -43.2097 }
+];
+
+  // ============= Address search with fast debounce =============
   const searchAddress = useCallback((text, target) => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     setSugTarget(target)
 
-    if (text.length < 4) {
+    const trimmed = text.trim()
+    if (trimmed.length < 2) {
       setSuggestions([])
       return
     }
 
+    // Busca rápida instantânea no fallback local enquanto pesquisa na rede
+    const queryClean = trimmed.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const quickLocal = POPULAR_PLACES_RJ.filter(addr => {
+      const nameClean = addr.display_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return nameClean.includes(queryClean);
+    });
+    if (quickLocal.length > 0) {
+      setSuggestions(quickLocal.slice(0, 5));
+    }
+
     debounceRef.current = setTimeout(async () => {
-      let data = [];
+      let remoteResults = [];
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&countrycodes=br&limit=5`
-        )
-        data = await res.json()
-      } catch (e) {
-        console.error('Nominatim search error, using local fallback:', e)
+        // Tenta Photon primeiro (muito mais rápido e sem rate-limit)
+        const photonRes = await fetch(
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&limit=6&lat=-22.9068&lon=-43.1729&lang=pt`
+        );
+        if (photonRes.ok) {
+          const photonData = await photonRes.json();
+          if (photonData?.features && photonData.features.length > 0) {
+            remoteResults = photonData.features.map(f => {
+              const p = f.properties;
+              const name = p.name || p.street || '';
+              const city = p.city || p.county || p.state || 'Rio de Janeiro';
+              const district = p.district || p.suburb || '';
+              const subtitle = [district, city].filter(Boolean).join(', ') || 'Brasil';
+              const fullName = [name, subtitle].filter(Boolean).join(', ');
+              return {
+                display_name: fullName,
+                title: name || fullName,
+                subtitle: subtitle,
+                lat: f.geometry.coordinates[1],
+                lon: f.geometry.coordinates[0]
+              };
+            });
+          }
+        }
+      } catch (e) {}
+
+      // Fallback para Nominatim se Photon não retornar
+      if (remoteResults.length === 0) {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trimmed)}&countrycodes=br&limit=6`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) {
+              remoteResults = data.map(d => {
+                const parts = d.display_name.split(',');
+                return {
+                  display_name: d.display_name,
+                  title: parts[0]?.trim() || d.display_name,
+                  subtitle: parts.slice(1, 3).join(',').trim() || 'Brasil',
+                  lat: parseFloat(d.lat),
+                  lon: parseFloat(d.lon)
+                };
+              });
+            }
+          }
+        } catch (e) {}
       }
 
-      const queryClean = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const localMatches = LOCAL_ADDRESS_FALLBACK.filter(addr => {
+      // Combina resultados remotos com locais
+      const localMatches = POPULAR_PLACES_RJ.filter(addr => {
         const nameClean = addr.display_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         return nameClean.includes(queryClean);
       });
 
-      if (!Array.isArray(data) || data.length === 0) {
-        setSuggestions(localMatches);
-      } else {
-        const combined = [...data, ...localMatches].slice(0, 5);
-        setSuggestions(combined);
+      const merged = [...remoteResults, ...localMatches];
+      const unique = [];
+      const seen = new Set();
+      for (const item of merged) {
+        const key = item.title?.toLowerCase() || item.display_name?.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(item);
+        }
       }
-    }, 600) // 600ms debounce to respect API rate limits
-  }, [])
+
+      setSuggestions(unique.slice(0, 5));
+    }, 200);
+  }, []);
 
   // ============= Select suggestion =============
   const handleSelectSuggestion = async (s) => {
@@ -453,9 +531,8 @@ export default function PassengerDashboard() {
     const numberMatch = typedText.match(/\d+/)
     const houseNumber = numberMatch ? numberMatch[0] : ''
 
-    // Build address: street name + number + bairro + cidade
     const parts = s.display_name.split(',')
-    const streetName = parts[0]?.trim() || ''
+    const streetName = parts[0]?.trim() || s.title || ''
     const bairro = parts.length > 2 ? parts[parts.length - 4]?.trim() || parts[1]?.trim() : parts[1]?.trim() || ''
     const cidade = parts.length > 3 ? parts[parts.length - 3]?.trim() || '' : ''
     const shortAddr = houseNumber
@@ -469,7 +546,7 @@ export default function PassengerDashboard() {
     } else if (sugTarget === 'dest') {
       setDestAddr(shortAddr)
       setDestCoords(coords)
-    } else if (sugTarget.startsWith('stop_')) {
+    } else if (sugTarget && sugTarget.startsWith('stop_')) {
       const idx = parseInt(sugTarget.split('_')[1])
       const newStops = [...stops]
       newStops[idx] = { addr: shortAddr, coords }
@@ -478,7 +555,7 @@ export default function PassengerDashboard() {
 
     setSuggestions([])
 
-    // Try to calculate route immediately if enough coords are ready
+    // Trigger route calc if both origin and dest are set
     const oCoords = sugTarget === 'origin' ? coords : originCoordsRef.current
     const dCoords = sugTarget === 'dest' ? coords : destCoordsRef.current
     const sCoords = sugTarget.startsWith('stop_') 
@@ -773,9 +850,21 @@ export default function PassengerDashboard() {
             {suggestions.length > 0 && (
               <div className="autocomplete-dropdown">
                 {suggestions.map((s, i) => (
-                  <div key={i} className="suggestion-item" onMouseDown={(e) => { e.preventDefault(); handleSelectSuggestion(s) }}>
-                    <MapPin size={14} color="#888" />
-                    <span>{s.display_name.split(',').slice(0, 3).join(',')}</span>
+                  <div 
+                    key={i} 
+                    className="suggestion-item" 
+                    onMouseDown={(e) => { 
+                      e.preventDefault(); 
+                      handleSelectSuggestion(s); 
+                    }}
+                  >
+                    <div className="suggestion-icon-wrap">
+                      <MapPin size={15} color="#059669" />
+                    </div>
+                    <div className="suggestion-text">
+                      <span className="suggestion-main">{s.title || s.display_name.split(',')[0]}</span>
+                      <span className="suggestion-sub">{s.subtitle || s.display_name.split(',').slice(1, 3).join(',').trim()}</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -790,37 +879,21 @@ export default function PassengerDashboard() {
         </div>
       )}
 
-      {/* ===== BOTTOM SHEET ===== */}
-      <div className={`passenger-bottom-sheet ${isSheetCollapsed ? 'collapsed' : ''}`}>
-        <div className="sheet-drag-area" onClick={() => setIsSheetCollapsed(!isSheetCollapsed)}>
-          <div className="sheet-handle"></div>
-        </div>
+      {/* ===== BOTTOM SHEET (Aparece apenas quando houver ação/fluxo em andamento) ===== */}
+      {rideState !== 'IDLE' && (
+        <div className={`passenger-bottom-sheet ${isSheetCollapsed ? 'collapsed' : ''}`}>
+          <div className="sheet-drag-area" onClick={() => setIsSheetCollapsed(!isSheetCollapsed)}>
+            <div className="sheet-handle"></div>
+          </div>
 
-        <div className="sheet-content-wrapper">
+          <div className="sheet-content-wrapper">
 
-          {/* ---- STATE: IDLE ---- */}
-          {rideState === 'IDLE' && (
-            <div className="state-idle animate-fade-in" style={{ paddingBottom: '20px' }}>
-              <div style={{ textAlign: 'center', padding: '28px 16px', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', borderRadius: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
-                <div style={{ fontSize: '2.8rem', marginBottom: '12px' }}>🚀</div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0' }}>Para onde vamos hoje?</h3>
-                <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0, fontWeight: 600, lineHeight: 1.4 }}>
-                  Digite seu endereço de partida e destino na barra de busca superior para iniciar uma viagem rápida e segura.
-                </p>
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '18px' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '4px 10px', borderRadius: '100px', border: '1px solid #d1fae5' }}>⚡ Preço Imbatível</span>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#2563eb', background: '#eff6ff', padding: '4px 10px', borderRadius: '100px', border: '1px solid #dbeafe' }}>🛡️ Viagem Segura</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ---- STATE: FREIGHT ---- */}
-          {rideState === 'FREIGHT' && (
-            <div className="state-freight animate-fade-in-up">
-              <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'20px'}}>
-                <button onClick={() => { setRideState('IDLE'); setFreightType(null); setFreightDescription(''); setRouteGeometry([]); setRouteKm('0'); }} style={{background:'none',border:'none',cursor:'pointer',fontSize:'1.4rem',padding:'4px'}}>←</button>
-                <h2 className="sheet-title" style={{margin:0}}>🚚 Frete: {freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}</h2>
+            {/* ---- STATE: FREIGHT ---- */}
+            {rideState === 'FREIGHT' && (
+              <div className="state-freight animate-fade-in-up">
+                <div style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'20px'}}>
+                  <button onClick={() => { setRideState('IDLE'); setFreightType(null); setFreightDescription(''); setRouteGeometry([]); setRouteKm('0'); }} style={{background:'none',border:'none',cursor:'pointer',fontSize:'1.4rem',padding:'4px'}}>←</button>
+                  <h2 className="sheet-title" style={{margin:0}}>🚚 Frete: {freightType === 'caixas' ? 'Caixas' : 'Sacos & Sacolas'}</h2>
               </div>
 
               {/* Freight Address Inputs */}
@@ -1605,6 +1678,7 @@ export default function PassengerDashboard() {
 
         </div>
       </div>
+      )}
 
       {/* ===== SIDE MENU ===== */}
       {isMenuOpen && (
@@ -1705,42 +1779,37 @@ export default function PassengerDashboard() {
 
               {menuScreen === 'LONG_TRIPS' && (
                 <div className="animate-fade-in">
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
-                    ← Voltar
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '8px', fontWeight: 700}}>
+                    ← Voltar ao Menu
                   </button>
-                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>Viagens Longas</h3>
-                  <p className="hint-text" style={{marginBottom: '16px'}}>Selecione um destino intermunicipal:</p>
+                  <div style={{ padding: '0 4px 12px 4px' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#18181b', margin: '0 0 4px 0' }}>Viagens Longas</h3>
+                    <p style={{ fontSize: '0.78rem', color: '#71717a', margin: 0, fontWeight: 500 }}>
+                      Destinos intermunicipais com tarifa especial
+                    </p>
+                  </div>
                   
-                  <div style={{display:'flex', flexDirection:'column', gap:'12px', maxHeight:'60vh', overflowY:'auto', paddingRight:'4px'}} className="hide-scrollbar">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '62vh', overflowY: 'auto', paddingRight: '4px' }} className="hide-scrollbar">
                     {[
-                      { id: 'angra', title: 'Angra dos Reis', label: 'Praia', img: '/angra.png' },
-                      { id: 'mangaratiba', title: 'Mangaratiba', label: 'Praia', img: '/mangaratiba.png' },
-                      { id: 'buzios', title: 'Búzios', label: 'Praia', img: '/buzios.png' },
-                      { id: 'cabo', title: 'Cabo Frio', label: 'Praia', img: '/cabo.png' },
-                      { id: 'arraial', title: 'Arraial do Cabo', label: 'Praia', img: '/arraial.png' },
-                      { id: 'saquarema', title: 'Saquarema', label: 'Praia', img: '/saquarema.png' },
-                      { id: 'paraty', title: 'Paraty', label: 'Praia', img: '/paraty.png' },
-                      { id: 'ostras', title: 'Rio das Ostras', label: 'Praia', img: '/ostras.png' },
-                      { id: 'petropolis', title: 'Petrópolis', label: 'Montanha', img: '/petropolis.png' },
-                      { id: 'teresopolis', title: 'Teresópolis', label: 'Montanha', img: '/teresopolis.png' },
-                      { id: 'friburgo', title: 'Nova Friburgo', label: 'Montanha', img: 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=400&q=80' },
-                      { id: 'vassouras', title: 'Vassouras', label: 'Interior', img: 'https://images.unsplash.com/photo-1506506200949-df87442881d3?w=400&q=80' },
-                      { id: 'valenca', title: 'Valença', label: 'Interior', img: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400&q=80' },
-                      { id: 'barra_pirai', title: 'Barra do Piraí', label: 'Interior', img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400&q=80' },
-                      { id: 'resende', title: 'Resende', label: 'Interior', img: '/resende.png' },
-                      { id: 'campos', title: 'Campos', label: 'Interior', img: '/campos.png' }
+                      { id: 'angra', title: 'Angra dos Reis', label: 'Praia', icon: '🏖️', distance: '~150 km' },
+                      { id: 'buzios', title: 'Armação dos Búzios', label: 'Praia', icon: '🏖️', distance: '~170 km' },
+                      { id: 'cabo', title: 'Cabo Frio', label: 'Praia', icon: '🏖️', distance: '~155 km' },
+                      { id: 'arraial', title: 'Arraial do Cabo', label: 'Praia', icon: '🏖️', distance: '~165 km' },
+                      { id: 'paraty', title: 'Paraty', label: 'Histórico', icon: '🏛️', distance: '~240 km' },
+                      { id: 'petropolis', title: 'Petrópolis', label: 'Serra', icon: '⛰️', distance: '~68 km' },
+                      { id: 'teresopolis', title: 'Teresópolis', label: 'Serra', icon: '⛰️', distance: '~95 km' },
+                      { id: 'friburgo', title: 'Nova Friburgo', label: 'Serra', icon: '⛰️', distance: '~135 km' },
+                      { id: 'saquarema', title: 'Saquarema', label: 'Praia', icon: '🏄', distance: '~100 km' },
+                      { id: 'mangaratiba', title: 'Mangaratiba', label: 'Praia', icon: '🏖️', distance: '~105 km' },
+                      { id: 'ostras', title: 'Rio das Ostras', label: 'Praia', icon: '🏖️', distance: '~170 km' },
+                      { id: 'resende', title: 'Resende', label: 'Interior', icon: '🌿', distance: '~160 km' },
+                      { id: 'vassouras', title: 'Vassouras', label: 'Histórico', icon: '🏛️', distance: '~115 km' },
+                      { id: 'campos', title: 'Campos dos Goytacazes', label: 'Norte', icon: '🌾', distance: '~275 km' }
                     ].map(dest => (
-                      <div key={dest.id} style={{
-                          position: 'relative',
-                          width: '100%',
-                          height: '90px',
-                          borderRadius:'16px',
-                          overflow:'hidden',
-                          background:'#000',
-                          boxShadow:'0 4px 10px rgba(0,0,0,0.1)',
-                          cursor:'pointer',
-                          transition: 'transform 0.2s ease',
-                      }} onClick={async () => {
+                      <div 
+                        key={dest.id} 
+                        className="intercity-dest-item"
+                        onClick={async () => {
                           setIsMenuOpen(false);
                           setMenuScreen('MAIN');
                           setIsIntercity(true);
@@ -1774,25 +1843,16 @@ export default function PassengerDashboard() {
                           } finally {
                             setIsLoading(false);
                           }
-                      }}>
-                        <div style={{
-                          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                          backgroundImage:`url(${dest.img})`,
-                          backgroundSize:'cover',
-                          backgroundPosition:'center',
-                        }}></div>
-                        <div style={{
-                          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                          background: 'linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.1) 100%)'
-                        }}></div>
-                        <div style={{
-                          position: 'absolute', top: 0, bottom: 0, left: 0,
-                          padding:'16px',
-                          display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px'
-                        }}>
-                           <span style={{fontSize:'0.65rem',color:'#10b981',fontWeight:800, textTransform:'uppercase', letterSpacing:'1px'}}>{dest.label}</span>
-                           <h4 style={{margin:0,fontSize:'1rem',fontWeight:800,color:'#fff'}}>{dest.title}</h4>
+                        }}
+                      >
+                        <div className="intercity-icon-wrap">
+                          <span>{dest.icon}</span>
                         </div>
+                        <div className="intercity-info">
+                          <span className="intercity-title">{dest.title}</span>
+                          <span className="intercity-badge">{dest.label} • {dest.distance}</span>
+                        </div>
+                        <span className="intercity-arrow">→</span>
                       </div>
                     ))}
                   </div>
@@ -1801,47 +1861,47 @@ export default function PassengerDashboard() {
 
               {menuScreen === 'FREIGHT_SELECTION' && (
                 <div className="animate-fade-in">
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
-                    ← Voltar
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '8px', fontWeight: 700}}>
+                    ← Voltar ao Menu
                   </button>
-                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>Fretes & Entregas</h3>
-                  <p className="hint-text" style={{marginBottom: '20px'}}>Escolha a modalidade de envio:</p>
+                  <div style={{ padding: '0 4px 12px 4px' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#18181b', margin: '0 0 4px 0' }}>Fretes & Entregas</h3>
+                    <p style={{ fontSize: '0.78rem', color: '#71717a', margin: 0, fontWeight: 500 }}>
+                      Selecione a modalidade de envio:
+                    </p>
+                  </div>
                   
-                  <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {[
-                      { id: 'caixas', icon: '📦', title: 'Caixas', desc: 'Mudanças e volumes maiores' },
-                      { id: 'sacos', icon: '🛍️', title: 'Sacos & Sacolas', desc: 'Compras e pequenos volumes' },
+                      { id: 'caixas', icon: '📦', title: 'Caixas e Mudanças', desc: 'Móveis, caixas e volumes médios/grandes' },
+                      { id: 'sacos', icon: '🛍️', title: 'Sacos e Sacolas', desc: 'Compras, documentos e pequenos volumes' },
                     ].map(item => (
-                      <div key={item.id} style={{
-                        background: '#fff',
-                        border: '1px solid #e4e4e7',
-                        borderRadius: '16px',
-                        padding: '16px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '14px',
-                        transition: 'all 0.25s ease',
-                      }}
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        setMenuScreen('MAIN');
-                        setFreightType(item.id);
-                        setFreightDescription('');
-                        setDestAddr('');
-                        setDestCoords(null);
-                        setRouteGeometry([]);
-                        setRouteKm('0');
-                        setVehicleType('car');
-                        setFreightSecurityCode('');
-                        setRideState('FREIGHT');
-                      }}
+                      <div 
+                        key={item.id} 
+                        className="intercity-dest-item"
+                        style={{ padding: '14px 16px' }}
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          setMenuScreen('MAIN');
+                          setFreightType(item.id);
+                          setFreightDescription('');
+                          setDestAddr('');
+                          setDestCoords(null);
+                          setRouteGeometry([]);
+                          setRouteKm('0');
+                          setVehicleType('car');
+                          setFreightSecurityCode('');
+                          setRideState('FREIGHT');
+                        }}
                       >
-                        <span style={{fontSize:'2.2rem'}}>{item.icon}</span>
-                        <div style={{display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left'}}>
-                          <span style={{fontSize:'0.95rem',fontWeight:800,color:'#18181b'}}>{item.title}</span>
-                          <span style={{fontSize:'0.75rem',color:'#71717a',fontWeight:600}}>{item.desc}</span>
+                        <div className="intercity-icon-wrap" style={{ background: '#ecfdf5', fontSize: '1.3rem' }}>
+                          <span>{item.icon}</span>
                         </div>
+                        <div className="intercity-info">
+                          <span className="intercity-title">{item.title}</span>
+                          <span className="intercity-badge" style={{ color: '#71717a', fontWeight: 500, fontSize: '0.72rem' }}>{item.desc}</span>
+                        </div>
+                        <span className="intercity-arrow">→</span>
                       </div>
                     ))}
                   </div>
