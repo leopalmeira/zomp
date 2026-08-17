@@ -291,6 +291,13 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Corridas longas (≥ 15km) ou agendadas tocam **som suave e grave apenas 1 vez** e aparecem **no máximo 1 vez** por motorista.
   - Temporizador regressivo de **10 segundos** no card do motorista com barra de progresso e auto-recusa.
 
+* 🛑 **Encerramento no Meio do Caminho & Cobrança Acumulada na Próxima Corrida**:
+  - Se a corrida for encerrada/cancelada durante o percurso, o sistema calcula o **valor percentual proporcional** baseado no KM percorrido em relação ao total.
+  - Caso o passageiro não quite o valor no momento, o saldo é registrado como **débito pendente** (`pendingDebt`) e somado automaticamente no total da **próxima corrida** que ele solicitar.
+
+* ❖ **Chave PIX Visível no Início da Corrida**:
+  - Assim que o motorista aceita/inicia a corrida (`ACCEPTED` / `IN_PROGRESS`), a chave PIX do motorista e o valor total já aparecem em destaque para o passageiro adiantar o pagamento com botão de cópia rápida.
+
 * 🛑 **Fim de Chamadas Fantasmas & Cancelamento no Servidor**:
   - Ao cancelar no app do passageiro, a sessão é destruída no banco de dados (`status = 'CANCELLED'`), desativando o alarme e o card no motorista imediatamente.
 
