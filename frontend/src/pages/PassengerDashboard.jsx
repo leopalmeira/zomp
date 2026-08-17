@@ -923,9 +923,15 @@ const POPULAR_PLACES_RJ = [
         setCurrentRide(newRide);
       }
 
+      // Quita e limpa o débito pendente do passageiro no estado local (não volta a aparecer)
+      setUserPendingDebt(0);
+      setPendingFeeAmount(0);
+
       setRideState('SEARCHING');
     } catch (e) {
       console.error('Erro ao chamar motorista:', e);
+      setUserPendingDebt(0);
+      setPendingFeeAmount(0);
       setRideState('SEARCHING');
     } finally {
       setIsLoading(false);

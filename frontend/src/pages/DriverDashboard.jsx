@@ -267,6 +267,7 @@ export default function DriverDashboard() {
   // Wallet & Credits
   const [wallet, setWallet] = useState({ balance: 0 })
   const [credits, setCredits] = useState(0)
+  const [driverAppDebt, setDriverAppDebt] = useState(0)
   const [linkedPassengers, setLinkedPassengers] = useState(0)
   const [globalLaunchDate, setGlobalLaunchDate] = useState(null)
 
@@ -288,6 +289,7 @@ export default function DriverDashboard() {
       const res = await fetch(`${API}/credits`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
       const d = await res.json()
       if (d.credits !== undefined) setCredits(d.credits)
+      if (d.driverAppDebt !== undefined) setDriverAppDebt(parseFloat(d.driverAppDebt) || 0)
     } catch (err) {
       console.warn('Erro ao buscar creditos:', err)
     }
@@ -612,9 +614,16 @@ export default function DriverDashboard() {
 
   const handleBuyCreditsInit = (qty, price) => {
     const resolvedPrice = price ?? CREDIT_PACKAGE_PRICES[qty] ?? qty * 1.5
-    const formattedPrice = Number(resolvedPrice).toFixed(2)
+    const totalToPay = Number(resolvedPrice) + Number(driverAppDebt || 0)
+    const formattedPrice = totalToPay.toFixed(2)
     const pixPayload = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2,15)}-zomp0204${qty}C5204000053039865405${formattedPrice}5802BR5914ZOMP PAGAMENTOS6009SAO_PAULO62070503***6304ABCD`
-    setPixModal({ qty, price: formattedPrice, pixKey: pixPayload })
+    setPixModal({
+      qty,
+      basePrice: Number(resolvedPrice).toFixed(2),
+      driverAppDebt: Number(driverAppDebt || 0),
+      price: formattedPrice,
+      pixKey: pixPayload
+    })
   }
 
   const handleConfirmPixPayment = async () => {
@@ -628,7 +637,8 @@ export default function DriverDashboard() {
       const d = await res.json()
       if (!res.ok) throw new Error(d.error)
       setCredits(d.credits)
-      alert(d.message || 'Créditos adicionados com sucesso!')
+      setDriverAppDebt(0)
+      alert(d.message || 'Créditos adicionados e débitos com o app quitados com sucesso!')
       setPixModal(null)
     } catch (e) { alert(e.message || 'Erro na compra') }
   }
@@ -1267,9 +1277,37 @@ export default function DriverDashboard() {
               <button type="button" onClick={() => setPixModal(null)} style={{border: 'none', background: '#f4f4f5', borderRadius: '999px', width: '34px', height: '34px', cursor: 'pointer', fontWeight: 900}}>×</button>
             </div>
 
+            {pixModal.driverAppDebt > 0 && (
+              <div style={{ background: '#fef2f2', border: '1.5px solid #f87171', borderRadius: '12px', padding: '12px', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#991b1b' }}>
+                      VALOR EXTRA A REPASSAR AO APP
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#b91c1c', fontWeight: 600, lineHeight: 1.4 }}>
+                      Você recebeu <strong>R$ {pixModal.driverAppDebt.toFixed(2)}</strong> a mais de corrida pendente de outro motorista/sistema. Este valor foi somado a esta recarga e será quitado com a plataforma.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div style={{background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '14px', padding: '14px', marginBottom: '14px'}}>
-              <div style={{fontSize: '0.8rem', color: '#047857', fontWeight: 700, marginBottom: '4px'}}>Valor</div>
-              <div style={{fontSize: '2rem', fontWeight: 900, color: '#064e3b'}}>R$ {pixModal.price}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#047857', fontWeight: 700, marginBottom: '2px' }}>
+                <span>Pacote {pixModal.qty} créditos:</span>
+                <span>R$ {pixModal.basePrice}</span>
+              </div>
+              {pixModal.driverAppDebt > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#dc2626', fontWeight: 700, marginBottom: '4px' }}>
+                  <span>Débito c/ App (Corrida Anterior):</span>
+                  <span>+ R$ {pixModal.driverAppDebt.toFixed(2)}</span>
+                </div>
+              )}
+              <div style={{ borderTop: '1px solid #a7f3d0', paddingTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <div style={{fontSize: '0.85rem', color: '#047857', fontWeight: 800}}>Total PIX a Pagar</div>
+                <div style={{fontSize: '1.8rem', fontWeight: 900, color: '#064e3b'}}>R$ {pixModal.price}</div>
+              </div>
             </div>
 
             <textarea

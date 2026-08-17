@@ -9,8 +9,10 @@ exports.requestRide = async (req, res) => {
     const validDistance = parseFloat(distanceKm) || 1.0;
     const validVehicle = vehicleType || 'car';
 
-    // Garante coluna pendingDebt na tabela User
+    // Garante colunas na tabela User e Ride
     await pool.query('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "pendingDebt" NUMERIC(10,2) DEFAULT 0');
+    await pool.query('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "driverAppDebt" NUMERIC(10,2) DEFAULT 0');
+    await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "pendingDebtIncluded" NUMERIC(10,2) DEFAULT 0');
 
     // 1. Verifica se o passageiro possui débito pendente de corrida anterior cancelada no percurso
     const { rows: userDebtRows } = await pool.query('SELECT "pendingDebt" FROM "User" WHERE id = $1', [req.user.id]);
@@ -23,10 +25,10 @@ exports.requestRide = async (req, res) => {
     }
 
     const { rows } = await pool.query(`
-      INSERT INTO "Ride" ("passengerId", origin, destination, price, "distanceKm", "vehicleType", status)
-      VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
+      INSERT INTO "Ride" ("passengerId", origin, destination, price, "distanceKm", "vehicleType", "pendingDebtIncluded", status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING')
       RETURNING *
-    `, [req.user.id, validOrigin, validDest, validPrice, validDistance, validVehicle]);
+    `, [req.user.id, validOrigin, validDest, validPrice, validDistance, validVehicle, pendingDebt]);
 
     res.json({
       ...rows[0],
@@ -124,6 +126,17 @@ exports.completeRide = async (req, res) => {
 
     // Incrementar ridesCompleted do motorista
     await pool.query('UPDATE "User" SET "ridesCompleted" = "ridesCompleted" + 1 WHERE id = $1', [req.user.id]);
+
+    // Zera qualquer pendência do passageiro (ele acabou de quitar esta corrida e dívida anterior)
+    await pool.query('UPDATE "User" SET "pendingDebt" = 0 WHERE id = $1', [ride.passengerId]);
+
+    // Se a corrida continha valor extra de dívida de corrida anterior, o motorista recebeu esse valor
+    // e deve repassar ao app na sua próxima compra de créditos
+    const pendingDebtIncluded = parseFloat(ride.pendingDebtIncluded || 0);
+    if (pendingDebtIncluded > 0) {
+      await pool.query('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "driverAppDebt" NUMERIC(10,2) DEFAULT 0');
+      await pool.query('UPDATE "User" SET "driverAppDebt" = COALESCE("driverAppDebt", 0) + $1 WHERE id = $2', [pendingDebtIncluded, req.user.id]);
+    }
 
     // Processar Royalties
     const { rows: referrals } = await pool.query(`
