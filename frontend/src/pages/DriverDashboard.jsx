@@ -1046,6 +1046,31 @@ export default function DriverDashboard() {
               <button className="drawer-nav-item" onClick={() => { setDarkMap(!darkMap); setMenuOpen(false) }}>
                 <span className="nav-icon">{darkMap ? <Sun size={18} /> : <Moon size={18} />}</span> {darkMap ? 'Modo Claro' : 'Mapa Escuro'}
               </button>
+
+              <button
+                className="drawer-nav-item"
+                style={{ color: '#00E676', fontWeight: 800 }}
+                onClick={async () => {
+                  try {
+                    if ('caches' in window) {
+                      const names = await caches.keys();
+                      await Promise.all(names.map(name => caches.delete(name)));
+                    }
+                    if ('serviceWorker' in navigator) {
+                      const registrations = await navigator.serviceWorker.getRegistrations();
+                      for (let reg of registrations) {
+                        await reg.unregister();
+                      }
+                    }
+                    window.location.reload(true);
+                  } catch (e) {
+                    window.location.reload();
+                  }
+                }}
+              >
+                <span className="nav-icon"><RefreshCw size={18} /></span>
+                Atualizar App (Limpar Cache)
+              </button>
             </nav>
 
             <div className="drawer-footer">

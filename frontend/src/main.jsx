@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import { registerSW } from 'virtual:pwa-register'
+
+// Força atualização imediata do PWA sem reter cache antigo
+registerSW({ immediate: true })
 
 import { GoogleOAuthProvider } from '@react-oauth/google'
 
