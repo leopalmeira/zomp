@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, rateRide } from '../services/api'
-import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet'
-import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet } from 'lucide-react'
+import { MapContainer, TileLayer, useMap, Marker, Circle } from 'react-leaflet'
+import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Driver.css'
@@ -160,6 +160,64 @@ export default function DriverDashboard() {
   const [darkMap, setDarkMap] = useState(false)
   const lightTile = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
   const darkTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+
+  // Clima e Trânsito na Região (Open-Meteo API Grátis)
+  const [weather, setWeather] = useState({ temp: 26, icon: '☀️', desc: 'Ensolarado', wind: 12 })
+  const [showWeatherTraffic, setShowWeatherTraffic] = useState(() => localStorage.getItem('zomp_driver_show_weather') !== 'false')
+  const [showTrafficLayer, setShowTrafficLayer] = useState(() => localStorage.getItem('zomp_driver_traffic_layer') === 'true')
+  
+  // Raio de Atuação (Sonar de Radar em volta do motorista)
+  const [workRadiusKm, setWorkRadiusKm] = useState(() => {
+    const saved = localStorage.getItem('zomp_driver_radius');
+    return saved !== null ? parseInt(saved) : 10;
+  })
+  const [showRadiusSelector, setShowRadiusSelector] = useState(false)
+
+  // Atualização do Clima em Tempo Real via Open-Meteo
+  const fetchWeather = useCallback(async (lat, lon) => {
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.current_weather) {
+          const code = data.current_weather.weathercode;
+          let icon = '☀️';
+          let desc = 'Ensolarado';
+          if (code === 0) { icon = '☀️'; desc = 'Céu Limpo'; }
+          else if ([1, 2, 3].includes(code)) { icon = '⛅'; desc = 'Parcialmente Nublado'; }
+          else if ([45, 48].includes(code)) { icon = '🌫️'; desc = 'Nevoeiro'; }
+          else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) { icon = '🌧️'; desc = 'Chuva'; }
+          else if ([95, 96, 99].includes(code)) { icon = '⛈️'; desc = 'Tempestade'; }
+
+          setWeather({
+            temp: Math.round(data.current_weather.temperature),
+            wind: Math.round(data.current_weather.windspeed),
+            icon,
+            desc
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao buscar clima gratuito:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (myPos && myPos[0]) {
+      fetchWeather(myPos[0], myPos[1]);
+      const wTimer = setInterval(() => fetchWeather(myPos[0], myPos[1]), 10 * 60 * 1000);
+      return () => clearInterval(wTimer);
+    }
+  }, [myPos, fetchWeather]);
+
+  const getTrafficInfo = () => {
+    const hour = new Date().getHours();
+    const isRush = (hour >= 7 && hour <= 9) || (hour >= 17 && hour <= 19);
+    const isModerate = (hour >= 11 && hour <= 14) || (hour >= 20 && hour <= 21);
+    if (isRush) return { status: 'INTENSO', label: 'Trânsito Intenso (Pico)', color: '#ef4444', icon: '🔴' };
+    if (isModerate) return { status: 'MODERADO', label: 'Trânsito Moderado', color: '#f59e0b', icon: '🟡' };
+    return { status: 'FLUINDO', label: 'Trânsito Fluindo', color: '#10b981', icon: '🟢' };
+  };
 
   // Slide to go online
   const [slideX, setSlideX] = useState(0)
@@ -584,6 +642,20 @@ export default function DriverDashboard() {
       <div className="driver-map-bg">
         <MapContainer center={myPos} zoom={15} zoomControl={false} attributionControl={false} style={{ width: '100%', height: '100%' }}>
           <TileLayer url={darkMap ? darkTile : lightTile} />
+          {/* Sonar de Raio de Atuação em volta do motorista */}
+          {isOnline && workRadiusKm > 0 && (
+            <Circle
+              center={myPos}
+              radius={workRadiusKm * 1000}
+              pathOptions={{
+                color: '#00E676',
+                fillColor: '#00E676',
+                fillOpacity: 0.07,
+                weight: 2,
+                dashArray: '6, 8'
+              }}
+            />
+          )}
           <MapController center={myPos} />
           <Marker position={myPos} icon={driverIcon} />
         </MapContainer>
@@ -599,6 +671,74 @@ export default function DriverDashboard() {
           </button>
         )}
       </div>
+
+      {/* OVERLAY WIDGET: CLIMA, TRÂNSITO & SONAR DE RAIO */}
+      {showWeatherTraffic && (
+        <div className="driver-widgets-overlay">
+          <div className="driver-widget-glass">
+            <div className="weather-traffic-info">
+              {/* Clima Gratuito Open-Meteo */}
+              <div className="weather-badge" title={`${weather.desc} • Vento ${weather.wind} km/h`}>
+                <span>{weather.icon}</span>
+                <span>{weather.temp}°C</span>
+              </div>
+              
+              {/* Trânsito */}
+              <div className="traffic-badge" style={{ color: getTrafficInfo().color }}>
+                <span>{getTrafficInfo().icon}</span>
+                <span>{getTrafficInfo().label}</span>
+              </div>
+            </div>
+
+            {/* Sonar / Raio de Atuação */}
+            <button
+              className="radius-badge-btn"
+              onClick={() => setShowRadiusSelector(prev => !prev)}
+              title="Ajustar Raio de Atuação (Sonar)"
+            >
+              <span>🎯</span>
+              <span>{workRadiusKm === 0 ? 'Sem Limite' : `${workRadiusKm} km`}</span>
+            </button>
+          </div>
+
+          {/* Seletor Rápido de Raio de Atuação */}
+          {showRadiusSelector && (
+            <div className="radius-selector-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '1.2rem' }}>🎯</span>
+                  <strong style={{ fontSize: '0.9rem' }}>Raio de Atuação (Sonar)</strong>
+                </div>
+                <button
+                  onClick={() => setShowRadiusSelector(false)}
+                  style={{ background: 'none', border: 'none', color: '#a1a1aa', cursor: 'pointer', fontSize: '1.1rem' }}
+                >
+                  ✕
+                </button>
+              </div>
+              <p style={{ margin: '4px 0 8px', fontSize: '0.75rem', color: '#a1a1aa' }}>
+                Defina o alcance máximo das corridas a partir da sua posição atual:
+              </p>
+
+              <div className="radius-options-grid">
+                {[3, 5, 10, 15, 20, 30, 50, 0].map(r => (
+                  <button
+                    key={r}
+                    className={`radius-chip ${workRadiusKm === r ? 'active' : ''}`}
+                    onClick={() => {
+                      setWorkRadiusKm(r);
+                      localStorage.setItem('zomp_driver_radius', String(r));
+                      setShowRadiusSelector(false);
+                    }}
+                  >
+                    {r === 0 ? 'Livre 🌐' : `${r} km`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* BOTTOM */}
       <div className="driver-bottom-bar">
@@ -877,6 +1017,30 @@ export default function DriverDashboard() {
               </button>
               <button className={`drawer-nav-item ${activeScreen === 'FAQ' ? 'active' : ''}`} onClick={() => openScreen('FAQ')}>
                 <span className="nav-icon"><HelpCircle size={18} /></span> FAQ
+              </button>
+
+              <div className="drawer-section-label">Preferências & Mapa</div>
+              <button
+                className="drawer-nav-item"
+                onClick={() => {
+                  const nextVal = !showWeatherTraffic;
+                  setShowWeatherTraffic(nextVal);
+                  localStorage.setItem('zomp_driver_show_weather', String(nextVal));
+                }}
+              >
+                <span className="nav-icon"><CloudSun size={18} /></span>
+                {showWeatherTraffic ? 'Ocultar Clima & Trânsito' : 'Exibir Clima & Trânsito'}
+              </button>
+
+              <button
+                className="drawer-nav-item"
+                onClick={() => {
+                  setShowRadiusSelector(true);
+                  setMenuOpen(false);
+                }}
+              >
+                <span className="nav-icon"><Radio size={18} /></span>
+                Raio Sonar: {workRadiusKm === 0 ? 'Ilimitado' : `${workRadiusKm} km`}
               </button>
 
               <button className="drawer-nav-item" onClick={() => { setDarkMap(!darkMap); setMenuOpen(false) }}>
