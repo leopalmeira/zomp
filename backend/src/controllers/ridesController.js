@@ -151,13 +151,24 @@ exports.getRideById = async (req, res) => {
 
 exports.cancelRide = async (req, res) => {
   try {
-    const { rows } = await pool.query(`
+    const rideId = req.params.id;
+    const userId = req.user.id;
+    const { status = 'CANCELLED' } = req.body || {};
+
+    if (rideId && rideId !== 'undefined' && rideId !== 'null') {
+      await pool.query(`
+        UPDATE "Ride" SET status = $1, "updatedAt" = NOW()
+        WHERE id = $2 AND ("passengerId" = $3 OR "driverId" = $3)
+      `, [status, rideId, userId]);
+    }
+
+    // Cancela e destrói qualquer outra corrida PENDING deste passageiro para não sobrar nada tocando para motoristas
+    await pool.query(`
       UPDATE "Ride" SET status = 'CANCELLED', "updatedAt" = NOW()
-      WHERE id = $1 AND ("passengerId" = $2 OR "driverId" = $2)
-      RETURNING *
-    `, [req.params.id, req.user.id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Corrida não encontrada' });
-    res.json(rows[0]);
+      WHERE "passengerId" = $1 AND status = 'PENDING'
+    `, [userId]);
+
+    res.json({ ok: true, message: 'Corrida cancelada com sucesso' });
   } catch (err) {
     console.error('Erro ao cancelar corrida:', err.message);
     res.status(500).json({ error: 'Erro ao cancelar corrida' });

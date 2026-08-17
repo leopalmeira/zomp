@@ -1641,16 +1641,9 @@ const POPULAR_PLACES_RJ = [
                     if (confirm(msg)) {
                       if (activeRideId) {
                         try {
-                           await fetch(`${import.meta.env.VITE_API_URL || '/api'}/rides/${activeRideId}/cancel`, {
-                             method: 'PUT',
-                             headers: {
-                               'Content-Type': 'application/json',
-                               'Authorization': `Bearer ${localStorage.getItem('zomp_token')}`
-                             },
-                             body: JSON.stringify({ status: statusVal })
-                           });
+                          await cancelRide(activeRideId, statusVal);
                         } catch (e) {
-                           console.error('Erro ao cancelar ride no backend', e);
+                          console.error('Erro ao cancelar ride no backend', e);
                         }
                       }
                       

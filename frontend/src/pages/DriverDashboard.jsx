@@ -299,6 +299,7 @@ export default function DriverDashboard() {
 
   // Pending Rides & Visualizações
   const [seenRidesCount, setSeenRidesCount] = useState({})
+  const seenRidesCountRef = useRef({})
   const [completedRideData, setCompletedRideData] = useState(null)
   const [showPixCompletionModal, setShowPixCompletionModal] = useState(false)
   const [showDriverRatingModal, setShowDriverRatingModal] = useState(false)
@@ -334,7 +335,7 @@ export default function DriverDashboard() {
           const r = Array.isArray(rawRides) ? rawRides.filter(ride => {
             if (!ride.createdAt) return true;
             // Limite: cada pedido só aparece no máximo 2 vezes para este motorista
-            if ((seenRidesCount[ride.id] || 0) >= 2) return false;
+            if ((seenRidesCountRef.current[ride.id] || 0) >= 2) return false;
 
             const isLongOrScheduled = (parseFloat(ride.distanceKm) >= 50) || (ride.vehicleType && (ride.vehicleType.includes('long') || ride.vehicleType.includes('intercity') || ride.vehicleType.includes('scheduled') || ride.vehicleType.includes('freight')));
             if (isLongOrScheduled) return true;
@@ -678,7 +679,8 @@ export default function DriverDashboard() {
                   style={{ flex: 1, padding: '14px', fontSize: '0.9rem', fontWeight: 700, background: '#27272a', color: '#a1a1aa', borderRadius: '12px', border: '1px solid #3f3f46', cursor: 'pointer' }}
                   onClick={async () => {
                     const rideId = pendingRides[0].id;
-                    setSeenRidesCount(prev => ({ ...prev, [rideId]: (prev[rideId] || 0) + 1 }));
+                    seenRidesCountRef.current[rideId] = (seenRidesCountRef.current[rideId] || 0) + 1;
+                    setSeenRidesCount({ ...seenRidesCountRef.current });
                     setPendingRides(prev => prev.slice(1));
                     try {
                       const { rejectRide } = await import('../services/api');
