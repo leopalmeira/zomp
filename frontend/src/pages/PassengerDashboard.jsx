@@ -908,16 +908,33 @@ const POPULAR_PLACES_RJ = [
         }
       }
 
+      // Fallback e garantia de coordenadas precisas de início e fim da corrida
+      let finalOriginLat = originCoords ? originCoords[0] : (Array.isArray(mapCenter) && mapCenter[0] ? mapCenter[0] : null);
+      let finalOriginLon = originCoords ? originCoords[1] : (Array.isArray(mapCenter) && mapCenter[1] ? mapCenter[1] : null);
+      let finalDestLat = destCoords ? destCoords[0] : null;
+      let finalDestLon = destCoords ? destCoords[1] : null;
+
+      if ((!finalOriginLat || !finalDestLat) && Array.isArray(routeGeometry) && routeGeometry.length >= 2) {
+        if (!finalOriginLat) {
+          finalOriginLat = routeGeometry[0][0];
+          finalOriginLon = routeGeometry[0][1];
+        }
+        if (!finalDestLat) {
+          finalDestLat = routeGeometry[routeGeometry.length - 1][0];
+          finalDestLon = routeGeometry[routeGeometry.length - 1][1];
+        }
+      }
+
       const ridePayload = {
         origin: rideOrigin,
         destination: rideDest,
         price: ridePrice,
         distanceKm: rideDistance,
         vehicleType,
-        originLat: originCoords ? originCoords[0] : null,
-        originLon: originCoords ? originCoords[1] : null,
-        destLat: destCoords ? destCoords[0] : null,
-        destLon: destCoords ? destCoords[1] : null
+        originLat: finalOriginLat,
+        originLon: finalOriginLon,
+        destLat: finalDestLat,
+        destLon: finalDestLon
       };
 
       const newRide = await requestRide(ridePayload);

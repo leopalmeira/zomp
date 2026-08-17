@@ -220,6 +220,30 @@ export default function DriverDashboard() {
   })
   const [showRadiusSelector, setShowRadiusSelector] = useState(false)
 
+  const workRadiusKmRef = useRef(workRadiusKm)
+  const myPosRef = useRef(myPos)
+  useEffect(() => { workRadiusKmRef.current = workRadiusKm }, [workRadiusKm])
+  useEffect(() => { myPosRef.current = myPos }, [myPos])
+
+  // Ao alterar o raio de atuação, filtra imediatamente as corridas pendentes em tela
+  useEffect(() => {
+    setPendingRides(prev => prev.filter(ride => {
+      if (workRadiusKm <= 0) return true;
+      if (!Array.isArray(myPos) || !myPos[0]) return false;
+      const rideDist = parseFloat(ride.distanceKm) || 0;
+      if (rideDist > workRadiusKm) return false;
+      if (ride.originLat != null && ride.originLon != null) {
+        const dOrig = getDistanceFromLatLonInKm(myPos[0], myPos[1], parseFloat(ride.originLat), parseFloat(ride.originLon));
+        if (dOrig === null || dOrig > workRadiusKm) return false;
+      }
+      if (ride.destLat != null && ride.destLon != null) {
+        const dDest = getDistanceFromLatLonInKm(myPos[0], myPos[1], parseFloat(ride.destLat), parseFloat(ride.destLon));
+        if (dDest === null || dDest > workRadiusKm) return false;
+      }
+      return true;
+    }));
+  }, [workRadiusKm, myPos]);
+
   const formatRadiusLabel = (r) => {
     if (r === 0) return 'Livre 🌐';
     if (r === 0.5) return '500 m';
@@ -516,31 +540,45 @@ export default function DriverDashboard() {
             const maxViews = isLongOrScheduledRide(ride) ? 1 : 2;
             if ((seenRidesCountRef.current[ride.id] || 0) >= maxViews) return false;
 
-            // Filtro de Raio de Atuação (Sonar): Início e Fim da corrida devem estar 100% dentro do raio
-            if (workRadiusKm > 0 && Array.isArray(myPos) && myPos[0]) {
-              const driverLat = myPos[0];
-              const driverLon = myPos[1];
+            const currentRadius = Number(workRadiusKmRef.current ?? workRadiusKm);
+            const currentPos = myPosRef.current || myPos;
 
-              // Se a distância total do trajeto for maior que o diâmetro do raio, o destino certamente sai do raio
+            // Filtro RIGOROSO de Raio de Atuação (Sonar)
+            if (currentRadius > 0) {
+              if (!Array.isArray(currentPos) || !currentPos[0]) return false;
+              const driverLat = currentPos[0];
+              const driverLon = currentPos[1];
+
+              // 1. Se a distância total do trajeto for maior que o raio configurado, REJEITA (NÃO TOCA)
               const rideDist = parseFloat(ride.distanceKm) || 0;
-              if (rideDist > workRadiusKm * 2) {
+              if (rideDist > currentRadius) {
                 return false;
               }
 
-              // 1. Validação do Início da Corrida (Origem)
-              if (ride.originLat != null && ride.originLon != null) {
-                const distOrigin = getDistanceFromLatLonInKm(driverLat, driverLon, parseFloat(ride.originLat), parseFloat(ride.originLon));
-                if (distOrigin !== null && distOrigin > workRadiusKm) {
+              // 2. Validação do Início da Corrida (Origem)
+              const origLat = ride.originLat != null ? parseFloat(ride.originLat) : null;
+              const origLon = ride.originLon != null ? parseFloat(ride.originLon) : null;
+              if (origLat != null && origLon != null) {
+                const distOrigin = getDistanceFromLatLonInKm(driverLat, driverLon, origLat, origLon);
+                if (distOrigin === null || distOrigin > currentRadius) {
                   return false; // Início fora do raio
                 }
+              } else if (currentRadius <= 15) {
+                // Sem coordenadas comprovadas em raio restrito, BLOQUEIA (NÃO TOCA)
+                return false;
               }
 
-              // 2. Validação do Fim da Corrida (Destino)
-              if (ride.destLat != null && ride.destLon != null) {
-                const distDest = getDistanceFromLatLonInKm(driverLat, driverLon, parseFloat(ride.destLat), parseFloat(ride.destLon));
-                if (distDest !== null && distDest > workRadiusKm) {
+              // 3. Validação do Fim da Corrida (Destino)
+              const dstLat = ride.destLat != null ? parseFloat(ride.destLat) : null;
+              const dstLon = ride.destLon != null ? parseFloat(ride.destLon) : null;
+              if (dstLat != null && dstLon != null) {
+                const distDest = getDistanceFromLatLonInKm(driverLat, driverLon, dstLat, dstLon);
+                if (distDest === null || distDest > currentRadius) {
                   return false; // Fim fora do raio
                 }
+              } else if (currentRadius <= 15) {
+                // Sem coordenadas comprovadas em raio restrito, BLOQUEIA (NÃO TOCA)
+                return false;
               }
             }
 
