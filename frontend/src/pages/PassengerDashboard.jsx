@@ -1405,7 +1405,7 @@ const POPULAR_PLACES_RJ = [
                     <span className="vehicle-icon">🚗</span>
                     <div className="vehicle-details">
                       <span className="vehicle-name">{isTripIntercity ? 'Carro Seguro' : 'Carro'}</span>
-                      <span className="vehicle-price">R$ {getPrice(routeKm, 'car', true)}</span>
+                      <span className="vehicle-price">R$ {(parseFloat(getPrice(routeKm, 'car', false)) + userPendingDebt).toFixed(2)}</span>
                     </div>
                   </div>
                   
@@ -1433,7 +1433,7 @@ const POPULAR_PLACES_RJ = [
                     <span className="vehicle-icon">🏍️</span>
                     <div className="vehicle-details">
                       <span className="vehicle-name">Moto</span>
-                      <span className="vehicle-price">R$ {getPrice(routeKm, 'moto', true)}</span>
+                      <span className="vehicle-price">R$ {(parseFloat(getPrice(routeKm, 'moto', false)) + userPendingDebt).toFixed(2)}</span>
                     </div>
                     <span className="vehicle-info">Econômico</span>
                   </div>
@@ -1442,9 +1442,16 @@ const POPULAR_PLACES_RJ = [
 
               <div className="price-box">
                 <div className="price-val">
-                  <span className="currency">R$</span> {getPrice(routeKm, vehicleType, true)}
+                  <span className="currency">R$</span> {(parseFloat(getPrice(routeKm, vehicleType, false)) + userPendingDebt).toFixed(2)}
                 </div>
-                <div className="dist-val">{routeKm} km estimado</div>
+                <div className="dist-val">
+                  {routeKm} km estimado
+                  {userPendingDebt > 0 && (
+                    <span style={{ color: '#ef4444', fontWeight: 800, display: 'block', fontSize: '0.72rem', marginTop: '2px' }}>
+                      (inclui R$ {userPendingDebt.toFixed(2)} de débito anterior a quitar nesta corrida)
+                    </span>
+                  )}
+                </div>
               </div>
 
               {parseFloat(routeKm) * (vehicleType === 'car' ? config.pricePerKmCar : config.pricePerKmMoto) < (vehicleType === 'car' ? config.minFareCar : config.minFareMoto) && (
@@ -1482,16 +1489,53 @@ const POPULAR_PLACES_RJ = [
                 </div>
               </div>
 
+              {/* Discriminativo Transparente de Débito Pendente da Corrida Anterior */}
               {userPendingDebt > 0 && (
-                <div style={{background: '#fef2f2', border: '1.5px solid #f87171', padding: '12px', borderRadius: '12px', marginBottom: '16px'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                    <span style={{fontSize: '1.2rem'}}>⚠️</span>
-                    <div>
-                      <div style={{fontSize: '0.82rem', fontWeight: 800, color: '#991b1b'}}>
-                        VALOR PENDENTE DA CORRIDA ANTERIOR (ENCERRADA NO PERCURSO)
-                      </div>
-                      <div style={{fontSize: '0.74rem', color: '#b91c1c', fontWeight: 600}}>
-                        Você possui um valor de <strong>R$ {userPendingDebt.toFixed(2)}</strong> referente ao trecho percorrido da sua corrida anterior. Este valor foi somado ao total desta viagem.
+                <div style={{
+                  background: 'linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%)',
+                  border: '2px solid #ef4444',
+                  borderRadius: '16px',
+                  padding: '16px',
+                  marginBottom: '16px',
+                  boxShadow: '0 4px 15px rgba(239, 68, 68, 0.15)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <span style={{ fontSize: '1.6rem' }}>⚠️</span>
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ margin: '0 0 4px', fontSize: '0.92rem', fontWeight: 900, color: '#991b1b' }}>
+                        DÉBITO PENDENTE DE CORRIDA ANTERIOR
+                      </h4>
+                      <p style={{ margin: '0 0 10px', fontSize: '0.76rem', color: '#7f1d1d', fontWeight: 600, lineHeight: 1.4 }}>
+                        Sua última corrida foi encerrada durante o percurso. O valor proporcional de <strong>R$ {userPendingDebt.toFixed(2)}</strong> referente ao KM percorrido será quitado ao final desta nova corrida.
+                      </p>
+                      
+                      {/* Discriminativo Transparente de Valores */}
+                      <div style={{
+                        background: '#fff',
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        border: '1px solid #fca5a5'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#4b5563', marginBottom: '4px' }}>
+                          <span>🚗 Tarifa da Nova Corrida:</span>
+                          <strong style={{ color: '#111827' }}>R$ {getPrice(routeKm, vehicleType, false)}</strong>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#dc2626', marginBottom: '6px' }}>
+                          <span>⏱️ Débito da Corrida Anterior:</span>
+                          <strong>+ R$ {userPendingDebt.toFixed(2)}</strong>
+                        </div>
+                        <div style={{
+                          borderTop: '1px solid #fee2e2',
+                          paddingTop: '6px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '0.92rem',
+                          fontWeight: 900,
+                          color: '#991b1b'
+                        }}>
+                          <span>Total a Pagar ao Final:</span>
+                          <span>R$ {(parseFloat(getPrice(routeKm, vehicleType, false)) + userPendingDebt).toFixed(2)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
