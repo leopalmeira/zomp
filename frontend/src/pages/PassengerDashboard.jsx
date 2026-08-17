@@ -149,7 +149,12 @@ export default function PassengerDashboard() {
   const [passengersCount, setPassengersCount] = useState(1)
   const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
   const [compPriceRead, setCompPriceRead] = useState(0)
+  
+  const userEmail = user?.email?.toLowerCase() || ''
+  const isTestAccount = userEmail.includes('cliente@zomp') || userEmail.includes('cliente@zom') || userEmail.includes('teste')
+
   const [imbativelRidesLeft, setImbativelRidesLeft] = useState(() => {
+    if (isTestAccount) return 999;
     const savedDate = localStorage.getItem('zomp_imbativel_date');
     const today = new Date().toISOString().split('T')[0];
     if (savedDate !== today) {
@@ -1426,7 +1431,7 @@ const POPULAR_PLACES_RJ = [
                         PREÇO IMBATÍVEL ZOMP
                       </h4>
                       <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 600, color: '#991b1b' }}>
-                        Viu mais barato na Uber ou 99? Envie o print da corrida com percurso e valor para cobrirmos com desconto exclusivo! ({imbativelRidesLeft} restante{imbativelRidesLeft > 1 ? 's' : ''} hoje)
+                        Viu mais barato na Uber ou 99? Envie o print da corrida com percurso e valor para cobrirmos com desconto exclusivo! ({isTestAccount ? 'Ilimitado - Conta de Testes' : `${imbativelRidesLeft} restante${imbativelRidesLeft > 1 ? 's' : ''} hoje`})
                       </p>
                     </div>
                   </div>
@@ -1468,8 +1473,12 @@ const POPULAR_PLACES_RJ = [
                             setManualPriceInput(imageSrc);
                             setHasCompetitionDiscount(true);
                             setManualPriceError('');
-                            setImbativelRidesLeft(result.ridesLeftToday);
-                            localStorage.setItem('zomp_imbativel_rides_left', String(result.ridesLeftToday));
+                            
+                            const leftCount = isTestAccount ? 999 : (result.ridesLeftToday ?? 3);
+                            setImbativelRidesLeft(leftCount);
+                            if (!isTestAccount) {
+                              localStorage.setItem('zomp_imbativel_rides_left', String(leftCount));
+                            }
                           } catch (err) {
                             setIsAnalyzingScreenshot(false);
                             setManualPriceError(err.message || 'Erro ao validar print da concorrência.');

@@ -253,27 +253,37 @@ exports.validateScreenshotAi = async (req, res) => {
     }
 
     // 1. Controle de limite diário no backend (máximo 3 descontos por dia por passageiro)
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS "DiscountLog" (
-        id SERIAL PRIMARY KEY,
-        "userId" TEXT NOT NULL,
-        "discountAmount" NUMERIC(10,2) NOT NULL,
-        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-      )
-    `);
+    // Contas de teste (cliente@zomp.com) possuem uso ILIMITADO
+    const { rows: userRows } = await pool.query('SELECT email FROM "User" WHERE id = $1', [userId]);
+    const userEmail = userRows[0]?.email?.toLowerCase() || '';
+    const isTestAccount = userEmail.includes('cliente@zomp') || userEmail.includes('cliente@zom') || userEmail.includes('teste');
 
-    const { rows: todayLogs } = await pool.query(`
-      SELECT COUNT(*) as count FROM "DiscountLog"
-      WHERE "userId" = $1 AND "createdAt" >= CURRENT_DATE
-    `, [String(userId)]);
+    let ridesLeftToday = 999;
 
-    const usedToday = parseInt(todayLogs[0]?.count || 0);
-    if (usedToday >= 3) {
-      return res.status(400).json({
-        valid: false,
-        error: 'Você já utilizou os 3 Preços Imbatíveis de hoje. O limite será renovado amanhã!',
-        ridesLeftToday: 0
-      });
+    if (!isTestAccount) {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS "DiscountLog" (
+          id SERIAL PRIMARY KEY,
+          "userId" TEXT NOT NULL,
+          "discountAmount" NUMERIC(10,2) NOT NULL,
+          "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        )
+      `);
+
+      const { rows: todayLogs } = await pool.query(`
+        SELECT COUNT(*) as count FROM "DiscountLog"
+        WHERE "userId" = $1 AND "createdAt" >= CURRENT_DATE
+      `, [String(userId)]);
+
+      const usedToday = parseInt(todayLogs[0]?.count || 0);
+      if (usedToday >= 3) {
+        return res.status(400).json({
+          valid: false,
+          error: 'Você já utilizou os 3 Preços Imbatíveis de hoje. O limite será renovado amanhã!',
+          ridesLeftToday: 0
+        });
+      }
+      ridesLeftToday = Math.max(0, 3 - (usedToday + 1));
     }
 
     // 2. Inteligência de validação do arquivo no backend
