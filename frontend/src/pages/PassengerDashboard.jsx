@@ -150,6 +150,13 @@ export default function PassengerDashboard() {
   const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
   const [compPriceRead, setCompPriceRead] = useState(0)
   const [imbativelRidesLeft, setImbativelRidesLeft] = useState(() => {
+    const savedDate = localStorage.getItem('zomp_imbativel_date');
+    const today = new Date().toISOString().split('T')[0];
+    if (savedDate !== today) {
+      localStorage.setItem('zomp_imbativel_date', today);
+      localStorage.setItem('zomp_imbativel_rides_left', '3');
+      return 3;
+    }
     const saved = localStorage.getItem('zomp_imbativel_rides_left');
     return saved !== null ? parseInt(saved) : 3;
   });
@@ -663,8 +670,13 @@ const POPULAR_PLACES_RJ = [
 
       const rideOrigin = originAddr?.trim() || 'Sua Localização';
       const rideDest = destAddr?.trim() || 'Destino Solicitado';
-      const ridePrice = parseFloat(getPrice(routeKm, vehicleType, true)) || 10.0;
+      let ridePrice = parseFloat(getPrice(routeKm, vehicleType, true)) || 10.0;
       const rideDistance = parseFloat(routeKm) || 1.0;
+
+      // Se o desconto imbatível foi ativado (print enviado), já envia com desconto
+      if (hasCompetitionDiscount && ridePrice > 12) {
+        ridePrice = Math.max(ridePrice - 2.00, 8.00);
+      }
 
       const ridePayload = {
         origin: rideOrigin,
@@ -681,16 +693,9 @@ const POPULAR_PLACES_RJ = [
         setCurrentRide(newRide);
       }
 
-      if (hasCompetitionDiscount) {
-        const nextCount = Math.max(0, imbativelRidesLeft - 1);
-        setImbativelRidesLeft(nextCount);
-        localStorage.setItem('zomp_imbativel_rides_left', nextCount.toString());
-      }
-
       setRideState('SEARCHING');
     } catch (e) {
       console.error('Erro ao chamar motorista:', e);
-      // Mesmo com erro de rede pontual, inicia o estado de busca para a melhor experiência
       setRideState('SEARCHING');
     } finally {
       setIsLoading(false);
@@ -1207,8 +1212,124 @@ const POPULAR_PLACES_RJ = [
                 </div>
               )}
 
+              {/* === PREÇO IMBATÍVEL — Upload de Print da Uber/99 === */}
+              {parseFloat(getPrice(routeKm, vehicleType, true)) > 12 && imbativelRidesLeft > 0 && (
+                <div style={{
+                  marginTop: '8px',
+                  background: 'linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%)',
+                  border: '2px solid #fecaca',
+                  borderRadius: '16px',
+                  padding: '18px',
+                  marginBottom: '16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '1.6rem' }}>🔥</span>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: '#b91c1c' }}>
+                        PREÇO IMBATÍVEL ZOMP
+                      </h4>
+                      <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 600, color: '#991b1b' }}>
+                        Envie o print da Uber ou 99 e ganhe R$ 2,00 de desconto! ({imbativelRidesLeft} restante{imbativelRidesLeft > 1 ? 's' : ''} hoje)
+                      </p>
+                    </div>
+                  </div>
 
+                  <div style={{
+                    background: '#fff',
+                    border: '2px dashed #fca5a5',
+                    borderRadius: '14px',
+                    padding: '18px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="imbativel-screenshot-priced"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          setManualPriceInput(ev.target.result);
+                          setHasCompetitionDiscount(true);
+                          setManualPriceError('');
+                          const nextCount = Math.max(0, imbativelRidesLeft - 1);
+                          setImbativelRidesLeft(nextCount);
+                          localStorage.setItem('zomp_imbativel_rides_left', nextCount.toString());
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                    <label htmlFor="imbativel-screenshot-priced" style={{ cursor: 'pointer', display: 'block' }}>
+                      {manualPriceInput && manualPriceInput.startsWith('data:image') ? (
+                        <div>
+                          <img 
+                            src={manualPriceInput} 
+                            alt="Print da concorrência" 
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: '100px', 
+                              borderRadius: '10px', 
+                              marginBottom: '8px',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                            }} 
+                          />
+                          <p style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, margin: 0 }}>
+                            ✅ Print anexado! Toque para alterar.
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <Camera size={28} color="#ef4444" style={{ marginBottom: '6px' }} />
+                          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c' }}>
+                            Enviar Print da Uber ou 99
+                          </p>
+                          <p style={{ margin: '3px 0 0', fontSize: '0.68rem', fontWeight: 600, color: '#9ca3af' }}>
+                            Toque para tirar foto ou selecionar da galeria
+                          </p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
 
+                  {manualPriceError && (
+                    <p style={{ fontSize: '0.78rem', color: '#ef4444', fontWeight: 800, margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontSize: '1rem' }}>⚠️</span> {manualPriceError}
+                    </p>
+                  )}
+
+                  {hasCompetitionDiscount && !manualPriceError && (
+                    <div className="animate-bounce-subtle" style={{
+                      background: '#059669',
+                      padding: '14px',
+                      borderRadius: '14px',
+                      border: '2px solid #34d399',
+                      marginTop: '12px',
+                      boxShadow: '0 10px 25px -5px rgba(5, 150, 105, 0.4)'
+                    }}>
+                      <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <Check size={18} strokeWidth={3} /> <span>DESCONTO IMBATÍVEL ATIVADO!</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: '#ecfdf5', fontWeight: 600 }}>
+                            Preço original: R$ {parseFloat(getPrice(routeKm, vehicleType, true)).toFixed(2)}
+                          </p>
+                          <p style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 900 }}>
+                            Novo Preço: <span style={{ fontSize: '1.4rem' }}>R$ {(parseFloat(getPrice(routeKm, vehicleType, true)) - 2.00).toFixed(2)}</span>
+                          </p>
+                        </div>
+                        <div style={{ background: '#fff', color: '#059669', padding: '6px 14px', borderRadius: '10px', fontWeight: 900, fontSize: '0.9rem' }}>
+                          -R$ 2,00
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="action-buttons mt-4">
                 <button className="btn btn-schedule" onClick={() => setRideState('SCHEDULING')}>
@@ -1311,139 +1432,16 @@ const POPULAR_PLACES_RJ = [
               </h3>
               <p className="hint-text">Aguarde enquanto conectamos você ao melhor parceiro próximo.</p>
 
-              {/* === PREÇO IMBATÍVEL — Upload de Print === */}
-              {parseFloat(getPrice(routeKm, vehicleType, true)) > 12 && (
+              {hasCompetitionDiscount && (
                 <div style={{
-                  marginTop: '20px',
-                  background: 'linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%)',
-                  border: '2px solid #fecaca',
-                  borderRadius: '16px',
-                  padding: '18px',
-                  textAlign: 'left'
+                  background: '#ecfdf5', border: '1px solid #34d399',
+                  borderRadius: '12px', padding: '12px', marginTop: '12px',
+                  display: 'flex', alignItems: 'center', gap: '8px'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '1.6rem' }}>🔥</span>
-                    <div>
-                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#b91c1c' }}>
-                        PREÇO IMBATÍVEL ZOMP
-                      </h4>
-                      <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 600, color: '#991b1b' }}>
-                        Viu mais barato na Uber ou 99? Envie o print e ganhe R$ 2,00 de desconto!
-                      </p>
-                    </div>
-                  </div>
-
-                  <div style={{
-                    background: '#fff',
-                    border: '2px dashed #fca5a5',
-                    borderRadius: '14px',
-                    padding: '20px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    position: 'relative'
-                  }}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      id="imbativel-screenshot"
-                      style={{ display: 'none' }}
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        
-                        // Mostra preview do print
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                          setManualPriceInput(ev.target.result); // reusa como URL preview
-                        };
-                        reader.readAsDataURL(file);
-
-                        // Aplica desconto de R$2 via API
-                        if (activeRideId) {
-                          try {
-                            const updated = await applyRideDiscount(activeRideId, 2.00);
-                            setHasCompetitionDiscount(true);
-                            setManualPriceError('');
-                            setCurrentRide(prev => ({ ...prev, price: updated.price }));
-                          } catch (err) {
-                            setManualPriceError(err.message || 'Erro ao aplicar desconto.');
-                            setHasCompetitionDiscount(false);
-                          }
-                        } else {
-                          setHasCompetitionDiscount(true);
-                          setManualPriceError('');
-                        }
-                      }}
-                    />
-                    <label htmlFor="imbativel-screenshot" style={{ cursor: 'pointer', display: 'block' }}>
-                      {manualPriceInput && manualPriceInput.startsWith('data:image') ? (
-                        <div>
-                          <img 
-                            src={manualPriceInput} 
-                            alt="Print da concorrência" 
-                            style={{ 
-                              maxWidth: '100%', 
-                              maxHeight: '120px', 
-                              borderRadius: '10px', 
-                              marginBottom: '8px',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-                            }} 
-                          />
-                          <p style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, margin: 0 }}>
-                            ✅ Print enviado! Toque para alterar.
-                          </p>
-                        </div>
-                      ) : (
-                        <div>
-                          <Camera size={32} color="#ef4444" style={{ marginBottom: '8px' }} />
-                          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c' }}>
-                            Enviar Print da Uber ou 99
-                          </p>
-                          <p style={{ margin: '4px 0 0', fontSize: '0.7rem', fontWeight: 600, color: '#9ca3af' }}>
-                            Toque aqui para tirar foto ou selecionar da galeria
-                          </p>
-                        </div>
-                      )}
-                    </label>
-                  </div>
-
-                  {manualPriceError && (
-                    <p style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: 800, margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>⚠️</span> {manualPriceError}
-                    </p>
-                  )}
-
-                  {hasCompetitionDiscount && !manualPriceError && (
-                    <div className="animate-bounce-subtle" style={{
-                      background: '#059669',
-                      padding: '14px',
-                      borderRadius: '14px',
-                      border: '2px solid #34d399',
-                      marginTop: '12px',
-                      boxShadow: '0 10px 25px -5px rgba(5, 150, 105, 0.4)'
-                    }}>
-                      <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <Check size={18} strokeWidth={3} /> <span>DESCONTO IMBATÍVEL APLICADO!</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: '#ecfdf5', fontWeight: 600 }}>
-                            Preço original: R$ {parseFloat(getPrice(routeKm, vehicleType, true)).toFixed(2)}
-                          </p>
-                          <p style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 900 }}>
-                            Novo Preço: <span style={{ fontSize: '1.4rem' }}>R$ {(parseFloat(getPrice(routeKm, vehicleType, true)) - 2.00).toFixed(2)}</span>
-                          </p>
-                        </div>
-                        <div style={{ background: '#fff', color: '#059669', padding: '6px 14px', borderRadius: '10px', fontWeight: 900, fontSize: '0.9rem' }}>
-                          -R$ 2,00
-                        </div>
-                      </div>
-                      <p style={{ margin: '6px 0 0', fontSize: '0.68rem', color: '#ecfdf5', fontWeight: 700, fontStyle: 'italic' }}>
-                        ✅ Garantido mais barato que a concorrência!
-                      </p>
-                    </div>
-                  )}
+                  <Check size={18} color="#059669" strokeWidth={3} />
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#059669' }}>
+                    Desconto Imbatível de R$ 2,00 será aplicado!
+                  </span>
                 </div>
               )}
 
