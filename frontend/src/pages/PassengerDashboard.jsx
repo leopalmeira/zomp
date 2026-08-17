@@ -927,11 +927,25 @@ const POPULAR_PLACES_RJ = [
       setUserPendingDebt(0);
       setPendingFeeAmount(0);
 
+      // Limpa totalmente o print de tela para nunca persistir em novas solicitações
+      setManualPriceInput('');
+      setHasCompetitionDiscount(false);
+      setCompetitorPrintPrice(0);
+      setCalculatedDiscountAmount(0);
+      setManualPriceError('');
+      setIsAnalyzingScreenshot(false);
+
       setRideState('SEARCHING');
     } catch (e) {
       console.error('Erro ao chamar motorista:', e);
       setUserPendingDebt(0);
       setPendingFeeAmount(0);
+      setManualPriceInput('');
+      setHasCompetitionDiscount(false);
+      setCompetitorPrintPrice(0);
+      setCalculatedDiscountAmount(0);
+      setManualPriceError('');
+      setIsAnalyzingScreenshot(false);
       setRideState('SEARCHING');
     } finally {
       setIsLoading(false);
@@ -956,12 +970,17 @@ const POPULAR_PLACES_RJ = [
     setIsIntercity(false)
     setPassengersCount(1)
     setStops([])
-    // Reset competition discount (per-trip only)
+    // Reset competition discount (per-trip only - nunca persiste para novas solicitações)
     setHasCompetitionDiscount(false)
     setCompPriceRead(0)
     setCompPlatform('')
     setCompCategory('')
     setIsAnalyzingPrint(false)
+    setManualPriceInput('')
+    setCompetitorPrintPrice(0)
+    setCalculatedDiscountAmount(0)
+    setManualPriceError('')
+    setIsAnalyzingScreenshot(false)
   }
 
   // ============= Markers for map =============
