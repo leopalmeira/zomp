@@ -295,13 +295,10 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - A inteligência do Zomp prioriza o **valor da categoria selecionada / ticada** no print da Uber ou 99 (o valor que aparece repetido tanto no item ativo da lista quanto no botão inferior de confirmação de chamada).
   - O desconto é aplicado diretamente sobre este valor exato (R$ 12-14: -R$ 2,00; R$ 18-25: -R$ 2,50; ≥ R$ 30: -R$ 3,00; outros > R$ 12: -R$ 2,00).
 
-* 🔥 **Preço Imbatível — Aplicação Direta do Desconto sobre o Print**:
-  - Correção na função de precificação `getPrice`: o desconto do print (`competitorPrintPrice`) é aplicado **imediatamente na interface** ao enviar a captura de tela da concorrência:
-    - `>= R$ 30,00`: Desconto de **- R$ 3,00**
-    - `R$ 18,00 a R$ 25,00`: Desconto de **- R$ 2,50**
-    - `R$ 12,00 a R$ 14,00`: Desconto de **- R$ 2,00**
-    - Demais: Desconto de **- R$ 2,00**
-  - Os valores nos cards de Carro e Moto e o botão de chamada rápida refletem instantaneamente o valor final com desconto!
+* 🔥 **Preço Imbatível — Exibição Estratégica após Inserção de Endereços (`PRICED`)**:
+  - A tela inicial (`IDLE`) permanece limpa e direta para busca rápida de origem e destino.
+  - O card do **Preço Imbatível** surge **exclusivamente na tela de opções de viagem (`PRICED`)**, após os endereços serem inseridos e a rota calculada.
+  - Caso o passageiro concorde com a tarifa padrão do Zomp, ele chama a corrida diretamente sem distrações. Se desejar cobrir uma oferta da concorrência, envia o print da Uber ou 99 e recebe o desconto imediato de até R$ 3,00 diretamente sobre o valor do print!
 
 * 🌦️ **Header Integrado do Motorista (Clima, Trânsito & Sonar)**:
   - Widgets de Clima em tempo real (Open-Meteo), Trânsito da região e Seletor do Sonar integrados diretamente na barra superior nativa com `z-index: 2500`.
