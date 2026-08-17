@@ -291,8 +291,12 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Corridas longas (≥ 15km) ou agendadas tocam **som suave e grave apenas 1 vez** e aparecem **no máximo 1 vez** por motorista.
   - Temporizador regressivo de **10 segundos** no card do motorista com barra de progresso e auto-recusa.
 
-* 🌦️ **Clima & Condições de Tempo em Tempo Real (API Gratuita Open-Meteo)**:
-  - No topo do app do motorista surge um widget translúcido (*Glassmorphism*) exibindo temperatura (°C), condição climática (☀️ Ensolarado, ⛅ Nublado, 🌧️ Chuvoso, ⛈️ Tempestade) e velocidade do vento em tempo real.
+* 🔥 **Preço Imbatível Visível Imediatamente na Tela Inicial (IDLE & PRICED)**:
+  - O card do Preço Imbatível agora fica visível **logo na tela inicial** do passageiro (antes mesmo de digitar o destino) e também na tela de opções de viagem. O cliente pode tocar em *"📸 Toque aqui para Enviar Print da Uber ou 99"* a qualquer momento.
+
+* 🌦️ **Header Integrado do Motorista (Clima, Trânsito & Sonar)**:
+  - Widgets de Clima em tempo real (Open-Meteo), Trânsito da região e Seletor do Sonar integrados diretamente na barra superior nativa com `z-index: 2500`.
+  - Círculo verde fluorescente de Sonar renderizado no mapa em volta da posição GPS do motorista.
 
 * 🚦 **Status do Trânsito na Região**:
   - Indicador dinâmico de fluxo (🟢 Fluindo / 🟡 Moderado / 🔴 Intenso em horários de pico) para orientar o motorista sobre a dinâmica viária da área.
