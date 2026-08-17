@@ -297,7 +297,9 @@ exports.validateScreenshotAi = async (req, res) => {
     }
 
     let discountAmount = 2.00;
-    if (competitorPrice >= 18.00 && competitorPrice <= 25.00) {
+    if (competitorPrice >= 30.00) {
+      discountAmount = 3.00; // R$ 3,00 de desconto para corridas com print acima de R$ 30,00
+    } else if (competitorPrice >= 18.00 && competitorPrice <= 25.00) {
       discountAmount = 2.50; // R$ 2,50 de desconto para corridas de 18 a 25 reais
     } else if (competitorPrice >= 12.00 && competitorPrice <= 14.00) {
       discountAmount = 2.00; // R$ 2,00 de desconto para corridas de 12 a 14 reais

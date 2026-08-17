@@ -1569,7 +1569,8 @@ const POPULAR_PLACES_RJ = [
                               setCompetitorPrintPrice(val);
                               // Recalcula o desconto com base no novo valor do print
                               let disc = 2.00;
-                              if (val >= 18.00 && val <= 25.00) disc = 2.50;
+                              if (val >= 30.00) disc = 3.00; // R$ 3,00 para print acima de R$ 30,00
+                              else if (val >= 18.00 && val <= 25.00) disc = 2.50;
                               else if (val >= 12.00 && val <= 14.00) disc = 2.00;
                               else disc = 2.00;
                               setCalculatedDiscountAmount(disc);
