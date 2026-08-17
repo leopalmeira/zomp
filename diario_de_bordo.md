@@ -291,6 +291,17 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Corridas longas (≥ 15km) ou agendadas tocam **som suave e grave apenas 1 vez** e aparecem **no máximo 1 vez** por motorista.
   - Temporizador regressivo de **10 segundos** no card do motorista com barra de progresso e auto-recusa.
 
+* 🌦️ **Clima & Condições de Tempo em Tempo Real (API Gratuita Open-Meteo)**:
+  - No topo do app do motorista surge um widget translúcido (*Glassmorphism*) exibindo temperatura (°C), condição climática (☀️ Ensolarado, ⛅ Nublado, 🌧️ Chuvoso, ⛈️ Tempestade) e velocidade do vento em tempo real.
+
+* 🚦 **Status do Trânsito na Região**:
+  - Indicador dinâmico de fluxo (🟢 Fluindo / 🟡 Moderado / 🔴 Intenso em horários de pico) para orientar o motorista sobre a dinâmica viária da área.
+
+* 🎯 **Sonar de Radar & Seletor de Raio de Atuação**:
+  - Quando online, um **círculo de sonar verde pulsante** é renderizado no mapa em volta da posição GPS do motorista.
+  - O motorista pode tocar no botão do raio ou acessar o menu lateral para escolher seu raio de atuação (`3 km`, `5 km`, `10 km`, `15 km`, `20 km`, `30 km`, `50 km` ou `Sem Limite / Livre`).
+  - O motorista pode **ocultar ou reexibir o widget de clima/trânsito** a qualquer momento pelo menu lateral (*Preferências & Mapa*).
+
 * 🛑 **Encerramento no Meio do Caminho & Cobrança Acumulada na Próxima Corrida**:
   - Se a corrida for encerrada/cancelada durante o percurso, o sistema calcula o **valor percentual proporcional** baseado no KM percorrido em relação ao total.
   - **Aviso e Discriminativo Transparente de Valores**:
