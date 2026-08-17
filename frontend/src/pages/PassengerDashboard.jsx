@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide, validateScreenshot } from '../services/api'
+import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide, validateScreenshot, getUserDebt } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline, Popup } from 'react-leaflet'
 import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera } from 'lucide-react'
 import L from 'leaflet'
@@ -190,6 +190,7 @@ export default function PassengerDashboard() {
   const [ratingStars, setRatingStars] = useState(0)
   const [manualPriceInput, setManualPriceInput] = useState('')
   const [manualPriceError, setManualPriceError] = useState('')
+  const [userPendingDebt, setUserPendingDebt] = useState(0)
   const [profileData, setProfileData] = useState({ name: 'Passageiro de Teste', email: 'cliente@zomp.com' })
   const [chatInput, setChatInput] = useState('')
   const [currentRide, setCurrentRide] = useState(null)
@@ -434,6 +435,15 @@ export default function PassengerDashboard() {
     }
     return 'Sua Localização';
   }
+
+  // ============= Fetch user pending debt on load =============
+  useEffect(() => {
+    getUserDebt().then(res => {
+      if (res && res.pendingDebt > 0) {
+        setUserPendingDebt(parseFloat(res.pendingDebt));
+      }
+    }).catch(() => {});
+  }, []);
 
   // ============= GPS tracking =============
   const hasInitializedGps = useRef(false);
@@ -1472,11 +1482,19 @@ const POPULAR_PLACES_RJ = [
                 </div>
               </div>
 
-              {pendingFeeAmount > 0 && (
-                <div style={{background: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '8px', marginBottom: '16px'}}>
-                  <p style={{fontSize: '0.85rem', color: '#b91c1c', margin: 0, fontWeight: 700}}>
-                    ⚠️ Seu último cancelamento gerou uma taxa de deslocamento pendente de R$ {pendingFeeAmount.toFixed(2)}. Este valor foi adicionado ao total desta corrida.
-                  </p>
+              {userPendingDebt > 0 && (
+                <div style={{background: '#fef2f2', border: '1.5px solid #f87171', padding: '12px', borderRadius: '12px', marginBottom: '16px'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                    <span style={{fontSize: '1.2rem'}}>⚠️</span>
+                    <div>
+                      <div style={{fontSize: '0.82rem', fontWeight: 800, color: '#991b1b'}}>
+                        VALOR PENDENTE DA CORRIDA ANTERIOR (ENCERRADA NO PERCURSO)
+                      </div>
+                      <div style={{fontSize: '0.74rem', color: '#b91c1c', fontWeight: 600}}>
+                        Você possui um valor de <strong>R$ {userPendingDebt.toFixed(2)}</strong> referente ao trecho percorrido da sua corrida anterior. Este valor foi somado ao total desta viagem.
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1994,7 +2012,15 @@ const POPULAR_PLACES_RJ = [
                     if (confirm(msg)) {
                       if (activeRideId) {
                         try {
-                          await cancelRide(activeRideId, statusVal);
+                          const res = await cancelRide(activeRideId, {
+                            status: statusVal,
+                            isMidRideCancel: true,
+                            distanceTravelledKm: parseFloat(routeKm) * 0.5
+                          });
+                          if (res && res.debtAdded && res.proportionalPrice > 0) {
+                            alert(`⚠️ Corrida encerrada no percurso!\n\nPercurso percorrido: ${res.proportionPct}% do trajeto contratado.\nValor proporcional calculado: R$ ${res.proportionalPrice.toFixed(2)}.\n\nEste valor ficou acumulado na sua conta e será adicionado automaticamente na sua próxima corrida caso não seja pago agora.`);
+                            setUserPendingDebt(res.proportionalPrice);
+                          }
                         } catch (e) {
                           console.error('Erro ao cancelar ride no backend', e);
                         }

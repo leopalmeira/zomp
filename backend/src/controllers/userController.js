@@ -81,3 +81,14 @@ exports.linkReferral = async (req, res) => {
   }
 };
 
+exports.getUserDebt = async (req, res) => {
+  try {
+    await pool.query('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "pendingDebt" NUMERIC(10,2) DEFAULT 0');
+    const { rows } = await pool.query('SELECT "pendingDebt" FROM "User" WHERE id = $1', [req.user.id]);
+    res.json({ pendingDebt: parseFloat(rows[0]?.pendingDebt || 0) });
+  } catch (err) {
+    console.error('Erro ao buscar débito pendente:', err.message);
+    res.json({ pendingDebt: 0 });
+  }
+};
+

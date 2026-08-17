@@ -230,15 +230,28 @@ export async function purchaseCredits(quantity) {
   return data;
 }
 
-export async function cancelRide(rideId, status) {
+export async function cancelRide(rideId, statusOrPayload) {
+  const payload = typeof statusOrPayload === 'object' ? statusOrPayload : { status: statusOrPayload };
   const res = await fetch(`${API_BASE}/rides/${rideId}/cancel`, {
     method: 'PUT',
     headers: getHeaders(),
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(payload),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Erro ao cancelar corrida');
   return data;
+}
+
+export async function getUserDebt() {
+  try {
+    const res = await fetch(`${API_BASE}/user/debt`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return { pendingDebt: 0 };
+    return await res.json();
+  } catch {
+    return { pendingDebt: 0 };
+  }
 }
 
 export async function getGlobalConfig() {

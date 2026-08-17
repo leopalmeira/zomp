@@ -6,5 +6,6 @@ const authMiddleware = require('../middlewares/authMiddleware');
 router.put('/profile', authMiddleware, userController.updateProfile);
 router.get('/driver/linked-passengers', authMiddleware, userController.getLinkedPassengers);
 router.post('/link-referral', authMiddleware, userController.linkReferral);
+router.get('/debt', authMiddleware, userController.getUserDebt);
 
 module.exports = router;

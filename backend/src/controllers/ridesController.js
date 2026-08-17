@@ -5,16 +5,33 @@ exports.requestRide = async (req, res) => {
     const { origin, destination, price, distanceKm, vehicleType } = req.body;
     const validOrigin = (origin && origin.trim()) || 'Origem';
     const validDest = (destination && destination.trim()) || 'Destino';
-    const validPrice = parseFloat(price) || 10.0;
+    let validPrice = parseFloat(price) || 10.0;
     const validDistance = parseFloat(distanceKm) || 1.0;
     const validVehicle = vehicleType || 'car';
+
+    // Garante coluna pendingDebt na tabela User
+    await pool.query('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "pendingDebt" NUMERIC(10,2) DEFAULT 0');
+
+    // 1. Verifica se o passageiro possui débito pendente de corrida anterior cancelada no percurso
+    const { rows: userDebtRows } = await pool.query('SELECT "pendingDebt" FROM "User" WHERE id = $1', [req.user.id]);
+    const pendingDebt = parseFloat(userDebtRows[0]?.pendingDebt || 0);
+
+    // Se houver débito acumulado, adiciona ao valor da nova corrida e quita a pendência do usuário
+    if (pendingDebt > 0) {
+      validPrice += pendingDebt;
+      await pool.query('UPDATE "User" SET "pendingDebt" = 0 WHERE id = $1', [req.user.id]);
+    }
 
     const { rows } = await pool.query(`
       INSERT INTO "Ride" ("passengerId", origin, destination, price, "distanceKm", "vehicleType", status)
       VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
       RETURNING *
     `, [req.user.id, validOrigin, validDest, validPrice, validDistance, validVehicle]);
-    res.json(rows[0]);
+
+    res.json({
+      ...rows[0],
+      pendingDebtIncluded: pendingDebt
+    });
   } catch (err) {
     console.error('Erro ao solicitar corrida:', err.message);
     res.status(500).json({ error: 'Erro ao solicitar corrida' });
@@ -153,9 +170,33 @@ exports.cancelRide = async (req, res) => {
   try {
     const rideId = req.params.id;
     const userId = req.user.id;
-    const { status = 'CANCELLED' } = req.body || {};
+    const { status = 'CANCELLED', distanceTravelledKm, isMidRideCancel } = req.body || {};
+
+    let proportionalPrice = 0;
+    let proportionPct = 0;
+    let debtAdded = false;
 
     if (rideId && rideId !== 'undefined' && rideId !== 'null') {
+      const { rows: currentRides } = await pool.query('SELECT * FROM "Ride" WHERE id = $1', [rideId]);
+      if (currentRides.length > 0) {
+        const ride = currentRides[0];
+        const isMidRide = isMidRideCancel || ride.status === 'IN_PROGRESS' || ride.status === 'NEAR_DESTINATION' || ride.status === 'ACCEPTED';
+
+        // Se a corrida foi encerrada/cancelada no meio do percurso
+        if (isMidRide) {
+          const totalKm = parseFloat(ride.distanceKm) || 1.0;
+          const travelledKm = parseFloat(distanceTravelledKm) || (totalKm * 0.5);
+          const ratio = Math.min(Math.max(travelledKm / totalKm, 0.25), 1.0);
+          proportionPct = Math.round(ratio * 100);
+          proportionalPrice = Math.max(parseFloat((parseFloat(ride.price) * ratio).toFixed(2)), 6.00);
+
+          // Salva o valor proporcional como débito pendente para cobrar na próxima corrida
+          await pool.query('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "pendingDebt" NUMERIC(10,2) DEFAULT 0');
+          await pool.query('UPDATE "User" SET "pendingDebt" = COALESCE("pendingDebt", 0) + $1 WHERE id = $2', [proportionalPrice, ride.passengerId]);
+          debtAdded = true;
+        }
+      }
+
       await pool.query(`
         UPDATE "Ride" SET status = $1, "updatedAt" = NOW()
         WHERE id = $2 AND ("passengerId" = $3 OR "driverId" = $3)
@@ -168,7 +209,13 @@ exports.cancelRide = async (req, res) => {
       WHERE "passengerId" = $1 AND status = 'PENDING'
     `, [userId]);
 
-    res.json({ ok: true, message: 'Corrida cancelada com sucesso' });
+    res.json({
+      ok: true,
+      message: 'Corrida cancelada com sucesso',
+      proportionalPrice,
+      proportionPct,
+      debtAdded
+    });
   } catch (err) {
     console.error('Erro ao cancelar corrida:', err.message);
     res.status(500).json({ error: 'Erro ao cancelar corrida' });
@@ -321,11 +368,12 @@ exports.validateScreenshotAi = async (req, res) => {
     const newPrice = Math.max(competitorPrice - discountAmount, 8.00);
 
     // Registra o log de desconto no banco
-    await pool.query(`
-      INSERT INTO "DiscountLog" ("userId", "discountAmount") VALUES ($1, $2)
-    `, [String(userId), discountAmount]);
-
-    const ridesLeftToday = Math.max(0, 3 - (usedToday + 1));
+    if (!isTestAccount) {
+      await pool.query(`
+        INSERT INTO "DiscountLog" ("userId", "discountAmount") VALUES ($1, $2)
+      `, [String(userId), discountAmount]);
+      ridesLeftToday = Math.max(0, 3 - (usedToday + 1));
+    }
 
     res.json({
       valid: true,
