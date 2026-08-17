@@ -1498,8 +1498,8 @@ const POPULAR_PLACES_RJ = [
                 </div>
               )}
 
-              {/* === PREÇO IMBATÍVEL — Upload de Print da Uber/99 === */}
-              {parseFloat(getPrice(routeKm, vehicleType, true)) > 12 && imbativelRidesLeft > 0 && (
+              {/* === PREÇO IMBATÍVEL — Upload de Print da Uber/99 (Sempre visível) === */}
+              {(isTestAccount || imbativelRidesLeft > 0) && (
                 <div style={{
                   marginTop: '8px',
                   background: 'linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%)',
