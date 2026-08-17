@@ -305,9 +305,9 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 * 🚦 **Status do Trânsito na Região**:
   - Indicador dinâmico de fluxo (🟢 Fluindo / 🟡 Moderado / 🔴 Intenso em horários de pico) para orientar o motorista sobre a dinâmica viária da área.
 
-* 🎯 **Sonar de Radar & Seletor de Raio de Atuação**:
+* 🎯 **Sonar de Radar & Seletor de Raio de Atuação (Ultra-Local e Regional)**:
   - Quando online, um **círculo de sonar verde pulsante** é renderizado no mapa em volta da posição GPS do motorista.
-  - O motorista pode tocar no botão do raio ou acessar o menu lateral para escolher seu raio de atuação (`3 km`, `5 km`, `10 km`, `15 km`, `20 km`, `30 km`, `50 km` ou `Sem Limite / Livre`).
+  - O motorista pode tocar no botão do raio ou acessar o menu lateral para escolher seu raio de atuação (`500 m`, `1 km`, `3 km`, `5 km`, `10 km`, `15 km`, `20 km`, `30 km`, `50 km` ou `Sem Limite / Livre`).
   - O motorista pode **ocultar ou reexibir o widget de clima/trânsito** a qualquer momento pelo menu lateral (*Preferências & Mapa*).
 
 * 🛑 **Encerramento no Meio do Caminho & Conciliação Financeira Completa**:

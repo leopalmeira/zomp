@@ -137,7 +137,7 @@ const DRIVER_FAQS = [
   },
   {
     q: '🎯 O que é o Sonar de Radar no mapa e como escolher meu raio de atuação?',
-    a: 'O Sonar é o radar verde que envolve sua posição GPS no mapa. Você pode escolher a distância máxima que deseja trabalhar (3km, 5km, 10km, 15km, 20km, 30km, 50km ou Livre). O aplicativo priorizará e filtrará chamadas dentro do raio que você escolheu, garantindo que você rode apenas onde deseja!'
+    a: 'O Sonar é o radar verde que envolve sua posição GPS no mapa. Você pode escolher a distância máxima que deseja trabalhar (500m, 1km, 3km, 5km, 10km, 15km, 20km, 30km, 50km ou Livre). O aplicativo priorizará e filtrará chamadas dentro do raio que você escolheu, garantindo que você rode apenas onde deseja!'
   },
   {
     q: '🌦️ Como funciona a previsão de Clima e Trânsito em tempo real?',
@@ -202,9 +202,16 @@ export default function DriverDashboard() {
   // Raio de Atuação (Sonar de Radar em volta do motorista)
   const [workRadiusKm, setWorkRadiusKm] = useState(() => {
     const saved = localStorage.getItem('zomp_driver_radius');
-    return saved !== null ? parseInt(saved) : 10;
+    return saved !== null ? parseFloat(saved) : 10;
   })
   const [showRadiusSelector, setShowRadiusSelector] = useState(false)
+
+  const formatRadiusLabel = (r) => {
+    if (r === 0) return 'Livre 🌐';
+    if (r === 0.5) return '500 m';
+    if (r === 1) return '1 km';
+    return `${r} km`;
+  };
 
   // Atualização do Clima em Tempo Real via Open-Meteo
   const fetchWeather = useCallback(async (lat, lon) => {
@@ -707,7 +714,7 @@ export default function DriverDashboard() {
             title="Ajustar Raio de Atuação (Sonar)"
           >
             <span>🎯</span>
-            <span>{workRadiusKm === 0 ? 'Sem Limite' : `${workRadiusKm} km`}</span>
+            <span>{formatRadiusLabel(workRadiusKm)}</span>
           </button>
 
           {isOnline ? (
@@ -762,7 +769,7 @@ export default function DriverDashboard() {
             </p>
 
             <div className="radius-options-grid">
-              {[3, 5, 10, 15, 20, 30, 50, 0].map(r => (
+              {[0.5, 1, 3, 5, 10, 15, 20, 30, 50, 0].map(r => (
                 <button
                   key={r}
                   className={`radius-chip ${workRadiusKm === r ? 'active' : ''}`}
@@ -772,7 +779,7 @@ export default function DriverDashboard() {
                     setShowRadiusSelector(false);
                   }}
                 >
-                  {r === 0 ? 'Livre 🌐' : `${r} km`}
+                  {formatRadiusLabel(r)}
                 </button>
               ))}
             </div>
@@ -1080,7 +1087,7 @@ export default function DriverDashboard() {
                 }}
               >
                 <span className="nav-icon"><Radio size={18} /></span>
-                Raio Sonar: {workRadiusKm === 0 ? 'Ilimitado' : `${workRadiusKm} km`}
+                Raio Sonar: {formatRadiusLabel(workRadiusKm)}
               </button>
 
               <button className="drawer-nav-item" onClick={() => { setDarkMap(!darkMap); setMenuOpen(false) }}>
