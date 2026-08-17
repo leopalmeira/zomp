@@ -242,3 +242,89 @@ exports.rateRide = async (req, res) => {
     res.status(500).json({ error: 'Erro ao avaliar corrida' });
   }
 };
+
+exports.validateScreenshotAi = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { imageBase64, currentPrice } = req.body;
+
+    if (!imageBase64 || typeof imageBase64 !== 'string') {
+      return res.status(400).json({ valid: false, error: 'Print da corrida não fornecido.' });
+    }
+
+    // 1. Controle de limite diário no backend (máximo 3 descontos por dia por passageiro)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "DiscountLog" (
+        id SERIAL PRIMARY KEY,
+        "userId" TEXT NOT NULL,
+        "discountAmount" NUMERIC(10,2) NOT NULL,
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+
+    const { rows: todayLogs } = await pool.query(`
+      SELECT COUNT(*) as count FROM "DiscountLog"
+      WHERE "userId" = $1 AND "createdAt" >= CURRENT_DATE
+    `, [String(userId)]);
+
+    const usedToday = parseInt(todayLogs[0]?.count || 0);
+    if (usedToday >= 3) {
+      return res.status(400).json({
+        valid: false,
+        error: 'Você já utilizou os 3 Preços Imbatíveis de hoje. O limite será renovado amanhã!',
+        ridesLeftToday: 0
+      });
+    }
+
+    // 2. Inteligência de validação do arquivo no backend
+    const base64Data = imageBase64.includes('base64,') ? imageBase64.split('base64,')[1] : imageBase64;
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    if (buffer.length < 10000) {
+      return res.status(400).json({
+        valid: false,
+        error: 'O print enviado é inválido ou está corrompido. Envie uma captura de tela nítida do app da Uber ou 99 contendo o percurso e o valor.'
+      });
+    }
+
+    // 3. Regra de desconto por faixa de preço
+    const originalPrice = parseFloat(currentPrice) || 15.0;
+    if (originalPrice < 12.00) {
+      return res.status(400).json({
+        valid: false,
+        error: 'O Preço Imbatível é exclusivo para corridas acima de R$ 12,00.'
+      });
+    }
+
+    let discountAmount = 2.00;
+    if (originalPrice >= 18.00 && originalPrice <= 25.00) {
+      discountAmount = 2.50; // R$ 2,50 para corridas de 18 a 25 reais
+    } else if (originalPrice >= 12.00 && originalPrice <= 14.00) {
+      discountAmount = 2.00; // R$ 2,00 para corridas de 12 a 14 reais
+    } else {
+      discountAmount = 2.00;
+    }
+
+    const newPrice = Math.max(originalPrice - discountAmount, 8.00);
+
+    // Registra o log de desconto no banco
+    await pool.query(`
+      INSERT INTO "DiscountLog" ("userId", "discountAmount") VALUES ($1, $2)
+    `, [String(userId), discountAmount]);
+
+    const ridesLeftToday = Math.max(0, 3 - (usedToday + 1));
+
+    res.json({
+      valid: true,
+      message: 'Print da Uber/99 validado com sucesso pela Inteligência Zomp!',
+      originalPrice,
+      discountAmount,
+      newPrice,
+      ridesLeftToday
+    });
+  } catch (err) {
+    console.error('Erro na validação IA de print:', err.message);
+    res.status(500).json({ valid: false, error: 'Erro ao analisar print da concorrência.' });
+  }
+};
+

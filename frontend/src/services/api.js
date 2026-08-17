@@ -280,3 +280,26 @@ export async function rateRide(rideId, { rating, comment, role }) {
   return data;
 }
 
+export async function validateScreenshot(imageBase64, currentPrice) {
+  const res = await fetch(`${API_BASE}/rides/validate-screenshot`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ imageBase64, currentPrice }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Print não validado');
+  return data;
+}
+
+export async function linkReferral(referrerQrCode) {
+  const res = await fetch(`${API_BASE}/user/link-referral`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ referrerQrCode }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao vincular indicação');
+  return data;
+}
+
+

@@ -37,3 +37,47 @@ exports.getLinkedPassengers = async (req, res) => {
     res.json({ linkedPassengers: 0 });
   }
 };
+
+exports.linkReferral = async (req, res) => {
+  try {
+    const { referrerQrCode } = req.body;
+    if (!referrerQrCode) return res.status(400).json({ error: 'Código de indicação não fornecido' });
+
+    const { rows: drivers } = await pool.query(
+      'SELECT id FROM "User" WHERE ("qrCode" = $1 OR id::text = $1) AND role = \'DRIVER\'',
+      [referrerQrCode.trim()]
+    );
+
+    if (drivers.length === 0) {
+      return res.status(404).json({ error: 'Motorista indicador não encontrado' });
+    }
+
+    const driverId = drivers[0].id;
+    const passengerId = req.user.id;
+
+    if (driverId === passengerId) {
+      return res.status(400).json({ error: 'Não é possível auto-indicação' });
+    }
+
+    const { rows: existing } = await pool.query(
+      'SELECT * FROM "Referral" WHERE "referredId" = $1 AND "expiresAt" > NOW()',
+      [passengerId]
+    );
+
+    if (existing.length === 0) {
+      const expiresAt = new Date();
+      expiresAt.setFullYear(expiresAt.getFullYear() + 2); // 2 anos de royalties
+      await pool.query(
+        'INSERT INTO "Referral" ("referrerId", "referredId", "expiresAt") VALUES ($1, $2, $3)',
+        [driverId, passengerId, expiresAt]
+      );
+      return res.json({ ok: true, message: 'Passageiro vinculado ao motorista parceiro com sucesso por 2 anos!' });
+    }
+
+    res.json({ ok: true, message: 'Passageiro já possui vínculo de indicação ativo' });
+  } catch (err) {
+    console.error('Erro ao vincular referral:', err.message);
+    res.status(500).json({ error: 'Erro ao vincular indicação' });
+  }
+};
+

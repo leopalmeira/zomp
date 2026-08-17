@@ -449,10 +449,11 @@ export default function DriverDashboard() {
 
   // QR
   const [copied, setCopied] = useState(false)
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(user?.qrCode || '')}&bgcolor=ffffff&color=18181b`
+  const referralLink = `${window.location.origin}/passageiro/cadastro?ref=${encodeURIComponent(user?.qrCode || '')}`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(referralLink)}&bgcolor=ffffff&color=18181b`
 
   const handleCopy = () => {
-    if (user?.qrCode) { navigator.clipboard.writeText(user.qrCode); setCopied(true); setTimeout(() => setCopied(false), 2000) }
+    if (user?.qrCode) { navigator.clipboard.writeText(referralLink); setCopied(true); setTimeout(() => setCopied(false), 2000) }
   }
 
   const handleLogout = () => { logout(); navigate('/motorista') }

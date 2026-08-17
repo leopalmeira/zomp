@@ -4,6 +4,7 @@ const ridesController = require('../controllers/ridesController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 router.post('/request', authMiddleware, ridesController.requestRide);
+router.post('/validate-screenshot', authMiddleware, ridesController.validateScreenshotAi);
 router.get('/pending', authMiddleware, ridesController.getPendingRides);
 router.get('/', authMiddleware, ridesController.getHistory);
 router.get('/:id', authMiddleware, ridesController.getRideById);

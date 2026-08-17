@@ -1,18 +1,20 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { register } from '../services/api'
 import AuthMapBg from '../components/AuthMapBg'
 import './Auth.css'
 
 export default function RegisterPage({ forceRole }) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const refCode = searchParams.get('ref') || ''
 
   const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
     role: forceRole,
-    referrerQrCode: '',
+    referrerQrCode: refCode,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -54,10 +56,27 @@ export default function RegisterPage({ forceRole }) {
           <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
         </div>
 
-
         <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-accent' : ''}`}>
 
           {error && <div className="auth-error">⚠ {error}</div>}
+
+          {refCode && !isDriver && (
+            <div style={{
+              background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+              padding: '14px 16px',
+              borderRadius: '14px',
+              marginBottom: '12px',
+              border: '2px solid #34d399',
+              boxShadow: '0 4px 12px rgba(5,150,105,0.3)'
+            }}>
+              <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: '#fff' }}>
+                🌟 Você foi indicado por um motorista parceiro Zomp!
+              </p>
+              <p style={{ margin: '4px 0 0', fontSize: '0.7rem', fontWeight: 600, color: '#ecfdf5' }}>
+                Seu vínculo será criado automaticamente ao finalizar o cadastro.
+              </p>
+            </div>
+          )}
 
           <div className="input-group">
             <label htmlFor="reg-name">Nome e Sobrenome</label>
@@ -101,15 +120,21 @@ export default function RegisterPage({ forceRole }) {
 
           {!isDriver && (
             <div className="input-group" style={{ marginTop: '8px' }}>
-              <label htmlFor="reg-referral" style={{ color: 'var(--primary-hover)' }}>Código de Indicação (Opcional)</label>
+              <label htmlFor="reg-referral" style={{ color: 'var(--primary-hover)' }}>
+                Código de Indicação {refCode ? '(✅ Vinculado automaticamente!)' : '(Opcional)'}
+              </label>
               <input
                 id="reg-referral"
                 className="input"
-                style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.1)' }}
+                style={{
+                  backgroundColor: refCode ? 'rgba(5,150,105,0.08)' : 'rgba(255, 255, 255, 0.05)',
+                  borderColor: refCode ? '#34d399' : 'rgba(255, 255, 255, 0.1)'
+                }}
                 type="text"
                 placeholder="Código do motorista"
                 value={form.referrerQrCode}
                 onChange={(e) => setForm({ ...form, referrerQrCode: e.target.value })}
+                readOnly={!!refCode}
               />
             </div>
           )}

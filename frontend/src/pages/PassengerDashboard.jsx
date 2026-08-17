@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide } from '../services/api'
+import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide, validateScreenshot } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline, Popup } from 'react-leaflet'
 import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera } from 'lucide-react'
 import L from 'leaflet'
@@ -1294,7 +1294,7 @@ const POPULAR_PLACES_RJ = [
                       accept="image/*"
                       id="imbativel-screenshot-priced"
                       style={{ display: 'none' }}
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         
@@ -1303,47 +1303,25 @@ const POPULAR_PLACES_RJ = [
                         setHasCompetitionDiscount(false);
 
                         const reader = new FileReader();
-                        reader.onload = (ev) => {
+                        reader.onload = async (ev) => {
                           const imageSrc = ev.target.result;
-                          const img = new Image();
-                          img.onload = () => {
-                            // Validação de proporção de tela de celular e resolução mínima
-                            const isMobileAspectRatio = img.height >= (img.width * 0.85);
-                            const hasAdequateResolution = img.width >= 200 && img.height >= 300;
-
-                            setTimeout(() => {
-                              setIsAnalyzingScreenshot(false);
-
-                              // Rejeita prints inválidos, fotos genéricas ou arquivos muito pequenos
-                              if (!isMobileAspectRatio || !hasAdequateResolution || file.size < 12000) {
-                                setManualPriceError('O print enviado não foi reconhecido como uma tela válida de corrida da Uber ou 99. Certifique-se de que o percurso e o valor da corrida estejam nítidos.');
-                                setHasCompetitionDiscount(false);
-                                setManualPriceInput('');
-                                return;
-                              }
-
-                              // Cálculo de desconto por faixa de valor
-                              const originalPrice = parseFloat(getPrice(routeKm, vehicleType, true)) || 15.0;
-                              let discount = 2.00;
-                              if (originalPrice >= 18.00 && originalPrice <= 25.00) {
-                                discount = 2.50; // Desconto de R$ 2,50 para corridas de 18 a 25 reais
-                              } else if (originalPrice >= 12.00 && originalPrice <= 14.00) {
-                                discount = 2.00; // Desconto de R$ 2,00 para corridas de 12 a 14 reais
-                              } else {
-                                discount = 2.00;
-                              }
-
-                              setCalculatedDiscountAmount(discount);
-                              setManualPriceInput(imageSrc);
-                              setHasCompetitionDiscount(true);
-                              setManualPriceError('');
-
-                              const nextCount = Math.max(0, imbativelRidesLeft - 1);
-                              setImbativelRidesLeft(nextCount);
-                              localStorage.setItem('zomp_imbativel_rides_left', nextCount.toString());
-                            }, 1300);
-                          };
-                          img.src = imageSrc;
+                          try {
+                            const currentPrice = parseFloat(getPrice(routeKm, vehicleType, true)) || 15.0;
+                            const result = await validateScreenshot(imageSrc, currentPrice);
+                            
+                            setIsAnalyzingScreenshot(false);
+                            setCalculatedDiscountAmount(result.discountAmount);
+                            setManualPriceInput(imageSrc);
+                            setHasCompetitionDiscount(true);
+                            setManualPriceError('');
+                            setImbativelRidesLeft(result.ridesLeftToday);
+                            localStorage.setItem('zomp_imbativel_rides_left', String(result.ridesLeftToday));
+                          } catch (err) {
+                            setIsAnalyzingScreenshot(false);
+                            setManualPriceError(err.message || 'Erro ao validar print da concorrência.');
+                            setHasCompetitionDiscount(false);
+                            setManualPriceInput('');
+                          }
                         };
                         reader.readAsDataURL(file);
                       }}
