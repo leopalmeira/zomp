@@ -257,3 +257,14 @@ export async function nearDestinationRide(rideId) {
   if (!res.ok) throw new Error(data.error || 'Erro ao atualizar status da corrida');
   return data;
 }
+
+export async function applyRideDiscount(rideId, discountAmount = 2.00) {
+  const res = await fetch(`${API_BASE}/rides/${rideId}/discount`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ discountAmount }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao aplicar desconto');
+  return data;
+}

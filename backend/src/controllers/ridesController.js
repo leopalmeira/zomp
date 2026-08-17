@@ -171,10 +171,38 @@ exports.nearDestinationRide = async (req, res) => {
       WHERE id = $1 AND "driverId" = $2
       RETURNING *
     `, [req.params.id, req.user.id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Corrida não encontrada ou você não é o motorista dela' });
+    if (rows.length === 0) return res.status(404).json({ error: 'Corrida não encontrada' });
     res.json(rows[0]);
   } catch (err) {
-    console.error('Erro ao definir corrida perto do destino:', err.message);
-    res.status(500).json({ error: 'Erro ao atualizar status da corrida' });
+    console.error('Erro ao atualizar para próximo do destino:', err.message);
+    res.status(500).json({ error: 'Erro ao atualizar corrida' });
+  }
+};
+
+exports.applyDiscount = async (req, res) => {
+  try {
+    const { discountAmount = 2.00 } = req.body;
+    const { rows: current } = await pool.query('SELECT * FROM "Ride" WHERE id = $1', [req.params.id]);
+    if (current.length === 0) return res.status(404).json({ error: 'Corrida não encontrada' });
+    
+    const ride = current[0];
+    const currentPrice = parseFloat(ride.price) || 0;
+    
+    if (currentPrice <= 12.00) {
+      return res.status(400).json({ error: 'O desconto do Preço Imbatível é válido apenas para corridas acima de R$ 12,00.' });
+    }
+
+    const newPrice = Math.max(currentPrice - parseFloat(discountAmount), 8.00);
+    
+    const { rows: updated } = await pool.query(`
+      UPDATE "Ride" SET price = $1, "updatedAt" = NOW()
+      WHERE id = $2
+      RETURNING *
+    `, [newPrice, req.params.id]);
+
+    res.json(updated[0]);
+  } catch (err) {
+    console.error('Erro ao aplicar desconto:', err.message);
+    res.status(500).json({ error: 'Erro ao aplicar desconto' });
   }
 };

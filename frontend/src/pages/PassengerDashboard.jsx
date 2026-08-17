@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, requestRide, getRideHistory } from '../services/api'
+import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline, Popup } from 'react-leaflet'
 import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera } from 'lucide-react'
 import L from 'leaflet'
@@ -839,7 +839,7 @@ const POPULAR_PLACES_RJ = [
                   setDestCoords(null)
                   searchAddress(v, 'dest')
                 }}
-                placeholder="Para onde vai?"
+                placeholder="Destino"
               />
             </div>
 
@@ -1207,108 +1207,6 @@ const POPULAR_PLACES_RJ = [
                 </div>
               )}
 
-              {/* Challenge Price Box */}
-              <div className="price-challenge-box animate-fade-in" style={{ border: manualPriceError ? '1px solid #ef4444' : 'none' }}>
-                <div className="challenge-icon">🔥</div>
-                <div className="challenge-content">
-                  <h4 style={{fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c', margin: 0}}>
-                    PREÇO IMBATÍVEL ZOMP {imbativelRidesLeft > 0 ? `(${imbativelRidesLeft} restantes)` : '(Limite Esgotado)'}
-                  </h4>
-                  <p style={{fontSize: '0.75rem', fontWeight: 600, color: '#7f1d1d', margin: '2px 0 8px'}}>
-                    Viu preço mais barato na Uber ou 99? Cobrimos com desconto real!
-                  </p>
-                  
-                  <div style={{display:'flex', gap:'8px', marginBottom:'8px'}}>
-                    <input 
-                      type="number" 
-                      placeholder="R$ 0,00"
-                      value={manualPriceInput}
-                      onChange={(e) => setManualPriceInput(e.target.value)}
-                      disabled={imbativelRidesLeft <= 0}
-                      style={{
-                        flex:1, padding:'10px 14px', borderRadius:'10px', border:'2px solid #fca5a5',
-                        fontSize:'1rem', fontWeight:700, outline:'none',
-                        background: imbativelRidesLeft <= 0 ? '#f3f4f6' : '#fff',
-                        cursor: imbativelRidesLeft <= 0 ? 'not-allowed' : 'text'
-                      }}
-                    />
-                    <button 
-                      onClick={() => {
-                        if (imbativelRidesLeft <= 0) {
-                          setManualPriceError('Você já utilizou suas 3 corridas com garantia de Preço Imbatível.');
-                          return;
-                        }
-                        const price = parseFloat(manualPriceInput);
-                        const distance = parseFloat(routeKm);
-                        if (isNaN(price) || price <= 0) {
-                          setManualPriceError('Informe um valor válido.');
-                          return;
-                        }
-                        
-                        let discountPct = 0.05;
-                        if (distance >= 2.0) discountPct = 0.15;
-                        else if (distance >= 1.8) discountPct = 0.12;
-                        else if (distance >= 1.4) discountPct = 0.10;
-
-                        const calculatedDiscount = price * discountPct;
-                        const challengePrice = price - calculatedDiscount;
-
-                        const minKmPrice = config.minKmPriceImbativel || 1.50;
-                        if (challengePrice / distance < minKmPrice) {
-                          setManualPriceError('Não conseguimos bater esse valor (preço abaixo do teto de segurança).');
-                          setHasCompetitionDiscount(false);
-                          setCompPriceRead(0);
-                        } else {
-                          setManualPriceError('');
-                          setCompPriceRead(price);
-                          setHasCompetitionDiscount(true);
-                          setCompPlatform('Concorrência');
-                        }
-                      }}
-                      disabled={imbativelRidesLeft <= 0}
-                      style={{
-                        background: imbativelRidesLeft <= 0 ? '#9ca3af' : '#ef4444', 
-                        color:'#fff', border:'none', padding:'10px 20px',
-                        borderRadius:'10px', fontWeight:800, 
-                        cursor: imbativelRidesLeft <= 0 ? 'not-allowed' : 'pointer',
-                        boxShadow: imbativelRidesLeft <= 0 ? 'none' : '0 4px 12px rgba(239, 68, 68, 0.3)'
-                      }}
-                    >
-                      Bater Preço!
-                    </button>
-                  </div>
-
-                  {manualPriceError && (
-                    <p style={{fontSize: '0.8rem', color: '#ef4444', fontWeight: 800, margin: '8px 0', display:'flex', alignItems:'center', gap:'4px'}}>
-                      <span style={{fontSize:'1.1rem'}}>⚠️</span> {manualPriceError}
-                    </p>
-                  )}
-
-                  {hasCompetitionDiscount && !manualPriceError && (
-                    <div className="animate-bounce-subtle" style={{background:'#059669', padding:'14px', borderRadius:'14px', border:'2px solid #34d399', marginTop:'12px', boxShadow:'0 10px 25px -5px rgba(5, 150, 105, 0.4)'}}>
-                      <div style={{fontSize: '0.85rem', color: '#fff', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', marginBottom:'6px'}}>
-                         <Check size={18} strokeWidth={3} /> <span>OFERTA IMBATÍVEL ATIVADA!</span>
-                      </div>
-                      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                        <div>
-                          <p style={{margin:0, fontSize:'0.75rem', color:'#ecfdf5', fontWeight:600}}>
-                            Você informou: R$ {parseFloat(manualPriceInput).toFixed(2)} na concorrência
-                          </p>
-                          <p style={{margin:0, fontSize:'1.1rem', color:'#fff', fontWeight:900}}>
-                            Novo Preço Zomp: <span style={{fontSize:'1.4rem'}}>R$ {(manualPriceInput * (1 - (parseFloat(routeKm) >= 2.0 ? 0.15 : (parseFloat(routeKm) >= 1.8 ? 0.12 : (parseFloat(routeKm) >= 1.4 ? 0.10 : 0.05))))).toFixed(2)}</span>
-                          </p>
-                        </div>
-                        <div style={{background:'#fff', color:'#059669', padding:'4px 10px', borderRadius:'8px', fontWeight:900, fontSize:'0.8rem'}}>
-                          {parseFloat(routeKm) >= 2.0 ? '15%' : (parseFloat(routeKm) >= 1.8 ? '12%' : (parseFloat(routeKm) >= 1.4 ? '10%' : '5%'))} OFF!
-                        </div>
-                      </div>
-                      <p style={{margin:'8px 0 0', fontSize:'0.7rem', color:'#ecfdf5', fontWeight:700, fontStyle:'italic'}}>
-                        ✅ Garantido mais barato que Uber/99! (Você tem {imbativelRidesLeft} corridas promocionais restantes).
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
 
 
 
@@ -1412,7 +1310,149 @@ const POPULAR_PLACES_RJ = [
                 Buscando motoristas...
               </h3>
               <p className="hint-text">Aguarde enquanto conectamos você ao melhor parceiro próximo.</p>
-              <button className="btn btn-secondary mt-4 w-full" onClick={() => setRideState('PRICED')}>
+
+              {/* === PREÇO IMBATÍVEL — Upload de Print === */}
+              {parseFloat(getPrice(routeKm, vehicleType, true)) > 12 && (
+                <div style={{
+                  marginTop: '20px',
+                  background: 'linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%)',
+                  border: '2px solid #fecaca',
+                  borderRadius: '16px',
+                  padding: '18px',
+                  textAlign: 'left'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '1.6rem' }}>🔥</span>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#b91c1c' }}>
+                        PREÇO IMBATÍVEL ZOMP
+                      </h4>
+                      <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 600, color: '#991b1b' }}>
+                        Viu mais barato na Uber ou 99? Envie o print e ganhe R$ 2,00 de desconto!
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    background: '#fff',
+                    border: '2px dashed #fca5a5',
+                    borderRadius: '14px',
+                    padding: '20px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    position: 'relative'
+                  }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="imbativel-screenshot"
+                      style={{ display: 'none' }}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        
+                        // Mostra preview do print
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          setManualPriceInput(ev.target.result); // reusa como URL preview
+                        };
+                        reader.readAsDataURL(file);
+
+                        // Aplica desconto de R$2 via API
+                        if (activeRideId) {
+                          try {
+                            const updated = await applyRideDiscount(activeRideId, 2.00);
+                            setHasCompetitionDiscount(true);
+                            setManualPriceError('');
+                            setCurrentRide(prev => ({ ...prev, price: updated.price }));
+                          } catch (err) {
+                            setManualPriceError(err.message || 'Erro ao aplicar desconto.');
+                            setHasCompetitionDiscount(false);
+                          }
+                        } else {
+                          setHasCompetitionDiscount(true);
+                          setManualPriceError('');
+                        }
+                      }}
+                    />
+                    <label htmlFor="imbativel-screenshot" style={{ cursor: 'pointer', display: 'block' }}>
+                      {manualPriceInput && manualPriceInput.startsWith('data:image') ? (
+                        <div>
+                          <img 
+                            src={manualPriceInput} 
+                            alt="Print da concorrência" 
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: '120px', 
+                              borderRadius: '10px', 
+                              marginBottom: '8px',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                            }} 
+                          />
+                          <p style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, margin: 0 }}>
+                            ✅ Print enviado! Toque para alterar.
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <Camera size={32} color="#ef4444" style={{ marginBottom: '8px' }} />
+                          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: '#b91c1c' }}>
+                            Enviar Print da Uber ou 99
+                          </p>
+                          <p style={{ margin: '4px 0 0', fontSize: '0.7rem', fontWeight: 600, color: '#9ca3af' }}>
+                            Toque aqui para tirar foto ou selecionar da galeria
+                          </p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+
+                  {manualPriceError && (
+                    <p style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: 800, margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontSize: '1.1rem' }}>⚠️</span> {manualPriceError}
+                    </p>
+                  )}
+
+                  {hasCompetitionDiscount && !manualPriceError && (
+                    <div className="animate-bounce-subtle" style={{
+                      background: '#059669',
+                      padding: '14px',
+                      borderRadius: '14px',
+                      border: '2px solid #34d399',
+                      marginTop: '12px',
+                      boxShadow: '0 10px 25px -5px rgba(5, 150, 105, 0.4)'
+                    }}>
+                      <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <Check size={18} strokeWidth={3} /> <span>DESCONTO IMBATÍVEL APLICADO!</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: '#ecfdf5', fontWeight: 600 }}>
+                            Preço original: R$ {parseFloat(getPrice(routeKm, vehicleType, true)).toFixed(2)}
+                          </p>
+                          <p style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 900 }}>
+                            Novo Preço: <span style={{ fontSize: '1.4rem' }}>R$ {(parseFloat(getPrice(routeKm, vehicleType, true)) - 2.00).toFixed(2)}</span>
+                          </p>
+                        </div>
+                        <div style={{ background: '#fff', color: '#059669', padding: '6px 14px', borderRadius: '10px', fontWeight: 900, fontSize: '0.9rem' }}>
+                          -R$ 2,00
+                        </div>
+                      </div>
+                      <p style={{ margin: '6px 0 0', fontSize: '0.68rem', color: '#ecfdf5', fontWeight: 700, fontStyle: 'italic' }}>
+                        ✅ Garantido mais barato que a concorrência!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button className="btn btn-secondary mt-4 w-full" onClick={() => {
+                setHasCompetitionDiscount(false);
+                setManualPriceError('');
+                setManualPriceInput('');
+                setRideState('PRICED');
+              }}>
                 Cancelar Busca
               </button>
             </div>
