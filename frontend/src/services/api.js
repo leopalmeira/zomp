@@ -268,3 +268,15 @@ export async function applyRideDiscount(rideId, discountAmount = 2.00) {
   if (!res.ok) throw new Error(data.error || 'Erro ao aplicar desconto');
   return data;
 }
+
+export async function rateRide(rideId, { rating, comment, role }) {
+  const res = await fetch(`${API_BASE}/rides/${rideId}/rate`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ rating, comment, role }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao avaliar corrida');
+  return data;
+}
+

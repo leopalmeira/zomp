@@ -12,6 +12,7 @@ router.post('/:id/reject', authMiddleware, ridesController.rejectRide);
 router.post('/:id/complete', authMiddleware, ridesController.completeRide);
 router.post('/:id/near-destination', authMiddleware, ridesController.nearDestinationRide);
 router.post('/:id/discount', authMiddleware, ridesController.applyDiscount);
+router.post('/:id/rate', authMiddleware, ridesController.rateRide);
 router.put('/:id/cancel', authMiddleware, ridesController.cancelRide);
 
 module.exports = router;

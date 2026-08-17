@@ -135,7 +135,7 @@ exports.getRideById = async (req, res) => {
         d."carPlate" as "driverCarPlate", d."carColor" as "driverCarColor",
         d.rating as "driverRating", d."ridesCompleted" as "driverRidesCompleted",
         d.phone as "driverPhone", d.photo as "driverPhoto", d."pixKey" as "driverPixKey",
-        p.name as "passengerName", p.phone as "passengerPhone"
+        p.name as "passengerName", p.phone as "passengerPhone", p.rating as "passengerRating"
       FROM "Ride" r
       LEFT JOIN "User" d ON r."driverId" = d.id
       LEFT JOIN "User" p ON r."passengerId" = p.id
@@ -204,5 +204,30 @@ exports.applyDiscount = async (req, res) => {
   } catch (err) {
     console.error('Erro ao aplicar desconto:', err.message);
     res.status(500).json({ error: 'Erro ao aplicar desconto' });
+  }
+};
+
+exports.rateRide = async (req, res) => {
+  try {
+    const { rating, comment, role } = req.body;
+    const numericRating = Math.max(1, Math.min(5, parseFloat(rating) || 5));
+    
+    const { rows: rideRows } = await pool.query('SELECT * FROM "Ride" WHERE id = $1', [req.params.id]);
+    if (rideRows.length === 0) return res.status(404).json({ error: 'Corrida não encontrada' });
+    const ride = rideRows[0];
+
+    const targetUserId = role === 'PASSENGER' ? ride.driverId : ride.passengerId;
+    if (targetUserId) {
+      await pool.query(`
+        UPDATE "User" 
+        SET rating = ROUND(((COALESCE(rating, 5.0) * GREATEST(COALESCE("ridesCompleted", 1), 1) + $1) / (GREATEST(COALESCE("ridesCompleted", 1), 1) + 1))::numeric, 2)
+        WHERE id = $2
+      `, [numericRating, targetUserId]);
+    }
+
+    res.json({ ok: true, message: 'Avaliação enviada com sucesso' });
+  } catch (err) {
+    console.error('Erro ao avaliar corrida:', err.message);
+    res.status(500).json({ error: 'Erro ao avaliar corrida' });
   }
 };

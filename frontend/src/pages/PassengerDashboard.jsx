@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount } from '../services/api'
+import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline, Popup } from 'react-leaflet'
 import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera } from 'lucide-react'
 import L from 'leaflet'
@@ -170,6 +170,12 @@ export default function PassengerDashboard() {
   const [freightSecurityCode, setFreightSecurityCode] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('PIX')
   const [freightContactName, setFreightContactName] = useState('')
+  const [passengerRatingModalOpen, setPassengerRatingModalOpen] = useState(false)
+  const [lastCompletedRide, setLastCompletedRide] = useState(null)
+  const [passengerRatingStars, setPassengerRatingStars] = useState(5)
+  const [passengerRatingComment, setPassengerRatingComment] = useState('')
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false)
+  const [pixCopiedToast, setPixCopiedToast] = useState(false)
   const [freightContactPhone, setFreightContactPhone] = useState('')
   const [ratingStars, setRatingStars] = useState(0)
   const [manualPriceInput, setManualPriceInput] = useState('')
@@ -241,7 +247,9 @@ export default function PassengerDashboard() {
           } else if (ride.status === 'NEAR_DESTINATION' && rideState === 'ACCEPTED') {
             setRideState('NEAR_DESTINATION');
           } else if (ride.status === 'COMPLETED') {
-            setRideState('COMPLETED');
+            setLastCompletedRide(ride);
+            setPassengerRatingModalOpen(true);
+            setRideState('IDLE');
             setActiveRideId(null);
             setCurrentRide(null);
             showToast('Corrida finalizada com sucesso!');
@@ -1480,7 +1488,16 @@ const POPULAR_PLACES_RJ = [
                 </div>
               )}
 
-              <button className="btn btn-secondary mt-4 w-full" onClick={() => {
+              <button className="btn btn-secondary mt-4 w-full" onClick={async () => {
+                if (activeRideId) {
+                  try {
+                    await cancelRide(activeRideId, 'CANCELLED');
+                  } catch (err) {
+                    console.warn('Erro ao cancelar corrida no backend:', err);
+                  }
+                }
+                setActiveRideId(null);
+                setCurrentRide(null);
                 setHasCompetitionDiscount(false);
                 setManualPriceError('');
                 setManualPriceInput('');
@@ -1514,6 +1531,59 @@ const POPULAR_PLACES_RJ = [
                 <div className="drv-car">
                   <span className="car-model">{currentRide?.driverCarColor ? `${currentRide.driverCarColor} ` : ''}{currentRide?.driverCarModel || favoriteDriversState[0].car}</span>
                   <span className="car-plate">{currentRide?.driverCarPlate || favoriteDriversState[0].plate}</span>
+                </div>
+              </div>
+
+              {/* Card de Pagamento PIX Antecipado ao Motorista */}
+              <div style={{
+                background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)',
+                border: '2px solid #34d399',
+                borderRadius: '16px',
+                padding: '16px',
+                marginBottom: '16px',
+                boxShadow: '0 4px 15px rgba(5, 150, 105, 0.15)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '1.4rem' }}>⚡</span>
+                  <div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#065f46' }}>
+                      PAGAMENTO PIX ANTECIPADO
+                    </div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#047857' }}>
+                      Adiante o pagamento por PIX ao motorista para maior agilidade no desembarque!
+                    </div>
+                  </div>
+                </div>
+                <div style={{
+                  background: '#fff', border: '1px solid #a7f3d0',
+                  borderRadius: '12px', padding: '12px',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '0.7rem', color: '#6b7280', fontWeight: 700 }}>Chave PIX do Motorista</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#111827' }}>
+                      {currentRide?.driverPixKey || 'Chave cadastrada no app'}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#059669', marginTop: '2px' }}>
+                      Valor: R$ {Number(currentRide?.price || getPrice(routeKm, vehicleType, true)).toFixed(2)}
+                    </div>
+                  </div>
+                  <button
+                    style={{
+                      background: pixCopiedToast ? '#10b981' : '#059669', color: '#fff', border: 'none',
+                      padding: '8px 14px', borderRadius: '10px', fontWeight: 800,
+                      fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                    onClick={() => {
+                      const pix = currentRide?.driverPixKey || 'Chave cadastrada no app';
+                      navigator.clipboard.writeText(pix);
+                      setPixCopiedToast(true);
+                      showToast('✅ Chave PIX copiada com sucesso!');
+                      setTimeout(() => setPixCopiedToast(false), 3000);
+                    }}
+                  >
+                    {pixCopiedToast ? '✓ Copiado!' : '📋 Copiar'}
+                  </button>
                 </div>
               </div>
 
@@ -2455,6 +2525,99 @@ const POPULAR_PLACES_RJ = [
                 {isUploadingSelfie ? 'Enviando...' : '🚀 Finalizar Validação'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Modal de Avaliação do Motorista pelo Passageiro */}
+      {passengerRatingModalOpen && lastCompletedRide && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.8)', zIndex: 10000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div className="animate-fade-in-up" style={{
+            background: '#fff', borderRadius: '24px', width: '100%', maxWidth: '380px',
+            padding: '28px', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
+          }}>
+            <div style={{
+              width: '70px', height: '70px', borderRadius: '50%', background: '#ecfdf5',
+              border: '3px solid #10b981', margin: '0 auto 16px', overflow: 'hidden',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              {lastCompletedRide.driverPhoto ? (
+                <img src={lastCompletedRide.driverPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ fontSize: '2rem' }}>🚗</span>
+              )}
+            </div>
+
+            <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', fontWeight: 900, color: '#18181b' }}>
+              Viagem Concluída!
+            </h3>
+            <p style={{ margin: '0 0 20px', fontSize: '0.85rem', color: '#71717a' }}>
+              Como foi sua experiência com <strong>{lastCompletedRide.driverName || 'o Motorista'}</strong>?
+            </p>
+
+            {/* Estrelas */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '20px' }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setPassengerRatingStars(star)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: '2rem', transition: 'transform 0.15s',
+                    transform: passengerRatingStars >= star ? 'scale(1.15)' : 'scale(1)',
+                    color: passengerRatingStars >= star ? '#f59e0b' : '#d4d4d8'
+                  }}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={passengerRatingComment}
+              onChange={(e) => setPassengerRatingComment(e.target.value)}
+              placeholder="Deixe um elogio ou comentário (opcional)..."
+              style={{
+                width: '100%', minHeight: '70px', padding: '12px',
+                borderRadius: '12px', border: '1px solid #e4e4e7',
+                fontSize: '0.85rem', outline: 'none', resize: 'none',
+                marginBottom: '20px', boxSizing: 'border-box'
+              }}
+            />
+
+            <button
+              disabled={isSubmittingRating}
+              style={{
+                width: '100%', padding: '16px', borderRadius: '14px',
+                background: '#059669', color: '#fff', fontWeight: 900,
+                fontSize: '1rem', border: 'none', cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(5, 150, 105, 0.4)'
+              }}
+              onClick={async () => {
+                setIsSubmittingRating(true);
+                try {
+                  await rateRide(lastCompletedRide.id, {
+                    rating: passengerRatingStars,
+                    comment: passengerRatingComment,
+                    role: 'PASSENGER'
+                  });
+                  showToast('⭐ Obrigado por avaliar!');
+                } catch (e) {
+                  console.warn('Erro ao enviar avaliação:', e);
+                } finally {
+                  setIsSubmittingRating(false);
+                  setPassengerRatingModalOpen(false);
+                  setLastCompletedRide(null);
+                  setPassengerRatingStars(5);
+                  setPassengerRatingComment('');
+                }
+              }}
+            >
+              {isSubmittingRating ? 'Enviando...' : '✓ Enviar Avaliação'}
+            </button>
           </div>
         </div>
       )}

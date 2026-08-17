@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide } from '../services/api'
+import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, rateRide } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet'
 import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet } from 'lucide-react'
 import L from 'leaflet'
@@ -297,7 +297,15 @@ export default function DriverDashboard() {
     }
   }
 
-  // Pending Rides
+  // Pending Rides & Visualizações
+  const [seenRidesCount, setSeenRidesCount] = useState({})
+  const [completedRideData, setCompletedRideData] = useState(null)
+  const [showPixCompletionModal, setShowPixCompletionModal] = useState(false)
+  const [showDriverRatingModal, setShowDriverRatingModal] = useState(false)
+  const [driverRatingStars, setDriverRatingStars] = useState(5)
+  const [driverRatingComment, setDriverRatingComment] = useState('')
+  const [isSubmittingDriverRating, setIsSubmittingDriverRating] = useState(false)
+
   const [pendingRides, setPendingRides] = useState([])
   const [activeRide, setActiveRide] = useState(null)
   const prevRideCountRef = useRef(0)
@@ -325,6 +333,9 @@ export default function DriverDashboard() {
           const now = Date.now();
           const r = Array.isArray(rawRides) ? rawRides.filter(ride => {
             if (!ride.createdAt) return true;
+            // Limite: cada pedido só aparece no máximo 2 vezes para este motorista
+            if ((seenRidesCount[ride.id] || 0) >= 2) return false;
+
             const isLongOrScheduled = (parseFloat(ride.distanceKm) >= 50) || (ride.vehicleType && (ride.vehicleType.includes('long') || ride.vehicleType.includes('intercity') || ride.vehicleType.includes('scheduled') || ride.vehicleType.includes('freight')));
             if (isLongOrScheduled) return true;
             const ageMs = now - new Date(ride.createdAt).getTime();
@@ -369,10 +380,13 @@ export default function DriverDashboard() {
   const handleComplete = async () => {
     try {
       if (activeRide) {
-        await completeRide(activeRide.id)
-        setActiveRide(null)
-        fetchWallet()
-        fetchCredits()
+        const finishedRide = { ...activeRide };
+        await completeRide(activeRide.id);
+        setCompletedRideData(finishedRide);
+        setShowPixCompletionModal(true);
+        setActiveRide(null);
+        fetchWallet();
+        fetchCredits();
       }
     } catch (err) { alert(err.message || 'Erro ao finalizar.') }
   }
@@ -664,6 +678,7 @@ export default function DriverDashboard() {
                   style={{ flex: 1, padding: '14px', fontSize: '0.9rem', fontWeight: 700, background: '#27272a', color: '#a1a1aa', borderRadius: '12px', border: '1px solid #3f3f46', cursor: 'pointer' }}
                   onClick={async () => {
                     const rideId = pendingRides[0].id;
+                    setSeenRidesCount(prev => ({ ...prev, [rideId]: (prev[rideId] || 0) + 1 }));
                     setPendingRides(prev => prev.slice(1));
                     try {
                       const { rejectRide } = await import('../services/api');
@@ -1173,6 +1188,129 @@ export default function DriverDashboard() {
         </div>
       )}
 
+      {/* ===== MODAL QR CODE PIX AO FINALIZAR CORRIDA ===== */}
+      {showPixCompletionModal && completedRideData && (
+        <div className="modal-overlay" style={{ zIndex: 10000 }}>
+          <div className="modal-content animate-fade-in-up" style={{ textAlign: 'center', maxWidth: '380px' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: '1.8rem' }}>
+              ❖
+            </div>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#18181b', margin: '0 0 6px' }}>
+              Recebimento PIX
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: '#71717a', margin: '0 0 16px' }}>
+              Apresente o QR Code ao passageiro para receber o valor da corrida.
+            </p>
+
+            <div style={{
+              background: '#fff', border: '2px solid #10b981', borderRadius: '16px',
+              padding: '16px', display: 'inline-block', marginBottom: '16px',
+              boxShadow: '0 10px 25px rgba(16, 185, 129, 0.2)'
+            }}>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                  generatePixPayload(user?.pixKey || 'motorista.zomp@pix.com.br', completedRideData.price, user?.name || 'Motorista Zomp')
+                )}`} 
+                alt="QR Code PIX" 
+                style={{ width: '180px', height: '180px', display: 'block' }}
+              />
+            </div>
+
+            <div style={{ background: '#f4f4f5', padding: '12px', borderRadius: '12px', marginBottom: '16px' }}>
+              <div style={{ fontSize: '0.75rem', color: '#71717a', fontWeight: 700 }}>VALOR A RECEBER</div>
+              <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#059669' }}>
+                R$ {Number(completedRideData.price).toFixed(2)}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#a1a1aa', marginTop: '4px' }}>
+                Chave PIX: <strong>{user?.pixKey || 'Não cadastrada'}</strong>
+              </div>
+            </div>
+
+            <button
+              className="btn-premium btn-green"
+              style={{ width: '100%', padding: '16px', fontSize: '1rem', fontWeight: 900, borderRadius: '14px' }}
+              onClick={() => {
+                setShowPixCompletionModal(false);
+                setShowDriverRatingModal(true);
+              }}
+            >
+              ✓ Pagamento Confirmado & Avaliar ⭐
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== MODAL DE AVALIAÇÃO DO PASSAGEIRO PELO MOTORISTA ===== */}
+      {showDriverRatingModal && completedRideData && (
+        <div className="modal-overlay" style={{ zIndex: 10000 }}>
+          <div className="modal-content animate-fade-in-up" style={{ textAlign: 'center', maxWidth: '380px' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f4f4f5', border: '3px solid #18181b', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem' }}>
+              👤
+            </div>
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#18181b', margin: '0 0 6px' }}>
+              Avaliar Passageiro
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: '#71717a', margin: '0 0 20px' }}>
+              Como foi a viagem com <strong>{completedRideData.passengerName || completedRideData.passenger?.name || 'o Passageiro'}</strong>?
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '20px' }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setDriverRatingStars(star)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: '2.2rem', transition: 'transform 0.15s',
+                    transform: driverRatingStars >= star ? 'scale(1.15)' : 'scale(1)',
+                    color: driverRatingStars >= star ? '#f59e0b' : '#d4d4d8'
+                  }}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={driverRatingComment}
+              onChange={(e) => setDriverRatingComment(e.target.value)}
+              placeholder="Deixe um comentário sobre o passageiro (opcional)..."
+              style={{
+                width: '100%', minHeight: '70px', padding: '12px',
+                borderRadius: '12px', border: '1px solid #e4e4e7',
+                fontSize: '0.85rem', outline: 'none', resize: 'none',
+                marginBottom: '20px', boxSizing: 'border-box'
+              }}
+            />
+
+            <button
+              disabled={isSubmittingDriverRating}
+              className="btn-premium btn-green"
+              style={{ width: '100%', padding: '16px', fontSize: '1rem', fontWeight: 900, borderRadius: '14px' }}
+              onClick={async () => {
+                setIsSubmittingDriverRating(true);
+                try {
+                  await rateRide(completedRideData.id, {
+                    rating: driverRatingStars,
+                    comment: driverRatingComment,
+                    role: 'DRIVER'
+                  });
+                } catch (e) {
+                  console.warn('Erro ao avaliar passageiro:', e);
+                } finally {
+                  setIsSubmittingDriverRating(false);
+                  setShowDriverRatingModal(false);
+                  setCompletedRideData(null);
+                  setDriverRatingStars(5);
+                  setDriverRatingComment('');
+                }
+              }}
+            >
+              {isSubmittingDriverRating ? 'Enviando...' : '✓ Finalizar Avaliação'}
+            </button>
+          </div>
+        </div>
+      )}
 
       </div>
   )
