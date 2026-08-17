@@ -615,31 +615,103 @@ const POPULAR_PLACES_RJ = [
     }
   }
 
-  // ============= Enter seleciona primeira sugestão ou geocode direto =============
+  // ============= Função para resolver endereço textual para coordenadas =============
+  const resolveAddress = async (text) => {
+    if (!text || typeof text !== 'string' || text.trim().length < 2) return null;
+    const trimmed = text.trim();
+
+    // 1. Busca rápida na lista local
+    const queryClean = trimmed.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const localMatch = POPULAR_PLACES_RJ.find(p => {
+      const nameClean = p.display_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return nameClean.includes(queryClean) || queryClean.includes(p.title.toLowerCase());
+    });
+    if (localMatch) {
+      return { lat: localMatch.lat, lon: localMatch.lon, display_name: localMatch.display_name };
+    }
+
+    // 2. Busca no Photon (rápido e sem rate-limit)
+    try {
+      const pRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&limit=1&lat=-22.9068&lon=-43.1729&lang=pt`);
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        if (pData?.features && pData.features.length > 0) {
+          const f = pData.features[0];
+          return {
+            lat: f.geometry.coordinates[1],
+            lon: f.geometry.coordinates[0],
+            display_name: f.properties.name || trimmed
+          };
+        }
+      }
+    } catch (e) {}
+
+    // 3. Fallback Nominatim
+    try {
+      const nRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trimmed)}&countrycodes=br&limit=1`);
+      if (nRes.ok) {
+        const nData = await nRes.json();
+        if (Array.isArray(nData) && nData.length > 0) {
+          return {
+            lat: parseFloat(nData[0].lat),
+            lon: parseFloat(nData[0].lon),
+            display_name: nData[0].display_name
+          };
+        }
+      }
+    } catch (e) {}
+
+    return null;
+  };
+
+  // ============= Enter seleciona primeira sugestão ou geocode direto e calcula rota =============
   const handleEnterKey = async (e, target) => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
 
-    // Se há sugestões, seleciona a primeira
-    if (suggestions.length > 0) {
-      await handleSelectSuggestion(suggestions[0]);
-      return;
-    }
-
-    // Se não há sugestões, faz geocode direto do texto digitado
-    const text = target === 'origin' ? originAddr : target === 'dest' ? destAddr : '';
-    if (!text || text.trim().length < 3) return;
+    setIsLoading(true);
+    setSuggestions([]);
 
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&limit=1&countrycodes=br`);
-      const data = await res.json();
-      if (data.length > 0) {
-        // Simula a seleção como se fosse uma sugestão
-        setSugTarget(target);
-        setTimeout(() => handleSelectSuggestion(data[0]), 50);
+      // 1. Se há sugestões ativas, usa a primeira
+      if (suggestions.length > 0) {
+        await handleSelectSuggestion(suggestions[0]);
+        return;
+      }
+
+      // 2. Caso contrário, resolve o texto digitado
+      const text = target === 'origin' ? originAddr : target === 'dest' ? destAddr : '';
+      if (!text || text.trim().length < 2) {
+        // Se deu enter com destino preenchido e origem vazia, tenta calcular com GPS
+        if (target === 'dest' && destAddr.trim().length >= 2) {
+          await handleForceCalculate();
+        }
+        return;
+      }
+
+      const resolved = await resolveAddress(text);
+      if (resolved) {
+        const coords = [resolved.lat, resolved.lon];
+        if (target === 'origin') {
+          setOriginAddr(resolved.display_name || text);
+          setOriginCoords(coords);
+          setMapCenter(coords);
+          originCoordsRef.current = coords;
+        } else if (target === 'dest') {
+          setDestAddr(resolved.display_name || text);
+          setDestCoords(coords);
+          destCoordsRef.current = coords;
+        }
+
+        // Se já tiver ou conseguir a origem, dispara o cálculo de rota
+        await handleForceCalculate();
+      } else {
+        await handleForceCalculate();
       }
     } catch (err) {
-      console.warn('Geocode direto falhou:', err);
+      console.warn('Erro ao processar Enter no endereço:', err);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -666,61 +738,83 @@ const POPULAR_PLACES_RJ = [
     }
   }
 
-  // ============= Force calculate (button click) =============
+  // ============= Force calculate (button click ou Enter) =============
   const handleForceCalculate = async () => {
     setIsLoading(true)
     try {
-      // Use refs for latest coords (avoids stale closure from GPS)
+      // 1. Resolução da Origem (se vazia, usa GPS/mapCenter atual)
       let oCoords = originCoordsRef.current
       if (!oCoords) {
-        // Try HTML5 Geolocation first before falling back to text resolve
-        try {
-          const gpsPos = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true, timeout: 5000, maximumAge: 10000
-            })
-          })
-          oCoords = [gpsPos.coords.latitude, gpsPos.coords.longitude]
-          setOriginCoords(oCoords)
-          setMapCenter(oCoords)
-          setOriginAddr('Sua Localização')
-        } catch (gpsErr) {
-          // GPS failed, try text resolve as fallback
+        if (originAddr && originAddr.trim().length >= 2 && originAddr !== 'Sua Localização') {
           const resolved = await resolveAddress(originAddr)
           if (resolved) {
             oCoords = [resolved.lat, resolved.lon]
             setOriginCoords(oCoords)
-            setMapCenter(oCoords)
+            originCoordsRef.current = oCoords
+          }
+        }
+        
+        // Se ainda não tiver oCoords, usa o mapCenter do GPS
+        if (!oCoords) {
+          if (Array.isArray(mapCenter) && mapCenter.length === 2 && mapCenter[0] !== 0) {
+            oCoords = mapCenter
+            setOriginCoords(oCoords)
+            originCoordsRef.current = oCoords
+            if (!originAddr) setOriginAddr('Sua Localização')
+          } else {
+            try {
+              const gpsPos = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                  enableHighAccuracy: true, timeout: 4000, maximumAge: 10000
+                })
+              })
+              oCoords = [gpsPos.coords.latitude, gpsPos.coords.longitude]
+              setOriginCoords(oCoords)
+              setMapCenter(oCoords)
+              originCoordsRef.current = oCoords
+              if (!originAddr) setOriginAddr('Sua Localização')
+            } catch (gpsErr) {
+              const resolved = await resolveAddress('Centro, Rio de Janeiro')
+              if (resolved) {
+                oCoords = [resolved.lat, resolved.lon]
+                setOriginCoords(oCoords)
+                originCoordsRef.current = oCoords
+              }
+            }
           }
         }
       }
 
-      // Resolve destination if no coords
+      // 2. Resolução do Destino
       let dCoords = destCoordsRef.current
-      if (!dCoords) {
+      if (!dCoords && destAddr && destAddr.trim().length >= 2) {
         const resolved = await resolveAddress(destAddr)
         if (resolved) {
           dCoords = [resolved.lat, resolved.lon]
           setDestCoords(dCoords)
+          destCoordsRef.current = dCoords
         }
       }
 
-      // Resolve stops
+      // 3. Resolução das Paradas
       let resolvedStops = []
       const currentStops = stopsRef.current
       for (let i = 0; i < currentStops.length; i++) {
         let sc = currentStops[i].coords
-        if (!sc && currentStops[i].addr.length >= 4) {
+        if (!sc && currentStops[i].addr.length >= 2) {
           const res = await resolveAddress(currentStops[i].addr)
           if (res) sc = [res.lat, res.lon]
         }
         if (sc) resolvedStops.push(sc)
       }
 
+      // 4. Se tiver origem e destino, calcula a rota
       if (oCoords && dCoords) {
         await calculateRoute(oCoords, dCoords, resolvedStops)
+      } else if (!dCoords) {
+        alert('Por favor, informe o endereço de destino.')
       } else {
-        alert('Não foi possível encontrar os endereços. Verifique se o GPS está ativado ou digite um endereço de partida.')
+        alert('Não foi possível localizar o ponto de partida. Verifique o GPS ou digite o endereço.')
       }
     } catch (e) {
       console.error('Force calculate error:', e)
@@ -954,6 +1048,32 @@ const POPULAR_PLACES_RJ = [
               </div>
             )}
           </div>
+
+          {destAddr.trim().length >= 2 && !isLoading && (
+            <button
+              onClick={handleForceCalculate}
+              style={{
+                marginTop: '10px',
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                color: '#fff',
+                fontWeight: 900,
+                fontSize: '0.92rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 15px rgba(5, 150, 105, 0.35)',
+                transition: 'all 0.2s'
+              }}
+            >
+              <span>🚖</span> VER PREÇOS & PEDIR CARRO
+            </button>
+          )}
 
           {isLoading && (
             <div style={{marginTop:'10px', textAlign:'center', fontSize:'0.85rem', color:'#059669', fontWeight:700}}>
