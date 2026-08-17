@@ -305,10 +305,13 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 * 🚦 **Status do Trânsito na Região**:
   - Indicador dinâmico de fluxo (🟢 Fluindo / 🟡 Moderado / 🔴 Intenso em horários de pico) para orientar o motorista sobre a dinâmica viária da área.
 
-* 🎯 **Sonar de Radar & Seletor de Raio de Atuação (Ultra-Local e Regional)**:
-  - Quando online, um **círculo de sonar verde pulsante** é renderizado no mapa em volta da posição GPS do motorista.
-  - O motorista pode tocar no botão do raio ou acessar o menu lateral para escolher seu raio de atuação (`500 m`, `1 km`, `3 km`, `5 km`, `10 km`, `15 km`, `20 km`, `30 km`, `50 km` ou `Sem Limite / Livre`).
-  - O motorista pode **ocultar ou reexibir o widget de clima/trânsito** a qualquer momento pelo menu lateral (*Preferências & Mapa*).
+* 🎯 **Sonar de Radar & Filtro Rigoroso de Início e Fim no Raio de Atuação**:
+  - Quando um raio de atuação é configurado (`500 m`, `1 km`, `3 km`, `5 km`, `10 km`, `15 km`, `20 km`, `30 km` ou `50 km`), o sistema aplica um **filtro geoespacial rigoroso por Haversine**:
+    - O ponto de **INÍCIO (Origem)** deve estar a `<= raio` da posição GPS do motorista.
+    - O ponto de **FIM (Destino)** também deve estar a `<= raio` da posição GPS do motorista.
+    - Isso assegura que o motorista parceiro **somente visualize e receba corridas que ocorram 100% dentro da sua área delimitada**!
+  - No modo `Livre / Sem Limite`, todas as corridas são elegíveis normalmente.
+  - O motorista pode alternar o raio com 1 toque no header superior ou pelo menu lateral.
 
 * 🛑 **Encerramento no Meio do Caminho & Conciliação Financeira Completa**:
   - Se uma corrida anterior foi cancelada no percurso, o valor proporcional calculado fica registrado.

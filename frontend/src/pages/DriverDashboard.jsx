@@ -129,6 +129,20 @@ const isLongOrScheduledRide = (ride) => {
   return dist >= 15 || vt.includes('long') || vt.includes('intercity') || vt.includes('scheduled') || vt.includes('freight');
 }
 
+// Distância geodésica em KM (Fórmula de Haversine)
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 // Lista Completa de FAQs para o Motorista Parceiro
 const DRIVER_FAQS = [
   {
@@ -501,6 +515,34 @@ export default function DriverDashboard() {
             // Limite: corrida longa/agendada aparece 1x, normal aparece 2x
             const maxViews = isLongOrScheduledRide(ride) ? 1 : 2;
             if ((seenRidesCountRef.current[ride.id] || 0) >= maxViews) return false;
+
+            // Filtro de Raio de Atuação (Sonar): Início e Fim da corrida devem estar 100% dentro do raio
+            if (workRadiusKm > 0 && Array.isArray(myPos) && myPos[0]) {
+              const driverLat = myPos[0];
+              const driverLon = myPos[1];
+
+              // Se a distância total do trajeto for maior que o diâmetro do raio, o destino certamente sai do raio
+              const rideDist = parseFloat(ride.distanceKm) || 0;
+              if (rideDist > workRadiusKm * 2) {
+                return false;
+              }
+
+              // 1. Validação do Início da Corrida (Origem)
+              if (ride.originLat != null && ride.originLon != null) {
+                const distOrigin = getDistanceFromLatLonInKm(driverLat, driverLon, parseFloat(ride.originLat), parseFloat(ride.originLon));
+                if (distOrigin !== null && distOrigin > workRadiusKm) {
+                  return false; // Início fora do raio
+                }
+              }
+
+              // 2. Validação do Fim da Corrida (Destino)
+              if (ride.destLat != null && ride.destLon != null) {
+                const distDest = getDistanceFromLatLonInKm(driverLat, driverLon, parseFloat(ride.destLat), parseFloat(ride.destLon));
+                if (distDest !== null && distDest > workRadiusKm) {
+                  return false; // Fim fora do raio
+                }
+              }
+            }
 
             const isLongOrScheduled = (parseFloat(ride.distanceKm) >= 50) || (ride.vehicleType && (ride.vehicleType.includes('long') || ride.vehicleType.includes('intercity') || ride.vehicleType.includes('scheduled') || ride.vehicleType.includes('freight')));
             if (isLongOrScheduled) return true;

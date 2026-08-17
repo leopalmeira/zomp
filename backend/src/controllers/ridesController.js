@@ -13,6 +13,15 @@ exports.requestRide = async (req, res) => {
     await pool.query('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "pendingDebt" NUMERIC(10,2) DEFAULT 0');
     await pool.query('ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "driverAppDebt" NUMERIC(10,2) DEFAULT 0');
     await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "pendingDebtIncluded" NUMERIC(10,2) DEFAULT 0');
+    await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "originLat" NUMERIC(10,6)');
+    await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "originLon" NUMERIC(10,6)');
+    await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "destLat" NUMERIC(10,6)');
+    await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "destLon" NUMERIC(10,6)');
+
+    const originLat = req.body.originLat != null ? parseFloat(req.body.originLat) : null;
+    const originLon = req.body.originLon != null ? parseFloat(req.body.originLon) : null;
+    const destLat = req.body.destLat != null ? parseFloat(req.body.destLat) : null;
+    const destLon = req.body.destLon != null ? parseFloat(req.body.destLon) : null;
 
     // 1. Verifica se o passageiro possui débito pendente de corrida anterior cancelada no percurso
     const { rows: userDebtRows } = await pool.query('SELECT "pendingDebt" FROM "User" WHERE id = $1', [req.user.id]);
@@ -25,10 +34,10 @@ exports.requestRide = async (req, res) => {
     }
 
     const { rows } = await pool.query(`
-      INSERT INTO "Ride" ("passengerId", origin, destination, price, "distanceKm", "vehicleType", "pendingDebtIncluded", status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING')
+      INSERT INTO "Ride" ("passengerId", origin, destination, price, "distanceKm", "vehicleType", "pendingDebtIncluded", "originLat", "originLon", "destLat", "destLon", status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'PENDING')
       RETURNING *
-    `, [req.user.id, validOrigin, validDest, validPrice, validDistance, validVehicle, pendingDebt]);
+    `, [req.user.id, validOrigin, validDest, validPrice, validDistance, validVehicle, pendingDebt, originLat, originLon, destLat, destLon]);
 
     res.json({
       ...rows[0],

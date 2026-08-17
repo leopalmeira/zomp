@@ -913,7 +913,11 @@ const POPULAR_PLACES_RJ = [
         destination: rideDest,
         price: ridePrice,
         distanceKm: rideDistance,
-        vehicleType
+        vehicleType,
+        originLat: originCoords ? originCoords[0] : null,
+        originLon: originCoords ? originCoords[1] : null,
+        destLat: destCoords ? destCoords[0] : null,
+        destLon: destCoords ? destCoords[1] : null
       };
 
       const newRide = await requestRide(ridePayload);
