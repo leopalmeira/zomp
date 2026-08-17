@@ -119,6 +119,8 @@ export default function PassengerDashboard() {
   const [originCoords, setOriginCoords] = useState(null)
   const [destAddr, setDestAddr] = useState('')
   const [destCoords, setDestCoords] = useState(null)
+  const [gpsAddress, setGpsAddress] = useState('')
+  const [gpsCoords, setGpsCoords] = useState(null)
 
   // Keep refs for latest coords to avoid stale closures
   const originCoordsRef = useRef(null)
@@ -443,11 +445,19 @@ export default function PassengerDashboard() {
         async (pos) => {
           const c = [pos.coords.latitude, pos.coords.longitude]
           setMapCenter(c)
+          setGpsCoords(c)
           
-          // Só centraliza o mapa na posição do GPS, mas NÃO preenche o campo de origem
+          // Busca o endereço reverso preciso do GPS em background
           if (!hasInitializedGps.current) {
             hasInitializedGps.current = true;
-            // Campo de origem fica vazio para o passageiro digitar manualmente
+            try {
+              const realAddress = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+              if (realAddress && realAddress !== 'Sua Localização') {
+                setGpsAddress(realAddress);
+              }
+            } catch (err) {
+              console.warn('Erro ao obter endereço do GPS:', err);
+            }
           }
         },
         (err) => {
@@ -481,6 +491,33 @@ const POPULAR_PLACES_RJ = [
   { display_name: 'Rodoviária Novo Rio, Rio de Janeiro - RJ', title: 'Rodoviária Novo Rio', subtitle: 'Santo Cristo • Rio de Janeiro, RJ', lat: -22.8989, lon: -43.2097 }
 ];
 
+  // ============= Sugestões de GPS instantâneas para partida =============
+  const showOriginGpsSuggestions = useCallback(() => {
+    setSugTarget('origin');
+    const items = [];
+    if (gpsCoords) {
+      items.push({
+        isGps: true,
+        title: 'Usar Localização Atual (GPS)',
+        subtitle: gpsAddress || 'Localização precisa obtida do seu aparelho',
+        display_name: gpsAddress || 'Sua Localização',
+        lat: gpsCoords[0],
+        lon: gpsCoords[1]
+      });
+    } else if (Array.isArray(mapCenter) && mapCenter[0] !== 0) {
+      items.push({
+        isGps: true,
+        title: 'Usar Localização Atual (GPS)',
+        subtitle: 'Localização do mapa / GPS',
+        display_name: 'Sua Localização',
+        lat: mapCenter[0],
+        lon: mapCenter[1]
+      });
+    }
+    items.push(...POPULAR_PLACES_RJ.slice(0, 3));
+    setSuggestions(items);
+  }, [gpsCoords, gpsAddress, mapCenter]);
+
   // ============= Address search with fast debounce =============
   const searchAddress = useCallback((text, target) => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -488,7 +525,11 @@ const POPULAR_PLACES_RJ = [
 
     const trimmed = text.trim()
     if (trimmed.length < 2) {
-      setSuggestions([])
+      if (target === 'origin') {
+        showOriginGpsSuggestions();
+      } else {
+        setSuggestions([]);
+      }
       return
     }
 
@@ -498,16 +539,29 @@ const POPULAR_PLACES_RJ = [
       const nameClean = addr.display_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       return nameClean.includes(queryClean);
     });
-    if (quickLocal.length > 0) {
-      setSuggestions(quickLocal.slice(0, 5));
+    
+    // Adiciona o item de GPS no topo para a partida
+    const gpsItem = (target === 'origin' && (gpsCoords || mapCenter)) ? [{
+      isGps: true,
+      title: 'Usar Localização Atual (GPS)',
+      subtitle: gpsAddress || 'Localização precisa do seu aparelho',
+      display_name: gpsAddress || 'Sua Localização',
+      lat: (gpsCoords ? gpsCoords[0] : mapCenter[0]),
+      lon: (gpsCoords ? gpsCoords[1] : mapCenter[1])
+    }] : [];
+
+    if (quickLocal.length > 0 || gpsItem.length > 0) {
+      setSuggestions([...gpsItem, ...quickLocal].slice(0, 5));
     }
 
     debounceRef.current = setTimeout(async () => {
       let remoteResults = [];
       try {
-        // Tenta Photon primeiro (muito mais rápido e sem rate-limit)
+        const latRef = gpsCoords ? gpsCoords[0] : mapCenter[0];
+        const lonRef = gpsCoords ? gpsCoords[1] : mapCenter[1];
+        // Tenta Photon ancorado no GPS do aparelho
         const photonRes = await fetch(
-          `https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&limit=6&lat=-22.9068&lon=-43.1729&lang=pt`
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&limit=6&lat=${latRef}&lon=${lonRef}&lang=pt`
         );
         if (photonRes.ok) {
           const photonData = await photonRes.json();
@@ -555,17 +609,11 @@ const POPULAR_PLACES_RJ = [
         } catch (e) {}
       }
 
-      // Combina resultados remotos com locais
-      const localMatches = POPULAR_PLACES_RJ.filter(addr => {
-        const nameClean = addr.display_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        return nameClean.includes(queryClean);
-      });
-
-      const merged = [...remoteResults, ...localMatches];
+      const merged = [...gpsItem, ...remoteResults, ...quickLocal];
       const unique = [];
       const seen = new Set();
       for (const item of merged) {
-        const key = item.title?.toLowerCase() || item.display_name?.toLowerCase();
+        const key = item.isGps ? 'gps_fixed_key' : (item.title?.toLowerCase() || item.display_name?.toLowerCase());
         if (!seen.has(key)) {
           seen.add(key);
           unique.push(item);
@@ -574,7 +622,7 @@ const POPULAR_PLACES_RJ = [
 
       setSuggestions(unique.slice(0, 5));
     }, 200);
-  }, []);
+  }, [gpsCoords, gpsAddress, mapCenter, showOriginGpsSuggestions]);
 
   // ============= Select suggestion =============
   const handleSelectSuggestion = async (s) => {
@@ -976,14 +1024,23 @@ const POPULAR_PLACES_RJ = [
               <input
                 className="route-input"
                 value={originAddr}
+                onFocus={() => {
+                  if (!originAddr || originAddr.trim().length === 0) {
+                    showOriginGpsSuggestions();
+                  }
+                }}
                 onChange={(e) => {
                   const v = e.target.value
                   setOriginAddr(v)
                   setOriginCoords(null)
-                  searchAddress(v, 'origin')
+                  if (!v || v.trim().length === 0) {
+                    showOriginGpsSuggestions();
+                  } else {
+                    searchAddress(v, 'origin')
+                  }
                 }}
                 onKeyDown={(e) => handleEnterKey(e, 'origin')}
-                placeholder="Partida"
+                placeholder="Partida (ou toque para GPS)"
               />
               {stops.map((stop, si) => (
                 <div key={`stop-${si}`} className="stop-input-row">
@@ -1044,13 +1101,22 @@ const POPULAR_PLACES_RJ = [
                       e.preventDefault(); 
                       handleSelectSuggestion(s); 
                     }}
+                    style={s.isGps ? { background: '#f0fdf4', borderBottom: '1px solid #bbf7d0' } : {}}
                   >
-                    <div className="suggestion-icon-wrap">
-                      <MapPin size={15} color="#059669" />
+                    <div className="suggestion-icon-wrap" style={s.isGps ? { background: '#dcfce7' } : {}}>
+                      {s.isGps ? (
+                        <span style={{ fontSize: '1rem' }}>📍</span>
+                      ) : (
+                        <MapPin size={15} color="#059669" />
+                      )}
                     </div>
                     <div className="suggestion-text">
-                      <span className="suggestion-main">{s.title || s.display_name.split(',')[0]}</span>
-                      <span className="suggestion-sub">{s.subtitle || s.display_name.split(',').slice(1, 3).join(',').trim()}</span>
+                      <span className="suggestion-main" style={s.isGps ? { color: '#15803d', fontWeight: 800 } : {}}>
+                        {s.title || s.display_name.split(',')[0]}
+                      </span>
+                      <span className="suggestion-sub" style={s.isGps ? { color: '#166534', fontWeight: 600 } : {}}>
+                        {s.subtitle || s.display_name.split(',').slice(1, 3).join(',').trim()}
+                      </span>
                     </div>
                   </div>
                 ))}
