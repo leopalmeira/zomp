@@ -70,7 +70,7 @@ function generatePixPayload(key, amount, merchantName = 'Motorista Zomp', city =
   return payloadWithoutCRC + crc;
 }
 
-// --- Som de Notificação ---
+// --- Som de Notificação (corrida normal) ---
 const playRingSound = () => {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -87,15 +87,46 @@ const playRingSound = () => {
       osc.stop(startTime + duration);
     };
     const now = ctx.currentTime;
-    // Toca um padrão estilo chamada de aplicativo
     playNote(523.25, now, 0.15, 'square'); 
     playNote(659.25, now + 0.2, 0.15, 'square');
     playNote(783.99, now + 0.4, 0.4, 'square');
-    
     playNote(523.25, now + 1.0, 0.15, 'square'); 
     playNote(659.25, now + 1.2, 0.15, 'square');
     playNote(783.99, now + 1.4, 0.4, 'square');
   } catch(e) { console.error('Audio falhou', e) }
+}
+
+// --- Som diferente para corrida LONGA / AGENDADA (tom grave, apenas 1x) ---
+const playLongRideSound = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const playNote = (freq, startTime, duration, type='sine') => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.15, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+    const now = ctx.currentTime;
+    // Tom grave e suave — diferente do ring agudo
+    playNote(349.23, now, 0.3, 'triangle');
+    playNote(440.00, now + 0.35, 0.3, 'triangle');
+    playNote(523.25, now + 0.7, 0.5, 'triangle');
+    playNote(659.25, now + 1.3, 0.6, 'sine');
+  } catch(e) { console.error('Audio longa falhou', e) }
+}
+
+// Detecta se a corrida é longa (>=15km) ou agendada/frete
+const isLongOrScheduledRide = (ride) => {
+  if (!ride) return false;
+  const dist = parseFloat(ride.distanceKm) || 0;
+  const vt = ride.vehicleType || '';
+  return dist >= 15 || vt.includes('long') || vt.includes('intercity') || vt.includes('scheduled') || vt.includes('freight');
 }
 
 export default function DriverDashboard() {
@@ -310,15 +341,48 @@ export default function DriverDashboard() {
   const [pendingRides, setPendingRides] = useState([])
   const [activeRide, setActiveRide] = useState(null)
   const prevRideCountRef = useRef(0)
+  const [rideCountdown, setRideCountdown] = useState(10)
 
-  // Alarme sonoro contínuo enquanto houver corrida pendente aguardando aceite
+  // Temporizador regressivo de 10 segundos para aceitar a corrida
+  useEffect(() => {
+    let countdownTimer;
+    if (isOnline && pendingRides.length > 0 && !activeRide) {
+      setRideCountdown(10);
+      countdownTimer = setInterval(() => {
+        setRideCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownTimer);
+            // Auto-recusa ao expirar o tempo
+            const rideId = pendingRides[0]?.id;
+            if (rideId) {
+              seenRidesCountRef.current[rideId] = (seenRidesCountRef.current[rideId] || 0) + 1;
+              setSeenRidesCount({ ...seenRidesCountRef.current });
+              setPendingRides(pr => pr.slice(1));
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => { if (countdownTimer) clearInterval(countdownTimer); };
+  }, [isOnline, pendingRides.length > 0 ? pendingRides[0]?.id : null, activeRide]);
+
+  // Alarme sonoro — contínuo para corridas normais, apenas 1x para longas/agendadas
   useEffect(() => {
     let ringTimer;
     if (isOnline && pendingRides.length > 0 && !activeRide) {
-      playRingSound();
-      ringTimer = setInterval(() => {
+      const ride = pendingRides[0];
+      if (isLongOrScheduledRide(ride)) {
+        // Corrida longa/agendada: som diferente, apenas 1 vez
+        playLongRideSound();
+      } else {
+        // Corrida normal: alarme contínuo
         playRingSound();
-      }, 3500);
+        ringTimer = setInterval(() => {
+          playRingSound();
+        }, 3500);
+      }
     }
     return () => {
       if (ringTimer) clearInterval(ringTimer);
@@ -334,8 +398,9 @@ export default function DriverDashboard() {
           const now = Date.now();
           const r = Array.isArray(rawRides) ? rawRides.filter(ride => {
             if (!ride.createdAt) return true;
-            // Limite: cada pedido só aparece no máximo 2 vezes para este motorista
-            if ((seenRidesCountRef.current[ride.id] || 0) >= 2) return false;
+            // Limite: corrida longa/agendada aparece 1x, normal aparece 2x
+            const maxViews = isLongOrScheduledRide(ride) ? 1 : 2;
+            if ((seenRidesCountRef.current[ride.id] || 0) >= maxViews) return false;
 
             const isLongOrScheduled = (parseFloat(ride.distanceKm) >= 50) || (ride.vehicleType && (ride.vehicleType.includes('long') || ride.vehicleType.includes('intercity') || ride.vehicleType.includes('scheduled') || ride.vehicleType.includes('freight')));
             if (isLongOrScheduled) return true;
@@ -615,13 +680,42 @@ export default function DriverDashboard() {
             </div>
           )
         ) : pendingRides.length > 0 ? (
-          <div className="ride-request-card animate-fade-in-up" style={{ border: '2px solid #10b981', boxShadow: '0 8px 30px rgba(16, 185, 129, 0.25)' }}>
+          <div className="ride-request-card animate-fade-in-up" style={{ border: '2px solid #10b981', boxShadow: '0 8px 30px rgba(16, 185, 129, 0.25)', position: 'relative', overflow: 'hidden' }}>
+            {/* Barra de progresso do countdown */}
+            <div style={{
+              position: 'absolute', top: 0, left: 0,
+              width: `${(rideCountdown / 10) * 100}%`,
+              height: '4px',
+              background: rideCountdown <= 3 ? '#ef4444' : '#10b981',
+              transition: 'width 1s linear, background 0.3s',
+              borderRadius: '0 2px 2px 0'
+            }} />
             <div className="request-header" style={{ borderBottom: '1px solid #27272a', paddingBottom: '12px' }}>
               <div>
                 <div className="label" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: 800 }}>
                   <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
                   {pendingRides[0].vehicleType?.includes('freight') ? '📦 NOVO FRETE SOLICITADO' : '🚖 NOVA CORRIDA'}
                 </div>
+                {/* Badges de CORRIDA LONGA / AGENDADA */}
+                {isLongOrScheduledRide(pendingRides[0]) && (
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                    {parseFloat(pendingRides[0].distanceKm) >= 15 && (
+                      <span style={{ background: '#7c3aed', color: '#fff', fontSize: '0.62rem', fontWeight: 800, padding: '2px 8px', borderRadius: '100px' }}>
+                        🛣️ CORRIDA LONGA
+                      </span>
+                    )}
+                    {(pendingRides[0].vehicleType?.includes('scheduled')) && (
+                      <span style={{ background: '#2563eb', color: '#fff', fontSize: '0.62rem', fontWeight: 800, padding: '2px 8px', borderRadius: '100px' }}>
+                        📅 AGENDADA
+                      </span>
+                    )}
+                    {pendingRides[0].vehicleType?.includes('freight') && (
+                      <span style={{ background: '#d97706', color: '#fff', fontSize: '0.62rem', fontWeight: 800, padding: '2px 8px', borderRadius: '100px' }}>
+                        📦 FRETE
+                      </span>
+                    )}
+                  </div>
+                )}
                 <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'4px'}}>
                   <div style={{fontSize:'0.95rem',fontWeight:700,color:'#f4f4f5'}}>
                     {pendingRides[0].passengerName || pendingRides[0].passenger?.name || 'Passageiro'}
@@ -670,10 +764,10 @@ export default function DriverDashboard() {
               <div className="request-actions" style={{ gap: '10px' }}>
                 <button 
                   className="btn-accept" 
-                  style={{ flex: 1.6, padding: '14px', fontSize: '1rem', fontWeight: 900, background: '#10b981', color: '#fff', borderRadius: '12px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)' }}
+                  style={{ flex: 1.6, padding: '14px', fontSize: '1rem', fontWeight: 900, background: '#10b981', color: '#fff', borderRadius: '12px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)', position: 'relative' }}
                   onClick={() => handleAccept(pendingRides[0].id)}
                 >
-                  ✓ Aceitar Viagem
+                  ✓ Aceitar ({rideCountdown}s)
                 </button>
                 <button 
                   className="btn-reject" 
