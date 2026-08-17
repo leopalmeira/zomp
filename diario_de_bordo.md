@@ -260,3 +260,49 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 **Últimos Commits**:
 - [e23d53b](https://github.com/leopalmeira/zomp/commit/e23d53b) (Downgrade do frontend/package.json)
 - [40a59f8](https://github.com/leopalmeira/zomp/commit/40a59f8) (Remoção do static serving do backend)
+
+---
+
+### 🚀 v13.0.0 - Preço Imbatível Dinâmico, IA de Print, Royalties e Melhorias no Motorista (2026-08-17)
+
+* 🔥 **Preço Imbatível com Desconto Direto no Print da Uber/99**:
+  - Validação inteligente do print no backend (`POST /api/rides/validate-screenshot`) com limite estrito de **3 descontos por dia** por passageiro (tabela `DiscountLog`).
+  - O desconto é **subtraído diretamente sobre o valor do print do cliente**:
+    - Print de **R$ 12,00 a R$ 14,00** ➔ **- R$ 2,00 de desconto**
+    - Print de **R$ 18,00 a R$ 25,00** ➔ **- R$ 2,50 de desconto**
+    - Print **acima de R$ 30,00** ➔ **- R$ 3,00 de desconto**
+    - Demais valores (> R$ 12,00) ➔ **- R$ 2,00 de desconto**
+  - Campo transparente de conferência/ajuste do valor lido do print com recálculo automático.
+  - Botão de chamada rápida: `⚡ CHAMAR ZOMP POR R$ XX,XX — MAIS BARATO!`.
+
+* 📍 **Inserção Rápida de Endereço sem Obrigar Clique na Lista**:
+  - Suporte completo para **pressionar Enter** ou clicar no botão **"🚖 VER PREÇOS & PEDIR CARRO"**.
+  - Geocodificação inteligente com Photon, Nominatim e catálogo local.
+  - Preenchimento automático da partida com GPS quando em branco.
+
+* 🔗 **QR Code de Indicação & Royalties de R$ 0,30 por Corrida**:
+  - QR Code do motorista gera URL completa: `zomp.app/passageiro/cadastro?ref=CODIGO`.
+  - Passageiro é vinculado por **2 anos** ao motorista parceiro.
+  - A cada corrida concluída pelo passageiro, **R$ 0,30 de royalties** são creditados na carteira do motorista indicador.
+
+* 🛣️ **Corridas Longas / Agendadas & Temporizador Regressivo de 10s**:
+  - Corridas longas (≥ 15km) ou agendadas tocam **som suave e grave apenas 1 vez** e aparecem **no máximo 1 vez** por motorista.
+  - Temporizador regressivo de **10 segundos** no card do motorista com barra de progresso e auto-recusa.
+
+* 🛑 **Fim de Chamadas Fantasmas & Cancelamento no Servidor**:
+  - Ao cancelar no app do passageiro, a sessão é destruída no banco de dados (`status = 'CANCELLED'`), desativando o alarme e o card no motorista imediatamente.
+
+* ⚡ **PIX Antecipado & Avaliação Mútua**:
+  - Passageiro pode antecipar o pagamento PIX durante a corrida e motorista gera QR Code dinâmico ao finalizar.
+  - Sistema de avaliação mútua de 1 a 5 estrelas ⭐.
+
+---
+**Status Atual**: ✅ Todas as funcionalidades operacionais e validadas no Render.
+**Versão**: 13.0.0
+**Responsável**: Antigravity AI & Pair Programming
+**Últimos Commits**:
+- `47af92f` (Desconto de R$ 3,00 para corridas com print acima de R$ 30,00)
+- `689ea2a` (Desconto aplicado diretamente sobre o valor do print da concorrência)
+- `3fdc63a` (Inserção de endereço simples com Enter e botão de ação rápida)
+- `8625bc9` (Corridas longas com som suave, limite 1x e countdown 10s)
+
