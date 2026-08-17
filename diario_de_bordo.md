@@ -310,14 +310,11 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - O motorista pode tocar no botão do raio ou acessar o menu lateral para escolher seu raio de atuação (`3 km`, `5 km`, `10 km`, `15 km`, `20 km`, `30 km`, `50 km` ou `Sem Limite / Livre`).
   - O motorista pode **ocultar ou reexibir o widget de clima/trânsito** a qualquer momento pelo menu lateral (*Preferências & Mapa*).
 
-* 🛑 **Encerramento no Meio do Caminho & Cobrança Acumulada na Próxima Corrida**:
-  - Se a corrida for encerrada/cancelada durante o percurso, o sistema calcula o **valor percentual proporcional** baseado no KM percorrido em relação ao total.
-  - **Aviso e Discriminativo Transparente de Valores**:
-    - Ao abrir a tela de preços (`PRICED`), se houver débito anterior (`pendingDebt`), o passageiro visualiza um card detalhado em destaque:
-      - 🚗 **Tarifa da Nova Corrida**: R$ YY,YY
-      - ⏱️ **Débito da Corrida Anterior**: + R$ XX,XX
-      - 💰 **Total a Pagar ao Final desta Viagem**: R$ (YY,YY + XX,XX)
-    - O valor é quitado automaticamente ao final desta nova corrida.
+* 🛑 **Encerramento no Meio do Caminho & Conciliação Financeira Completa**:
+  - Se uma corrida anterior foi cancelada no percurso, o valor proporcional calculado fica registrado.
+  - **Aviso Prévio e Pagamento Único**: O passageiro é avisado do débito antes de chamar o carro e o valor é somado no total da nova corrida para quitação no desembarque.
+  - **Quitação Total no Passageiro**: Assim que a nova corrida é solicitada e concluída, o débito do passageiro é **100% zerado e nunca mais volta a aparecer para ele**.
+  - **Repasse do Motorista na Compra de Créditos**: Como o motorista recebeu esse valor extra em mãos/PIX do passageiro (referente à corrida cancelada de outro motorista/sistema), o valor fica registrado no débito com o app (`driverAppDebt`) e é **somado automaticamente com aviso detalhado quando o motorista for comprar novos pacotes de créditos**, quitando a pendência com a plataforma!
 
 * ❖ **Chave PIX Visível no Início da Corrida**:
   - Assim que o motorista aceita/inicia a corrida (`ACCEPTED` / `IN_PROGRESS`), a chave PIX do motorista e o valor total já aparecem em destaque para o passageiro adiantar o pagamento com botão de cópia rápida.
