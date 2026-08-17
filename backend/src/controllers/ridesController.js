@@ -115,7 +115,7 @@ exports.getRideById = async (req, res) => {
         d.name as "driverName", d."carModel" as "driverCarModel",
         d."carPlate" as "driverCarPlate", d."carColor" as "driverCarColor",
         d.rating as "driverRating", d."ridesCompleted" as "driverRidesCompleted",
-        d.phone as "driverPhone",
+        d.phone as "driverPhone", d.photo as "driverPhoto", d."pixKey" as "driverPixKey",
         p.name as "passengerName", p.phone as "passengerPhone"
       FROM "Ride" r
       LEFT JOIN "User" d ON r."driverId" = d.id
@@ -142,5 +142,20 @@ exports.cancelRide = async (req, res) => {
   } catch (err) {
     console.error('Erro ao cancelar corrida:', err.message);
     res.status(500).json({ error: 'Erro ao cancelar corrida' });
+  }
+};
+
+exports.nearDestinationRide = async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      UPDATE "Ride" SET status = 'NEAR_DESTINATION', "updatedAt" = NOW()
+      WHERE id = $1 AND "driverId" = $2
+      RETURNING *
+    `, [req.params.id, req.user.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Corrida não encontrada ou você não é o motorista dela' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Erro ao definir corrida perto do destino:', err.message);
+    res.status(500).json({ error: 'Erro ao atualizar status da corrida' });
   }
 };

@@ -18,6 +18,20 @@ const originIcon = createIcon('#00E676')
 const destIcon = createIcon('#EF4444')
 const stopIcon = createIcon('#F59E0B')
 
+const sonarIcon = L.divIcon({
+  className: 'custom-sonar-icon',
+  html: `
+    <div class="sonar-wrapper">
+      <div class="sonar-center"></div>
+      <div class="sonar-wave"></div>
+      <div class="sonar-wave-2"></div>
+      <div class="sonar-wave-3"></div>
+    </div>
+  `,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10]
+})
+
 // Helper: resolve address text to coordinates via Nominatim
 async function resolveAddress(text) {
   const res = await fetch(
@@ -155,6 +169,8 @@ export default function PassengerDashboard() {
   const [manualPriceError, setManualPriceError] = useState('')
   const [profileData, setProfileData] = useState({ name: 'Passageiro de Teste', email: 'cliente@zomp.com' })
   const [chatInput, setChatInput] = useState('')
+  const [currentRide, setCurrentRide] = useState(null)
+  const [searchingDrivers, setSearchingDrivers] = useState([])
 
   // Freight pricing constant
   const FREIGHT_PRICE_PER_KM = 3.50
@@ -207,21 +223,26 @@ export default function PassengerDashboard() {
   // Real-time Ride Polling (No mock)
   useEffect(() => {
     let interval;
-    if (activeRideId && (rideState === 'SEARCHING' || rideState === 'PENDING' || rideState === 'ACCEPTED')) {
+    if (activeRideId && (rideState === 'SEARCHING' || rideState === 'PENDING' || rideState === 'ACCEPTED' || rideState === 'NEAR_DESTINATION')) {
       const poll = async () => {
         try {
           const res = await fetch(`${API_BASE}/rides/${activeRideId}`, { headers: getHeaders() });
           const ride = await res.json();
-          if (ride.status === 'ACCEPTED' && rideState === 'PENDING') {
+          setCurrentRide(ride);
+          if (ride.status === 'ACCEPTED' && (rideState === 'PENDING' || rideState === 'SEARCHING')) {
             setRideState('ACCEPTED');
+          } else if (ride.status === 'NEAR_DESTINATION' && rideState === 'ACCEPTED') {
+            setRideState('NEAR_DESTINATION');
           } else if (ride.status === 'COMPLETED') {
             setRideState('COMPLETED');
             setActiveRideId(null);
+            setCurrentRide(null);
             showToast('Corrida finalizada com sucesso!');
             loadHistory();
           } else if (ride.status === 'CANCELLED') {
             setRideState('IDLE');
             setActiveRideId(null);
+            setCurrentRide(null);
             alert('A corrida foi cancelada.');
           }
         } catch (e) {}
@@ -231,6 +252,21 @@ export default function PassengerDashboard() {
     }
     return () => clearInterval(interval);
   }, [activeRideId, rideState]);
+
+  // Simulated searching drivers for sonar
+  useEffect(() => {
+    if (rideState === 'SEARCHING' && originCoords) {
+      const [lat, lon] = originCoords;
+      const mockDrivers = [
+        { id: 1, pos: [lat + 0.0012, lon + 0.0012] },
+        { id: 2, pos: [lat - 0.0014, lon + 0.0016] },
+        { id: 3, pos: [lat + 0.0006, lon - 0.0018] }
+      ];
+      setSearchingDrivers(mockDrivers);
+    } else {
+      setSearchingDrivers([]);
+    }
+  }, [rideState, originCoords]);
 
   // UI
   const [toast, setToast] = useState(null)
@@ -590,6 +626,7 @@ export default function PassengerDashboard() {
     setIsChatOpen(false)
     setChatMessages([])
     setActiveRideId(null)
+    setCurrentRide(null)
     setIsIntercity(false)
     setPassengersCount(1)
     setStops([])
@@ -613,13 +650,21 @@ export default function PassengerDashboard() {
           <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
           <MapController center={mapCenter} markers={allMarkers} />
           {originCoords && (
-            <Marker position={originCoords} icon={originIcon}>
+            <Marker position={originCoords} icon={rideState === 'SEARCHING' ? sonarIcon : originIcon}>
               <Popup autoPan={false}>
-                <div style={{fontWeight:800}}>Partida</div>
+                <div style={{fontWeight:800}}>{rideState === 'SEARCHING' ? 'Buscando motoristas...' : 'Partida'}</div>
                 <div style={{fontSize:'0.75rem'}}>{originAddr}</div>
               </Popup>
             </Marker>
           )}
+          {rideState === 'SEARCHING' && searchingDrivers.map(drv => (
+             <Marker key={`searching-drv-${drv.id}`} position={drv.pos} icon={L.divIcon({
+               className: 'custom-car-pin-animated',
+               html: `<div style="background:#18181b;width:32px;height:32px;border-radius:50%;border:3px solid #00E676;box-shadow:0 3px 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:16px;">🚗</div>`,
+               iconSize: [32, 32],
+               iconAnchor: [16, 16]
+             })} />
+          ))}
           {stops.filter(s => s.coords).map((stop, i) => (
              <Marker key={`stop-marker-${i}`} position={stop.coords} icon={stopIcon}>
                <Popup autoPan={false}>
@@ -755,155 +800,18 @@ export default function PassengerDashboard() {
 
           {/* ---- STATE: IDLE ---- */}
           {rideState === 'IDLE' && (
-            <div className="state-idle animate-fade-in">
-
-
-
-              {/* Viagens Longas */}
-              <div className="intercity-section" style={{marginTop:'20px'}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
-                  <h3 style={{fontSize:'1.05rem',fontWeight:800,margin:0,color:'#18181b'}}>Viagens Longas</h3>
-                </div>
-                <div style={{display:'flex',overflowX:'auto',gap:'12px',paddingBottom:'16px',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch'}} className="hide-scrollbar">
-                  {[
-                    { id: 'angra', title: 'Angra dos Reis', label: 'Praia', img: '/angra.png' },
-                    { id: 'mangaratiba', title: 'Mangaratiba', label: 'Praia', img: '/mangaratiba.png' },
-                    { id: 'buzios', title: 'Búzios', label: 'Praia', img: '/buzios.png' },
-                    { id: 'cabo', title: 'Cabo Frio', label: 'Praia', img: '/cabo.png' },
-                    { id: 'arraial', title: 'Arraial do Cabo', label: 'Praia', img: '/arraial.png' },
-                    { id: 'saquarema', title: 'Saquarema', label: 'Praia', img: '/saquarema.png' },
-                    { id: 'paraty', title: 'Paraty', label: 'Praia', img: '/paraty.png' },
-                    { id: 'ostras', title: 'Rio das Ostras', label: 'Praia', img: '/ostras.png' },
-                    { id: 'petropolis', title: 'Petrópolis', label: 'Montanha', img: '/petropolis.png' },
-                    { id: 'teresopolis', title: 'Teresópolis', label: 'Montanha', img: '/teresopolis.png' },
-                    { id: 'friburgo', title: 'Nova Friburgo', label: 'Montanha', img: 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=400&q=80' },
-                    { id: 'vassouras', title: 'Vassouras', label: 'Interior', img: 'https://images.unsplash.com/photo-1506506200949-df87442881d3?w=400&q=80' },
-                    { id: 'valenca', title: 'Valença', label: 'Interior', img: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400&q=80' },
-                    { id: 'barra_pirai', title: 'Barra do Piraí', label: 'Interior', img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400&q=80' },
-                    { id: 'resende', title: 'Resende', label: 'Interior', img: '/resende.png' },
-                    { id: 'campos', title: 'Campos', label: 'Interior', img: '/campos.png' }
-                  ].map(dest => (
-                    <div key={dest.id} style={{
-                        position: 'relative',
-                        minWidth:'150px',
-                        height: '180px',
-                        borderRadius:'20px',
-                        overflow:'hidden',
-                        background:'#000',
-                        boxShadow:'0 8px 20px rgba(0,0,0,0.12)',
-                        cursor:'pointer',
-                        flexShrink:0,
-                        scrollSnapAlign:'start',
-                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                    }} onClick={async () => {
-                        setIsIntercity(true);
-                        setDestAddr(`${dest.title}, RJ`);
-                        setDestCoords(null);
-                        setIsLoading(true);
-                        try {
-                          // Resolve dest coordinates directly
-                          const resolved = await resolveAddress(`${dest.title}, Rio de Janeiro, RJ, Brasil`);
-                          if (resolved) {
-                            const dCoords = [resolved.lat, resolved.lon];
-                            setDestCoords(dCoords);
-                            // Get origin from GPS ref
-                            let oCoords = originCoordsRef.current;
-                            if (!oCoords) {
-                              try {
-                                const gpsPos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 5000 }));
-                                oCoords = [gpsPos.coords.latitude, gpsPos.coords.longitude];
-                                setOriginCoords(oCoords);
-                                setMapCenter(oCoords);
-                              } catch(e) { /* GPS failed */ }
-                            }
-                            if (oCoords) {
-                              await calculateRoute(oCoords, dCoords);
-                            } else {
-                              alert('Ative o GPS ou digite seu endereço de partida.');
-                            }
-                          } else {
-                            alert('Não foi possível localizar ' + dest.title);
-                          }
-                        } catch(e) {
-                          console.error(e);
-                        } finally {
-                          setIsLoading(false);
-                        }
-                    }} onMouseEnter={(e) => { e.currentTarget.style.transform='scale(1.04)'; e.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,0.2)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform='scale(1)'; e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,0.12)'; }}>
-                      <div style={{
-                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        backgroundImage:`url(${dest.img})`,
-                        backgroundSize:'cover',
-                        backgroundPosition:'center',
-                        transition: 'transform 0.5s ease',
-                      }} className="dest-bg-img"></div>
-                      <div style={{
-                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%)'
-                      }}></div>
-                      <div style={{
-                        position: 'absolute', bottom: 0, left: 0, right: 0,
-                        padding:'16px',
-                        display: 'flex', flexDirection: 'column', gap: '4px'
-                      }}>
-                         <span style={{fontSize:'0.65rem',color:'#10b981',fontWeight:800, textTransform:'uppercase', letterSpacing:'1px', textShadow:'0 2px 4px rgba(0,0,0,0.5)'}}>{dest.label}</span>
-                         <h4 style={{margin:0,fontSize:'1.1rem',fontWeight:800,color:'#fff', textShadow:'0 2px 4px rgba(0,0,0,0.5)'}}>{dest.title}</h4>
-                      </div>
-                    </div>
-                  ))}
+            <div className="state-idle animate-fade-in" style={{ paddingBottom: '20px' }}>
+              <div style={{ textAlign: 'center', padding: '28px 16px', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', borderRadius: '24px', border: '1px solid #e2e8f0', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+                <div style={{ fontSize: '2.8rem', marginBottom: '12px' }}>🚀</div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0' }}>Para onde vamos hoje?</h3>
+                <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0, fontWeight: 600, lineHeight: 1.4 }}>
+                  Digite seu endereço de partida e destino na barra de busca superior para iniciar uma viagem rápida e segura.
+                </p>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '18px' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '4px 10px', borderRadius: '100px', border: '1px solid #d1fae5' }}>⚡ Preço Imbatível</span>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#2563eb', background: '#eff6ff', padding: '4px 10px', borderRadius: '100px', border: '1px solid #dbeafe' }}>🛡️ Viagem Segura</span>
                 </div>
               </div>
-
-              {/* Fretes e Entregas */}
-              <div className="intercity-section" style={{marginTop:'20px'}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}>
-                  <h3 style={{fontSize:'1.05rem',fontWeight:800,margin:0,color:'#18181b'}}>Fretes e Entregas</h3>
-                  <span style={{fontSize:'0.7rem',fontWeight:800,color:'#f59e0b',background:'#fffbeb',padding:'4px 8px',borderRadius:'100px'}}>NOVO</span>
-                </div>
-                <div style={{display:'flex',gap:'12px',overflowX:'auto',paddingBottom:'16px',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch'}} className="hide-scrollbar">
-                  {[
-                    { id: 'caixas', icon: '📦', title: 'Caixas', desc: 'Mudanças e volumes' },
-                    { id: 'sacos', icon: '🛍️', title: 'Sacos & Sacolas', desc: 'Compras e materiais' },
-                  ].map(item => (
-                    <div key={item.id} style={{
-                      minWidth: '140px',
-                      background: '#fff',
-                      border: '1px solid #e4e4e7',
-                      borderRadius: '16px',
-                      padding: '20px 16px',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      scrollSnapAlign: 'start',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '8px',
-                      textAlign: 'center',
-                      transition: 'all 0.25s ease',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)'; e.currentTarget.style.borderColor='#10b981'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor='#e4e4e7'; }}
-                    onClick={() => {
-                      setFreightType(item.id);
-                      setFreightDescription('');
-                      setDestAddr('');
-                      setDestCoords(null);
-                      setRouteGeometry([]);
-                      setRouteKm('0');
-                      setVehicleType('car');
-                      setFreightSecurityCode('');
-                      setRideState('FREIGHT');
-                    }}
-                    >
-                      <span style={{fontSize:'2.2rem'}}>{item.icon}</span>
-                      <span style={{fontSize:'0.9rem',fontWeight:800,color:'#18181b'}}>{item.title}</span>
-                      <span style={{fontSize:'0.7rem',color:'#71717a',fontWeight:600,lineHeight:1.3}}>{item.desc}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
             </div>
           )}
 
@@ -1413,28 +1321,28 @@ export default function PassengerDashboard() {
           )}
 
           {/* ---- STATE: ACCEPTED ---- */}
-          {rideState === 'ACCEPTED' && favoriteDriversState.length > 0 && (
+          {rideState === 'ACCEPTED' && (currentRide || favoriteDriversState.length > 0) && (
             <div className="state-accepted animate-fade-in-up">
               <div className="match-header">
                 <span className="badge-nearby">MOTORISTA A CAMINHO</span>
-                <h3>4 min</h3>
+                <h3>{routeDuration ? `${routeDuration} min` : '4 min'}</h3>
               </div>
               <div className="driver-card-large" style={{marginBottom: '12px'}}>
-                <img src={favoriteDriversState[0].img} alt={favoriteDriversState[0].name} className="drv-avatar" />
+                <img src={currentRide?.driverPhoto || favoriteDriversState[0].img} alt={currentRide?.driverName || favoriteDriversState[0].name} className="drv-avatar" />
                 <div className="drv-info">
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <h4>{favoriteDriversState[0].name}</h4>
+                    <h4>{currentRide?.driverName || favoriteDriversState[0].name}</h4>
                   </div>
                   <div className="drv-metrics" style={{display:'flex', gap:'12px', alignItems:'center'}}>
-                    <div className="drv-rating">⭐ {favoriteDriversState[0].rating}</div>
+                    <div className="drv-rating">⭐ {Number(currentRide?.driverRating || favoriteDriversState[0].rating).toFixed(1)}</div>
                     <div className="drv-rides" style={{fontSize:'0.75rem', fontWeight:700, color:'#64748b'}}>
-                       {favoriteDriversState[0].ridesCompleted > 0 ? `${favoriteDriversState[0].ridesCompleted} corridas` : <span className="ap-badge-new" style={{margin:0}}>Novo</span>}
+                       {(currentRide?.driverRidesCompleted || 0) > 0 ? `${currentRide.driverRidesCompleted} corridas` : <span className="ap-badge-new" style={{margin:0}}>Novo</span>}
                     </div>
                   </div>
                 </div>
                 <div className="drv-car">
-                  <span className="car-model">{favoriteDriversState[0].car}</span>
-                  <span className="car-plate">{favoriteDriversState[0].plate}</span>
+                  <span className="car-model">{currentRide?.driverCarColor ? `${currentRide.driverCarColor} ` : ''}{currentRide?.driverCarModel || favoriteDriversState[0].car}</span>
+                  <span className="car-plate">{currentRide?.driverCarPlate || favoriteDriversState[0].plate}</span>
                 </div>
               </div>
 
@@ -1532,6 +1440,93 @@ export default function PassengerDashboard() {
               >
                 Cheguei ao Destino 🏁
               </button>
+            </div>
+          )}
+
+          {/* ---- STATE: NEAR_DESTINATION ---- */}
+          {rideState === 'NEAR_DESTINATION' && currentRide && (
+            <div className="state-near-destination animate-fade-in-up" style={{ padding: '20px 0' }}>
+              <div className="match-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="badge-nearby" style={{ background: '#f59e0b', color: '#fff', fontSize: '0.75rem', fontWeight: 800, padding: '4px 10px', borderRadius: '100px' }}>ÚLTIMOS 500 METROS</span>
+                <h3 style={{ color: '#d97706', margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>Chegando!</h3>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: '#6b7280', fontWeight: 600, margin: '0 0 20px 0', lineHeight: 1.4, textAlign: 'center' }}>
+                Falta muito pouco para o seu destino. Prepare o pagamento para o motorista no Pix abaixo.
+              </p>
+
+              <div className="driver-card-large" style={{ marginBottom: '20px' }}>
+                <img src={currentRide.driverPhoto || 'https://i.pravatar.cc/150?img=11'} alt={currentRide.driverName} className="drv-avatar" />
+                <div className="drv-info">
+                  <h4>{currentRide.driverName || 'Seu Motorista'}</h4>
+                  <div className="drv-metrics" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div className="drv-rating">⭐ {Number(currentRide.driverRating || 5.0).toFixed(1)}</div>
+                  </div>
+                </div>
+                <div className="drv-car">
+                  <span className="car-model">{currentRide.driverCarModel || 'Carro Zomp'}</span>
+                  <span className="car-plate">{currentRide.driverCarPlate || 'ZOMP-000'}</span>
+                </div>
+              </div>
+
+              {paymentMethod === 'PIX' && (
+                <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '16px', borderRadius: '16px', marginBottom: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '1.2rem', color: '#10b981' }}>❖</span>
+                    <span style={{ fontWeight: 800, color: '#15803d', fontSize: '1rem' }}>Pagar via PIX</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <span style={{ fontWeight: 700, color: '#166534', fontSize: '0.9rem' }}>Valor da Viagem:</span>
+                    <span style={{ fontWeight: 900, color: '#166534', fontSize: '1.25rem' }}>R$ {Number(currentRide.price || 0).toFixed(2)}</span>
+                  </div>
+                  
+                  {currentRide.driverPixKey ? (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#166534', marginBottom: '6px', textTransform: 'uppercase' }}>Chave PIX do Motorista</label>
+                      <div style={{ background: '#ffffff', border: '1px solid #dcfce7', padding: '10px 14px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                        <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#166534', fontSize: '0.9rem', wordBreak: 'break-all', marginRight: '8px' }}>
+                          {currentRide.driverPixKey}
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(currentRide.driverPixKey);
+                            alert('Chave PIX copiada com sucesso!');
+                          }}
+                          style={{ background: '#10b981', border: 'none', padding: '8px 14px', borderRadius: '8px', color: '#fff', fontWeight: 800, cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap', transition: 'all 0.2s' }}
+                        >
+                          Copiar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '10px', color: '#991b1b', fontSize: '0.8rem', fontWeight: 700, textAlign: 'center' }}>
+                      ⚠️ Chave PIX não cadastrada pelo motorista. Realize o pagamento diretamente em dinheiro.
+                    </div>
+                  )}
+                  <p style={{ margin: '12px 0 0 0', fontSize: '0.72rem', color: '#166534', fontWeight: 600, lineHeight: 1.4, textAlign: 'center' }}>
+                    Após transferir o valor, o motorista finalizará a corrida no painel dele.
+                  </p>
+                </div>
+              )}
+
+              {paymentMethod === 'DINHEIRO' && (
+                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '16px', borderRadius: '16px', marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1.5rem' }}>💵</span>
+                  <div>
+                    <span style={{ fontWeight: 800, color: '#1e40af', display: 'block', fontSize: '0.95rem' }}>Pagamento em Dinheiro</span>
+                    <span style={{ fontSize: '0.85rem', color: '#1e40af', fontWeight: 600 }}>Prepare o valor de <strong>R$ {Number(currentRide.price || 0).toFixed(2)}</strong> para pagar ao motorista no destino.</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="action-buttons mt-4">
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ flex: 1, padding: '14px', fontWeight: 700 }}
+                  onClick={() => setIsChatOpen(true)}
+                >
+                  💬 Chat com Motorista
+                </button>
+              </div>
             </div>
           )}
 
@@ -1670,6 +1665,19 @@ export default function PassengerDashboard() {
                     )}
                   </button>
 
+                  {/* ── Seção: SERVIÇOS ── */}
+                  <div className="menu-section-label">Serviços Especiais</div>
+
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('LONG_TRIPS')}>
+                    <span className="nav-icon"><Send size={17} /></span>
+                    Viagens Longas
+                  </button>
+
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('FREIGHT_SELECTION')}>
+                    <span className="nav-icon"><Clock size={17} /></span>
+                    Fretes & Entregas
+                  </button>
+
                   {/* ── Seção: CONTA ── */}
                   <div className="menu-section-label">Conta</div>
 
@@ -1693,6 +1701,151 @@ export default function PassengerDashboard() {
                     Sair do App
                   </button>
                 </>
+              )}
+
+              {menuScreen === 'LONG_TRIPS' && (
+                <div className="animate-fade-in">
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
+                    ← Voltar
+                  </button>
+                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>Viagens Longas</h3>
+                  <p className="hint-text" style={{marginBottom: '16px'}}>Selecione um destino intermunicipal:</p>
+                  
+                  <div style={{display:'flex', flexDirection:'column', gap:'12px', maxHeight:'60vh', overflowY:'auto', paddingRight:'4px'}} className="hide-scrollbar">
+                    {[
+                      { id: 'angra', title: 'Angra dos Reis', label: 'Praia', img: '/angra.png' },
+                      { id: 'mangaratiba', title: 'Mangaratiba', label: 'Praia', img: '/mangaratiba.png' },
+                      { id: 'buzios', title: 'Búzios', label: 'Praia', img: '/buzios.png' },
+                      { id: 'cabo', title: 'Cabo Frio', label: 'Praia', img: '/cabo.png' },
+                      { id: 'arraial', title: 'Arraial do Cabo', label: 'Praia', img: '/arraial.png' },
+                      { id: 'saquarema', title: 'Saquarema', label: 'Praia', img: '/saquarema.png' },
+                      { id: 'paraty', title: 'Paraty', label: 'Praia', img: '/paraty.png' },
+                      { id: 'ostras', title: 'Rio das Ostras', label: 'Praia', img: '/ostras.png' },
+                      { id: 'petropolis', title: 'Petrópolis', label: 'Montanha', img: '/petropolis.png' },
+                      { id: 'teresopolis', title: 'Teresópolis', label: 'Montanha', img: '/teresopolis.png' },
+                      { id: 'friburgo', title: 'Nova Friburgo', label: 'Montanha', img: 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=400&q=80' },
+                      { id: 'vassouras', title: 'Vassouras', label: 'Interior', img: 'https://images.unsplash.com/photo-1506506200949-df87442881d3?w=400&q=80' },
+                      { id: 'valenca', title: 'Valença', label: 'Interior', img: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400&q=80' },
+                      { id: 'barra_pirai', title: 'Barra do Piraí', label: 'Interior', img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400&q=80' },
+                      { id: 'resende', title: 'Resende', label: 'Interior', img: '/resende.png' },
+                      { id: 'campos', title: 'Campos', label: 'Interior', img: '/campos.png' }
+                    ].map(dest => (
+                      <div key={dest.id} style={{
+                          position: 'relative',
+                          width: '100%',
+                          height: '90px',
+                          borderRadius:'16px',
+                          overflow:'hidden',
+                          background:'#000',
+                          boxShadow:'0 4px 10px rgba(0,0,0,0.1)',
+                          cursor:'pointer',
+                          transition: 'transform 0.2s ease',
+                      }} onClick={async () => {
+                          setIsMenuOpen(false);
+                          setMenuScreen('MAIN');
+                          setIsIntercity(true);
+                          setDestAddr(`${dest.title}, RJ`);
+                          setDestCoords(null);
+                          setIsLoading(true);
+                          try {
+                            const resolved = await resolveAddress(`${dest.title}, Rio de Janeiro, RJ, Brasil`);
+                            if (resolved) {
+                              const dCoords = [resolved.lat, resolved.lon];
+                              setDestCoords(dCoords);
+                              let oCoords = originCoordsRef.current;
+                              if (!oCoords) {
+                                try {
+                                  const gpsPos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 5000 }));
+                                  oCoords = [gpsPos.coords.latitude, gpsPos.coords.longitude];
+                                  setOriginCoords(oCoords);
+                                  setMapCenter(oCoords);
+                                } catch(e) {}
+                              }
+                              if (oCoords) {
+                                await calculateRoute(oCoords, dCoords);
+                              } else {
+                                alert('Ative o GPS ou digite seu endereço de partida.');
+                              }
+                            } else {
+                              alert('Não foi possível localizar ' + dest.title);
+                            }
+                          } catch(e) {
+                            console.error(e);
+                          } finally {
+                            setIsLoading(false);
+                          }
+                      }}>
+                        <div style={{
+                          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                          backgroundImage:`url(${dest.img})`,
+                          backgroundSize:'cover',
+                          backgroundPosition:'center',
+                        }}></div>
+                        <div style={{
+                          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                          background: 'linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.1) 100%)'
+                        }}></div>
+                        <div style={{
+                          position: 'absolute', top: 0, bottom: 0, left: 0,
+                          padding:'16px',
+                          display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px'
+                        }}>
+                           <span style={{fontSize:'0.65rem',color:'#10b981',fontWeight:800, textTransform:'uppercase', letterSpacing:'1px'}}>{dest.label}</span>
+                           <h4 style={{margin:0,fontSize:'1rem',fontWeight:800,color:'#fff'}}>{dest.title}</h4>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {menuScreen === 'FREIGHT_SELECTION' && (
+                <div className="animate-fade-in">
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
+                    ← Voltar
+                  </button>
+                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>Fretes & Entregas</h3>
+                  <p className="hint-text" style={{marginBottom: '20px'}}>Escolha a modalidade de envio:</p>
+                  
+                  <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+                    {[
+                      { id: 'caixas', icon: '📦', title: 'Caixas', desc: 'Mudanças e volumes maiores' },
+                      { id: 'sacos', icon: '🛍️', title: 'Sacos & Sacolas', desc: 'Compras e pequenos volumes' },
+                    ].map(item => (
+                      <div key={item.id} style={{
+                        background: '#fff',
+                        border: '1px solid #e4e4e7',
+                        borderRadius: '16px',
+                        padding: '16px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '14px',
+                        transition: 'all 0.25s ease',
+                      }}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setMenuScreen('MAIN');
+                        setFreightType(item.id);
+                        setFreightDescription('');
+                        setDestAddr('');
+                        setDestCoords(null);
+                        setRouteGeometry([]);
+                        setRouteKm('0');
+                        setVehicleType('car');
+                        setFreightSecurityCode('');
+                        setRideState('FREIGHT');
+                      }}
+                      >
+                        <span style={{fontSize:'2.2rem'}}>{item.icon}</span>
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left'}}>
+                          <span style={{fontSize:'0.95rem',fontWeight:800,color:'#18181b'}}>{item.title}</span>
+                          <span style={{fontSize:'0.75rem',color:'#71717a',fontWeight:600}}>{item.desc}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {menuScreen === 'SCHEDULED' && (

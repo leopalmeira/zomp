@@ -1061,3 +1061,99 @@ input:checked + .slider:before { transform: translateX(22px); }
   transform: scale(1.05);
 }
 
+/* ========================================
+   ZOMP UI - Sonar & Map Animations
+   ======================================== */
+.sonar-wrapper {
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+.sonar-center {
+  width: 20px;
+  height: 20px;
+  background-color: #00E676;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
+.sonar-wave {
+  position: absolute;
+  top: -40px;
+  left: -40px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid #00E676;
+  background-color: rgba(0, 230, 118, 0.15);
+  opacity: 0;
+  transform: scale(0.1);
+  animation: sonar-expand 2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  pointer-events: none;
+}
+.sonar-wave-2 {
+  position: absolute;
+  top: -40px;
+  left: -40px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid #00E676;
+  background-color: rgba(0, 230, 118, 0.15);
+  opacity: 0;
+  transform: scale(0.1);
+  animation: sonar-expand 2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  animation-delay: 0.66s;
+  pointer-events: none;
+}
+.sonar-wave-3 {
+  position: absolute;
+  top: -40px;
+  left: -40px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid #00E676;
+  background-color: rgba(0, 230, 118, 0.15);
+  opacity: 0;
+  transform: scale(0.1);
+  animation: sonar-expand 2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  animation-delay: 1.33s;
+  pointer-events: none;
+}
+
+@keyframes sonar-expand {
+  0% {
+    transform: scale(0.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(3.0);
+    opacity: 0;
+  }
+}
+
+.custom-sonar-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-car-pin-animated {
+  background: transparent !important;
+  border: none !important;
+  animation: car-bounce 1s ease infinite alternate;
+}
+
+@keyframes car-bounce {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+

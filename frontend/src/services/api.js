@@ -247,3 +247,13 @@ export async function getGlobalConfig() {
   if (!res.ok) throw new Error(data.error || 'Erro ao buscar configurações');
   return data;
 }
+
+export async function nearDestinationRide(rideId) {
+  const res = await fetch(`${API_BASE}/rides/${rideId}/near-destination`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao atualizar status da corrida');
+  return data;
+}

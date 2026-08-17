@@ -29,6 +29,47 @@ function formatNumber(value, decimals = 1, fallback = '0.0') {
   return Number.isFinite(number) ? number.toFixed(decimals) : fallback
 }
 
+// Algoritmo clássico CRC16 CCITT (0x1021) para geração do Pix estático
+function calculateCRC16(str) {
+  let crc = 0xFFFF;
+  for (let c = 0; c < str.length; c++) {
+    let code = str.charCodeAt(c);
+    crc ^= (code << 8);
+    for (let i = 0; i < 8; i++) {
+      if (crc & 0x8000) {
+        crc = (crc << 1) ^ 0x1021;
+      } else {
+        crc = crc << 1;
+      }
+    }
+  }
+  let hex = (crc & 0xFFFF).toString(16).toUpperCase();
+  return hex.padStart(4, '0');
+}
+
+function generatePixPayload(key, amount, merchantName = 'Motorista Zomp', city = 'RIO DE JANEIRO') {
+  let cleanKey = key.trim();
+  const parts = [
+    '000201', // Payload Format Indicator
+    '26' + String(22 + cleanKey.length).padStart(2, '0') + '0014br.gov.bcb.pix01' + String(cleanKey.length).padStart(2, '0') + cleanKey, // Merchant Account Info
+    '52040000', // Merchant Category Code
+    '5303986', // Currency (Real)
+  ];
+  if (amount) {
+    const valStr = Number(amount).toFixed(2);
+    parts.push('54' + String(valStr.length).padStart(2, '0') + valStr);
+  }
+  parts.push('5802BR'); // Country Code
+  const cleanName = merchantName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 25).toUpperCase();
+  parts.push('59' + String(cleanName.length).padStart(2, '0') + cleanName);
+  const cleanCity = city.normalize("NFD").replace(/[\u0300-\u036f]/g, "").substring(0, 15).toUpperCase();
+  parts.push('60' + String(cleanCity.length).padStart(2, '0') + cleanCity);
+  parts.push('62070503***'); // Transaction ID
+  const payloadWithoutCRC = parts.join('') + '6304';
+  const crc = calculateCRC16(payloadWithoutCRC);
+  return payloadWithoutCRC + crc;
+}
+
 // --- Som de Notificação ---
 const playRingSound = () => {
   try {
@@ -96,7 +137,7 @@ export default function DriverDashboard() {
   const slideThumbWidth = 60
   const slideThreshold = slideTrackWidth - slideThumbWidth - 10
 
-  const handleSlideStart = () => {
+  const handleSlideStart = (e) => {
     const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
     if (!isTestDriver && !user?.isApproved) {
       alert("📳 Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
@@ -260,6 +301,18 @@ export default function DriverDashboard() {
     } catch (err) { alert(err.message || 'Erro ao finalizar.') }
   }
 
+  const handleNearDestination = async () => {
+    try {
+      if (activeRide) {
+        const { nearDestinationRide } = await import('../services/api');
+        await nearDestinationRide(activeRide.id);
+        setActiveRide(prev => ({ ...prev, status: 'NEAR_DESTINATION' }));
+      }
+    } catch (err) {
+      alert(err.message || 'Erro ao definir status da corrida.');
+    }
+  }
+
   // Menu & Screen
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeScreen, setActiveScreen] = useState(null)
@@ -393,39 +446,82 @@ export default function DriverDashboard() {
       {/* BOTTOM */}
       <div className="driver-bottom-bar">
         {activeRide ? (
-          <div className="active-ride-card">
-            <div className="active-ride-header">
-              <h3>🚗 Viagem em Andamento</h3>
-              <span style={{fontSize:'0.75rem',color:'#059669',fontWeight:800,background:'#ecfdf5',padding:'4px 10px',borderRadius:'100px'}}>ATIVA</span>
-            </div>
-            <div className="active-ride-body">
-              <div className="active-ride-info">
-                <div className="info-row">
-                  <span className="info-label">Passageiro</span>
-                  <div style={{textAlign:'right'}}>
-                    <div className="info-value">{activeRide.passenger?.name || 'Passageiro'}</div>
-                    <div style={{fontSize:'0.7rem', fontWeight:700, color:'#64748b'}}>
-                       ⭐ {formatNumber(activeRide.passenger?.rating, 1, '5.0')} • {activeRide.passenger?.ridesCompleted || 0} viagens
+          activeRide.status === 'NEAR_DESTINATION' ? (
+            <div className="active-ride-card animate-fade-in-up">
+              <div className="active-ride-header" style={{ borderBottom: '1px solid #e4e4e7', paddingBottom: '12px' }}>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>🏁 Faltam 500m</h3>
+                <span style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: 800, background: '#fffbeb', padding: '4px 10px', borderRadius: '100px', border: '1px solid #fde68a' }}>CHEGANDO</span>
+              </div>
+              <div className="active-ride-body" style={{ marginTop: '14px', textAlign: 'center' }}>
+                <p style={{ fontSize: '0.85rem', color: '#52525b', fontWeight: 600, margin: '0 0 16px 0' }}>
+                  Mostre o QR Code abaixo ao passageiro <strong>{activeRide.passengerName || activeRide.passenger?.name || 'Passageiro'}</strong> para receber o pagamento.
+                </p>
+                
+                {profileData.pixKey ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '20px', border: '1px solid #e4e4e7', marginBottom: '16px' }}>
+                    <div style={{ background: '#fff', padding: '10px', borderRadius: '14px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', display: 'inline-block' }}>
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(generatePixPayload(profileData.pixKey, activeRide.price, user?.name || 'Motorista Zomp'))}`} 
+                        alt="PIX QR Code" 
+                        style={{ width: '180px', height: '180px', display: 'block' }} 
+                      />
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Chave Cadastrada</span>
+                      <span style={{ display: 'block', fontSize: '0.9rem', fontWeight: 800, color: '#18181b', fontFamily: 'monospace', marginTop: '2px' }}>{profileData.pixKey}</span>
+                      <span style={{ display: 'inline-block', fontSize: '1.25rem', fontWeight: 900, color: '#059669', marginTop: '8px' }}>R$ {formatNumber ? formatNumber(activeRide.price, 2, '0.00') : Number(activeRide.price).toFixed(2)}</span>
                     </div>
                   </div>
-                </div>
-                <div className="info-row"><span className="info-label">Origem</span><span className="info-value" style={{maxWidth:'60%',textAlign:'right'}}>{activeRide.origin || '-'}</span></div>
-                {activeRide.stops && activeRide.stops.length > 0 && activeRide.stops.map((stop, i) => (
-                  <div key={i} className="info-row" style={{background:'#fffbeb',padding:'8px 14px',borderRadius:'8px',marginTop:'2px'}}>
-                    <span className="info-label" style={{color:'#92400e',fontWeight:700}}>📍 Parada {i+1}</span>
-                    <span className="info-value" style={{maxWidth:'60%',textAlign:'right',color:'#b45309'}}>{stop}</span>
+                ) : (
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '16px', borderRadius: '16px', color: '#991b1b', fontSize: '0.85rem', fontWeight: 700, marginBottom: '16px', textAlign: 'center' }}>
+                    ⚠️ Você não cadastrou sua chave PIX no perfil! Acesse o menu lateral &gt; Meu Perfil para cadastrar sua chave e liberar o QR Code.
                   </div>
-                ))}
-                <div className="info-row"><span className="info-label">Destino</span><span className="info-value" style={{maxWidth:'60%',textAlign:'right'}}>{activeRide.destination || '-'}</span></div>
-                <div className="info-row"><span className="info-label">Distância</span><span className="info-value">{activeRide.distanceKm} km</span></div>
-                <div className="info-row" style={{background:'#ecfdf5',padding:'10px 14px',borderRadius:'10px',marginTop:'4px'}}>
-                  <span className="info-label" style={{color:'#065f46',fontWeight:700}}>Ganho</span>
-                  <span className="info-value" style={{color:'#059669',fontSize:'1.3rem'}}>R$ {formatNumber(activeRide.price, 2, '0.00')}</span>
+                )}
+
+                <button className="btn-premium btn-green" style={{ width: '100%' }} onClick={handleComplete}>
+                  ✓ Confirmar Pagamento e Finalizar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="active-ride-card">
+              <div className="active-ride-header">
+                <h3>🚗 Viagem em Andamento</h3>
+                <span style={{fontSize:'0.75rem',color:'#059669',fontWeight:800,background:'#ecfdf5',padding:'4px 10px',borderRadius:'100px'}}>ATIVA</span>
+              </div>
+              <div className="active-ride-body">
+                <div className="active-ride-info">
+                  <div className="info-row">
+                    <span className="info-label">Passageiro</span>
+                    <div style={{textAlign:'right'}}>
+                      <div className="info-value">{activeRide.passenger?.name || 'Passageiro'}</div>
+                      <div style={{fontSize:'0.7rem', fontWeight:700, color:'#64748b'}}>
+                         ⭐ {formatNumber ? formatNumber(activeRide.passenger?.rating, 1, '5.0') : (activeRide.passenger?.rating?.toFixed(1) || '5.0')} • {activeRide.passenger?.ridesCompleted || 0} viagens
+                      </div>
+                    </div>
+                  </div>
+                  <div className="info-row"><span className="info-label">Origem</span><span className="info-value" style={{maxWidth:'60%',textAlign:'right'}}>{activeRide.origin || '-'}</span></div>
+                  {activeRide.stops && activeRide.stops.length > 0 && activeRide.stops.map((stop, i) => (
+                    <div key={i} className="info-row" style={{background:'#fffbeb',padding:'8px 14px',borderRadius:'8px',marginTop:'2px'}}>
+                      <span className="info-label" style={{color:'#92400e',fontWeight:700}}>📍 Parada {i+1}</span>
+                      <span className="info-value" style={{maxWidth:'60%',textAlign:'right',color:'#b45309'}}>{stop}</span>
+                    </div>
+                  ))}
+                  <div className="info-row"><span className="info-label">Destino</span><span className="info-value" style={{maxWidth:'60%',textAlign:'right'}}>{activeRide.destination || '-'}</span></div>
+                  <div className="info-row"><span className="info-label">Distância</span><span className="info-value">{activeRide.distanceKm} km</span></div>
+                  <div className="info-row" style={{background:'#ecfdf5',padding:'10px 14px',borderRadius:'10px',marginTop:'4px'}}>
+                    <span className="info-label" style={{color:'#065f46',fontWeight:700}}>Ganho</span>
+                    <span className="info-value" style={{color:'#059669',fontSize:'1.3rem'}}>R$ {formatNumber ? formatNumber(activeRide.price, 2, '0.00') : Number(activeRide.price).toFixed(2)}</span>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+                  <button className="btn-premium btn-green" style={{ flex: 1.5, margin: 0 }} onClick={handleComplete}>✓ Finalizar Corrida</button>
+                  <button className="btn-premium" style={{ flex: 1.2, margin: 0, background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }} onClick={handleNearDestination}>Simular 500m 🏁</button>
                 </div>
               </div>
-              <button className="btn-premium btn-green" onClick={handleComplete}>✓ Finalizar Corrida</button>
             </div>
-          </div>
+          )
         ) : pendingRides.length > 0 ? (
           <div className="ride-request-card">
             <div className="request-header">
@@ -726,19 +822,19 @@ export default function DriverDashboard() {
 
             <div className="section-title" style={{marginTop:'20px'}}>Comprar Pacotes</div>
 
-            <div className="credit-package" onClick={() => handleBuyCreditsInit(10, 15)}>
+            <div className="credit-package" onClick={() => handleBuyCreditsInit(10)}>
               <div className="credit-pkg-icon" style={{background:'#ecfdf5'}}>🎫</div>
               <div className="credit-pkg-info"><h4>10 Créditos</h4><p>Pacote Básico • 10 corridas</p></div>
               <div className="credit-pkg-price"><div className="price">R$ 15,00</div><div className="unit">R$ 1,50/un</div></div>
             </div>
 
-            <div className="credit-package popular" onClick={() => handleBuyCreditsInit(22, 30)}>
+            <div className="credit-package popular" onClick={() => handleBuyCreditsInit(22)}>
               <div className="credit-pkg-icon" style={{background:'#d1fae5'}}>⭐</div>
               <div className="credit-pkg-info"><h4>22 Créditos</h4><p style={{color:'#059669',fontWeight:700}}>+2 Corridas Grátis</p></div>
               <div className="credit-pkg-price"><div className="price">R$ 30,00</div><div className="unit">R$ 1,36/un</div></div>
             </div>
 
-            <div className="credit-package" onClick={() => handleBuyCreditsInit(35, 45)} style={{background: '#fef3c7', borderColor: '#f59e0b', transform: 'scale(1.02)'}}>
+            <div className="credit-package" onClick={() => handleBuyCreditsInit(35)} style={{background: '#fef3c7', borderColor: '#f59e0b', transform: 'scale(1.02)'}}>
               <div className="credit-pkg-icon" style={{background:'#f59e0b', color:'#fff'}}>🏆</div>
               <div className="credit-pkg-info"><h4>35 Créditos</h4><p style={{color:'#b45309',fontWeight:800}}>+5 Corridas Grátis (Econômico)</p></div>
               <div className="credit-pkg-price"><div className="price" style={{color:'#92400e'}}>R$ 45,00</div><div className="unit" style={{color:'#b45309'}}>R$ 1,28/un</div></div>
