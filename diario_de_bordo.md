@@ -293,7 +293,12 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 
 * 🛑 **Encerramento no Meio do Caminho & Cobrança Acumulada na Próxima Corrida**:
   - Se a corrida for encerrada/cancelada durante o percurso, o sistema calcula o **valor percentual proporcional** baseado no KM percorrido em relação ao total.
-  - Caso o passageiro não quite o valor no momento, o saldo é registrado como **débito pendente** (`pendingDebt`) e somado automaticamente no total da **próxima corrida** que ele solicitar.
+  - **Aviso e Discriminativo Transparente de Valores**:
+    - Ao abrir a tela de preços (`PRICED`), se houver débito anterior (`pendingDebt`), o passageiro visualiza um card detalhado em destaque:
+      - 🚗 **Tarifa da Nova Corrida**: R$ YY,YY
+      - ⏱️ **Débito da Corrida Anterior**: + R$ XX,XX
+      - 💰 **Total a Pagar ao Final desta Viagem**: R$ (YY,YY + XX,XX)
+    - O valor é quitado automaticamente ao final desta nova corrida.
 
 * ❖ **Chave PIX Visível no Início da Corrida**:
   - Assim que o motorista aceita/inicia a corrida (`ACCEPTED` / `IN_PROGRESS`), a chave PIX do motorista e o valor total já aparecem em destaque para o passageiro adiantar o pagamento com botão de cópia rápida.
