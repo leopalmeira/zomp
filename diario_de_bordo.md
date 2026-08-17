@@ -276,9 +276,10 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Botão de chamada rápida: `⚡ CHAMAR ZOMP POR R$ XX,XX — MAIS BARATO!`.
   - **Uso Ilimitado para Conta de Testes**: A conta de passageiro de testes (`cliente@zomp.com`) possui uso **ilimitado** do Preço Imbatível, sem ser bloqueada pelo limite de 3 diários.
 
-* 📍 **Inserção Rápida de Endereço sem Obrigar Clique na Lista**:
-  - Suporte completo para **pressionar Enter** ou clicar no botão **"🚖 VER PREÇOS & PEDIR CARRO"**.
-  - Geocodificação inteligente com Photon, Nominatim e catálogo local.
+* 📍 **Inserção Rápida de Endereço & Sugestão Precisa de GPS na Partida**:
+  - Ao focar ou digitar no campo de **Partida**, surge imediatamente no topo a opção destacada em verde: **📍 "Usar Localização Atual (GPS)"** com o endereço real exato do aparelho obtido via geocodificação reversa.
+  - A busca de ruas e bairros passa a ser **ancorada nas coordenadas GPS reais do passageiro**, trazendo os resultados mais próximos com altíssima precisão.
+  - Suporte completo para **pressionar Enter** ou clicar no botão **"🚖 VER PREÇOS & PEDIR CARRO"** sem obrigar clique na lista.
   - Preenchimento automático da partida com GPS quando em branco.
 
 * 🔗 **QR Code de Indicação & Royalties de R$ 0,30 por Corrida**:
