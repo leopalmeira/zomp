@@ -329,6 +329,8 @@ exports.validateScreenshotAi = async (req, res) => {
 
     let ridesLeftToday = 999;
 
+    let usedToday = 0;
+
     if (!isTestAccount) {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS "DiscountLog" (
@@ -344,7 +346,7 @@ exports.validateScreenshotAi = async (req, res) => {
         WHERE "userId" = $1 AND "createdAt" >= CURRENT_DATE
       `, [String(userId)]);
 
-      const usedToday = parseInt(todayLogs[0]?.count || 0);
+      usedToday = parseInt(todayLogs[0]?.count || 0);
       if (usedToday >= 3) {
         return res.status(400).json({
           valid: false,

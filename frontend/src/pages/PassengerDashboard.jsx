@@ -945,7 +945,6 @@ const POPULAR_PLACES_RJ = [
 
       // Quita e limpa o débito pendente do passageiro no estado local (não volta a aparecer)
       setUserPendingDebt(0);
-      setPendingFeeAmount(0);
 
       // Limpa totalmente o print de tela para nunca persistir em novas solicitações
       setManualPriceInput('');
@@ -958,15 +957,14 @@ const POPULAR_PLACES_RJ = [
       setRideState('SEARCHING');
     } catch (e) {
       console.error('Erro ao chamar motorista:', e);
-      setUserPendingDebt(0);
-      setPendingFeeAmount(0);
+      alert('Erro ao solicitar corrida. Tente novamente.');
       setManualPriceInput('');
       setHasCompetitionDiscount(false);
       setCompetitorPrintPrice(0);
       setCalculatedDiscountAmount(0);
       setManualPriceError('');
       setIsAnalyzingScreenshot(false);
-      setRideState('SEARCHING');
+      setRideState('IDLE');
     } finally {
       setIsLoading(false);
     }
@@ -993,9 +991,6 @@ const POPULAR_PLACES_RJ = [
     // Reset competition discount (per-trip only - nunca persiste para novas solicitações)
     setHasCompetitionDiscount(false)
     setCompPriceRead(0)
-    setCompPlatform('')
-    setCompCategory('')
-    setIsAnalyzingPrint(false)
     setManualPriceInput('')
     setCompetitorPrintPrice(0)
     setCalculatedDiscountAmount(0)
