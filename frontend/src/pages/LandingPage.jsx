@@ -82,8 +82,7 @@ export default function LandingPage() {
         <img src="/logo.svg" alt="Zomp" className="lp-nav-logo" />
         <div className="lp-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
           <button onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button>
-          <button onClick={() => navigate('/passageiro')} style={{ color: '#33a3ff', fontSize: '0.85rem', background: 'rgba(51, 163, 255, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid rgba(51, 163, 255, 0.2)' }}>📱 Passageiro</button>
-          <button onClick={() => navigate('/motorista')} style={{ color: 'var(--green)', fontSize: '0.85rem', background: 'rgba(151, 233, 0, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid var(--green-dim)' }}>🚗 Motorista</button>
+          <button onClick={() => navigate('/motorista')} style={{ color: 'var(--green)', fontSize: '0.85rem', background: 'rgba(151, 233, 0, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid var(--green-dim)' }}>🚗 Entrar como Motorista</button>
         </div>
       </nav>
 
@@ -159,58 +158,27 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── ENTRADA E ACESSOS RÁPIDOS ── */}
+      {/* ── ACESSO RÁPIDO MOTORISTA ── */}
       <section className="lp-entry-section" style={{ padding: '65px 5%' }}>
         <motion.div className="lp-section-tag" style={{ textAlign: 'center', display: 'block', margin: '0 auto 20px auto' }}>
-          📱 Acessar a Plataforma Zomp
+          🚗 Acesse o App do Motorista Zomp
         </motion.div>
         <h2 style={{ textAlign: 'center', marginBottom: '40px', fontSize: '2rem', fontWeight: 'bold' }}>
-          Escolha como deseja acessar
+          Comece a dirigir e lucrar agora
         </h2>
         
         <motion.div 
-          className="lp-entry-grid" 
           variants={stagger} 
           initial="hidden" 
           whileInView="visible" 
           viewport={{ once: true }}
           style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-            gap: '24px', 
-            maxWidth: '1200px', 
+            display: 'flex', 
+            justifyContent: 'center',
+            maxWidth: '500px', 
             margin: '0 auto' 
           }}
         >
-          {/* Card Passageiro */}
-          <motion.div 
-            className="lp-entry-card lp-entry-passenger" 
-            variants={fadeUp} 
-            onClick={() => navigate('/passageiro')}
-            style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid var(--border)',
-              borderRadius: '16px',
-              padding: '30px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              minHeight: '260px'
-            }}
-          >
-            <div>
-              <div className="lp-entry-badge" style={{ backgroundColor: 'rgba(51, 163, 255, 0.15)', color: '#33a3ff', display: 'inline-block', padding: '4px 8px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '15px' }}>📱 Passageiro</div>
-              <div className="lp-entry-icon" style={{ color: '#33a3ff', marginBottom: '15px' }}><Smartphone size={32} /></div>
-              <h3 style={{ fontSize: '1.4rem', marginBottom: '10px' }}>App Passageiro</h3>
-              <p style={{ color: 'var(--txt2)', fontSize: '0.9rem', lineHeight: '1.4' }}>
-                Solicite corridas rápidas e baratas de carro ou moto. Acompanhe a rota em tempo real.
-              </p>
-            </div>
-            <div className="lp-entry-btn" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: '#33a3ff', fontWeight: 'bold', fontSize: '0.9rem' }}>Acessar Aplicativo <ArrowRight size={16} /></div>
-          </motion.div>
-
           {/* Card Motorista */}
           <motion.div 
             className="lp-entry-card lp-entry-driver" 
@@ -226,21 +194,20 @@ export default function LandingPage() {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
-              minHeight: '260px'
+              minHeight: '220px',
+              width: '100%'
             }}
           >
             <div>
               <div className="lp-entry-badge" style={{ backgroundColor: 'rgba(151, 233, 0, 0.15)', color: 'var(--green)', display: 'inline-block', padding: '4px 8px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '15px' }}>💎 Renda Passiva</div>
               <div className="lp-entry-icon" style={{ color: 'var(--green)', marginBottom: '15px' }}><TrendingUp size={32} /></div>
-              <h3 style={{ fontSize: '1.4rem', marginBottom: '10px' }}>App Motorista</h3>
+              <h3 style={{ fontSize: '1.4rem', marginBottom: '10px' }}>App do Motorista Parceiro</h3>
               <p style={{ color: 'var(--txt2)', fontSize: '0.9rem', lineHeight: '1.4' }}>
                 Dirija, faça corridas e ganhe royalties diários indicando passageiros para sua rede.
               </p>
             </div>
-            <div className="lp-entry-btn" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--green)', fontWeight: 'bold', fontSize: '0.9rem' }}>Acessar Aplicativo <ArrowRight size={16} /></div>
+            <div className="lp-entry-btn" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--green)', fontWeight: 'bold', fontSize: '0.9rem' }}>Acessar App Motorista <ArrowRight size={16} /></div>
           </motion.div>
-
-
         </motion.div>
       </section>
 
