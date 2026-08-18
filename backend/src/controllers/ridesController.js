@@ -104,8 +104,30 @@ exports.acceptRide = async (req, res) => {
     `, [req.user.id, req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Corrida não encontrada ou já aceita' });
 
+    const ride = rows[0];
     await pool.query('UPDATE "User" SET "ridesAccepted" = "ridesAccepted" + 1 WHERE id = $1', [req.user.id]);
-    res.json(rows[0]);
+
+    // Processar Royalties: se o passageiro é vinculado (indicado) a algum motorista,
+    // credita R$ 0,30 na carteira de royalties do motorista que indicou
+    let royaltyPaid = 0;
+    try {
+      const { rows: referrals } = await pool.query(`
+        SELECT r."referrerId" FROM "Referral" r
+        WHERE r."referredId" = $1 AND r."expiresAt" > NOW()
+      `, [ride.passengerId]);
+
+      if (referrals.length > 0) {
+        const config = await pool.query('SELECT * FROM "AdminConfig" WHERE id = $1', ['singleton']);
+        const royaltyValue = config.rows[0]?.royaltyPerRide || 0.30;
+        await pool.query('UPDATE "User" SET balance = balance + $1 WHERE id = $2', [royaltyValue, referrals[0].referrerId]);
+        royaltyPaid = royaltyValue;
+        console.log(`Royalty de R$ ${royaltyValue} creditado ao motorista ${referrals[0].referrerId} (passageiro ${ride.passengerId} vinculado)`);
+      }
+    } catch (royaltyErr) {
+      console.warn('Erro ao processar royalty na aceitação (não bloqueante):', royaltyErr.message);
+    }
+
+    res.json({ ...ride, royaltyPaid });
   } catch (err) {
     console.error('Erro ao aceitar corrida:', err.message);
     res.status(500).json({ error: 'Erro ao aceitar corrida' });
@@ -147,17 +169,7 @@ exports.completeRide = async (req, res) => {
       await pool.query('UPDATE "User" SET "driverAppDebt" = COALESCE("driverAppDebt", 0) + $1 WHERE id = $2', [pendingDebtIncluded, req.user.id]);
     }
 
-    // Processar Royalties
-    const { rows: referrals } = await pool.query(`
-      SELECT r."referrerId" FROM "Referral" r
-      WHERE r."referredId" = $1 AND r."expiresAt" > NOW()
-    `, [ride.passengerId]);
-
-    if (referrals.length > 0) {
-      const config = await pool.query('SELECT * FROM "AdminConfig" WHERE id = $1', ['singleton']);
-      const royaltyValue = config.rows[0]?.royaltyPerRide || 0.30;
-      await pool.query('UPDATE "User" SET balance = balance + $1 WHERE id = $2', [royaltyValue, referrals[0].referrerId]);
-    }
+    // Royalties já foram creditados no acceptRide, não duplicar aqui
 
     res.json(ride);
   } catch (err) {
