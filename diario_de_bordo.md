@@ -342,14 +342,65 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Sistema de avaliação mútua de 1 a 5 estrelas ⭐.
 
 ---
-**Status Atual**: ✅ Todas as funcionalidades operacionais e validadas no Render.
-**Versão**: 14.0.0
-**Responsável**: Antigravity AI & Pair Programming
-**Últimos Commits**:
-- `d6d2037` (docs: atualiza diario de bordo com conciliacao financeira completa)
-- `0445aed` (feat: conciliacao de debitos quitados no passageiro e repasse para o motorista quitar na compra de creditos)
-- `e4b13c0` (docs: atualiza diario de bordo com priorizacao da categoria ticada no print)
-- `e7272ca` (feat: prioriza valor da categoria ticada e repetida no print para calculo do desconto)
-- `95571e0` (feat: integra preco imbativel na tela inicial IDLE do passageiro e widgets de clima/transito/sonar)
+### 🚀 v15.0.0 - Download Direto e Instalação Imediata do App Zomp (2026-08-18)
+* ⚡ **Botão Sempre Pronto para Download**:
+  - Implementado novo componente [DownloadAppBanner.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/components/DownloadAppBanner.jsx) com estado visual "Pronto para download", indicador fluorescente pulsante, badge dinâmico "BAIXAR DIRETO" e suporte visual tanto para Motoristas (tema verde `#00E676`) quanto Passageiros (tema azul `#33a3ff`).
+* 📥 **Download e Instalação Imediata**:
+  - O clique no botão aciona instantaneamente o diálogo nativo de instalação do PWA (`beforeinstallprompt.prompt()`) sem atrasos ou bloqueios.
+  - Caso o navegador não suporte o prompt nativo ou esteja no iOS/Safari/Desktop, o sistema dispara automaticamente o download direto do inicializador em tela cheia do aplicativo (`Zomp_Motorista_App.html` ou `Zomp_Passageiro_App.html`) e abre um modal interativo e moderno com o passo a passo ilustrado de 1 toque, eliminando os antigos alertas de texto puro (`alert(...)`).
+* 📱 **Ícones PWA em Alta Resolução (192x192, 512x512, Maskable e Apple Touch)**:
+  - Gerados ícones rasterizados PNG em `frontend/public/` e sincronizados em `backend/public/` (`icon-192.png`, `icon-512.png`, `pwa-192x192.png`, `pwa-512x512.png`, `apple-touch-icon.png`, `maskable-icon-512.png`).
+  - [manifest.json](file:///c:/Users/User/Desktop/zomp-master/frontend/public/manifest.json) e [vite.config.js](file:///c:/Users/User/Desktop/zomp-master/frontend/vite.config.js) atualizados para conformidade total com os critérios de WebAPK do Google Chrome Android e Chromium.
+* 🔄 **Captura Global do Evento de Instalação**:
+  - [main.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/main.jsx) atualizado com disparo de eventos globais `pwa-prompt-ready` e `pwa-installed`, garantindo que qualquer tela da aplicação detecte instantaneamente o status de instalação.
+
+---
+### 🚀 v15.1.0 - Preço Imbatível com Desconto Incidindo Diretamente sobre o Print (2026-08-18)
+* 🏷️ **Desconto Direto sobre o Valor do Print da Concorrência**:
+  - Ajustada a regra de negócio do **Preço Imbatível**: se o preço padrão da Zomp for **R$ 35,00** e o passageiro enviar um print da Uber/99 no valor de **R$ 32,00**, o desconto é **aplicado diretamente sobre os R$ 32,00 do print** (ex: R$ 32,00 - R$ 3,00 de desconto = **R$ 29,00** no Zomp).
+  - Tabela de desconto progressivo sobre o print:
+    - Print `>= R$ 30,00`: **Desconto de R$ 3,00**
+    - Print `>= R$ 18,00` e `< R$ 30,00`: **Desconto de R$ 2,50**
+    - Print `>= R$ 12,00` e `< R$ 18,00`: **Desconto de R$ 2,00**
+    - Print `< R$ 12,00`: **Desconto de R$ 1,50**
+* 🔍 **OCR com Tesseract no Frontend e Leitura Inteligente**:
+  - Integração do `tesseract.js` para ler e extrair automaticamente o valor numérico impresso na tela da Uber/99.
+  - Campo numérico interativo e editável para o passageiro confirmar ou ajustar o valor lido do print com recálculo instantâneo em tempo real.
+* 🚗 **Sincronização em Todas as Telas**:
+  - O seletor de veículos, a caixa de preço estimado, o botão de chamada rápida e a criação da corrida no backend passam a cobrar exatamente o valor descontado do print.
+
+---
+### 🚀 v15.2.0 - Correção do Recebimento de Chamadas no App do Motorista (2026-08-18)
+* 🚖 **Despacho Imediato e Desbloqueio no Backend**:
+  - `getPendingRides` em [ridesController.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/controllers/ridesController.js) atualizado para retornar de forma direta e sem restrições de fuso horário/timestamps todas as corridas ativas com `status = 'PENDING'`.
+  - `requestRide` agora insere explicitamente `"createdAt"` e `"updatedAt"` com `NOW()` e garante a integridade de todas as colunas de coordenadas no PostgreSQL.
+* 🎯 **Ajuste no Filtro de Raio Sonar & Modo Livre**:
+  - Raio de atuação configurado como padrão **Livre 🌐 (0 km)**, permitindo que motoristas recebam todas as corridas disponíveis sem risco de bloqueio geográfico acidental ou divergência de GPS.
+  - O filtro de raio (quando ativo) passa a calcular estritamente a proximidade do local de embarque (origem) em relação ao motorista, sem bloquear viagens de percurso longo.
+* 🔊 **Disparo Sonoro e Notificações Push**:
+  - Unlocked `AudioContext` imediatamente ao ficar online (via botão ou slide).
+  - O alarme toca para cada nova corrida recebida, disparando notificação e vibração no aparelho.
+  - Temporizador de aceitação ampliado para 15 segundos sem auto-rejeição silenciosa que ocultava corridas do radar.
+
+---
+### 🚀 v15.3.0 - Sugestões Inteligentes de Viagem e Endereços no App do Passageiro (2026-08-18)
+* ✨ **Sugestões de Viagem Instantâneas na Tela Inicial (IDLE)**:
+  - Novo painel inferior flutuante *"Sugestões de Viagem - 1 Toque p/ Pedir"* exibido quando o passageiro abre o app.
+  - Filtros temáticos por chips com ícones: **🔥 Populares**, **✈️ Aeroportos**, **🛍️ Shoppings**, **🏖️ Praias**, **⚽ Turismo & Lazer**, **🚌 Terminais & Centros**.
+  - Cards com ícone temático, título do local, bairro/região e badge de destaque.
+* ⚡ **Resolução e Pedido em 1 Toque**:
+  - Ao tocar em qualquer sugestão de viagem, o app define o destino, preenche a partida com a localização atual (GPS) do passageiro, calcula a melhor rota e exibe os preços e opções de veículos imediatamente.
+* 🔍 **Autocomplete Inteligente com Sugestões no Foco**:
+  - Ao clicar ou focar no campo **Destino** (mesmo antes de digitar), o dropdown já sugere destinos populares e viagens recentes do passageiro.
+  - Busca rápida local ancorada no catálogo de pontos de referência e integração com geocodificação Photon/Nominatim com badges de categoria e ícones.
+
+---
+**Status Atual**: ✅ Sugestões inteligentes de viagem e endereços ativas no app do passageiro.
+**Versão**: 15.3.0
+**Responsável**: Antigravity AI & Leandro Palmeira
+
+
+
+
 
 

@@ -203,6 +203,23 @@ exports.getRides = async (req, res) => {
   }
 };
 
+// ── CANCELAR CORRIDA (ADMIN) ──
+exports.cancelRide = async (req, res) => {
+  if (checkAdmin(req, res)) return;
+  try {
+    const { rows } = await pool.query(
+      'UPDATE "Ride" SET status = \'CANCELLED\', "updatedAt" = NOW() WHERE id = $1 RETURNING *',
+      [req.params.id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Corrida não encontrada' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Erro ao cancelar corrida pelo admin:', err.message);
+    res.status(500).json({ error: 'Erro ao cancelar corrida' });
+  }
+};
+
+
 // ── LISTAR INDICAÇÕES ──
 exports.getReferrals = async (req, res) => {
   if (checkAdmin(req, res)) return;
@@ -285,6 +302,16 @@ exports.getRoyaltyFund = async (req, res) => {
 exports.getWithdrawals = async (req, res) => {
   if (checkAdmin(req, res)) return;
   try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "Withdrawal" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "userId" UUID REFERENCES "User"(id),
+        "amount" DECIMAL NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'PENDING',
+        "createdAt" TIMESTAMP DEFAULT NOW(),
+        "updatedAt" TIMESTAMP DEFAULT NOW()
+      );
+    `);
     const { rows } = await pool.query(`
       SELECT w.id, w.amount, w.status, w."createdAt",
         u.name as "userName", u.email as "userEmail", u."pixKey"
@@ -294,7 +321,7 @@ exports.getWithdrawals = async (req, res) => {
     `);
     res.json(rows);
   } catch (err) {
-    // Tabela pode não existir ainda
+    console.error('Erro ao listar saques:', err.message);
     res.json([]);
   }
 };
@@ -303,13 +330,23 @@ exports.handleWithdrawal = async (req, res) => {
   if (checkAdmin(req, res)) return;
   try {
     const { status } = req.body;
+    const { rows: curr } = await pool.query('SELECT * FROM "Withdrawal" WHERE id = $1', [req.params.id]);
+    if (curr.length === 0) return res.status(404).json({ error: 'Saque não encontrado' });
+    const withdrawal = curr[0];
+
+    // Se estiver rejeitando um saque pendente, estorna o valor para o saldo do motorista
+    if (status === 'REJECTED' && withdrawal.status === 'PENDING') {
+      await pool.query('UPDATE "User" SET balance = balance + $1 WHERE id = $2', [withdrawal.amount, withdrawal.userId]);
+    }
+
     const { rows } = await pool.query(
-      'UPDATE "Withdrawal" SET status = $1 WHERE id = $2 RETURNING *',
+      'UPDATE "Withdrawal" SET status = $1, "updatedAt" = NOW() WHERE id = $2 RETURNING *',
       [status, req.params.id]
     );
-    if (rows.length === 0) return res.status(404).json({ error: 'Saque não encontrado' });
     res.json(rows[0]);
   } catch (err) {
+    console.error('Erro ao processar saque:', err.message);
     res.status(500).json({ error: 'Erro ao processar saque' });
   }
 };
+

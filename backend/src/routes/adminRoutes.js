@@ -19,6 +19,7 @@ router.get('/passengers', authMiddleware, adminController.getPassengers);
 
 // Rides & Referrals
 router.get('/rides', authMiddleware, adminController.getRides);
+router.put('/rides/:id/cancel', authMiddleware, adminController.cancelRide);
 router.get('/referrals', authMiddleware, adminController.getReferrals);
 
 // Config

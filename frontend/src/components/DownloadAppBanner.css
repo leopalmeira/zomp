@@ -1,0 +1,306 @@
+/* ===== DOWNLOAD APP BANNER STYLES ===== */
+
+.zomp-download-banner {
+  border-radius: 18px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  user-select: none;
+}
+
+.zomp-download-banner:hover {
+  transform: translateY(-2px);
+}
+
+.zomp-download-banner:active {
+  transform: scale(0.99);
+}
+
+.zomp-download-banner.driver-mode {
+  background: linear-gradient(135deg, rgba(0, 230, 118, 0.14) 0%, rgba(5, 150, 105, 0.08) 50%, rgba(10, 15, 25, 0.6) 100%);
+  border: 1.5px solid rgba(0, 230, 118, 0.4);
+}
+
+.zomp-download-banner.passenger-mode {
+  background: linear-gradient(135deg, rgba(51, 163, 255, 0.14) 0%, rgba(37, 99, 235, 0.08) 50%, rgba(10, 15, 25, 0.6) 100%);
+  border: 1.5px solid rgba(51, 163, 255, 0.4);
+}
+
+/* Pulsing Ambient Line at top */
+.zomp-banner-glow-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  opacity: 0.8;
+  animation: bannerGlowPulse 2.5s infinite alternate ease-in-out;
+}
+
+@keyframes bannerGlowPulse {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+/* Icon Box */
+.zomp-banner-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.zomp-banner-icon-box.driver-bg {
+  background: linear-gradient(135deg, #00E676 0%, #059669 100%);
+  box-shadow: 0 4px 18px rgba(0, 230, 118, 0.45);
+}
+
+.zomp-banner-icon-box.passenger-bg {
+  background: linear-gradient(135deg, #33a3ff 0%, #2563eb 100%);
+  box-shadow: 0 4px 18px rgba(51, 163, 255, 0.45);
+}
+
+.zomp-download-pulse-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 12px;
+  height: 12px;
+  background: #00E676;
+  border: 2px solid #18181b;
+  border-radius: 50%;
+  animation: pulseDot 1.5s infinite;
+}
+
+@keyframes pulseDot {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7);
+  }
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 8px rgba(0, 230, 118, 0);
+  }
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+  }
+}
+
+/* Content */
+.zomp-banner-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.zomp-banner-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.zomp-banner-title {
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.94rem;
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zomp-banner-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.zomp-banner-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #00E676;
+  margin-top: 3px;
+}
+
+/* Action Button */
+.zomp-banner-btn {
+  padding: 9px 15px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.zomp-banner-btn.driver-btn {
+  background: #00E676;
+  color: #052e16;
+  box-shadow: 0 4px 15px rgba(0, 230, 118, 0.35);
+}
+
+.zomp-banner-btn.passenger-btn {
+  background: #33a3ff;
+  color: #082f49;
+  box-shadow: 0 4px 15px rgba(51, 163, 255, 0.35);
+}
+
+.zomp-banner-btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.04);
+}
+
+/* MODAL INSTRUCTION OVERLAY */
+.zomp-install-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .zomp-install-modal-overlay {
+    align-items: center;
+    padding: 20px;
+  }
+}
+
+.zomp-install-modal-card {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
+  animation: slideUpModal 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+@media (min-width: 640px) {
+  .zomp-install-modal-card {
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  }
+}
+
+@keyframes slideUpModal {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.zomp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.zomp-modal-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.zomp-modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.zomp-modal-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.zomp-modal-step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #00E676;
+  color: #000;
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.zomp-modal-step-text {
+  color: #f0f4f8;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.zomp-modal-download-trigger-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #00E676 0%, #059669 100%);
+  color: #000;
+  font-weight: 800;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  box-shadow: 0 4px 20px rgba(0, 230, 118, 0.4);
+  transition: transform 0.2s, filter 0.2s;
+}
+
+.zomp-modal-download-trigger-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}

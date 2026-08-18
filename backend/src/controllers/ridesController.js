@@ -17,6 +17,8 @@ exports.requestRide = async (req, res) => {
     await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "originLon" NUMERIC(10,6)');
     await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "destLat" NUMERIC(10,6)');
     await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "destLon" NUMERIC(10,6)');
+    await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP DEFAULT NOW()');
+    await pool.query('ALTER TABLE "Ride" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP DEFAULT NOW()');
 
     const originLat = req.body.originLat != null ? parseFloat(req.body.originLat) : null;
     const originLon = req.body.originLon != null ? parseFloat(req.body.originLon) : null;
@@ -34,8 +36,8 @@ exports.requestRide = async (req, res) => {
     }
 
     const { rows } = await pool.query(`
-      INSERT INTO "Ride" ("passengerId", origin, destination, price, "distanceKm", "vehicleType", "pendingDebtIncluded", "originLat", "originLon", "destLat", "destLon", status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'PENDING')
+      INSERT INTO "Ride" ("passengerId", origin, destination, price, "distanceKm", "vehicleType", "pendingDebtIncluded", "originLat", "originLon", "destLat", "destLon", status, "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'PENDING', NOW(), NOW())
       RETURNING *
     `, [req.user.id, validOrigin, validDest, validPrice, validDistance, validVehicle, pendingDebt, originLat, originLon, destLat, destLon]);
 
@@ -61,15 +63,8 @@ exports.getPendingRides = async (req, res) => {
       FROM "Ride" r
       LEFT JOIN "User" u ON r."passengerId" = u.id
       WHERE r.status = 'PENDING'
-        AND (
-          r."createdAt" >= NOW() - INTERVAL '10 minutes'
-          OR r."distanceKm" >= 50
-          OR r."vehicleType" ILIKE '%long%'
-          OR r."vehicleType" ILIKE '%intercity%'
-          OR r."vehicleType" ILIKE '%scheduled%'
-          OR r."vehicleType" ILIKE '%freight%'
-        )
-      ORDER BY r."createdAt" DESC
+      ORDER BY r."createdAt" DESC NULLS LAST
+      LIMIT 25
     `);
     res.json(rows);
   } catch (err) {
@@ -104,30 +99,8 @@ exports.acceptRide = async (req, res) => {
     `, [req.user.id, req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Corrida não encontrada ou já aceita' });
 
-    const ride = rows[0];
     await pool.query('UPDATE "User" SET "ridesAccepted" = "ridesAccepted" + 1 WHERE id = $1', [req.user.id]);
-
-    // Processar Royalties: se o passageiro é vinculado (indicado) a algum motorista,
-    // credita R$ 0,30 na carteira de royalties do motorista que indicou
-    let royaltyPaid = 0;
-    try {
-      const { rows: referrals } = await pool.query(`
-        SELECT r."referrerId" FROM "Referral" r
-        WHERE r."referredId" = $1 AND r."expiresAt" > NOW()
-      `, [ride.passengerId]);
-
-      if (referrals.length > 0) {
-        const config = await pool.query('SELECT * FROM "AdminConfig" WHERE id = $1', ['singleton']);
-        const royaltyValue = config.rows[0]?.royaltyPerRide || 0.30;
-        await pool.query('UPDATE "User" SET balance = balance + $1 WHERE id = $2', [royaltyValue, referrals[0].referrerId]);
-        royaltyPaid = royaltyValue;
-        console.log(`Royalty de R$ ${royaltyValue} creditado ao motorista ${referrals[0].referrerId} (passageiro ${ride.passengerId} vinculado)`);
-      }
-    } catch (royaltyErr) {
-      console.warn('Erro ao processar royalty na aceitação (não bloqueante):', royaltyErr.message);
-    }
-
-    res.json({ ...ride, royaltyPaid });
+    res.json(rows[0]);
   } catch (err) {
     console.error('Erro ao aceitar corrida:', err.message);
     res.status(500).json({ error: 'Erro ao aceitar corrida' });
@@ -169,14 +142,33 @@ exports.completeRide = async (req, res) => {
       await pool.query('UPDATE "User" SET "driverAppDebt" = COALESCE("driverAppDebt", 0) + $1 WHERE id = $2', [pendingDebtIncluded, req.user.id]);
     }
 
-    // Royalties já foram creditados no acceptRide, não duplicar aqui
+    // Processar Royalties: se o passageiro é vinculado (indicado) a algum motorista,
+    // credita R$ 0,30 na carteira de royalties do motorista que indicou ao finalizar a corrida
+    let royaltyPaid = 0;
+    try {
+      const { rows: referrals } = await pool.query(`
+        SELECT r."referrerId" FROM "Referral" r
+        WHERE r."referredId" = $1 AND r."expiresAt" > NOW()
+      `, [ride.passengerId]);
 
-    res.json(ride);
+      if (referrals.length > 0) {
+        const config = await pool.query('SELECT * FROM "AdminConfig" WHERE id = $1', ['singleton']);
+        const royaltyValue = parseFloat(config.rows[0]?.royaltyPerRide || 0.30);
+        await pool.query('UPDATE "User" SET balance = balance + $1 WHERE id = $2', [royaltyValue, referrals[0].referrerId]);
+        royaltyPaid = royaltyValue;
+        console.log(`✅ [Royalty] R$ ${royaltyValue.toFixed(2)} creditado ao motorista ${referrals[0].referrerId} (passageiro ${ride.passengerId} vinculado) na conclusão da corrida.`);
+      }
+    } catch (royaltyErr) {
+      console.warn('Erro ao processar royalty na conclusão da corrida (não bloqueante):', royaltyErr.message);
+    }
+
+    res.json({ ...ride, royaltyPaid });
   } catch (err) {
     console.error('Erro ao completar corrida:', err.message);
     res.status(500).json({ error: 'Erro ao completar corrida' });
   }
 };
+
 
 exports.getRideById = async (req, res) => {
   try {
@@ -381,24 +373,24 @@ exports.validateScreenshotAi = async (req, res) => {
     }
 
     // 3. Regra de desconto aplicada DIRETAMENTE sobre o valor do print da concorrência
-    // A IA prioriza o valor da categoria selecionada / ticada (que aparece repetido na opção ativa e no botão de confirmação)
-    let competitorPrice = parseFloat(req.body.printPrice || req.body.currentPrice) || 20.0;
+    // Se o print do Uber/99 foi R$ 32,00, o desconto incide sobre os R$ 32,00 (ex: 32 - 3 = R$ 29,00)
+    let competitorPrice = parseFloat(req.body.printPrice) || parseFloat(req.body.currentPrice) || 20.0;
     if (competitorPrice < 8.00) {
       competitorPrice = 15.00;
     }
 
     let discountAmount = 2.00;
     if (competitorPrice >= 30.00) {
-      discountAmount = 3.00; // R$ 3,00 de desconto para corridas com print acima de R$ 30,00
-    } else if (competitorPrice >= 18.00 && competitorPrice <= 25.00) {
-      discountAmount = 2.50; // R$ 2,50 de desconto para corridas de 18 a 25 reais
-    } else if (competitorPrice >= 12.00 && competitorPrice <= 14.00) {
-      discountAmount = 2.00; // R$ 2,00 de desconto para corridas de 12 a 14 reais
+      discountAmount = 3.00; // R$ 3,00 de desconto para print >= R$ 30,00
+    } else if (competitorPrice >= 18.00 && competitorPrice < 30.00) {
+      discountAmount = 2.50; // R$ 2,50 de desconto para print entre R$ 18,00 e R$ 29,99
+    } else if (competitorPrice >= 12.00 && competitorPrice < 18.00) {
+      discountAmount = 2.00; // R$ 2,00 de desconto para print entre R$ 12,00 e R$ 17,99
     } else {
-      discountAmount = 2.00;
+      discountAmount = 1.50; // R$ 1,50 de desconto para valores menores
     }
 
-    // Preço no Zomp é o preço do print do cliente MENOS o desconto
+    // Preço final no Zomp é o valor no print do cliente MENOS o desconto
     const newPrice = Math.max(competitorPrice - discountAmount, 8.00);
 
     // Registra o log de desconto no banco

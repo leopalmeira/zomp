@@ -1318,3 +1318,146 @@ input:checked + .slider:before { transform: translateX(22px); }
   transform: translateX(3px);
 }
 
+/* ========================================
+   ZOMP UI - Travel Suggestions & Quick Discovery
+   ======================================== */
+.travel-suggestions-sheet {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 1000;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  max-height: 48vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.travel-suggestions-header {
+  margin-bottom: 12px;
+}
+
+.travel-category-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.travel-category-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.travel-cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 100px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #4b5563;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.travel-cat-chip:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.travel-cat-chip.active {
+  background: #059669;
+  border-color: #059669;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+}
+
+.travel-destinations-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 240px;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+
+.travel-destination-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.travel-destination-card:hover {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  transform: translateX(3px);
+}
+
+.travel-destination-card:active {
+  transform: scale(0.98);
+}
+
+.travel-dest-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.travel-dest-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.travel-dest-title {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.travel-dest-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.travel-dest-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #059669;
+  background: #dcfce7;
+  padding: 2px 8px;
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+

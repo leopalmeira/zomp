@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { register } from '../services/api'
 import AuthMapBg from '../components/AuthMapBg'
+import DownloadAppBanner from '../components/DownloadAppBanner'
 import './Auth.css'
 
 export default function RegisterPage({ forceRole }) {
@@ -52,7 +53,10 @@ export default function RegisterPage({ forceRole }) {
 
       <div className="auth-container animate-fade-in">
 
-        <div className="logo-container" style={{ marginBottom: '40px', transform: 'scale(1.2)' }}>
+        {/* Banner Baixar App */}
+        <DownloadAppBanner role={forceRole || 'PASSENGER'} />
+
+        <div className="logo-container" style={{ marginBottom: '30px', transform: 'scale(1.2)' }}>
           <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
         </div>
 

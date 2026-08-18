@@ -9,7 +9,13 @@ function api(path, opts = {}) {
   return fetch(`${API}${path}`, {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     ...opts
-  }).then(r => r.json())
+  }).then(async r => {
+    try {
+      return await r.json()
+    } catch {
+      return { error: 'Resposta inválida do servidor' }
+    }
+  })
 }
 
 function safeNum(v, fallback = 0) {
@@ -17,7 +23,17 @@ function safeNum(v, fallback = 0) {
   return Number.isFinite(n) ? n : fallback
 }
 
-const tabs = ['Dashboard', 'Financeiro', 'Operações', 'Motoristas', 'Passageiros', 'Configurações', 'Fundo', 'Saques', 'Documentação']
+const tabs = [
+  'Dashboard',
+  'Financeiro',
+  'Operações',
+  'Motoristas',
+  'Passageiros',
+  'Configurações',
+  'Fundo',
+  'Saques',
+  'Documentação'
+]
 
 export default function AdminPanel() {
   const navigate = useNavigate()
@@ -25,14 +41,20 @@ export default function AdminPanel() {
   const [stats, setStats] = useState(null)
   const [drivers, setDrivers] = useState([])
   const [passengers, setPassengers] = useState([])
-  const [operations, setOperations] = useState(null)
+  const [operations, setOperations] = useState([])
   const [config, setConfig] = useState(null)
   const [fund, setFund] = useState(null)
   const [withdrawals, setWithdrawals] = useState([])
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState(null)
+
+  // Filtros & Buscas
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+
+  // Modais
   const [selectedDriver, setSelectedDriver] = useState(null)
+  const [selectedPassenger, setSelectedPassenger] = useState(null)
   const [selectedRide, setSelectedRide] = useState(null)
   const [creditsModal, setCreditsModal] = useState(null)
   const [creditsAmount, setCreditsAmount] = useState('')
@@ -46,26 +68,43 @@ export default function AdminPanel() {
     setLoading(true)
     try {
       if (tab === 'Dashboard') {
-        const s = await api('/admin/stats')
+        const [s, ops] = await Promise.all([
+          api('/admin/stats'),
+          api('/admin/operations')
+        ])
         setStats(s)
-        setOperations(await api('/admin/operations'))
+        setOperations(Array.isArray(ops) ? ops : [])
+      } else if (tab === 'Financeiro') {
+        setStats(await api('/admin/stats'))
+      } else if (tab === 'Operações') {
+        const ops = await api('/admin/operations')
+        setOperations(Array.isArray(ops) ? ops : [])
+      } else if (tab === 'Motoristas') {
+        const drvs = await api('/admin/drivers')
+        setDrivers(Array.isArray(drvs) ? drvs : [])
+      } else if (tab === 'Passageiros') {
+        const psgs = await api('/admin/passengers')
+        setPassengers(Array.isArray(psgs) ? psgs : [])
+      } else if (tab === 'Configurações') {
+        setConfig(await api('/admin/config'))
+      } else if (tab === 'Fundo') {
+        setFund(await api('/admin/royalty-fund'))
+      } else if (tab === 'Saques') {
+        const wds = await api('/admin/withdrawals')
+        setWithdrawals(Array.isArray(wds) ? wds : [])
       }
-      if (tab === 'Financeiro') setStats(await api('/admin/stats'))
-      if (tab === 'Operações') setOperations(await api('/admin/operations'))
-      if (tab === 'Motoristas') setDrivers(await api('/admin/drivers'))
-      if (tab === 'Passageiros') setPassengers(await api('/admin/passengers'))
-      if (tab === 'Configurações') setConfig(await api('/admin/config'))
-      if (tab === 'Fundo') setFund(await api('/admin/royalty-fund'))
-      if (tab === 'Saques') setWithdrawals(await api('/admin/withdrawals'))
-    } catch { showToast('Erro ao carregar dados', 'error') }
-    setLoading(false)
+    } catch (e) {
+      showToast('Erro ao carregar dados da aba', 'error')
+    } finally {
+      setLoading(false)
+    }
   }, [tab])
 
   useEffect(() => {
     const initialLoad = setTimeout(load, 0)
     let interval
     if (tab === 'Operações' || tab === 'Dashboard') {
-      interval = setInterval(load, 10000)
+      interval = setInterval(load, 8000)
     }
     return () => {
       clearTimeout(initialLoad)
@@ -73,31 +112,22 @@ export default function AdminPanel() {
     }
   }, [load, tab])
 
+  // Ações de Motorista
   const approveDriver = async (id, val) => {
     const r = await api(`/admin/users/${id}/approve`, { method: 'PUT', body: JSON.stringify({ isApproved: val }) })
     if (r.error) return showToast(r.error, 'error')
-    showToast(val ? 'Motorista aprovado!' : 'Motorista suspenso')
-    load()
-  }
-
-  const saveConfig = async () => {
-    const r = await api('/admin/config', { method: 'PUT', body: JSON.stringify(config) })
-    if (r.error) showToast(r.error, 'error')
-    else showToast('Configurações salvas!')
-  }
-
-  const handleWithdrawal = async (id, status) => {
-    const r = await api(`/admin/withdrawals/${id}`, { method: 'PUT', body: JSON.stringify({ status }) })
-    if (r.error) return showToast(r.error, 'error')
-    showToast(status === 'APPROVED' ? 'Saque aprovado!' : 'Saque rejeitado')
+    showToast(val ? 'Motorista aprovado e ativado com sucesso!' : 'Motorista suspenso temporariamente!')
     load()
   }
 
   const handleAddCredits = async () => {
     if (!creditsModal || !creditsAmount) return
-    const r = await api(`/admin/users/${creditsModal.id}/credits`, { method: 'PUT', body: JSON.stringify({ amount: Number(creditsAmount) }) })
+    const r = await api(`/admin/users/${creditsModal.id}/credits`, {
+      method: 'PUT',
+      body: JSON.stringify({ amount: Number(creditsAmount) })
+    })
     if (r.error) return showToast(r.error, 'error')
-    showToast(`${creditsAmount} créditos adicionados a ${creditsModal.name}!`)
+    showToast(`+${creditsAmount} créditos concedidos a ${creditsModal.name}!`)
     setCreditsModal(null)
     setCreditsAmount('')
     load()
@@ -106,100 +136,267 @@ export default function AdminPanel() {
   const handleResetStats = async (id) => {
     const r = await api(`/admin/users/${id}/reset-stats`, { method: 'PUT' })
     if (r.error) return showToast(r.error, 'error')
-    showToast('Estatísticas resetadas!')
+    showToast('Estatísticas de aceitação resetadas com sucesso!')
     load()
   }
 
-  const filteredDrivers = drivers.filter(d => d.name?.toLowerCase().includes(search.toLowerCase()) || d.email?.toLowerCase().includes(search.toLowerCase()))
-  const filteredPassengers = passengers.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()) || p.email?.toLowerCase().includes(search.toLowerCase()))
+  // Ações de Configuração
+  const saveConfig = async () => {
+    const r = await api('/admin/config', { method: 'PUT', body: JSON.stringify(config) })
+    if (r.error) showToast(r.error, 'error')
+    else showToast('Configurações operacionais salvas com sucesso!')
+  }
 
-  const configFields = [
-    { key: 'pricePerKmCar', label: 'Preço por KM (Carro)', type: 'number', prefix: 'R$' },
-    { key: 'pricePerKmMoto', label: 'Preço por KM (Moto)', type: 'number', prefix: 'R$' },
-    { key: 'minFareCar', label: 'Tarifa Mínima (Carro)', type: 'number', prefix: 'R$' },
-    { key: 'minFareMoto', label: 'Tarifa Mínima (Moto)', type: 'number', prefix: 'R$' },
-    { key: 'royaltyPerRide', label: 'Royalty por Corrida', type: 'number', prefix: 'R$' },
-    { key: 'royaltyMonthlyLimit', label: 'Limite Mensal de Royalty', type: 'number' },
-    { key: 'maxPassengersPerDriver', label: 'Máx. Passageiros por Motorista', type: 'number' },
-    { key: 'bindingMonthsFirst', label: 'Vínculo Inicial (meses)', type: 'number' },
-    { key: 'bindingMonthsRenew', label: 'Renovação de Vínculo (meses)', type: 'number' },
-    { key: 'autoSuspendMinAcceptance', label: 'Suspensão Automática (% Aceitação)', type: 'number' },
-    { key: 'autoSuspendMinRating', label: 'Suspensão Automática (Avaliação Mín.)', type: 'number' },
-    { key: 'pricePerCredit', label: 'Preço por Crédito', type: 'number', prefix: 'R$' },
-    { key: 'launchDate', label: 'Data de Lançamento', type: 'date' },
+  // Ações de Saques
+  const handleWithdrawalAction = async (id, status) => {
+    const r = await api(`/admin/withdrawals/${id}`, { method: 'PUT', body: JSON.stringify({ status }) })
+    if (r.error) return showToast(r.error, 'error')
+    showToast(status === 'APPROVED' ? 'Saque marcado como APROVADO!' : 'Saque REJEITADO e saldo estornado ao motorista!')
+    load()
+  }
+
+  // Ações de Corridas
+  const handleCancelRide = async (id) => {
+    if (!window.confirm('Tem certeza que deseja cancelar esta corrida pelo painel administrativo?')) return
+    const r = await api(`/admin/rides/${id}/cancel`, { method: 'PUT' })
+    if (r.error) return showToast(r.error, 'error')
+    showToast('Corrida cancelada pelo administrador!')
+    if (selectedRide?.id === id) setSelectedRide(null)
+    load()
+  }
+
+  // Filtros aplicados
+  const filteredDrivers = drivers.filter(d => {
+    const matchesSearch =
+      (d.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (d.email || '').toLowerCase().includes(search.toLowerCase()) ||
+      (d.carPlate || '').toLowerCase().includes(search.toLowerCase())
+    if (statusFilter === 'ACTIVE') return matchesSearch && d.isApproved
+    if (statusFilter === 'SUSPENDED') return matchesSearch && !d.isApproved
+    return matchesSearch
+  })
+
+  const filteredPassengers = passengers.filter(p => {
+    return (
+      (p.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.email || '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.phone || '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.linkedDriverName || '').toLowerCase().includes(search.toLowerCase())
+    )
+  })
+
+  const filteredOperations = operations.filter(r => {
+    const matchesSearch =
+      (r.passengerName || '').toLowerCase().includes(search.toLowerCase()) ||
+      (r.driverName || '').toLowerCase().includes(search.toLowerCase()) ||
+      (r.origin || '').toLowerCase().includes(search.toLowerCase()) ||
+      (r.destination || '').toLowerCase().includes(search.toLowerCase())
+    if (statusFilter !== 'ALL') return matchesSearch && r.status === statusFilter
+    return matchesSearch
+  })
+
+  const filteredWithdrawals = withdrawals.filter(w => {
+    const matchesSearch =
+      (w.userName || '').toLowerCase().includes(search.toLowerCase()) ||
+      (w.userEmail || '').toLowerCase().includes(search.toLowerCase()) ||
+      (w.pixKey || '').toLowerCase().includes(search.toLowerCase())
+    if (statusFilter !== 'ALL') return matchesSearch && w.status === statusFilter
+    return matchesSearch
+  })
+
+  const configGroups = [
+    {
+      title: '🚗 Tarifas e Preços Operacionais',
+      fields: [
+        { key: 'pricePerKmCar', label: 'Preço por KM (Carro)', type: 'number', step: '0.10', prefix: 'R$' },
+        { key: 'pricePerKmMoto', label: 'Preço por KM (Moto)', type: 'number', step: '0.10', prefix: 'R$' },
+        { key: 'minFareCar', label: 'Tarifa Mínima (Carro)', type: 'number', step: '0.50', prefix: 'R$' },
+        { key: 'minFareMoto', label: 'Tarifa Mínima (Moto)', type: 'number', step: '0.50', prefix: 'R$' },
+        { key: 'pricePerCredit', label: 'Preço de Compra por Crédito', type: 'number', step: '0.10', prefix: 'R$' },
+      ]
+    },
+    {
+      title: '💎 Royalties & Rede de Fidelidade',
+      fields: [
+        { key: 'royaltyPerRide', label: 'Royalty por Corrida Concluída', type: 'number', step: '0.05', prefix: 'R$' },
+        { key: 'royaltyMonthlyLimit', label: 'Limite Mensal de Saque de Royalties', type: 'number', step: '1' },
+        { key: 'maxPassengersPerDriver', label: 'Limite de Passageiros por Motorista', type: 'number', step: '50' },
+        { key: 'bindingMonthsFirst', label: 'Duração do Vínculo Inicial (meses)', type: 'number', step: '1' },
+        { key: 'bindingMonthsRenew', label: 'Duração da Renovação de Vínculo (meses)', type: 'number', step: '1' },
+      ]
+    },
+    {
+      title: '🛡️ Segurança, Critérios e Lançamento',
+      fields: [
+        { key: 'autoSuspendMinAcceptance', label: 'Taxa Mínima de Aceitação para Suspensão (%)', type: 'number', step: '1' },
+        { key: 'autoSuspendMinRating', label: 'Nota Mínima de Avaliação para Suspensão', type: 'number', step: '0.1' },
+        { key: 'launchDate', label: 'Data Oficial de Encerramento do Pré-cadastro', type: 'date' },
+      ]
+    }
   ]
 
   return (
     <div className="ap-root">
       {toast && <div className={`ap-toast ap-toast-${toast.type}`}>{toast.msg}</div>}
 
+      {/* ── MENU LATERAL (SIDEBAR) ── */}
       <aside className="ap-sidebar">
         <div className="ap-brand">
           <img src="/logo.svg" alt="Zomp" className="ap-logo" />
-          <span>Admin</span>
-        </div>
-        <nav className="ap-nav">
-          {tabs.map(t => (
-            <button key={t} className={`ap-nav-btn ${tab === t ? 'active' : ''}`} onClick={() => { setTab(t); setSearch(''); setSelectedDriver(null) }}>
-              {t === 'Dashboard' && '📊'} {t === 'Financeiro' && '💰'} {t === 'Operações' && '📡'}
-              {t === 'Motoristas' && '🚗'} {t === 'Passageiros' && '👤'}
-              {t === 'Configurações' && '⚙️'} {t === 'Fundo' && '💎'} {t === 'Saques' && '💳'}
-              {t === 'Documentação' && '📖'}
-              {' '}{t}
-            </button>
-          ))}
-        </nav>
-        <button className="ap-logout" onClick={() => { localStorage.clear(); navigate('/') }}>← Sair</button>
-      </aside>
-
-      <main className="ap-main">
-        <div className="ap-topbar">
-          <h1 className="ap-page-title">{tab}</h1>
-          <div className="ap-topbar-right">
-            <span className="ap-admin-badge">Sistema Live</span>
-            <button className="ap-refresh" onClick={load}>↻ Atualizar</button>
+          <div className="ap-brand-text">
+            <span>ZOMP</span>
+            <small>Terminal Admin</small>
           </div>
         </div>
 
-        {loading && !operations && !stats && !drivers.length && !passengers.length && !config && !fund && !withdrawals.length && (
-          <div className="ap-loading">Sincronizando dados...</div>
-        )}
+        <nav className="ap-nav">
+          {tabs.map(t => (
+            <button
+              key={t}
+              className={`ap-nav-btn ${tab === t ? 'active' : ''}`}
+              onClick={() => {
+                setTab(t)
+                setSearch('')
+                setStatusFilter('ALL')
+                setSelectedDriver(null)
+                setSelectedPassenger(null)
+                setSelectedRide(null)
+              }}
+            >
+              <span className="ap-nav-icon">
+                {t === 'Dashboard' && '📊'}
+                {t === 'Financeiro' && '💰'}
+                {t === 'Operações' && '📡'}
+                {t === 'Motoristas' && '🚗'}
+                {t === 'Passageiros' && '👤'}
+                {t === 'Configurações' && '⚙️'}
+                {t === 'Fundo' && '💎'}
+                {t === 'Saques' && '💳'}
+                {t === 'Documentação' && '📖'}
+              </span>
+              <span className="ap-nav-label">{t}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="ap-sidebar-footer">
+          <button className="ap-logout" onClick={() => { localStorage.clear(); navigate('/') }}>
+            <span>🚪</span> Sair da Conta
+          </button>
+        </div>
+      </aside>
+
+      {/* ── CONTEÚDO PRINCIPAL ── */}
+      <main className="ap-main">
+        <div className="ap-topbar">
+          <div>
+            <h1 className="ap-page-title">{tab}</h1>
+            <p className="ap-page-sub">
+              {tab === 'Dashboard' && 'Visão panorâmica e métricas em tempo real'}
+              {tab === 'Financeiro' && 'Balanço financeiro, receitas e royalties'}
+              {tab === 'Operações' && 'Monitoramento ao vivo de todas as corridas'}
+              {tab === 'Motoristas' && 'Gestão, aprovações, créditos e documentos'}
+              {tab === 'Passageiros' && 'Base de clientes e vínculos de indicação'}
+              {tab === 'Configurações' && 'Parâmetros globais, taxas e regras do app'}
+              {tab === 'Fundo' && 'Fundo acumulado de dividendos e top motoristas'}
+              {tab === 'Saques' && 'Processamento e aprovação de resgates PIX'}
+              {tab === 'Documentação' && 'Guia mestre de operações e regras do Zomp'}
+            </p>
+          </div>
+          <div className="ap-topbar-right">
+            <span className="ap-admin-badge">🟢 Conectado ao Servidor</span>
+            <button className="ap-refresh" onClick={load} title="Atualizar dados">
+              {loading ? 'Carregando...' : '↻ Atualizar'}
+            </button>
+          </div>
+        </div>
 
         {/* ── DASHBOARD ── */}
         {tab === 'Dashboard' && stats && (
           <div className="ap-dashboard">
             <div className="ap-stats-grid">
-              <div className="ap-stat-card"><span className="ap-stat-val">{stats.totalDrivers}</span><span className="ap-stat-lbl">Motoristas Ativos</span></div>
-              <div className="ap-stat-card"><span className="ap-stat-val">{stats.totalPassengers}</span><span className="ap-stat-lbl">Passageiros Totais</span></div>
-              <div className="ap-stat-card ap-stat-blue"><span className="ap-stat-val">{stats.activeRidesCount || 0}</span><span className="ap-stat-lbl">Corridas em Tempo Real</span></div>
-              <div className="ap-stat-card ap-stat-gold"><span className="ap-stat-val">R$ {safeNum(stats.royaltyFundBalance).toFixed(2)}</span><span className="ap-stat-lbl">Fundo Global</span></div>
+              <div className="ap-stat-card ap-stat-green" onClick={() => setTab('Motoristas')} style={{cursor:'pointer'}}>
+                <span className="ap-stat-val">{stats.totalDrivers}</span>
+                <span className="ap-stat-lbl">🚗 Motoristas Cadastrados</span>
+                <small className="ap-stat-hint">Clique para gerenciar</small>
+              </div>
+              <div className="ap-stat-card ap-stat-blue" onClick={() => setTab('Passageiros')} style={{cursor:'pointer'}}>
+                <span className="ap-stat-val">{stats.totalPassengers}</span>
+                <span className="ap-stat-lbl">👤 Passageiros Totais</span>
+                <small className="ap-stat-hint">Clique para gerenciar</small>
+              </div>
+              <div className="ap-stat-card ap-stat-orange" onClick={() => setTab('Operações')} style={{cursor:'pointer'}}>
+                <span className="ap-stat-val">{stats.activeRidesCount || 0}</span>
+                <span className="ap-stat-lbl">📡 Corridas em Andamento</span>
+                <small className="ap-stat-hint">Em tempo real</small>
+              </div>
+              <div className="ap-stat-card ap-stat-gold" onClick={() => setTab('Fundo')} style={{cursor:'pointer'}}>
+                <span className="ap-stat-val">R$ {safeNum(stats.royaltyFundBalance).toFixed(2)}</span>
+                <span className="ap-stat-lbl">💎 Fundo Global de Royalties</span>
+                <small className="ap-stat-hint">Acumulado em carteiras</small>
+              </div>
             </div>
 
-            <div className="ap-live-feed">
-              <h3>📡 Fluxo de Operações Recentes</h3>
-              {operations && operations.slice(0, 8).map(ride => (
-                <div key={ride.id} className="ap-feed-item" onClick={() => setSelectedRide(ride)} style={{cursor:'pointer'}}>
-                  <div className="ap-feed-icon">🚗</div>
-                  <div className="ap-feed-body">
-                    <strong>{ride.passengerName} → {ride.driverName || 'Aguardando...'}</strong>
-                    <span>{(ride.origin || '').slice(0, 30)}...</span>
+            <div className="ap-two-col">
+              <div className="ap-live-feed">
+                <div className="ap-card-header-flex">
+                  <h3>📡 Últimas Corridas na Plataforma</h3>
+                  <button className="ap-link-btn" onClick={() => setTab('Operações')}>Ver todas →</button>
+                </div>
+                {operations && operations.slice(0, 7).map(ride => (
+                  <div key={ride.id} className="ap-feed-item" onClick={() => setSelectedRide(ride)}>
+                    <div className="ap-feed-icon">🚗</div>
+                    <div className="ap-feed-body">
+                      <strong>{ride.passengerName || 'Passageiro'} → {ride.driverName || 'Buscando motorista...'}</strong>
+                      <span>Origem: {(ride.origin || '').slice(0, 35)}...</span>
+                    </div>
+                    <div className="ap-feed-right">
+                      <strong className="ap-feed-price">R$ {safeNum(ride.price).toFixed(2)}</strong>
+                      <span className={`ap-status ap-status-${(ride.status || '').toLowerCase()}`}>{ride.status}</span>
+                    </div>
                   </div>
-                  <div className="ap-feed-time">{new Date(ride.createdAt).toLocaleTimeString()}</div>
-                </div>
-              ))}
-              {operations && operations.length === 0 && <p style={{color:'#a1a1aa',padding:'20px 0'}}>Nenhuma operação ainda.</p>}
-            </div>
+                ))}
+                {operations && operations.length === 0 && (
+                  <p className="ap-empty-msg">Nenhuma operação registrada recentemente.</p>
+                )}
+              </div>
 
-            <div className="ap-rules-box">
-              <h3>📋 Visão Geral do Sistema</h3>
-              <div className="ap-rules-grid">
-                <div className="ap-rule">
-                  <span className="ap-rule-icon">📈</span>
-                  <div><strong>Volume de Operação</strong><p>Monitoramento ativo de {stats.totalRides} pedidos gerados na plataforma desde o início.</p></div>
+              <div className="ap-rules-box">
+                <h3>⚡ Ações Rápidas do Administrador</h3>
+                <div className="ap-quick-actions-grid">
+                  <button className="ap-quick-btn" onClick={() => setTab('Motoristas')}>
+                    <span className="ap-qb-icon">🚗</span>
+                    <div>
+                      <strong>Aprovar Motoristas</strong>
+                      <small>Validar CNH e CRLV pendentes</small>
+                    </div>
+                  </button>
+                  <button className="ap-quick-btn" onClick={() => setTab('Saques')}>
+                    <span className="ap-qb-icon">💳</span>
+                    <div>
+                      <strong>Aprovar Saques</strong>
+                      <small>Liberar transferências PIX</small>
+                    </div>
+                  </button>
+                  <button className="ap-quick-btn" onClick={() => setTab('Configurações')}>
+                    <span className="ap-qb-icon">⚙️</span>
+                    <div>
+                      <strong>Alterar Tarifas</strong>
+                      <small>Ajustar preço por KM ou tarifa mínima</small>
+                    </div>
+                  </button>
+                  <button className="ap-quick-btn" onClick={() => setTab('Financeiro')}>
+                    <span className="ap-qb-icon">💰</span>
+                    <div>
+                      <strong>Relatório de Lucro</strong>
+                      <small>Ver margem líquida e impostos</small>
+                    </div>
+                  </button>
                 </div>
-                <div className="ap-rule">
-                  <span className="ap-rule-icon">🛡️</span>
-                  <div><strong>Segurança de Dados</strong><p>Todos os documentos de motoristas e registros de corridas são criptografados e auditáveis.</p></div>
+
+                <div className="ap-info-notice" style={{marginTop:'20px'}}>
+                  <strong>📌 Regra Central de Royalties:</strong>
+                  <p>Cada corrida concluída por um passageiro credita automaticamente <strong>R$ 0,30</strong> na conta do motorista que o indicou.</p>
                 </div>
               </div>
             </div>
@@ -213,49 +410,98 @@ export default function AdminPanel() {
               <div className="ap-fin-card">
                 <span className="ap-fin-label">Faturamento Bruto</span>
                 <strong className="ap-fin-val">R$ {safeNum(stats.financials?.grossRevenue).toFixed(2)}</strong>
+                <small className="ap-fin-sub">Soma de todas as corridas concluídas</small>
               </div>
               <div className="ap-fin-card">
-                <span className="ap-fin-label">Custos (Taxas + Servidor)</span>
-                <strong className="ap-fin-val" style={{color:'#ef4444'}}>- R$ {(safeNum(stats.financials?.taxes) + safeNum(stats.financials?.serverFeesTotal)).toFixed(2)}</strong>
+                <span className="ap-fin-label">Custos (Servidor + Taxas)</span>
+                <strong className="ap-fin-val" style={{color:'#ef4444'}}>
+                  - R$ {(safeNum(stats.financials?.taxes) + safeNum(stats.financials?.serverFeesTotal)).toFixed(2)}
+                </strong>
+                <small className="ap-fin-sub">Infraestrutura e tributação estimada</small>
               </div>
               <div className="ap-fin-card">
-                <span className="ap-fin-label">Royalties Pagos</span>
-                <strong className="ap-fin-val" style={{color:'#f59e0b'}}>- R$ {safeNum(stats.financials?.royaltiesTotal).toFixed(2)}</strong>
+                <span className="ap-fin-label">Royalties Distribuídos</span>
+                <strong className="ap-fin-val" style={{color:'#f59e0b'}}>
+                  - R$ {safeNum(stats.financials?.royaltiesTotal).toFixed(2)}
+                </strong>
+                <small className="ap-fin-sub">Crédito aos motoristas indicadores</small>
               </div>
               <div className="ap-fin-card vibrant">
-                <span className="ap-fin-label">Lucro Líquido</span>
-                <strong className="ap-fin-val">R$ {safeNum(stats.financials?.netProfit).toFixed(2)}</strong>
+                <span className="ap-fin-label">Lucro Líquido do App</span>
+                <strong className="ap-fin-val" style={{color:'#00E676'}}>
+                  R$ {safeNum(stats.financials?.netProfit).toFixed(2)}
+                </strong>
+                <small className="ap-fin-sub">Margem final após deduções</small>
               </div>
             </div>
+
             <div className="ap-fin-detail">
-              <h3>📊 Resumo Financeiro</h3>
-              <div className="ap-fin-row"><span>Corridas Concluídas</span><strong>{stats.totalRides || 0}</strong></div>
-              <div className="ap-fin-row"><span>Receita por Corrida (média)</span><strong>R$ {stats.totalRides ? (safeNum(stats.financials?.grossRevenue) / stats.totalRides).toFixed(2) : '0.00'}</strong></div>
-              <div className="ap-fin-row"><span>Taxa de Servidor (R$ 0,10/corrida)</span><strong>R$ {safeNum(stats.financials?.serverFeesTotal).toFixed(2)}</strong></div>
-              <div className="ap-fin-row"><span>Impostos Estimados (6%)</span><strong>R$ {safeNum(stats.financials?.taxes).toFixed(2)}</strong></div>
+              <h3>📊 Detalhamento Contábil</h3>
+              <div className="ap-fin-row"><span>Total de Corridas Faturadas</span><strong>{stats.totalRides || 0} corridas</strong></div>
+              <div className="ap-fin-row"><span>Ticket Médio por Corrida</span><strong>R$ {stats.totalRides ? (safeNum(stats.financials?.grossRevenue) / stats.totalRides).toFixed(2) : '0.00'}</strong></div>
+              <div className="ap-fin-row"><span>Taxa de Servidor Fixa (R$ 0,10 por corrida)</span><strong>R$ {safeNum(stats.financials?.serverFeesTotal).toFixed(2)}</strong></div>
+              <div className="ap-fin-row"><span>Impostos Estimados (6% DAS Simples Nacional)</span><strong>R$ {safeNum(stats.financials?.taxes).toFixed(2)}</strong></div>
+              <div className="ap-fin-row"><span>Custo de Royalties (R$ 0,30 por corrida)</span><strong>R$ {safeNum(stats.financials?.royaltiesTotal).toFixed(2)}</strong></div>
             </div>
           </div>
         )}
 
         {/* ── OPERAÇÕES ── */}
-        {tab === 'Operações' && operations && (
+        {tab === 'Operações' && (
           <div className="ap-operations">
+            <div className="ap-filters-bar">
+              <input
+                className="ap-search"
+                placeholder="🔍 Buscar por passageiro, motorista, origem, destino..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <select className="ap-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                <option value="ALL">Todos os Status</option>
+                <option value="PENDING">Pendentes</option>
+                <option value="ACCEPTED">Em Andamento (Aceitas)</option>
+                <option value="COMPLETED">Concluídas</option>
+                <option value="CANCELLED">Canceladas</option>
+              </select>
+            </div>
+
             <div className="ap-table-wrap">
               <table className="ap-table">
-                <thead><tr><th>Data</th><th>Passageiro</th><th>Motorista</th><th>Valor</th><th>Distância</th><th>Status</th><th>Ações</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Data/Hora</th>
+                    <th>Passageiro</th>
+                    <th>Motorista</th>
+                    <th>Veículo</th>
+                    <th>Valor</th>
+                    <th>Distância</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {operations.map(r => (
+                  {filteredOperations.map(r => (
                     <tr key={r.id}>
                       <td>{new Date(r.createdAt).toLocaleString('pt-BR')}</td>
-                      <td>{r.passengerName || '—'}</td>
-                      <td>{r.driverName || '—'}</td>
-                      <td>R$ {safeNum(r.price).toFixed(2)}</td>
+                      <td><strong>{r.passengerName || 'Passageiro'}</strong></td>
+                      <td>{r.driverName ? <span>🚗 {r.driverName}</span> : <span style={{color:'#f59e0b'}}>Aguardando...</span>}</td>
+                      <td>{r.vehicleType === 'moto' ? '🏍️ Moto' : '🚗 Carro'}</td>
+                      <td><strong style={{color:'#00E676'}}>R$ {safeNum(r.price).toFixed(2)}</strong></td>
                       <td>{safeNum(r.distanceKm).toFixed(1)} km</td>
                       <td><span className={`ap-status ap-status-${(r.status || '').toLowerCase()}`}>{r.status}</span></td>
-                      <td><button className="ap-btn-sm ap-btn-blue" onClick={() => setSelectedRide(r)}>Detalhes</button></td>
+                      <td>
+                        <button className="ap-btn-sm ap-btn-blue" onClick={() => setSelectedRide(r)}>Detalhes</button>
+                        {(r.status === 'PENDING' || r.status === 'ACCEPTED') && (
+                          <button className="ap-btn-sm ap-btn-danger" style={{marginLeft:6}} onClick={() => handleCancelRide(r.id)}>
+                            Cancelar
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
-                  {operations.length === 0 && <tr><td colSpan="7" style={{textAlign:'center',padding:'40px',color:'#71717a'}}>Nenhuma corrida registrada.</td></tr>}
+                  {filteredOperations.length === 0 && (
+                    <tr><td colSpan="8" className="ap-table-empty">Nenhuma operação encontrada com os filtros selecionados.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -265,113 +511,127 @@ export default function AdminPanel() {
         {/* ── MOTORISTAS ── */}
         {tab === 'Motoristas' && (
           <div>
-            <div className="ap-actions-row">
-              <input className="ap-search" placeholder="Buscar motorista..." value={search} onChange={e => setSearch(e.target.value)} />
+            <div className="ap-filters-bar">
+              <input
+                className="ap-search"
+                placeholder="🔍 Buscar por nome, e-mail ou placa do veículo..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <select className="ap-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                <option value="ALL">Todos os Motoristas</option>
+                <option value="ACTIVE">Apenas Ativos</option>
+                <option value="SUSPENDED">Apenas Suspensos</option>
+              </select>
             </div>
+
             <div className="ap-table-wrap">
               <table className="ap-table">
-                <thead><tr><th>Motorista</th><th>Email</th><th>Veículo</th><th>Créditos</th><th>Avaliação</th><th>Status</th><th>Ações</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Motorista</th>
+                    <th>Contato</th>
+                    <th>Veículo / Placa</th>
+                    <th>Créditos</th>
+                    <th>Saldo Royalties</th>
+                    <th>Nota</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {filteredDrivers.map(d => (
                     <tr key={d.id}>
-                      <td>{d.name}</td>
-                      <td>{d.email}</td>
-                      <td>{d.carModel || '—'} {d.carPlate || ''}</td>
-                      <td>{safeNum(d.credits)}</td>
+                      <td>
+                        <strong>{d.name}</strong>
+                        <div style={{fontSize:'0.75rem',color:'#71717a'}}>{d.email}</div>
+                      </td>
+                      <td>{d.phone || d.pixKey || '—'}</td>
+                      <td>{d.carModel ? `${d.carModel} (${d.carPlate || '—'})` : '—'}</td>
+                      <td><strong style={{color:'#3b82f6'}}>{safeNum(d.credits)}</strong></td>
+                      <td><strong style={{color:'#00E676'}}>R$ {safeNum(d.balance).toFixed(2)}</strong></td>
                       <td>⭐ {safeNum(d.rating, 5).toFixed(1)}</td>
-                      <td><span className={`ap-badge ${d.isApproved ? 'ap-badge-green' : 'ap-badge-red'}`}>{d.isApproved ? 'Ativo' : 'Suspenso'}</span></td>
+                      <td>
+                        <span className={`ap-badge ${d.isApproved ? 'ap-badge-green' : 'ap-badge-red'}`}>
+                          {d.isApproved ? 'Ativo' : 'Suspenso'}
+                        </span>
+                      </td>
                       <td>
                         <button className="ap-btn-sm ap-btn-blue" onClick={() => setSelectedDriver(d)}>Ver</button>
-                        <button className={`ap-btn-sm ${d.isApproved ? 'ap-btn-danger' : 'ap-btn-success'}`} onClick={() => approveDriver(d.id, !d.isApproved)} style={{marginLeft:6}}>
-                          {d.isApproved ? 'Suspender' : 'Ativar'}
+                        <button
+                          className={`ap-btn-sm ${d.isApproved ? 'ap-btn-danger' : 'ap-btn-success'}`}
+                          onClick={() => approveDriver(d.id, !d.isApproved)}
+                          style={{marginLeft:6}}
+                        >
+                          {d.isApproved ? 'Suspender' : 'Aprovar'}
+                        </button>
+                        <button
+                          className="ap-btn-sm ap-btn-primary"
+                          onClick={() => setCreditsModal(d)}
+                          style={{marginLeft:6}}
+                        >
+                          + Créditos
                         </button>
                       </td>
                     </tr>
                   ))}
-                  {filteredDrivers.length === 0 && <tr><td colSpan="7" style={{textAlign:'center',padding:'40px',color:'#71717a'}}>Nenhum motorista encontrado.</td></tr>}
+                  {filteredDrivers.length === 0 && (
+                    <tr><td colSpan="8" className="ap-table-empty">Nenhum motorista encontrado.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
-
-            {/* Modal de detalhes do motorista */}
-            {selectedDriver && (
-              <div className="ap-modal-overlay" onClick={() => setSelectedDriver(null)}>
-                <div className="ap-modal" onClick={e => e.stopPropagation()}>
-                  <div className="ap-modal-header">
-                    <h2>{selectedDriver.name}</h2>
-                    <button className="ap-modal-close" onClick={() => setSelectedDriver(null)}>×</button>
-                  </div>
-                  <div className="ap-modal-content">
-                    <div className="ap-driver-info-grid">
-                      <div className="ap-info-item"><span className="ap-info-lbl">Email</span><span className="ap-info-val">{selectedDriver.email}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Telefone</span><span className="ap-info-val">{selectedDriver.phone || '—'}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">PIX</span><span className="ap-info-val">{selectedDriver.pixKey || '—'}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Veículo</span><span className="ap-info-val">{selectedDriver.carModel || '—'} ({selectedDriver.carColor || '—'})</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Placa</span><span className="ap-info-val">{selectedDriver.carPlate || '—'}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">QR Code</span><span className="ap-info-val">{selectedDriver.qrCode || '—'}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Créditos</span><span className="ap-info-val">{safeNum(selectedDriver.credits)}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Royalties</span><span className="ap-info-val">R$ {safeNum(selectedDriver.balance).toFixed(2)}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Avaliação</span><span className="ap-info-val">⭐ {safeNum(selectedDriver.rating, 5).toFixed(1)} ({safeNum(selectedDriver.totalRatings)} avaliações)</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Corridas Aceitas</span><span className="ap-info-val">{safeNum(selectedDriver.ridesAccepted)}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Corridas Perdidas</span><span className="ap-info-val">{safeNum(selectedDriver.ridesMissed)}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Corridas Concluídas</span><span className="ap-info-val">{safeNum(selectedDriver.ridesCompleted)}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Passageiros Vinculados</span><span className="ap-info-val">{safeNum(selectedDriver.linkedPassengers)}</span></div>
-                      <div className="ap-info-item"><span className="ap-info-lbl">Status</span><span className="ap-info-val">{selectedDriver.isApproved ? '✅ Ativo' : '⛔ Suspenso'}</span></div>
-                    </div>
-
-                    {(selectedDriver.cnh || selectedDriver.crlv) && (
-                      <div className="ap-docs-section">
-                        <h4>Documentos</h4>
-                        <div className="ap-docs-grid">
-                          {selectedDriver.cnh && (
-                            <div className="ap-img-box" onClick={() => window.open(selectedDriver.cnh, '_blank')}>
-                              <span>CNH</span>
-                              <img src={selectedDriver.cnh} alt="CNH" />
-                            </div>
-                          )}
-                          {selectedDriver.crlv && (
-                            <div className="ap-img-box" onClick={() => window.open(selectedDriver.crlv, '_blank')}>
-                              <span>CRLV</span>
-                              <img src={selectedDriver.crlv} alt="CRLV" />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="ap-driver-actions">
-                      <button className="ap-btn ap-btn-primary" onClick={() => { setCreditsModal(selectedDriver); setSelectedDriver(null) }}>+ Adicionar Créditos</button>
-                      <button className="ap-btn ap-btn-secondary" onClick={() => handleResetStats(selectedDriver.id)}>Resetar Estatísticas</button>
-                      <button className={`ap-btn ${selectedDriver.isApproved ? 'ap-btn-danger' : 'ap-btn-success'}`} onClick={() => { approveDriver(selectedDriver.id, !selectedDriver.isApproved); setSelectedDriver(null) }}>
-                        {selectedDriver.isApproved ? 'Suspender Motorista' : 'Ativar Motorista'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
         {/* ── PASSAGEIROS ── */}
         {tab === 'Passageiros' && (
           <div>
-            <input className="ap-search" placeholder="Buscar passageiro..." value={search} onChange={e => setSearch(e.target.value)} />
+            <div className="ap-filters-bar">
+              <input
+                className="ap-search"
+                placeholder="🔍 Buscar por nome, e-mail, telefone ou motorista vinculado..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+
             <div className="ap-table-wrap">
               <table className="ap-table">
-                <thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Motorista Vinculado</th><th>Corridas</th><th>Cadastro</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Nome do Passageiro</th>
+                    <th>E-mail</th>
+                    <th>Telefone</th>
+                    <th>Motorista Indicador (Vínculo)</th>
+                    <th>Corridas Feitas</th>
+                    <th>Data Cadastro</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {filteredPassengers.map(p => (
                     <tr key={p.id}>
-                      <td>{p.name}</td>
+                      <td><strong>{p.name}</strong></td>
                       <td>{p.email}</td>
                       <td>{p.phone || '—'}</td>
-                      <td>{p.linkedDriverName || '—'}</td>
-                      <td>{safeNum(p.ridesCompleted)}</td>
+                      <td>
+                        {p.linkedDriverName ? (
+                          <span style={{color:'#00E676',fontWeight:700}}>🚗 {p.linkedDriverName}</span>
+                        ) : (
+                          <span style={{color:'#71717a'}}>Orgânico (Sem vínculo)</span>
+                        )}
+                      </td>
+                      <td><strong>{safeNum(p.ridesCompleted)}</strong></td>
                       <td>{new Date(p.createdAt).toLocaleDateString('pt-BR')}</td>
+                      <td>
+                        <button className="ap-btn-sm ap-btn-blue" onClick={() => setSelectedPassenger(p)}>Detalhes</button>
+                      </td>
                     </tr>
                   ))}
-                  {filteredPassengers.length === 0 && <tr><td colSpan="6" style={{textAlign:'center',padding:'40px',color:'#71717a'}}>Nenhum passageiro encontrado.</td></tr>}
+                  {filteredPassengers.length === 0 && (
+                    <tr><td colSpan="7" className="ap-table-empty">Nenhum passageiro encontrado.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -382,41 +642,68 @@ export default function AdminPanel() {
         {tab === 'Configurações' && config && (
           <div className="ap-config-area">
             <div className="ap-config-header">
-              <h3>Configurações Globais da Plataforma</h3>
-              <button className="ap-btn ap-btn-primary" onClick={saveConfig}>💾 Salvar Configurações</button>
+              <div>
+                <h3>Configurações Globais do Zomp</h3>
+                <p style={{color:'#71717a',fontSize:'0.85rem'}}>Altere preços por km, regras de fidelidade, limites e parâmetros do sistema em tempo real.</p>
+              </div>
+              <button className="ap-btn ap-btn-primary" onClick={saveConfig}>💾 Salvar Todas as Alterações</button>
             </div>
-            <div className="ap-config-grid">
-              {configFields.map(f => (
-                <div key={f.key} className="ap-form-group">
-                  <label>{f.label}</label>
-                  <input
-                    type={f.type}
-                    value={config[f.key] ?? ''}
-                    onChange={e => setConfig({ ...config, [f.key]: e.target.value })}
-                    placeholder={f.prefix || ''}
-                  />
+
+            {configGroups.map((group, gi) => (
+              <div key={gi} className="ap-config-section">
+                <h4 className="ap-config-section-title">{group.title}</h4>
+                <div className="ap-config-grid">
+                  {group.fields.map(f => (
+                    <div key={f.key} className="ap-form-group">
+                      <label>{f.label}</label>
+                      <input
+                        type={f.type}
+                        step={f.step || 'any'}
+                        value={config[f.key] ?? ''}
+                        onChange={e => setConfig({ ...config, [f.key]: e.target.value })}
+                        placeholder={f.prefix || ''}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            ))}
+
+            <div style={{marginTop:'24px',textAlign:'right'}}>
+              <button className="ap-btn ap-btn-primary" onClick={saveConfig}>💾 Salvar Todas as Alterações</button>
             </div>
           </div>
         )}
 
-        {/* ── FUNDO ── */}
+        {/* ── FUNDO DE ROYALTIES ── */}
         {tab === 'Fundo' && fund && (
           <div className="ap-fund-area">
             <div className="ap-fund-total">
-              <span className="ap-fund-label">Saldo Total do Fundo de Royalties</span>
+              <span className="ap-fund-label">Saldo Total do Fundo de Dividendos</span>
               <strong className="ap-fund-val">R$ {safeNum(fund.total).toFixed(2)}</strong>
-              <span className="ap-fund-sub">{safeNum(fund.driverCount)} motoristas com saldo ativo</span>
+              <span className="ap-fund-sub">{safeNum(fund.driverCount)} motoristas ativos acumulando royalties de suas redes</span>
             </div>
+
             {fund.topDrivers && fund.topDrivers.length > 0 && (
               <div className="ap-table-wrap">
-                <h3>🏆 Top Motoristas por Royalty</h3>
+                <div style={{padding:'20px 24px',borderBottom:'1px solid #27272a'}}>
+                  <h3>🏆 Ranking: Top Motoristas por Saldo de Royalties</h3>
+                </div>
                 <table className="ap-table">
-                  <thead><tr><th>Motorista</th><th>Saldo de Royalties</th></tr></thead>
+                  <thead>
+                    <tr>
+                      <th>Posição</th>
+                      <th>Nome do Motorista</th>
+                      <th>Saldo Atual Acumulado</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {fund.topDrivers.map((d, i) => (
-                      <tr key={i}><td>{d.name}</td><td>R$ {safeNum(d.balance).toFixed(2)}</td></tr>
+                      <tr key={i}>
+                        <td><strong>#{i + 1}</strong></td>
+                        <td><strong>{d.name}</strong></td>
+                        <td><strong style={{color:'#00E676',fontSize:'1.1rem'}}>R$ {safeNum(d.balance).toFixed(2)}</strong></td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
@@ -428,29 +715,63 @@ export default function AdminPanel() {
         {/* ── SAQUES ── */}
         {tab === 'Saques' && (
           <div className="ap-withdrawals">
+            <div className="ap-filters-bar">
+              <input
+                className="ap-search"
+                placeholder="🔍 Buscar por motorista, e-mail ou chave PIX..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <select className="ap-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                <option value="ALL">Todos os Saques</option>
+                <option value="PENDING">Apenas Pendentes</option>
+                <option value="APPROVED">Aprovados</option>
+                <option value="REJECTED">Rejeitados</option>
+              </select>
+            </div>
+
             <div className="ap-table-wrap">
               <table className="ap-table">
-                <thead><tr><th>Motorista</th><th>Email</th><th>Chave PIX</th><th>Valor</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Motorista</th>
+                    <th>E-mail</th>
+                    <th>Chave PIX</th>
+                    <th>Valor do Saque</th>
+                    <th>Status</th>
+                    <th>Data Solicitação</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {withdrawals.map(w => (
+                  {filteredWithdrawals.map(w => (
                     <tr key={w.id}>
-                      <td>{w.userName || '—'}</td>
+                      <td><strong>{w.userName || '—'}</strong></td>
                       <td>{w.userEmail || '—'}</td>
-                      <td>{w.pixKey || '—'}</td>
-                      <td>R$ {safeNum(w.amount).toFixed(2)}</td>
+                      <td><code style={{color:'#00E676',background:'#1f2937',padding:'3px 8px',borderRadius:6}}>{w.pixKey || '—'}</code></td>
+                      <td><strong style={{color:'#fff',fontSize:'1.05rem'}}>R$ {safeNum(w.amount).toFixed(2)}</strong></td>
                       <td><span className={`ap-status ap-status-${(w.status || 'pending').toLowerCase()}`}>{w.status || 'PENDING'}</span></td>
-                      <td>{new Date(w.createdAt).toLocaleDateString('pt-BR')}</td>
+                      <td>{new Date(w.createdAt).toLocaleString('pt-BR')}</td>
                       <td>
                         {w.status === 'PENDING' && (
-                          <>
-                            <button className="ap-btn-sm ap-btn-success" onClick={() => handleWithdrawal(w.id, 'APPROVED')}>✓ Aprovar</button>
-                            <button className="ap-btn-sm ap-btn-danger" style={{marginLeft:6}} onClick={() => handleWithdrawal(w.id, 'REJECTED')}>✕ Rejeitar</button>
-                          </>
+                          <div style={{display:'flex',gap:'6px'}}>
+                            <button className="ap-btn-sm ap-btn-success" onClick={() => handleWithdrawalAction(w.id, 'APPROVED')}>
+                              ✓ Aprovar PIX
+                            </button>
+                            <button className="ap-btn-sm ap-btn-danger" onClick={() => handleWithdrawalAction(w.id, 'REJECTED')}>
+                              ✕ Rejeitar & Estornar
+                            </button>
+                          </div>
+                        )}
+                        {w.status !== 'PENDING' && (
+                          <span style={{color:'#71717a',fontSize:'0.8rem'}}>Processado</span>
                         )}
                       </td>
                     </tr>
                   ))}
-                  {withdrawals.length === 0 && <tr><td colSpan="7" style={{textAlign:'center',padding:'40px',color:'#71717a'}}>Nenhuma solicitação de saque.</td></tr>}
+                  {filteredWithdrawals.length === 0 && (
+                    <tr><td colSpan="7" className="ap-table-empty">Nenhuma solicitação de saque encontrada.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -460,37 +781,123 @@ export default function AdminPanel() {
         {/* ── DOCUMENTAÇÃO ── */}
         {tab === 'Documentação' && (
           <div className="ap-docs">
-            <h2>Manual do Administrador</h2>
+            <h2>📖 Manual Operacional e Regras do Zomp</h2>
             <div className="ap-docs-grid">
               <div className="ap-doc-card">
-                <h3>🚗 Motoristas</h3>
-                <p>Aprove ou suspenda motoristas. Clique em "Ver" para ver detalhes completos, documentos, estatísticas e adicionar créditos manualmente.</p>
+                <h3>🚗 1. Motoristas & Aprovação</h3>
+                <p>O cadastro de motoristas requer validação da CNH e CRLV do veículo. No painel de motoristas, clique em "Ver" para inspecionar os documentos em alta definição antes de aprovar.</p>
               </div>
               <div className="ap-doc-card">
-                <h3>📡 Operações</h3>
-                <p>Monitore todas as corridas em tempo real. Atualização automática a cada 10 segundos.</p>
+                <h3>💎 2. Sistema de Royalties (R$ 0,30)</h3>
+                <p>Sempre que um passageiro vinculado a um motorista completa uma corrida, o sistema credita automaticamente R$ 0,30 na carteira de royalties do motorista indicador.</p>
               </div>
               <div className="ap-doc-card">
-                <h3>💰 Financeiro</h3>
-                <p>Visualize faturamento bruto, custos, royalties pagos e lucro líquido da plataforma.</p>
+                <h3>💳 3. Solicitações de Saque (PIX)</h3>
+                <p>Os motoristas solicitam o resgate de royalties diretamente no aplicativo. Na aba "Saques", você pode aprovar a transferência ou rejeitar (o que devolve o saldo automaticamente ao motorista).</p>
               </div>
               <div className="ap-doc-card">
-                <h3>⚙️ Configurações</h3>
-                <p>Altere tarifas, preço por km, valor do crédito, data de lançamento e limites do sistema em tempo real.</p>
+                <h3>⚙️ 4. Gestão de Tarifas e KM</h3>
+                <p>As tarifas por KM e valores mínimos para Carro e Moto podem ser alterados em tempo real na aba "Configurações", sem necessidade de reiniciar servidores.</p>
               </div>
               <div className="ap-doc-card">
-                <h3>💎 Fundo</h3>
-                <p>Acompanhe o saldo total acumulado de royalties e os top motoristas por ganho.</p>
+                <h3>📡 5. Monitoramento de Operações</h3>
+                <p>A aba de operações atualiza a cada 8 segundos para mostrar corridas solicitadas, motoristas alocados, valores cobrados e rotas percorridas.</p>
               </div>
               <div className="ap-doc-card">
-                <h3>💳 Saques</h3>
-                <p>Aprove ou rejeite solicitações de saque de royalties dos motoristas.</p>
+                <h3>🛡️ 6. Preço Imbatível</h3>
+                <p>A plataforma valida capturas de tela dos concorrentes (Uber/99) e aplica descontos progressivos automáticos de R$ 2,00 a R$ 3,00 para garantir a preferência do passageiro.</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Modal de Corrida */}
+        {/* ── MODAL DE DETALHES DO MOTORISTA ── */}
+        {selectedDriver && (
+          <div className="ap-modal-overlay" onClick={() => setSelectedDriver(null)}>
+            <div className="ap-modal" onClick={e => e.stopPropagation()}>
+              <div className="ap-modal-header">
+                <h2>{selectedDriver.name}</h2>
+                <button className="ap-modal-close" onClick={() => setSelectedDriver(null)}>×</button>
+              </div>
+              <div className="ap-modal-content">
+                <div className="ap-driver-info-grid">
+                  <div className="ap-info-item"><span className="ap-info-lbl">E-mail</span><span className="ap-info-val">{selectedDriver.email}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Telefone</span><span className="ap-info-val">{selectedDriver.phone || '—'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Chave PIX</span><span className="ap-info-val">{selectedDriver.pixKey || '—'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Veículo</span><span className="ap-info-val">{selectedDriver.carModel || '—'} ({selectedDriver.carColor || '—'})</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Placa</span><span className="ap-info-val">{selectedDriver.carPlate || '—'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Código QR / Indicação</span><span className="ap-info-val">{selectedDriver.qrCode || '—'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Créditos Ativos</span><span className="ap-info-val" style={{color:'#3b82f6',fontWeight:800}}>{safeNum(selectedDriver.credits)}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Saldo Royalties</span><span className="ap-info-val" style={{color:'#00E676',fontWeight:800}}>R$ {safeNum(selectedDriver.balance).toFixed(2)}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Avaliação Média</span><span className="ap-info-val">⭐ {safeNum(selectedDriver.rating, 5).toFixed(1)}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Corridas Aceitas</span><span className="ap-info-val">{safeNum(selectedDriver.ridesAccepted)}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Corridas Perdidas</span><span className="ap-info-val">{safeNum(selectedDriver.ridesMissed)}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Corridas Concluídas</span><span className="ap-info-val">{safeNum(selectedDriver.ridesCompleted)}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Passageiros Vinculados</span><span className="ap-info-val" style={{color:'#00E676',fontWeight:800}}>{safeNum(selectedDriver.linkedPassengers)} clientes</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Status Atual</span><span className="ap-info-val">{selectedDriver.isApproved ? '✅ Aprovado e Ativo' : '⛔ Suspenso'}</span></div>
+                </div>
+
+                {(selectedDriver.cnh || selectedDriver.crlv) && (
+                  <div className="ap-docs-section">
+                    <h4>Documentação Enviada</h4>
+                    <div className="ap-docs-grid">
+                      {selectedDriver.cnh && (
+                        <div className="ap-img-box" onClick={() => window.open(selectedDriver.cnh, '_blank')}>
+                          <span>CNH (Toque para expandir)</span>
+                          <img src={selectedDriver.cnh} alt="CNH" />
+                        </div>
+                      )}
+                      {selectedDriver.crlv && (
+                        <div className="ap-img-box" onClick={() => window.open(selectedDriver.crlv, '_blank')}>
+                          <span>CRLV (Toque para expandir)</span>
+                          <img src={selectedDriver.crlv} alt="CRLV" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="ap-driver-actions">
+                  <button className="ap-btn ap-btn-primary" onClick={() => { setCreditsModal(selectedDriver); setSelectedDriver(null) }}>
+                    + Adicionar Créditos
+                  </button>
+                  <button className="ap-btn ap-btn-secondary" onClick={() => handleResetStats(selectedDriver.id)}>
+                    Resetar Estatísticas
+                  </button>
+                  <button
+                    className={`ap-btn ${selectedDriver.isApproved ? 'ap-btn-danger' : 'ap-btn-success'}`}
+                    onClick={() => { approveDriver(selectedDriver.id, !selectedDriver.isApproved); setSelectedDriver(null) }}
+                  >
+                    {selectedDriver.isApproved ? 'Suspender Motorista' : 'Aprovar Motorista'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── MODAL DE DETALHES DO PASSAGEIRO ── */}
+        {selectedPassenger && (
+          <div className="ap-modal-overlay" onClick={() => setSelectedPassenger(null)}>
+            <div className="ap-modal" onClick={e => e.stopPropagation()}>
+              <div className="ap-modal-header">
+                <h2>{selectedPassenger.name} (Passageiro)</h2>
+                <button className="ap-modal-close" onClick={() => setSelectedPassenger(null)}>×</button>
+              </div>
+              <div className="ap-modal-content">
+                <div className="ap-driver-info-grid">
+                  <div className="ap-info-item"><span className="ap-info-lbl">E-mail</span><span className="ap-info-val">{selectedPassenger.email}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Telefone</span><span className="ap-info-val">{selectedPassenger.phone || '—'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Motorista Indicador</span><span className="ap-info-val" style={{color:'#00E676',fontWeight:700}}>{selectedPassenger.linkedDriverName || 'Orgânico'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Corridas Concluídas</span><span className="ap-info-val">{safeNum(selectedPassenger.ridesCompleted)}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Data de Cadastro</span><span className="ap-info-val">{new Date(selectedPassenger.createdAt).toLocaleDateString('pt-BR')}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── MODAL DE CORRIDA ── */}
         {selectedRide && (
           <div className="ap-modal-overlay" onClick={() => setSelectedRide(null)}>
             <div className="ap-modal" onClick={e => e.stopPropagation()}>
@@ -499,21 +906,31 @@ export default function AdminPanel() {
                 <button className="ap-modal-close" onClick={() => setSelectedRide(null)}>×</button>
               </div>
               <div className="ap-modal-content">
-                <div className="ap-info-item"><span className="ap-info-lbl">Passageiro</span><span className="ap-info-val">{selectedRide.passengerName || '—'}</span></div>
-                <div className="ap-info-item"><span className="ap-info-lbl">Motorista</span><span className="ap-info-val">{selectedRide.driverName || '—'}</span></div>
-                <div className="ap-info-item"><span className="ap-info-lbl">Origem</span><span className="ap-info-val">{selectedRide.origin || '—'}</span></div>
-                <div className="ap-info-item"><span className="ap-info-lbl">Destino</span><span className="ap-info-val">{selectedRide.destination || '—'}</span></div>
-                <div className="ap-info-item"><span className="ap-info-lbl">Distância</span><span className="ap-info-val">{safeNum(selectedRide.distanceKm).toFixed(1)} km</span></div>
-                <div className="ap-info-item"><span className="ap-info-lbl">Veículo</span><span className="ap-info-val">{selectedRide.vehicleType === 'car' ? '🚗 Carro' : '🏍️ Moto'}</span></div>
-                <div className="ap-info-item"><span className="ap-info-lbl">Valor</span><span className="ap-info-val" style={{color:'#97e900',fontSize:'1.3rem'}}>R$ {safeNum(selectedRide.price).toFixed(2)}</span></div>
-                <div className="ap-info-item"><span className="ap-info-lbl">Status</span><span className="ap-info-val"><span className={`ap-status ap-status-${(selectedRide.status || '').toLowerCase()}`}>{selectedRide.status}</span></span></div>
-                <div className="ap-info-item"><span className="ap-info-lbl">Data</span><span className="ap-info-val">{new Date(selectedRide.createdAt).toLocaleString('pt-BR')}</span></div>
+                <div className="ap-driver-info-grid">
+                  <div className="ap-info-item"><span className="ap-info-lbl">Passageiro</span><span className="ap-info-val">{selectedRide.passengerName || '—'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Motorista</span><span className="ap-info-val">{selectedRide.driverName || 'Aguardando...'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Origem</span><span className="ap-info-val">{selectedRide.origin || '—'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Destino</span><span className="ap-info-val">{selectedRide.destination || '—'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Distância</span><span className="ap-info-val">{safeNum(selectedRide.distanceKm).toFixed(1)} km</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Veículo</span><span className="ap-info-val">{selectedRide.vehicleType === 'moto' ? '🏍️ Moto' : '🚗 Carro'}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Valor Cobrado</span><span className="ap-info-val" style={{color:'#00E676',fontSize:'1.3rem',fontWeight:800}}>R$ {safeNum(selectedRide.price).toFixed(2)}</span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Status</span><span className="ap-info-val"><span className={`ap-status ap-status-${(selectedRide.status || '').toLowerCase()}`}>{selectedRide.status}</span></span></div>
+                  <div className="ap-info-item"><span className="ap-info-lbl">Data e Hora</span><span className="ap-info-val">{new Date(selectedRide.createdAt).toLocaleString('pt-BR')}</span></div>
+                </div>
+
+                {(selectedRide.status === 'PENDING' || selectedRide.status === 'ACCEPTED') && (
+                  <div style={{marginTop:'20px',textAlign:'right'}}>
+                    <button className="ap-btn ap-btn-danger" onClick={() => handleCancelRide(selectedRide.id)}>
+                      ✕ Cancelar Esta Corrida
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* Modal de Adicionar Créditos */}
+        {/* ── MODAL DE ADICIONAR CRÉDITOS ── */}
         {creditsModal && (
           <div className="ap-modal-overlay" onClick={() => { setCreditsModal(null); setCreditsAmount('') }}>
             <div className="ap-modal" onClick={e => e.stopPropagation()}>
@@ -522,14 +939,22 @@ export default function AdminPanel() {
                 <button className="ap-modal-close" onClick={() => { setCreditsModal(null); setCreditsAmount('') }}>×</button>
               </div>
               <div className="ap-modal-content">
-                <p style={{marginBottom:'16px',color:'#a1a1aa'}}>Créditos atuais: <strong style={{color:'#fff'}}>{safeNum(creditsModal.credits)}</strong></p>
+                <p style={{marginBottom:'16px',color:'#a1a1aa'}}>
+                  Créditos atuais do motorista: <strong style={{color:'#fff',fontSize:'1.1rem'}}>{safeNum(creditsModal.credits)}</strong>
+                </p>
                 <div className="ap-form-group">
-                  <label>Quantidade de Créditos</label>
-                  <input type="number" value={creditsAmount} onChange={e => setCreditsAmount(e.target.value)} placeholder="Ex: 100" autoFocus />
+                  <label>Quantidade de Créditos a Inserir</label>
+                  <input
+                    type="number"
+                    value={creditsAmount}
+                    onChange={e => setCreditsAmount(e.target.value)}
+                    placeholder="Ex: 50 ou 100"
+                    autoFocus
+                  />
                 </div>
-                <div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
-                  <button className="ap-btn ap-btn-primary" onClick={handleAddCredits}>✓ Adicionar</button>
+                <div style={{display:'flex',gap:'10px',marginTop:'20px',justifyContent:'flex-end'}}>
                   <button className="ap-btn ap-btn-secondary" onClick={() => { setCreditsModal(null); setCreditsAmount('') }}>Cancelar</button>
+                  <button className="ap-btn ap-btn-primary" onClick={handleAddCredits}>✓ Confirmar Créditos</button>
                 </div>
               </div>
             </div>

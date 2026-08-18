@@ -1,11 +1,41 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide, validateScreenshot, getUserDebt } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline, Popup } from 'react-leaflet'
 import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera } from 'lucide-react'
 import L from 'leaflet'
+import Tesseract from 'tesseract.js'
 import 'leaflet/dist/leaflet.css'
 import './Passenger.css'
+
+// Helper: Cálculo de desconto aplicado DIRETAMENTE sobre o valor do print da concorrência
+export const calculateDiscountForPrintPrice = (val) => {
+  const p = parseFloat(val) || 0;
+  if (p >= 30.00) return 3.00; // Desconto de R$ 3,00 para print >= R$ 30,00
+  if (p >= 18.00 && p < 30.00) return 2.50; // Desconto de R$ 2,50 para print de R$ 18,00 a R$ 29,99
+  if (p >= 12.00 && p < 18.00) return 2.00; // Desconto de R$ 2,00 para print de R$ 12,00 a R$ 17,99
+  return 1.50; // Desconto de R$ 1,50 para valores menores
+};
+
+// Helper: Extração de valores monetários via OCR no print do passageiro
+export const extractPriceFromOcrText = (text) => {
+  if (!text) return null;
+  const matches = [];
+  const regex = /(?:R\$\s*|R\$\s*)?(\d{1,3}(?:[.,]\d{2}))/gi;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const rawVal = match[1].replace(',', '.');
+    const val = parseFloat(rawVal);
+    if (val >= 6.00 && val <= 500.00) {
+      matches.push(val);
+    }
+  }
+  if (matches.length > 0) {
+    return matches[0];
+  }
+  return null;
+};
+
 
 // Custom Map Icons
 const createIcon = (color) => L.divIcon({
@@ -151,6 +181,7 @@ export default function PassengerDashboard() {
   const [passengersCount, setPassengersCount] = useState(1)
   const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
   const [compPriceRead, setCompPriceRead] = useState(0)
+  const [selectedTravelCategory, setSelectedTravelCategory] = useState('todos')
   
   const userEmail = user?.email?.toLowerCase() || ''
   const isTestAccount = userEmail.includes('cliente@zomp') || userEmail.includes('cliente@zom') || userEmail.includes('teste')
@@ -389,13 +420,9 @@ export default function PassengerDashboard() {
     const basePrice = Math.max(calculated, type === 'car' ? config.minFareCar : config.minFareMoto) + stopsFee + extraPsg
 
     // REGRA PREÇO IMBATÍVEL: se tivermos um print validado da concorrência (Uber/99)
+    // O desconto incide DIRETAMENTE SOBRE O VALOR DO PRINT (ex: Zomp R$ 35, print Uber R$ 32 -> Desconto sobre os R$ 32 -> Zomp R$ 29)
     if (hasCompetitionDiscount && competitorPrintPrice > 0) {
-      let discount = calculatedDiscountAmount || 2.00;
-      if (competitorPrintPrice >= 30.00) discount = 3.00;
-      else if (competitorPrintPrice >= 18.00 && competitorPrintPrice <= 25.00) discount = 2.50;
-      else if (competitorPrintPrice >= 12.00 && competitorPrintPrice <= 14.00) discount = 2.00;
-      else discount = 2.00;
-
+      const discount = calculatedDiscountAmount || calculateDiscountForPrintPrice(competitorPrintPrice);
       const discountedPrintPrice = Math.max(competitorPrintPrice - discount, type === 'car' ? config.minFareCar : config.minFareMoto) + stopsFee + extraPsg;
       const finalDiscounted = includeFee ? discountedPrintPrice + pendingFeeAmount : discountedPrintPrice;
       return finalDiscounted.toFixed(2);
@@ -477,25 +504,49 @@ export default function PassengerDashboard() {
     }
   }, [])
 
-// Locais Populares e Fallback Rápido para o Rio de Janeiro e Região
-const POPULAR_PLACES_RJ = [
-  { display_name: 'Copacabana, Rio de Janeiro - RJ', title: 'Copacabana', subtitle: 'Zona Sul • Rio de Janeiro, RJ', lat: -22.9698, lon: -43.1868 },
-  { display_name: 'Ipanema, Rio de Janeiro - RJ', title: 'Ipanema', subtitle: 'Zona Sul • Rio de Janeiro, RJ', lat: -22.9848, lon: -43.2003 },
-  { display_name: 'Leblon, Rio de Janeiro - RJ', title: 'Leblon', subtitle: 'Zona Sul • Rio de Janeiro, RJ', lat: -22.9839, lon: -43.2238 },
-  { display_name: 'Barra da Tijuca, Rio de Janeiro - RJ', title: 'Barra da Tijuca', subtitle: 'Zona Oeste • Rio de Janeiro, RJ', lat: -23.0004, lon: -43.3659 },
-  { display_name: 'Recreio dos Bandeirantes, Rio de Janeiro - RJ', title: 'Recreio dos Bandeirantes', subtitle: 'Zona Oeste • Rio de Janeiro, RJ', lat: -23.0272, lon: -43.4653 },
-  { display_name: 'Centro, Rio de Janeiro - RJ', title: 'Centro', subtitle: 'Centro • Rio de Janeiro, RJ', lat: -22.9068, lon: -43.1729 },
-  { display_name: 'Botafogo, Rio de Janeiro - RJ', title: 'Botafogo', subtitle: 'Zona Sul • Rio de Janeiro, RJ', lat: -22.9519, lon: -43.1857 },
-  { display_name: 'Flamengo, Rio de Janeiro - RJ', title: 'Flamengo', subtitle: 'Zona Sul • Rio de Janeiro, RJ', lat: -22.9329, lon: -43.1764 },
-  { display_name: 'Tijuca, Rio de Janeiro - RJ', title: 'Tijuca', subtitle: 'Zona Norte • Rio de Janeiro, RJ', lat: -22.9255, lon: -43.2356 },
-  { display_name: 'Estádio do Maracanã, Rio de Janeiro - RJ', title: 'Estádio do Maracanã', subtitle: 'Zona Norte • Rio de Janeiro, RJ', lat: -22.9121, lon: -43.2302 },
-  { display_name: 'Méier, Rio de Janeiro - RJ', title: 'Méier', subtitle: 'Zona Norte • Rio de Janeiro, RJ', lat: -22.8986, lon: -43.2777 },
-  { display_name: 'Madureira, Rio de Janeiro - RJ', title: 'Madureira', subtitle: 'Zona Norte • Rio de Janeiro, RJ', lat: -22.8732, lon: -43.3392 },
-  { display_name: 'Aeroporto Santos Dumont (SDU), Rio de Janeiro - RJ', title: 'Aeroporto Santos Dumont (SDU)', subtitle: 'Centro • Rio de Janeiro, RJ', lat: -22.9105, lon: -43.1631 },
-  { display_name: 'Aeroporto Internacional do Galeão (GIG), Rio de Janeiro - RJ', title: 'Aeroporto Galeão (GIG)', subtitle: 'Ilha do Governador • Rio de Janeiro, RJ', lat: -22.8148, lon: -43.2494 },
-  { display_name: 'Niterói, RJ', title: 'Niterói', subtitle: 'Região Metropolitana • RJ', lat: -22.8833, lon: -43.1036 },
-  { display_name: 'Rodoviária Novo Rio, Rio de Janeiro - RJ', title: 'Rodoviária Novo Rio', subtitle: 'Santo Cristo • Rio de Janeiro, RJ', lat: -22.8989, lon: -43.2097 }
+// Locais Populares e Categorias de Sugestões de Viagem
+const POPULAR_DESTINATIONS = [
+  // Aeroportos
+  { category: 'aeroportos', categoryLabel: 'Aeroportos', icon: '✈️', title: 'Aeroporto Santos Dumont (SDU)', subtitle: 'Centro • Rio de Janeiro, RJ', display_name: 'Aeroporto Santos Dumont, Rio de Janeiro - RJ', lat: -22.9105, lon: -43.1631, tag: 'Nacional' },
+  { category: 'aeroportos', categoryLabel: 'Aeroportos', icon: '✈️', title: 'Aeroporto Galeão (GIG)', subtitle: 'Ilha do Governador • Rio de Janeiro, RJ', display_name: 'Aeroporto Galeão, Rio de Janeiro - RJ', lat: -22.8148, lon: -43.2494, tag: 'Internacional' },
+  
+  // Shoppings
+  { category: 'shoppings', categoryLabel: 'Shoppings', icon: '🛍️', title: 'Barra Shopping', subtitle: 'Av. das Américas • Barra da Tijuca, RJ', display_name: 'Barra Shopping, Avenida das Américas, Barra da Tijuca, Rio de Janeiro - RJ', lat: -22.9995, lon: -43.3602, tag: 'Compras' },
+  { category: 'shoppings', categoryLabel: 'Shoppings', icon: '🛍️', title: 'Shopping Rio Sul', subtitle: 'Botafogo • Rio de Janeiro, RJ', display_name: 'Shopping Rio Sul, Rua Lauro Müller, Botafogo, Rio de Janeiro - RJ', lat: -22.9575, lon: -43.1772, tag: 'Zona Sul' },
+  { category: 'shoppings', categoryLabel: 'Shoppings', icon: '🛍️', title: 'NorteShopping', subtitle: 'Av. Dom Hélder Câmara • Cachambi, RJ', display_name: 'NorteShopping, Avenida Dom Hélder Câmara, Cachambi, Rio de Janeiro - RJ', lat: -22.8872, lon: -43.2842, tag: 'Zona Norte' },
+  { category: 'shoppings', categoryLabel: 'Shoppings', icon: '🛍️', title: 'Shopping Leblon', subtitle: 'Av. Afrânio de Melo Franco • Leblon, RJ', display_name: 'Shopping Leblon, Avenida Afrânio de Melo Franco, Leblon, Rio de Janeiro - RJ', lat: -22.9839, lon: -43.2201, tag: 'Premium' },
+  { category: 'shoppings', categoryLabel: 'Shoppings', icon: '🛍️', title: 'Shopping Tijuca', subtitle: 'Av. Maracanã • Tijuca, RJ', display_name: 'Shopping Tijuca, Avenida Maracanã, Tijuca, Rio de Janeiro - RJ', lat: -22.9234, lon: -43.2355, tag: 'Tijuca' },
+  
+  // Praias
+  { category: 'praias', categoryLabel: 'Praias', icon: '🏖️', title: 'Praia de Copacabana', subtitle: 'Av. Atlântica • Copacabana, RJ', display_name: 'Copacabana, Rio de Janeiro - RJ', lat: -22.9698, lon: -43.1868, tag: 'Posto 4' },
+  { category: 'praias', categoryLabel: 'Praias', icon: '🏖️', title: 'Praia de Ipanema', subtitle: 'Av. Vieira Souto • Ipanema, RJ', display_name: 'Ipanema, Rio de Janeiro - RJ', lat: -22.9848, lon: -43.2003, tag: 'Posto 9' },
+  { category: 'praias', categoryLabel: 'Praias', icon: '🏖️', title: 'Praia da Barra da Tijuca', subtitle: 'Av. Lúcio Costa • Barra da Tijuca, RJ', display_name: 'Barra da Tijuca, Rio de Janeiro - RJ', lat: -23.0004, lon: -43.3659, tag: 'Orla' },
+  { category: 'praias', categoryLabel: 'Praias', icon: '🏖️', title: 'Praia do Leblon', subtitle: 'Av. Delfim Moreira • Leblon, RJ', display_name: 'Leblon, Rio de Janeiro - RJ', lat: -22.9839, lon: -43.2238, tag: 'Posto 12' },
+  { category: 'praias', categoryLabel: 'Praias', icon: '🏖️', title: 'Praia do Recreio', subtitle: 'Recreio dos Bandeirantes, RJ', display_name: 'Recreio dos Bandeirantes, Rio de Janeiro - RJ', lat: -23.0272, lon: -43.4653, tag: 'Posto 10' },
+
+  // Turismo & Lazer
+  { category: 'turismo', categoryLabel: 'Turismo', icon: '⚽', title: 'Estádio do Maracanã', subtitle: 'Av. Presidente Castelo Branco • Maracanã, RJ', display_name: 'Estádio do Maracanã, Rio de Janeiro - RJ', lat: -22.9121, lon: -43.2302, tag: 'Futebol' },
+  { category: 'turismo', categoryLabel: 'Turismo', icon: '🏛️', title: 'Cristo Redentor / Corcovado', subtitle: 'Parque Nacional da Tijuca • Alto da Boa Vista, RJ', display_name: 'Cristo Redentor, Rio de Janeiro - RJ', lat: -22.9519, lon: -43.2105, tag: 'Maravilha' },
+  { category: 'turismo', categoryLabel: 'Turismo', icon: '🚡', title: 'Pão de Açúcar (Bondinho)', subtitle: 'Av. Pasteur • Urca, RJ', display_name: 'Pão de Açúcar, Urca, Rio de Janeiro - RJ', lat: -22.9556, lon: -43.1672, tag: 'Turismo' },
+  { category: 'turismo', categoryLabel: 'Turismo', icon: '🎵', title: 'Arcos da Lapa & Circo Voador', subtitle: 'Lapa • Centro, RJ', display_name: 'Lapa, Centro, Rio de Janeiro - RJ', lat: -22.9129, lon: -43.1802, tag: 'Noite' },
+
+  // Centros & Terminais
+  { category: 'terminais', categoryLabel: 'Terminais', icon: '🚌', title: 'Rodoviária Novo Rio', subtitle: 'Av. Francisco Bicalho • Santo Cristo, RJ', display_name: 'Rodoviária Novo Rio, Rio de Janeiro - RJ', lat: -22.8989, lon: -43.2097, tag: 'Viagens' },
+  { category: 'terminais', categoryLabel: 'Terminais', icon: '🏢', title: 'Centro da Cidade (Carioca / Cinelândia)', subtitle: 'Centro Financeiro • Rio de Janeiro, RJ', display_name: 'Centro, Rio de Janeiro - RJ', lat: -22.9068, lon: -43.1729, tag: 'Comércio' },
+  { category: 'terminais', categoryLabel: 'Terminais', icon: '🌉', title: 'Niterói (Centro / Icaraí)', subtitle: 'Região Metropolitana • RJ', display_name: 'Niterói, RJ', lat: -22.8833, lon: -43.1036, tag: 'Ponte' },
+  { category: 'terminais', categoryLabel: 'Terminais', icon: '🚂', title: 'Central do Brasil (Trens & Metrô)', subtitle: 'Praça Cristiano Otoni • Centro, RJ', display_name: 'Central do Brasil, Centro, Rio de Janeiro - RJ', lat: -22.9035, lon: -43.1915, tag: 'Estação' },
+  { category: 'terminais', categoryLabel: 'Terminais', icon: '🛍️', title: 'Madureira (Mercadão & Parque)', subtitle: 'Madureira • Zona Norte, RJ', display_name: 'Madureira, Rio de Janeiro - RJ', lat: -22.8732, lon: -43.3392, tag: 'Zona Norte' },
+  { category: 'terminais', categoryLabel: 'Terminais', icon: '🏬', title: 'Méier (Dias da Cruz)', subtitle: 'Méier • Zona Norte, RJ', display_name: 'Méier, Rio de Janeiro - RJ', lat: -22.8986, lon: -43.2777, tag: 'Zona Norte' },
+  { category: 'terminais', categoryLabel: 'Terminais', icon: '🌴', title: 'Botafogo (Praia de Botafogo)', subtitle: 'Botafogo • Zona Sul, RJ', display_name: 'Botafogo, Rio de Janeiro - RJ', lat: -22.9519, lon: -43.1857, tag: 'Zona Sul' }
 ];
+
+  // Destinos filtrados para os cards de sugestões da tela inicial
+  const filteredDestinations = useMemo(() => {
+    if (selectedTravelCategory === 'todos') {
+      return POPULAR_DESTINATIONS;
+    }
+    return POPULAR_DESTINATIONS.filter(d => d.category === selectedTravelCategory);
+  }, [selectedTravelCategory]);
 
   // ============= Sugestões de GPS instantâneas para partida =============
   const showOriginGpsSuggestions = useCallback(() => {
@@ -508,7 +559,8 @@ const POPULAR_PLACES_RJ = [
         subtitle: gpsAddress || 'Localização precisa obtida do seu aparelho',
         display_name: gpsAddress || 'Sua Localização',
         lat: gpsCoords[0],
-        lon: gpsCoords[1]
+        lon: gpsCoords[1],
+        icon: '📍'
       });
     } else if (Array.isArray(mapCenter) && mapCenter[0] !== 0) {
       items.push({
@@ -517,12 +569,92 @@ const POPULAR_PLACES_RJ = [
         subtitle: 'Localização do mapa / GPS',
         display_name: 'Sua Localização',
         lat: mapCenter[0],
-        lon: mapCenter[1]
+        lon: mapCenter[1],
+        icon: '📍'
       });
     }
-    items.push(...POPULAR_PLACES_RJ.slice(0, 3));
+    items.push(...POPULAR_DESTINATIONS.slice(0, 4));
     setSuggestions(items);
   }, [gpsCoords, gpsAddress, mapCenter]);
+
+  // ============= Sugestões instantâneas para Destino ao focar campo =============
+  const showDestSuggestions = useCallback((filterCat = null) => {
+    setSugTarget('dest');
+    let pool = POPULAR_DESTINATIONS;
+    if (filterCat && filterCat !== 'todos') {
+      pool = pool.filter(p => p.category === filterCat);
+    }
+    const recents = (rideHistory || [])
+      .filter(h => h.destination && h.destination.length > 2)
+      .slice(0, 3)
+      .map(h => ({
+        title: h.destination.split(',')[0]?.trim() || h.destination,
+        subtitle: 'Destino Recente',
+        display_name: h.destination,
+        isRecent: true,
+        icon: '🕒'
+      }));
+
+    const merged = [...recents, ...pool];
+    const unique = [];
+    const seen = new Set();
+    for (const item of merged) {
+      const key = (item.title || item.display_name).toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(item);
+      }
+    }
+    setSuggestions(unique.slice(0, 8));
+  }, [rideHistory]);
+
+  // ============= Seleção rápida de sugestão de viagem (1 toque) =============
+  const handleSelectDestinationSuggestion = async (item) => {
+    setIsLoading(true);
+    try {
+      const shortAddr = item.title ? `${item.title}${item.subtitle ? ', ' + item.subtitle : ''}` : item.display_name;
+      let coords = (item.lat && item.lon) ? [item.lat, item.lon] : null;
+      if (!coords) {
+        const resolved = await resolveAddress(item.display_name || item.title);
+        if (resolved) coords = [resolved.lat, resolved.lon];
+      }
+
+      setDestAddr(shortAddr);
+      if (coords) {
+        setDestCoords(coords);
+        destCoordsRef.current = coords;
+      }
+
+      let oCoords = originCoordsRef.current;
+      if (!oCoords) {
+        if (gpsCoords) {
+          oCoords = gpsCoords;
+        } else if (Array.isArray(mapCenter) && mapCenter[0] !== 0) {
+          oCoords = mapCenter;
+        } else {
+          try {
+            const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 3000 }));
+            oCoords = [pos.coords.latitude, pos.coords.longitude];
+          } catch (e) {
+            oCoords = [-22.9068, -43.1729];
+          }
+        }
+        setOriginCoords(oCoords);
+        originCoordsRef.current = oCoords;
+        if (!originAddr) setOriginAddr('Sua Localização');
+      }
+
+      setSuggestions([]);
+
+      if (oCoords && coords) {
+        await calculateRoute(oCoords, coords, []);
+      }
+    } catch (err) {
+      console.warn('Erro ao selecionar sugestão de viagem:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // ============= Address search with fast debounce =============
   const searchAddress = useCallback((text, target) => {
@@ -534,15 +666,15 @@ const POPULAR_PLACES_RJ = [
       if (target === 'origin') {
         showOriginGpsSuggestions();
       } else {
-        setSuggestions([]);
+        showDestSuggestions();
       }
       return
     }
 
     // Busca rápida instantânea no fallback local enquanto pesquisa na rede
     const queryClean = trimmed.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const quickLocal = POPULAR_PLACES_RJ.filter(addr => {
-      const nameClean = addr.display_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const quickLocal = POPULAR_DESTINATIONS.filter(addr => {
+      const nameClean = (addr.title + ' ' + addr.display_name + ' ' + (addr.category || '')).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       return nameClean.includes(queryClean);
     });
     
@@ -553,11 +685,12 @@ const POPULAR_PLACES_RJ = [
       subtitle: gpsAddress || 'Localização precisa do seu aparelho',
       display_name: gpsAddress || 'Sua Localização',
       lat: (gpsCoords ? gpsCoords[0] : mapCenter[0]),
-      lon: (gpsCoords ? gpsCoords[1] : mapCenter[1])
+      lon: (gpsCoords ? gpsCoords[1] : mapCenter[1]),
+      icon: '📍'
     }] : [];
 
     if (quickLocal.length > 0 || gpsItem.length > 0) {
-      setSuggestions([...gpsItem, ...quickLocal].slice(0, 5));
+      setSuggestions([...gpsItem, ...quickLocal].slice(0, 6));
     }
 
     debounceRef.current = setTimeout(async () => {
@@ -584,7 +717,8 @@ const POPULAR_PLACES_RJ = [
                 title: name || fullName,
                 subtitle: subtitle,
                 lat: f.geometry.coordinates[1],
-                lon: f.geometry.coordinates[0]
+                lon: f.geometry.coordinates[0],
+                icon: '📍'
               };
             });
           }
@@ -607,7 +741,8 @@ const POPULAR_PLACES_RJ = [
                   title: parts[0]?.trim() || d.display_name,
                   subtitle: parts.slice(1, 3).join(',').trim() || 'Brasil',
                   lat: parseFloat(d.lat),
-                  lon: parseFloat(d.lon)
+                  lon: parseFloat(d.lon),
+                  icon: '📍'
                 };
               });
             }
@@ -626,9 +761,9 @@ const POPULAR_PLACES_RJ = [
         }
       }
 
-      setSuggestions(unique.slice(0, 5));
+      setSuggestions(unique.slice(0, 6));
     }, 200);
-  }, [gpsCoords, gpsAddress, mapCenter, showOriginGpsSuggestions]);
+  }, [gpsCoords, gpsAddress, mapCenter, showOriginGpsSuggestions, showDestSuggestions]);
 
   // ============= Select suggestion =============
   const handleSelectSuggestion = async (s) => {
@@ -682,8 +817,8 @@ const POPULAR_PLACES_RJ = [
 
     // 1. Busca rápida na lista local
     const queryClean = trimmed.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const localMatch = POPULAR_PLACES_RJ.find(p => {
-      const nameClean = p.display_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const localMatch = POPULAR_DESTINATIONS.find(p => {
+      const nameClean = (p.title + ' ' + p.display_name).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       return nameClean.includes(queryClean) || queryClean.includes(p.title.toLowerCase());
     });
     if (localMatch) {
@@ -898,13 +1033,13 @@ const POPULAR_PLACES_RJ = [
 
       // Se o desconto imbatível foi ativado, aplica o desconto diretamente SOBRE O VALOR DO PRINT
       if (hasCompetitionDiscount && competitorPrintPrice > 0) {
-        let discount = calculatedDiscountAmount || 2.00;
-        if (competitorPrintPrice >= 30.00) discount = 3.00;
-        else if (competitorPrintPrice >= 18.00 && competitorPrintPrice <= 25.00) discount = 2.50;
-        else if (competitorPrintPrice >= 12.00 && competitorPrintPrice <= 14.00) discount = 2.00;
-        else discount = 2.00;
-
-        ridePrice = Math.max(competitorPrintPrice - discount, 8.00);
+        const discount = calculatedDiscountAmount || calculateDiscountForPrintPrice(competitorPrintPrice);
+        const stopsFee = stops.filter(s => s.addr).length * 2.00;
+        const extraPsg = (vehicleType === 'car' && passengersCount > 1) ? (passengersCount - 1) * 2.50 : 0;
+        ridePrice = Math.max(competitorPrintPrice - discount, vehicleType === 'car' ? config.minFareCar : config.minFareMoto) + stopsFee + extraPsg;
+        if (pendingFeeAmount > 0) {
+          ridePrice += pendingFeeAmount;
+        }
       }
 
       // Fallback e garantia de coordenadas precisas de início e fim da corrida
@@ -1118,14 +1253,23 @@ const POPULAR_PLACES_RJ = [
                 className="route-input"
                 style={{borderTop: (stops.length > 0 || originAddr) ? '1px solid #f1f5f9' : 'none'}}
                 value={destAddr}
+                onFocus={() => {
+                  if (!destAddr || destAddr.trim().length === 0) {
+                    showDestSuggestions();
+                  }
+                }}
                 onChange={(e) => {
                   const v = e.target.value
                   setDestAddr(v)
                   setDestCoords(null)
-                  searchAddress(v, 'dest')
+                  if (!v || v.trim().length === 0) {
+                    showDestSuggestions();
+                  } else {
+                    searchAddress(v, 'dest')
+                  }
                 }}
                 onKeyDown={(e) => handleEnterKey(e, 'dest')}
-                placeholder="Destino"
+                placeholder="Para onde vamos? (Destino)"
               />
             </div>
 
@@ -1156,14 +1300,23 @@ const POPULAR_PLACES_RJ = [
                     <div className="suggestion-icon-wrap" style={s.isGps ? { background: '#dcfce7' } : {}}>
                       {s.isGps ? (
                         <span style={{ fontSize: '1rem' }}>📍</span>
+                      ) : s.icon ? (
+                        <span style={{ fontSize: '1rem' }}>{s.icon}</span>
                       ) : (
                         <MapPin size={15} color="#059669" />
                       )}
                     </div>
                     <div className="suggestion-text">
-                      <span className="suggestion-main" style={s.isGps ? { color: '#15803d', fontWeight: 800 } : {}}>
-                        {s.title || s.display_name.split(',')[0]}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                        <span className="suggestion-main" style={s.isGps ? { color: '#15803d', fontWeight: 800 } : {}}>
+                          {s.title || s.display_name.split(',')[0]}
+                        </span>
+                        {s.tag && (
+                          <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#059669', background: '#dcfce7', padding: '1px 6px', borderRadius: '100px', flexShrink: 0 }}>
+                            {s.tag}
+                          </span>
+                        )}
+                      </div>
                       <span className="suggestion-sub" style={s.isGps ? { color: '#166534', fontWeight: 600 } : {}}>
                         {s.subtitle || s.display_name.split(',').slice(1, 3).join(',').trim()}
                       </span>
@@ -1205,6 +1358,66 @@ const POPULAR_PLACES_RJ = [
               ⏳ Calculando melhor rota...
             </div>
           )}
+        </div>
+      )}
+
+      {/* ===== IDLE: SUGESTÕES DE VIAGEM (Para onde vamos hoje?) ===== */}
+      {rideState === 'IDLE' && suggestions.length === 0 && (
+        <div className="travel-suggestions-sheet animate-fade-in-up">
+          <div className="travel-suggestions-header">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.15rem' }}>✨</span>
+                <span style={{ fontSize: '0.92rem', fontWeight: 900, color: '#111827' }}>Sugestões de Viagem</span>
+              </div>
+              <span style={{ fontSize: '0.70rem', fontWeight: 700, color: '#059669', background: '#ecfdf5', padding: '3px 8px', borderRadius: '100px' }}>
+                1 Toque p/ Pedir
+              </span>
+            </div>
+            
+            {/* Categorias / Chips de Filtro */}
+            <div className="travel-category-chips">
+              {[
+                { id: 'todos', label: '🔥 Populares', icon: '🔥' },
+                { id: 'aeroportos', label: 'Aeroportos', icon: '✈️' },
+                { id: 'shoppings', label: 'Shoppings', icon: '🛍️' },
+                { id: 'praias', label: 'Praias', icon: '🏖️' },
+                { id: 'turismo', label: 'Turismo', icon: '⚽' },
+                { id: 'terminais', label: 'Terminais', icon: '🚌' }
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedTravelCategory(cat.id)}
+                  className={`travel-cat-chip ${selectedTravelCategory === cat.id ? 'active' : ''}`}
+                >
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Grid / Lista de Sugestões de Destino */}
+          <div className="travel-destinations-scroll">
+            {filteredDestinations.slice(0, 6).map((dest, idx) => (
+              <div
+                key={idx}
+                className="travel-destination-card"
+                onClick={() => handleSelectDestinationSuggestion(dest)}
+              >
+                <div className="travel-dest-icon-box">
+                  <span>{dest.icon || '📍'}</span>
+                </div>
+                <div className="travel-dest-info">
+                  <div className="travel-dest-title">{dest.title}</div>
+                  <div className="travel-dest-sub">{dest.subtitle}</div>
+                </div>
+                {dest.tag && (
+                  <span className="travel-dest-tag">{dest.tag}</span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -1631,13 +1844,33 @@ const POPULAR_PLACES_RJ = [
                         reader.onload = async (ev) => {
                           const imageSrc = ev.target.result;
                           try {
-                            const currentPrice = parseFloat(getPrice(routeKm, vehicleType, true)) || 15.0;
-                            const result = await validateScreenshot(imageSrc, currentPrice);
+                            const zompBasePrice = parseFloat(getPrice(routeKm, vehicleType, false)) || 35.0;
+                            
+                            // 1. Tenta OCR inteligente no client-side para extrair o valor real do print da Uber/99
+                            let detectedPrintPrice = null;
+                            try {
+                              const ocrPromise = Tesseract.recognize(imageSrc, 'por+eng');
+                              const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000));
+                              const ocrResult = await Promise.race([ocrPromise, timeoutPromise]);
+                              if (ocrResult?.data?.text) {
+                                detectedPrintPrice = extractPriceFromOcrText(ocrResult.data.text);
+                              }
+                            } catch (ocrErr) {
+                              console.warn('Aviso no OCR client-side, prosseguindo com fallback inteligente:', ocrErr);
+                            }
+
+                            // Se não detectou via OCR, utiliza como valor inicial do print uma estimativa realista
+                            const initialPrintVal = detectedPrintPrice || (zompBasePrice > 12 ? (zompBasePrice - 3.0) : 25.0);
+
+                            // 2. Valida no backend
+                            const result = await validateScreenshot(imageSrc, initialPrintVal, zompBasePrice);
                             
                             setIsAnalyzingScreenshot(false);
-                            const printVal = result.printPrice || currentPrice;
-                            setCompetitorPrintPrice(printVal);
-                            setCalculatedDiscountAmount(result.discountAmount);
+                            const finalPrintPrice = detectedPrintPrice || result.printPrice || initialPrintVal;
+                            const discount = calculateDiscountForPrintPrice(finalPrintPrice);
+
+                            setCompetitorPrintPrice(finalPrintPrice);
+                            setCalculatedDiscountAmount(discount);
                             setManualPriceInput(imageSrc);
                             setHasCompetitionDiscount(true);
                             setManualPriceError('');
@@ -1724,19 +1957,25 @@ const POPULAR_PLACES_RJ = [
 
                       {/* Campo para conferir ou ajustar o valor lido do print */}
                       <div style={{
-                        background: 'rgba(0,0,0,0.2)',
-                        padding: '10px 12px',
-                        borderRadius: '10px',
-                        marginBottom: '10px',
+                        background: 'rgba(0,0,0,0.25)',
+                        padding: '12px 14px',
+                        borderRadius: '12px',
+                        marginBottom: '12px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between'
+                        justifyContent: 'space-between',
+                        border: '1px solid rgba(255,255,255,0.15)'
                       }}>
-                        <span style={{ fontSize: '0.75rem', color: '#ecfdf5', fontWeight: 700 }}>
-                          📱 Valor no print (Uber/99):
-                        </span>
+                        <div>
+                          <span style={{ fontSize: '0.8rem', color: '#ecfdf5', fontWeight: 800, display: 'block' }}>
+                            📱 Valor no print da concorrência (Uber/99):
+                          </span>
+                          <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
+                            O desconto é aplicado diretamente sobre este valor
+                          </span>
+                        </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ color: '#fff', fontWeight: 800, fontSize: '0.85rem' }}>R$</span>
+                          <span style={{ color: '#fff', fontWeight: 800, fontSize: '0.95rem' }}>R$</span>
                           <input
                             type="number"
                             step="0.10"
@@ -1744,39 +1983,35 @@ const POPULAR_PLACES_RJ = [
                             onChange={(e) => {
                               const val = parseFloat(e.target.value) || 0;
                               setCompetitorPrintPrice(val);
-                              // Recalcula o desconto com base no novo valor do print
-                              let disc = 2.00;
-                              if (val >= 30.00) disc = 3.00; // R$ 3,00 para print acima de R$ 30,00
-                              else if (val >= 18.00 && val <= 25.00) disc = 2.50;
-                              else if (val >= 12.00 && val <= 14.00) disc = 2.00;
-                              else disc = 2.00;
+                              const disc = calculateDiscountForPrintPrice(val);
                               setCalculatedDiscountAmount(disc);
                             }}
                             style={{
-                              width: '75px',
-                              padding: '4px 8px',
-                              borderRadius: '6px',
-                              border: '1px solid #34d399',
+                              width: '80px',
+                              padding: '6px 8px',
+                              borderRadius: '8px',
+                              border: '2px solid #34d399',
                               background: '#fff',
                               color: '#065f46',
                               fontWeight: 900,
-                              fontSize: '0.95rem',
+                              fontSize: '1rem',
                               textAlign: 'right'
                             }}
                           />
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '10px 12px', borderRadius: '10px' }}>
                         <div>
                           <p style={{ margin: 0, fontSize: '0.75rem', color: '#ecfdf5', fontWeight: 600 }}>
-                            Valor no Print da Concorrência: R$ {competitorPrintPrice.toFixed(2)}
+                            Valor no Print: <span style={{ textDecoration: 'line-through' }}>R$ {competitorPrintPrice.toFixed(2)}</span>
                           </p>
-                          <p style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 900 }}>
-                            Novo Preço Zomp: <span style={{ fontSize: '1.4rem' }}>R$ {Math.max(competitorPrintPrice - calculatedDiscountAmount, 8.00).toFixed(2)}</span>
+                          <p style={{ margin: '2px 0 0', fontSize: '1.1rem', color: '#fff', fontWeight: 900 }}>
+                            Novo Preço Zomp: <span style={{ fontSize: '1.4rem', color: '#a7f3d0' }}>R$ {Math.max(competitorPrintPrice - calculatedDiscountAmount, 8.00).toFixed(2)}</span>
                           </p>
                         </div>
-                        <div style={{ background: '#fff', color: '#059669', padding: '6px 14px', borderRadius: '10px', fontWeight: 900, fontSize: '0.9rem' }}>
+                        <div style={{ background: '#fff', color: '#059669', padding: '6px 14px', borderRadius: '10px', fontWeight: 900, fontSize: '0.9rem', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                          <span style={{ display: 'block', fontSize: '0.65rem', color: '#047857', fontWeight: 700 }}>ECONOMIA</span>
                           -R$ {calculatedDiscountAmount.toFixed(2)}
                         </div>
                       </div>
@@ -1793,7 +2028,7 @@ const POPULAR_PLACES_RJ = [
                       }}>
                         <span style={{ fontSize: '1.2rem' }}>💡</span>
                         <p style={{ margin: 0, fontSize: '0.72rem', color: '#ecfdf5', fontWeight: 600, lineHeight: '1.4' }}>
-                          Zomp é mais barato que Uber e 99! Cancele a corrida no outro app e chame agora pelo Zomp com desconto garantido.
+                          O Zomp cobriu o preço do print! Cancele no outro app e chame agora pelo Zomp por <strong>R$ {Math.max(competitorPrintPrice - calculatedDiscountAmount, 8.00).toFixed(2)}</strong> com desconto direto sobre o print.
                         </p>
                       </div>
 
@@ -1938,7 +2173,7 @@ const POPULAR_PLACES_RJ = [
                 }}>
                   <Check size={18} color="#059669" strokeWidth={3} />
                   <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#059669' }}>
-                    Desconto Imbatível de R$ 2,00 será aplicado!
+                    Desconto Imbatível de R$ {calculatedDiscountAmount.toFixed(2)} sobre o print será aplicado!
                   </span>
                 </div>
               )}

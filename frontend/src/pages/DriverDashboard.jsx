@@ -216,7 +216,7 @@ export default function DriverDashboard() {
   // Raio de Atuação (Sonar de Radar em volta do motorista)
   const [workRadiusKm, setWorkRadiusKm] = useState(() => {
     const saved = localStorage.getItem('zomp_driver_radius');
-    return saved !== null ? parseFloat(saved) : 10;
+    return saved !== null ? parseFloat(saved) : 0; // Padrão Livre (0) para receber todas as corridas disponíveis
   })
   const [showRadiusSelector, setShowRadiusSelector] = useState(false)
 
@@ -229,16 +229,10 @@ export default function DriverDashboard() {
   useEffect(() => {
     setPendingRides(prev => prev.filter(ride => {
       if (workRadiusKm <= 0) return true;
-      if (!Array.isArray(myPos) || !myPos[0]) return false;
-      const rideDist = parseFloat(ride.distanceKm) || 0;
-      if (rideDist > workRadiusKm) return false;
+      if (!Array.isArray(myPos) || !myPos[0]) return true;
       if (ride.originLat != null && ride.originLon != null) {
         const dOrig = getDistanceFromLatLonInKm(myPos[0], myPos[1], parseFloat(ride.originLat), parseFloat(ride.originLon));
-        if (dOrig === null || dOrig > workRadiusKm) return false;
-      }
-      if (ride.destLat != null && ride.destLon != null) {
-        const dDest = getDistanceFromLatLonInKm(myPos[0], myPos[1], parseFloat(ride.destLat), parseFloat(ride.destLon));
-        if (dDest === null || dDest > workRadiusKm) return false;
+        if (dOrig !== null && dOrig > (workRadiusKm * 1.3)) return false;
       }
       return true;
     }));
@@ -337,6 +331,10 @@ export default function DriverDashboard() {
 
       setIsOnline(true)
       setSlideX(0)
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+      } catch (e) {}
     } else {
       setSlideX(0)
     }
@@ -479,25 +477,18 @@ export default function DriverDashboard() {
   const [pendingRides, setPendingRides] = useState([])
   const [activeRide, setActiveRide] = useState(null)
   const prevRideCountRef = useRef(0)
-  const [rideCountdown, setRideCountdown] = useState(10)
+  const prevFirstRideIdRef = useRef(null)
+  const [rideCountdown, setRideCountdown] = useState(15)
 
-  // Temporizador regressivo de 10 segundos para aceitar a corrida
+  // Temporizador regressivo de 15 segundos para aceitar a corrida
   useEffect(() => {
     let countdownTimer;
     if (isOnline && pendingRides.length > 0 && !activeRide) {
-      setRideCountdown(10);
+      setRideCountdown(15);
       countdownTimer = setInterval(() => {
         setRideCountdown(prev => {
           if (prev <= 1) {
-            clearInterval(countdownTimer);
-            // Auto-recusa ao expirar o tempo
-            const rideId = pendingRides[0]?.id;
-            if (rideId) {
-              seenRidesCountRef.current[rideId] = (seenRidesCountRef.current[rideId] || 0) + 1;
-              setSeenRidesCount({ ...seenRidesCountRef.current });
-              setPendingRides(pr => pr.slice(1));
-            }
-            return 0;
+            return 15; // Reinicia o ciclo sem ocultar a corrida ativa
           }
           return prev - 1;
         });
@@ -506,16 +497,14 @@ export default function DriverDashboard() {
     return () => { if (countdownTimer) clearInterval(countdownTimer); };
   }, [isOnline, pendingRides.length > 0 ? pendingRides[0]?.id : null, activeRide]);
 
-  // Alarme sonoro — contínuo para corridas normais, apenas 1x para longas/agendadas
+  // Alarme sonoro — toca para qualquer nova chamada que chegar ao motorista
   useEffect(() => {
     let ringTimer;
     if (isOnline && pendingRides.length > 0 && !activeRide) {
       const ride = pendingRides[0];
       if (isLongOrScheduledRide(ride)) {
-        // Corrida longa/agendada: som diferente, apenas 1 vez
         playLongRideSound();
       } else {
-        // Corrida normal: alarme contínuo
         playRingSound();
         ringTimer = setInterval(() => {
           playRingSound();
@@ -525,92 +514,76 @@ export default function DriverDashboard() {
     return () => {
       if (ringTimer) clearInterval(ringTimer);
     };
-  }, [isOnline, pendingRides.length, activeRide]);
+  }, [isOnline, pendingRides.length > 0 ? pendingRides[0]?.id : null, activeRide]);
 
+  // Polling em tempo real de novas corridas
   useEffect(() => {
-    let interval
+    let interval;
     if (isOnline && !activeRide) {
       const poll = async () => {
         try { 
           const rawRides = await getPendingRides();
-          const now = Date.now();
           const r = Array.isArray(rawRides) ? rawRides.filter(ride => {
-            if (!ride.createdAt) return true;
-            // Limite: corrida longa/agendada aparece 1x, normal aparece 2x
-            const maxViews = isLongOrScheduledRide(ride) ? 1 : 2;
-            if ((seenRidesCountRef.current[ride.id] || 0) >= maxViews) return false;
+            if (!ride || ride.status !== 'PENDING') return false;
+            
+            // Ignora apenas se o motorista apertou o botão "Recusar" explicitamente nesta sessão
+            if ((seenRidesCountRef.current[ride.id] || 0) >= 1) return false;
 
             const currentRadius = Number(workRadiusKmRef.current ?? workRadiusKm);
             const currentPos = myPosRef.current || myPos;
 
-            // Filtro RIGOROSO de Raio de Atuação (Sonar)
-            if (currentRadius > 0) {
-              if (!Array.isArray(currentPos) || !currentPos[0]) return false;
+            // Filtro de Raio Sonar (apenas se configurado maior que 0 e com GPS válido)
+            if (currentRadius > 0 && Array.isArray(currentPos) && currentPos[0] && currentPos[1]) {
               const driverLat = currentPos[0];
               const driverLon = currentPos[1];
-
-              // 1. Se a distância total do trajeto for maior que o raio configurado, REJEITA (NÃO TOCA)
-              const rideDist = parseFloat(ride.distanceKm) || 0;
-              if (rideDist > currentRadius) {
-                return false;
-              }
-
-              // 2. Validação do Início da Corrida (Origem)
               const origLat = ride.originLat != null ? parseFloat(ride.originLat) : null;
               const origLon = ride.originLon != null ? parseFloat(ride.originLon) : null;
-              if (origLat != null && origLon != null) {
-                const distOrigin = getDistanceFromLatLonInKm(driverLat, driverLon, origLat, origLon);
-                if (distOrigin === null || distOrigin > currentRadius) {
-                  return false; // Início fora do raio
-                }
-              } else if (currentRadius <= 15) {
-                // Sem coordenadas comprovadas em raio restrito, BLOQUEIA (NÃO TOCA)
-                return false;
-              }
 
-              // 3. Validação do Fim da Corrida (Destino)
-              const dstLat = ride.destLat != null ? parseFloat(ride.destLat) : null;
-              const dstLon = ride.destLon != null ? parseFloat(ride.destLon) : null;
-              if (dstLat != null && dstLon != null) {
-                const distDest = getDistanceFromLatLonInKm(driverLat, driverLon, dstLat, dstLon);
-                if (distDest === null || distDest > currentRadius) {
-                  return false; // Fim fora do raio
+              if (origLat != null && origLon != null && !isNaN(origLat) && !isNaN(origLon)) {
+                const distOrigin = getDistanceFromLatLonInKm(driverLat, driverLon, origLat, origLon);
+                if (distOrigin !== null && distOrigin > (currentRadius * 1.3)) {
+                  return false;
                 }
-              } else if (currentRadius <= 15) {
-                // Sem coordenadas comprovadas em raio restrito, BLOQUEIA (NÃO TOCA)
-                return false;
               }
             }
 
-            const isLongOrScheduled = (parseFloat(ride.distanceKm) >= 50) || (ride.vehicleType && (ride.vehicleType.includes('long') || ride.vehicleType.includes('intercity') || ride.vehicleType.includes('scheduled') || ride.vehicleType.includes('freight')));
-            if (isLongOrScheduled) return true;
-            const ageMs = now - new Date(ride.createdAt).getTime();
-            return ageMs <= 10 * 60 * 1000; // expira em 10 minutos
+            return true;
           }) : [];
 
-          if (r.length > 0 && r.length > prevRideCountRef.current) {
-            playRingSound();
+          if (r.length > 0) {
             const first = r[0];
-            sendNotification(
-              `🚖 Nova Corrida — R$ ${Number(first.price).toFixed(2)}`,
-              `Passageiro: ${first.passengerName || first.passenger?.name || 'Passageiro'}\nOrigem: ${first.origin?.split(',')[0]} → ${first.destination?.split(',')[0]}\nDistância: ${first.distanceKm} km`,
-              first
-            );
+            if (first.id !== prevFirstRideIdRef.current) {
+              prevFirstRideIdRef.current = first.id;
+              if (isLongOrScheduledRide(first)) {
+                playLongRideSound();
+              } else {
+                playRingSound();
+              }
+              sendNotification(
+                `🚖 Nova Corrida — R$ ${Number(first.price).toFixed(2)}`,
+                `Passageiro: ${first.passengerName || first.passenger?.name || 'Passageiro'}\nOrigem: ${first.origin?.split(',')[0]} → ${first.destination?.split(',')[0]}\nDistância: ${first.distanceKm} km`,
+                first
+              );
+            }
+          } else {
+            prevFirstRideIdRef.current = null;
           }
+
           prevRideCountRef.current = r.length;
-          setPendingRides(r) 
+          setPendingRides(r);
         } catch (err) {
-          console.warn('Erro ao buscar corridas pendentes:', err)
+          console.warn('Erro ao buscar corridas pendentes:', err);
         }
-      }
-      poll()
-      interval = setInterval(poll, 3000)
+      };
+      poll();
+      interval = setInterval(poll, 2000);
     } else { 
-      setPendingRides([])
-      prevRideCountRef.current = 0 
+      setPendingRides([]);
+      prevRideCountRef.current = 0;
+      prevFirstRideIdRef.current = null;
     }
-    return () => clearInterval(interval)
-  }, [isOnline, activeRide])
+    return () => clearInterval(interval);
+  }, [isOnline, activeRide]);
 
   const handleAccept = async (rideId) => {
     try {
@@ -718,6 +691,10 @@ export default function DriverDashboard() {
     }
 
     setIsOnline(true);
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+    } catch (e) {}
   }
 
   // Tabela oficial de pacotes (mantém os descontos de 22 e 35 créditos)
