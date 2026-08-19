@@ -316,7 +316,8 @@ export default function LandingPage() {
         <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           Nosso objetivo é ter os melhores parceiros. O processo é simples e direto.
           Siga os passos abaixo para garantir sua Renda Passiva vinda de passageiros. 
-          <br/><strong>* Requisito: Completar 75 corridas por semana para manter o direito aos Royalties.</strong>
+          <br/><strong>* Requisito: Completar no mínimo 65 corridas por semana para manter o direito aos Royalties.</strong>
+          <br/><span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Os pagamentos de royalties são realizados mensalmente (a cada 30 dias) via PIX. O valor recebido depende da quantidade de clientes vinculados à sua carteira e da frequência de corridas deles.</span>
         </motion.p>
         <motion.div className="lp-how-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {[
@@ -371,12 +372,12 @@ export default function LandingPage() {
                 <strong className="lp-gold-val">R$ {monthlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
               </div>
               <div style={{ marginTop: '10px', padding: '8px 12px', borderRadius: '10px', background: 'rgba(151, 233, 0, 0.08)', border: '1px solid rgba(151, 233, 0, 0.2)', fontSize: '0.78rem', color: '#cbd5e1', lineHeight: '1.4' }}>
-                📅 <strong style={{ color: '#97E900' }}>Ciclo de Recebimento: a cada 30 dias.</strong> Seus royalties são acumulados diariamente e liberados para saque via PIX todo mês.
+                📅 <strong style={{ color: '#97E900' }}>Pagamento mensal (a cada 30 dias) via PIX.</strong> Para receber, é necessário completar no mínimo 65 corridas por semana. O valor é aproximado e depende da carteira de clientes vinculados a você.
               </div>
             </motion.div>
 
             <motion.p className="lp-sim-disclaimer" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-              * Projeções baseadas em dados históricos de mobilidade urbana. Ganhos reais dependem da conversão e retenção da sua rede.
+              * Valores aproximados. Ganhos reais dependem da quantidade de clientes vinculados à sua carteira e da frequência de viagens deles. Mínimo de 65 corridas/semana para ativar o recebimento.
             </motion.p>
             <motion.button className="lp-cta-btn lp-cta-lg" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} onClick={handleCta}>
               Iniciar Construção de Ativos →
@@ -410,7 +411,7 @@ export default function LandingPage() {
               {[
                 'Taxa Operacional Fixa e Transparente',
                 'Royalties de Rede (R$ 0,30 por viagem)',
-                'Manutenção de Royalties: Mínimo 75 corridas/semana',
+                'Mínimo de 65 corridas/semana para manter Royalties',
                 'Patrimônio Digital Vinculado (2 anos)',
                 'Saque de Royalties a cada 30 dias via PIX',
                 'Sistema Anti-Concorrência (Preço Imbatível)',
@@ -449,18 +450,18 @@ export default function LandingPage() {
           <motion.div className="lp-wallet-text" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <motion.div className="lp-section-tag" variants={fadeUp}>💳 Carteira Zomp — Exemplo Estimado</motion.div>
             <motion.h2 className="lp-section-title lp-left-title" variants={fadeUp}>
-              R$ 2.880 na conta<br /><span className="lp-accent">a cada 3 meses</span>
+              Até R$ 960 na conta<br /><span className="lp-accent">todo mês (a cada 30 dias)</span>
             </motion.h2>
             <motion.p className="lp-section-sub lp-left-sub" variants={fadeUp}>
-              Sem dirigir uma corrida sequer. Esse é o poder de ter 400 clientes vinculados fazendo 2 corridas por semana na Zomp. Enquanto você descansa, R$ 0,30 por corrida vai direto pra sua carteira.
+              Com 400 clientes vinculados fazendo 2 corridas por semana, R$ 0,30 por corrida vai direto pra sua carteira Zomp. O saque é liberado a cada 30 dias via PIX.
             </motion.p>
             <motion.div className="lp-wallet-stats" variants={fadeUp}>
-              <div className="lp-wstat"><span className="lp-wstat-val">R$ 960</span><span className="lp-wstat-lbl">por mês</span></div>
-              <div className="lp-wstat"><span className="lp-wstat-val">R$ 2.880</span><span className="lp-wstat-lbl">por trimestre</span></div>
-              <div className="lp-wstat"><span className="lp-wstat-val">R$ 11.520</span><span className="lp-wstat-lbl">ao ano</span></div>
+              <div className="lp-wstat"><span className="lp-wstat-val">~R$ 960</span><span className="lp-wstat-lbl">por mês</span></div>
+              <div className="lp-wstat"><span className="lp-wstat-val">~R$ 11.520</span><span className="lp-wstat-lbl">ao ano</span></div>
+              <div className="lp-wstat"><span className="lp-wstat-val">65</span><span className="lp-wstat-lbl">corridas/semana mín.</span></div>
             </motion.div>
             <motion.p className="lp-sim-disclaimer" variants={fadeUp}>
-              * Projeção estimada de exemplo. Ganhos reais dependem da atividade da sua rede.
+              * Valores aproximados. O valor real depende da quantidade de clientes vinculados à sua carteira e da frequência de viagens deles. Mínimo de 65 corridas/semana para ativar o recebimento dos Royalties.
             </motion.p>
             <motion.button className="lp-cta-btn lp-cta-lg" variants={fadeUp} onClick={handleCta}>
               Abrir minha Carteira Zomp →
@@ -493,7 +494,7 @@ export default function LandingPage() {
         <motion.div className="lp-stats-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val"><CountUp target={5000} suffix="+" /></span><span className="lp-stat-lbl">Vagas no RJ</span></motion.div>
           <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">R$ 0,30</span><span className="lp-stat-lbl">Royalty por Corrida</span></motion.div>
-          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">R$ 2.880</span><span className="lp-stat-lbl">Saque Trimestral Est.</span></motion.div>
+          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">~R$ 960</span><span className="lp-stat-lbl">Saque Mensal Est.</span></motion.div>
           <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">2 anos</span><span className="lp-stat-lbl">Vínculo Garantido</span></motion.div>
         </motion.div>
       </section>
