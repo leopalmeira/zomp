@@ -367,8 +367,11 @@ export default function LandingPage() {
               <div className="lp-calc-row lp-calc-sub"><span>Rendimento Mensal Passivo</span><strong className="lp-accent">R$ {monthlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
               <div className="lp-calc-divider" />
               <div className="lp-calc-row lp-calc-total">
-                <span>💰 Acúmulo para Saque Trimestral</span>
-                <strong className="lp-gold-val">R$ {quarterlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                <span>💰 Saque Disponível a cada 30 dias</span>
+                <strong className="lp-gold-val">R$ {monthlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+              </div>
+              <div style={{ marginTop: '10px', padding: '8px 12px', borderRadius: '10px', background: 'rgba(151, 233, 0, 0.08)', border: '1px solid rgba(151, 233, 0, 0.2)', fontSize: '0.78rem', color: '#cbd5e1', lineHeight: '1.4' }}>
+                📅 <strong style={{ color: '#97E900' }}>Ciclo de Recebimento: a cada 30 dias.</strong> Seus royalties são acumulados diariamente e liberados para saque via PIX todo mês.
               </div>
             </motion.div>
 
@@ -409,7 +412,7 @@ export default function LandingPage() {
                 'Royalties de Rede (R$ 0,30 por viagem)',
                 'Manutenção de Royalties: Mínimo 75 corridas/semana',
                 'Patrimônio Digital Vinculado (2 anos)',
-                'Liquidação Trimestral de Dividendos',
+                'Saque de Royalties a cada 30 dias via PIX',
                 'Sistema Anti-Concorrência (Preço Imbatível)',
                 'Suporte Corporativo Prioritário',
               ].map((item, i) => (
