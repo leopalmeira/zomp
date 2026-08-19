@@ -31,6 +31,27 @@ export async function register({ name, email, password, role, referrerQrCode }) 
   return data;
 }
 
+export async function driverPreRegister(payload) {
+  const res = await fetch(`${API_BASE}/auth/driver-pre-register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Erro ao processar pré-cadastro');
+  }
+  if (data.token) {
+    try {
+      localStorage.setItem('zomp_token', data.token);
+      localStorage.setItem('zomp_user', JSON.stringify(data.user));
+    } catch (e) {
+      console.warn('localStorage quota warning:', e);
+    }
+  }
+  return data;
+}
+
 export async function login({ email, password }) {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',

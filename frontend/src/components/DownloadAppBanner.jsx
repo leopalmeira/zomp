@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Download, Smartphone, CheckCircle, Share2, PlusSquare, ArrowDown, X, Sparkles } from 'lucide-react'
+import { Download, Smartphone, Share2, PlusSquare, ArrowDown, X } from 'lucide-react'
 import './DownloadAppBanner.css'
 
 export default function DownloadAppBanner({ role = 'PASSENGER' }) {
@@ -150,117 +150,80 @@ export default function DownloadAppBanner({ role = 'PASSENGER' }) {
         setIsDownloading(false)
       }
     } else {
-      // Se não há prompt nativo disponível no momento (iOS, navegador sem suporte ou bloqueado):
-      // Dispara o download direto do instalador/lançador HTML e abre guia visual
       triggerLauncherFileDownload()
       setShowModal(true)
       setIsDownloading(false)
     }
   }
 
+  // Se já estiver instalado, não polui a tela
   if (isInstalled) {
-    return (
-      <div 
-        className={`zomp-download-banner ${isDriver ? 'driver-mode' : 'passenger-mode'}`}
-        style={{ cursor: 'default' }}
-      >
-        <div className={`zomp-banner-icon-box ${isDriver ? 'driver-bg' : 'passenger-bg'}`}>
-          <CheckCircle size={24} color="#fff" />
-        </div>
-        <div className="zomp-banner-content">
-          <div className="zomp-banner-title">
-            App {appLabel} Instalado ✅
-          </div>
-          <div className="zomp-banner-subtitle">
-            Você está usando a versão otimizada do Zomp.
-          </div>
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (
     <>
+      {/* Botão / Pílula Discreta de Download */}
       <motion.div
-        className={`zomp-download-banner ${isDriver ? 'driver-mode' : 'passenger-mode'}`}
-        initial={{ opacity: 0, y: -15 }}
+        className={`zomp-discreet-download-pill ${isDriver ? 'driver-pill' : 'passenger-pill'}`}
+        initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.3 }}
         onClick={handleDownloadClick}
       >
-        <div className="zomp-banner-glow-line" style={{ background: appColor }} />
-
-        {/* App Icon with Ready Dot */}
-        <div className={`zomp-banner-icon-box ${isDriver ? 'driver-bg' : 'passenger-bg'}`}>
-          <Smartphone size={24} color="#fff" />
-          <div className="zomp-download-pulse-badge" style={{ backgroundColor: appColor }} />
+        <div className="zomp-pill-icon">
+          <Smartphone size={13} color={appColor} />
         </div>
-
-        {/* Text Details */}
-        <div className="zomp-banner-content">
-          <div className="zomp-banner-title-row">
-            <span className="zomp-banner-title">
-              <Download size={16} color={appColor} />
-              Baixar App {appLabel}
-            </span>
-          </div>
-          <div className="zomp-banner-subtitle">
-            Instale direto no seu celular para acesso rápido e notificações
-          </div>
-          <div className="zomp-banner-status-tag" style={{ color: appColor }}>
-            <Sparkles size={12} />
-            <span>Pronto para download</span>
-          </div>
-        </div>
-
-        {/* Direct Action Button */}
+        <span className="zomp-pill-text">
+          Baixar App {appLabel}
+        </span>
         <button
           type="button"
-          className={`zomp-banner-btn ${isDriver ? 'driver-btn' : 'passenger-btn'}`}
+          className="zomp-pill-action-btn"
           onClick={handleDownloadClick}
           disabled={isDownloading}
         >
           {isDownloading ? (
-            'BAIXANDO...'
+            '...'
           ) : (
             <>
-              <Download size={14} />
-              <span>BAIXAR DIRETO</span>
+              <Download size={11} />
+              <span>Instalar</span>
             </>
           )}
         </button>
       </motion.div>
 
-      {/* Interactive Modal Guide / Direct Installer for Non-PWA-prompt environments */}
+      {/* Modal Interativo de Instalação Rápida */}
       <AnimatePresence>
         {showModal && (
           <div className="zomp-install-modal-overlay" onClick={() => setShowModal(false)}>
             <motion.div
               className="zomp-install-modal-card"
-              initial={{ y: 80, opacity: 0 }}
+              initial={{ y: 60, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 80, opacity: 0 }}
+              exit={{ y: 60, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="zomp-modal-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{
-                    width: '32px',
-                    height: '32px',
+                    width: '30px',
+                    height: '30px',
                     borderRadius: '8px',
                     background: appColor,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}>
-                    <Smartphone size={18} color="#000" />
+                    <Smartphone size={16} color="#000" />
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', fontWeight: 800 }}>
-                      Baixar Zomp {appLabel}
+                    <h3 style={{ margin: 0, color: '#fff', fontSize: '0.98rem', fontWeight: 800 }}>
+                      Instalar Zomp {appLabel}
                     </h3>
-                    <span style={{ fontSize: '0.72rem', color: appColor, fontWeight: 700 }}>
-                      Download & Instalação Direta
+                    <span style={{ fontSize: '0.70rem', color: appColor, fontWeight: 700 }}>
+                      Acesso rápido na tela inicial
                     </span>
                   </div>
                 </div>
@@ -269,63 +232,61 @@ export default function DownloadAppBanner({ role = 'PASSENGER' }) {
                   className="zomp-modal-close-btn"
                   onClick={() => setShowModal(false)}
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
 
               {isIOS ? (
-                /* Instruções iOS Safari */
                 <div>
-                  <p style={{ color: '#cbd5e1', fontSize: '0.84rem', marginBottom: '14px', lineHeight: '1.4' }}>
-                    Para instalar o aplicativo no seu <strong>iPhone ou iPad</strong>:
+                  <p style={{ color: '#cbd5e1', fontSize: '0.82rem', marginBottom: '12px', lineHeight: '1.4' }}>
+                    Para adicionar à tela de início no <strong>iPhone ou iPad</strong>:
                   </p>
 
                   <div className="zomp-modal-step">
                     <div className="zomp-modal-step-number" style={{ background: appColor }}>1</div>
                     <div className="zomp-modal-step-text">
-                      Toque no botão de <strong>Compartilhar</strong> (<Share2 size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />) na barra inferior do Safari.
+                      Toque em <strong>Compartilhar</strong> (<Share2 size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />) no Safari.
                     </div>
                   </div>
 
                   <div className="zomp-modal-step">
                     <div className="zomp-modal-step-number" style={{ background: appColor }}>2</div>
                     <div className="zomp-modal-step-text">
-                      Role para baixo e selecione <strong>"Adicionar à Tela de Início"</strong> (<PlusSquare size={14} style={{ display: 'inline', verticalAlign: 'middle' }} />).
+                      Role e selecione <strong>"Adicionar à Tela de Início"</strong> (<PlusSquare size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />).
                     </div>
                   </div>
 
                   <div className="zomp-modal-step">
                     <div className="zomp-modal-step-number" style={{ background: appColor }}>3</div>
                     <div className="zomp-modal-step-text">
-                      Toque em <strong>"Adicionar"</strong> no canto superior direito. Pronto! O app Zomp será instalado no seu celular.
+                      Toque em <strong>"Adicionar"</strong> no topo direito.
                     </div>
                   </div>
                 </div>
               ) : (
-                /* Instruções Android / Desktop / Chrome */
                 <div>
-                  <p style={{ color: '#cbd5e1', fontSize: '0.84rem', marginBottom: '14px', lineHeight: '1.4' }}>
-                    O arquivo de inicialização direta foi <strong>baixado</strong> para o seu dispositivo!
+                  <p style={{ color: '#cbd5e1', fontSize: '0.82rem', marginBottom: '12px', lineHeight: '1.4' }}>
+                    O inicializador foi <strong>baixado</strong> no seu aparelho:
                   </p>
 
                   <div className="zomp-modal-step">
                     <div className="zomp-modal-step-number" style={{ background: appColor }}>1</div>
                     <div className="zomp-modal-step-text">
-                      No navegador (Chrome/Edge), toque no menu de <strong>3 pontos (⋮)</strong> no topo.
+                      No navegador (Chrome/Edge), toque no menu de <strong>3 pontos (⋮)</strong>.
                     </div>
                   </div>
 
                   <div className="zomp-modal-step">
                     <div className="zomp-modal-step-number" style={{ background: appColor }}>2</div>
                     <div className="zomp-modal-step-text">
-                      Selecione <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.
+                      Escolha <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.
                     </div>
                   </div>
 
                   <div className="zomp-modal-step">
                     <div className="zomp-modal-step-number" style={{ background: appColor }}>3</div>
                     <div className="zomp-modal-step-text">
-                      Ou abra o arquivo <strong>Zomp_{appLabel}_App.html</strong> baixado para acessar direto em tela cheia!
+                      Ou abra o arquivo <strong>Zomp_{appLabel}_App.html</strong> para abrir em tela cheia!
                     </div>
                   </div>
                 </div>
@@ -340,7 +301,7 @@ export default function DownloadAppBanner({ role = 'PASSENGER' }) {
                   setShowModal(false)
                 }}
               >
-                <ArrowDown size={18} />
+                <ArrowDown size={15} />
                 <span>BAIXAR ARQUIVO NOVAMENTE</span>
               </button>
             </motion.div>

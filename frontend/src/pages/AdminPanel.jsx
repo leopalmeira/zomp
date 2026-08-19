@@ -68,20 +68,28 @@ export default function AdminPanel() {
     setLoading(true)
     try {
       if (tab === 'Dashboard') {
-        const [s, ops] = await Promise.all([
+        const [s, ops, cfg, drvs] = await Promise.all([
           api('/admin/stats'),
-          api('/admin/operations')
+          api('/admin/operations'),
+          api('/admin/config'),
+          api('/admin/drivers')
         ])
         setStats(s)
         setOperations(Array.isArray(ops) ? ops : [])
+        if (cfg && !cfg.error) setConfig(cfg)
+        if (Array.isArray(drvs)) setDrivers(drvs)
       } else if (tab === 'Financeiro') {
         setStats(await api('/admin/stats'))
       } else if (tab === 'Operações') {
         const ops = await api('/admin/operations')
         setOperations(Array.isArray(ops) ? ops : [])
       } else if (tab === 'Motoristas') {
-        const drvs = await api('/admin/drivers')
+        const [drvs, cfg] = await Promise.all([
+          api('/admin/drivers'),
+          api('/admin/config')
+        ])
         setDrivers(Array.isArray(drvs) ? drvs : [])
+        if (cfg && !cfg.error) setConfig(cfg)
       } else if (tab === 'Passageiros') {
         const psgs = await api('/admin/passengers')
         setPassengers(Array.isArray(psgs) ? psgs : [])
@@ -112,12 +120,23 @@ export default function AdminPanel() {
     }
   }, [load, tab])
 
-  // Ações de Motorista
+  // Ações de Motorista & Pré-Cadastro
   const approveDriver = async (id, val) => {
     const r = await api(`/admin/users/${id}/approve`, { method: 'PUT', body: JSON.stringify({ isApproved: val }) })
     if (r.error) return showToast(r.error, 'error')
-    showToast(val ? 'Motorista aprovado e ativado com sucesso!' : 'Motorista suspenso temporariamente!')
+    showToast(val ? '✓ Motorista aprovado e ativado para a estreia com sucesso!' : 'Motorista suspenso temporariamente!')
     load()
+  }
+
+  const toggleAppLaunch = async () => {
+    const nextVal = !config?.isAppLive
+    const r = await api('/admin/config', { 
+      method: 'PUT', 
+      body: JSON.stringify({ isAppLive: nextVal, launchStatus: nextVal ? 'LIVE' : 'PRE_LAUNCH' }) 
+    })
+    if (r.error) return showToast(r.error, 'error')
+    setConfig(r)
+    showToast(nextVal ? '🚀 Estreia Oficial do App LIBERADA para todos os passageiros!' : '⏸️ Plataforma em Fase de Pré-Cadastro (Aguardando Estreia).')
   }
 
   const handleAddCredits = async () => {
@@ -165,12 +184,19 @@ export default function AdminPanel() {
     load()
   }
 
+  // Contadores de Motoristas
+  const pendingDriversCount = drivers.filter(d => !d.isApproved).length
+  const approvedDriversCount = drivers.filter(d => d.isApproved).length
+
   // Filtros aplicados
   const filteredDrivers = drivers.filter(d => {
     const matchesSearch =
       (d.name || '').toLowerCase().includes(search.toLowerCase()) ||
       (d.email || '').toLowerCase().includes(search.toLowerCase()) ||
-      (d.carPlate || '').toLowerCase().includes(search.toLowerCase())
+      (d.phone || '').toLowerCase().includes(search.toLowerCase()) ||
+      (d.carPlate || '').toLowerCase().includes(search.toLowerCase()) ||
+      (d.carModel || '').toLowerCase().includes(search.toLowerCase())
+    if (statusFilter === 'PENDING') return matchesSearch && !d.isApproved
     if (statusFilter === 'ACTIVE') return matchesSearch && d.isApproved
     if (statusFilter === 'SUSPENDED') return matchesSearch && !d.isApproved
     return matchesSearch
@@ -300,7 +326,7 @@ export default function AdminPanel() {
               {tab === 'Configurações' && 'Parâmetros globais, taxas e regras do app'}
               {tab === 'Fundo' && 'Fundo acumulado de dividendos e top motoristas'}
               {tab === 'Saques' && 'Processamento e aprovação de resgates PIX'}
-              {tab === 'Documentação' && 'Guia mestre de operações e regras do Zomp'}
+              {tab === 'Documentação' && 'Manual e regras operacionais da plataforma'}
             </p>
           </div>
           <div className="ap-topbar-right">
@@ -314,11 +340,70 @@ export default function AdminPanel() {
         {/* ── DASHBOARD ── */}
         {tab === 'Dashboard' && stats && (
           <div className="ap-dashboard">
+            {/* CARD DE CONTROLE DE ESTREIA DO APP */}
+            <div className="ap-launch-control-card" style={{
+              background: config?.isAppLive 
+                ? 'linear-gradient(135deg, rgba(0, 230, 118, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%)' 
+                : 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.2) 100%)',
+              border: config?.isAppLive ? '1.5px solid #00E676' : '1.5px solid #f59e0b',
+              borderRadius: '18px',
+              padding: '20px 24px',
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '16px',
+              boxShadow: config?.isAppLive ? '0 8px 30px rgba(0, 230, 118, 0.2)' : '0 8px 30px rgba(245, 158, 11, 0.15)'
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '1.4rem' }}>{config?.isAppLive ? '🚀' : '⏳'}</span>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#fff', fontWeight: 900 }}>
+                    Status da Plataforma: {config?.isAppLive ? 'Estreia Oficial Liberada (App ao Vivo)' : 'Fase de Pré-Cadastro (Aguardando Estreia)'}
+                  </h3>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#cbd5e1', maxWidth: '680px', lineHeight: '1.4' }}>
+                  {config?.isAppLive 
+                    ? 'O app está 100% liberado para todos os passageiros solicitarem corridas estilo Uber/99 e motoristas realizarem viagens em tempo real.'
+                    : `Os motoristas estão realizando o pré-cadastro na Landing Page. Existem ${pendingDriversCount} motoristas aguardando aprovação.`}
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {pendingDriversCount > 0 && (
+                  <button 
+                    className="ap-btn ap-btn-primary" 
+                    onClick={() => { setTab('Motoristas'); setStatusFilter('PENDING'); }}
+                    style={{ background: '#f59e0b', color: '#000', fontWeight: 800 }}
+                  >
+                    ⏳ Ver {pendingDriversCount} Pré-Cadastros
+                  </button>
+                )}
+                <button
+                  className="ap-btn"
+                  onClick={toggleAppLaunch}
+                  style={{
+                    background: config?.isAppLive ? '#ef4444' : '#00E676',
+                    color: '#000',
+                    fontWeight: 900,
+                    fontSize: '0.9rem',
+                    padding: '12px 20px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+                  }}
+                >
+                  {config?.isAppLive ? '⏸️ Pausar Estreia (Modo Pré-Cadastro)' : '🚀 Liberar Estreia Oficial do App'}
+                </button>
+              </div>
+            </div>
+
             <div className="ap-stats-grid">
               <div className="ap-stat-card ap-stat-green" onClick={() => setTab('Motoristas')} style={{cursor:'pointer'}}>
                 <span className="ap-stat-val">{stats.totalDrivers}</span>
                 <span className="ap-stat-lbl">🚗 Motoristas Cadastrados</span>
-                <small className="ap-stat-hint">Clique para gerenciar</small>
+                <small className="ap-stat-hint">{pendingDriversCount} pendentes de aprovação</small>
               </div>
               <div className="ap-stat-card ap-stat-blue" onClick={() => setTab('Passageiros')} style={{cursor:'pointer'}}>
                 <span className="ap-stat-val">{stats.totalPassengers}</span>
@@ -364,11 +449,11 @@ export default function AdminPanel() {
               <div className="ap-rules-box">
                 <h3>⚡ Ações Rápidas do Administrador</h3>
                 <div className="ap-quick-actions-grid">
-                  <button className="ap-quick-btn" onClick={() => setTab('Motoristas')}>
-                    <span className="ap-qb-icon">🚗</span>
+                  <button className="ap-quick-btn" onClick={() => { setTab('Motoristas'); setStatusFilter('PENDING'); }}>
+                    <span className="ap-qb-icon">⏳</span>
                     <div>
-                      <strong>Aprovar Motoristas</strong>
-                      <small>Validar CNH e CRLV pendentes</small>
+                      <strong>Aprovar Pré-Cadastros ({pendingDriversCount})</strong>
+                      <small>Validar CNH, CRLV e perfil</small>
                     </div>
                   </button>
                   <button className="ap-quick-btn" onClick={() => setTab('Saques')}>
@@ -508,21 +593,45 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* ── MOTORISTAS ── */}
+        {/* ── MOTORISTAS & PRÉ-CADASTROS ── */}
         {tab === 'Motoristas' && (
           <div>
-            <div className="ap-filters-bar">
+            <div className="ap-filters-bar" style={{ flexWrap: 'wrap', gap: '12px' }}>
               <input
                 className="ap-search"
-                placeholder="🔍 Buscar por nome, e-mail ou placa do veículo..."
+                placeholder="🔍 Buscar por nome, e-mail, telefone, modelo ou placa..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
+                style={{ minWidth: '240px', flex: 1 }}
               />
-              <select className="ap-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-                <option value="ALL">Todos os Motoristas</option>
-                <option value="ACTIVE">Apenas Ativos</option>
-                <option value="SUSPENDED">Apenas Suspensos</option>
-              </select>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  className={`ap-btn-sm ${statusFilter === 'ALL' ? 'ap-btn-primary' : 'ap-btn-secondary'}`}
+                  onClick={() => setStatusFilter('ALL')}
+                >
+                  Todos ({drivers.length})
+                </button>
+                <button
+                  className={`ap-btn-sm ${statusFilter === 'PENDING' ? 'ap-btn-primary' : 'ap-btn-secondary'}`}
+                  onClick={() => setStatusFilter('PENDING')}
+                  style={pendingDriversCount > 0 ? { border: '1.5px solid #f59e0b', color: statusFilter === 'PENDING' ? '#000' : '#f59e0b' } : {}}
+                >
+                  ⏳ Pré-Cadastros Pendentes ({pendingDriversCount})
+                </button>
+                <button
+                  className={`ap-btn-sm ${statusFilter === 'ACTIVE' ? 'ap-btn-primary' : 'ap-btn-secondary'}`}
+                  onClick={() => setStatusFilter('ACTIVE')}
+                >
+                  ✅ Aprovados ({approvedDriversCount})
+                </button>
+                <button
+                  className={`ap-btn-sm ${statusFilter === 'SUSPENDED' ? 'ap-btn-primary' : 'ap-btn-secondary'}`}
+                  onClick={() => setStatusFilter('SUSPENDED')}
+                >
+                  ⛔ Suspensos ({drivers.filter(d => !d.isApproved).length})
+                </button>
+              </div>
             </div>
 
             <div className="ap-table-wrap">
@@ -531,52 +640,76 @@ export default function AdminPanel() {
                   <tr>
                     <th>Motorista</th>
                     <th>Contato</th>
-                    <th>Veículo / Placa</th>
+                    <th>Tipo / Veículo / Placa</th>
                     <th>Créditos</th>
                     <th>Saldo Royalties</th>
-                    <th>Nota</th>
-                    <th>Status</th>
-                    <th>Ações</th>
+                    <th>Status de Aprovação</th>
+                    <th>Ações de Credenciamento</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredDrivers.map(d => (
-                    <tr key={d.id}>
+                    <tr key={d.id} style={!d.isApproved ? { background: 'rgba(245, 158, 11, 0.04)' } : {}}>
                       <td>
                         <strong>{d.name}</strong>
                         <div style={{fontSize:'0.75rem',color:'#71717a'}}>{d.email}</div>
+                        <div style={{fontSize:'0.70rem',color:'#94a3b8'}}>Cadastrado em {new Date(d.createdAt).toLocaleDateString('pt-BR')}</div>
                       </td>
-                      <td>{d.phone || d.pixKey || '—'}</td>
-                      <td>{d.carModel ? `${d.carModel} (${d.carPlate || '—'})` : '—'}</td>
+                      <td>
+                        <div>{d.phone || '—'}</div>
+                        {d.pixKey && <div style={{fontSize:'0.72rem',color:'#00E676'}}>PIX: {d.pixKey}</div>}
+                      </td>
+                      <td>
+                        <div>{d.vehicleType === 'moto' ? '🏍️ Moto' : '🚗 Carro'}</div>
+                        <strong>{d.carModel || 'Não informado'}</strong>
+                        {d.carPlate && <div style={{fontSize:'0.75rem',color:'#94a3b8'}}>{d.carPlate} ({d.carColor || 'Cor —'})</div>}
+                      </td>
                       <td><strong style={{color:'#3b82f6'}}>{safeNum(d.credits)}</strong></td>
                       <td><strong style={{color:'#00E676'}}>R$ {safeNum(d.balance).toFixed(2)}</strong></td>
-                      <td>⭐ {safeNum(d.rating, 5).toFixed(1)}</td>
                       <td>
-                        <span className={`ap-badge ${d.isApproved ? 'ap-badge-green' : 'ap-badge-red'}`}>
-                          {d.isApproved ? 'Ativo' : 'Suspenso'}
-                        </span>
+                        {d.isApproved ? (
+                          <span className="ap-badge ap-badge-green">✅ Aprovado para Estreia</span>
+                        ) : (
+                          <span className="ap-badge ap-badge-orange" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid #f59e0b' }}>
+                            ⏳ Pré-Cadastro Pendente
+                          </span>
+                        )}
                       </td>
                       <td>
-                        <button className="ap-btn-sm ap-btn-blue" onClick={() => setSelectedDriver(d)}>Ver</button>
-                        <button
-                          className={`ap-btn-sm ${d.isApproved ? 'ap-btn-danger' : 'ap-btn-success'}`}
-                          onClick={() => approveDriver(d.id, !d.isApproved)}
-                          style={{marginLeft:6}}
-                        >
-                          {d.isApproved ? 'Suspender' : 'Aprovar'}
-                        </button>
-                        <button
-                          className="ap-btn-sm ap-btn-primary"
-                          onClick={() => setCreditsModal(d)}
-                          style={{marginLeft:6}}
-                        >
-                          + Créditos
-                        </button>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <button className="ap-btn-sm ap-btn-blue" onClick={() => setSelectedDriver(d)}>
+                            Ver Docs
+                          </button>
+                          
+                          {!d.isApproved ? (
+                            <button
+                              className="ap-btn-sm ap-btn-success"
+                              onClick={() => approveDriver(d.id, true)}
+                              style={{ fontWeight: 800 }}
+                            >
+                              ✓ Aprovar Pré-Cadastro
+                            </button>
+                          ) : (
+                            <button
+                              className="ap-btn-sm ap-btn-danger"
+                              onClick={() => approveDriver(d.id, false)}
+                            >
+                              Suspender
+                            </button>
+                          )}
+
+                          <button
+                            className="ap-btn-sm ap-btn-primary"
+                            onClick={() => setCreditsModal(d)}
+                          >
+                            + Créditos
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                   {filteredDrivers.length === 0 && (
-                    <tr><td colSpan="8" className="ap-table-empty">Nenhum motorista encontrado.</td></tr>
+                    <tr><td colSpan="7" className="ap-table-empty">Nenhum motorista encontrado com os filtros atuais.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -837,10 +970,16 @@ export default function AdminPanel() {
                   <div className="ap-info-item"><span className="ap-info-lbl">Status Atual</span><span className="ap-info-val">{selectedDriver.isApproved ? '✅ Aprovado e Ativo' : '⛔ Suspenso'}</span></div>
                 </div>
 
-                {(selectedDriver.cnh || selectedDriver.crlv) && (
+                {(selectedDriver.photo || selectedDriver.cnh || selectedDriver.crlv) && (
                   <div className="ap-docs-section">
-                    <h4>Documentação Enviada</h4>
+                    <h4>Documentação & Fotos Enviadas</h4>
                     <div className="ap-docs-grid">
+                      {selectedDriver.photo && (
+                        <div className="ap-img-box" onClick={() => window.open(selectedDriver.photo, '_blank')}>
+                          <span>Foto de Perfil (Toque para expandir)</span>
+                          <img src={selectedDriver.photo} alt="Foto de Perfil" />
+                        </div>
+                      )}
                       {selectedDriver.cnh && (
                         <div className="ap-img-box" onClick={() => window.open(selectedDriver.cnh, '_blank')}>
                           <span>CNH (Toque para expandir)</span>
@@ -867,8 +1006,9 @@ export default function AdminPanel() {
                   <button
                     className={`ap-btn ${selectedDriver.isApproved ? 'ap-btn-danger' : 'ap-btn-success'}`}
                     onClick={() => { approveDriver(selectedDriver.id, !selectedDriver.isApproved); setSelectedDriver(null) }}
+                    style={{ fontWeight: 800 }}
                   >
-                    {selectedDriver.isApproved ? 'Suspender Motorista' : 'Aprovar Motorista'}
+                    {selectedDriver.isApproved ? '⛔ Suspender Motorista' : '✓ Aprovar Pré-Cadastro (Liberar p/ Estreia)'}
                   </button>
                 </div>
               </div>

@@ -126,3 +126,127 @@ exports.googleAuth = async (req, res) => {
     res.status(500).json({ error: 'Erro na autenticação com Google' });
   }
 };
+
+// ── PRÉ-CADASTRO COMPLETO DO MOTORISTA (LANDING PAGE & ONBOARDING) ──
+exports.driverPreRegister = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      phone,
+      pixKey,
+      vehicleType = 'car',
+      carModel,
+      carPlate,
+      carColor,
+      photo,
+      cnh,
+      crlv
+    } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Nome, e-mail e senha são obrigatórios.' });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    const qrCode = `ZOMP-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    // Verificar se já existe
+    const { rows: existingRows } = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
+    let user;
+
+    if (existingRows.length > 0) {
+      const existing = existingRows[0];
+      if (existing.role === 'DRIVER' && !existing.isApproved) {
+        // Atualizar os dados do pré-cadastro pendente
+        const { rows: updatedRows } = await pool.query(`
+          UPDATE "User" SET
+            name = COALESCE($2, name),
+            password = $3,
+            phone = COALESCE($4, phone),
+            "pixKey" = COALESCE($5, "pixKey"),
+            "vehicleType" = COALESCE($6, "vehicleType"),
+            "carModel" = COALESCE($7, "carModel"),
+            "carPlate" = COALESCE($8, "carPlate"),
+            "carColor" = COALESCE($9, "carColor"),
+            photo = COALESCE($10, photo),
+            cnh = COALESCE($11, cnh),
+            crlv = COALESCE($12, crlv),
+            "updatedAt" = NOW()
+          WHERE id = $1
+          RETURNING id, name, email, role, phone, "pixKey", "vehicleType", "carModel", "carPlate", "carColor", photo, cnh, crlv, "isApproved", "qrCode", "createdAt"
+        `, [
+          existing.id,
+          name,
+          hash,
+          phone || null,
+          pixKey || null,
+          vehicleType || 'car',
+          carModel || null,
+          carPlate ? carPlate.toUpperCase() : null,
+          carColor || null,
+          photo || null,
+          cnh || null,
+          crlv || null
+        ]);
+        user = updatedRows[0];
+      } else {
+        return res.status(409).json({ error: 'Este e-mail já está cadastrado no sistema! Faça login com suas credenciais.' });
+      }
+    } else {
+      // Inserir novo motorista com isApproved = false (Aguardando Aprovação do Admin)
+      const { rows } = await pool.query(`
+        INSERT INTO "User" (
+          name, email, password, role, phone, "pixKey", "vehicleType",
+          "carModel", "carPlate", "carColor", photo, cnh, crlv,
+          "qrCode", "isApproved", credits, balance, rating
+        )
+        VALUES ($1, $2, $3, 'DRIVER', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, false, 0, 0, 5.0)
+        RETURNING id, name, email, role, phone, "pixKey", "vehicleType", "carModel", "carPlate", "carColor", photo, cnh, crlv, "isApproved", "qrCode", "createdAt"
+      `, [
+        name,
+        email,
+        hash,
+        phone || null,
+        pixKey || null,
+        vehicleType || 'car',
+        carModel || null,
+        carPlate ? carPlate.toUpperCase() : null,
+        carColor || null,
+        photo || null,
+        cnh || null,
+        crlv || null,
+        qrCode
+      ]);
+      user = rows[0];
+    }
+
+    const authToken = jwt.sign({ id: user.id, role: 'DRIVER' }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.json({
+      message: 'Pré-cadastro realizado com sucesso! Seus dados foram enviados para o Painel de Controle e estão aguardando validação para a grande estreia do app.',
+      token: authToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: 'DRIVER',
+        phone: user.phone,
+        pixKey: user.pixKey,
+        vehicleType: user.vehicleType,
+        carModel: user.carModel,
+        carPlate: user.carPlate,
+        carColor: user.carColor,
+        isApproved: false,
+        qrCode: user.qrCode
+      }
+    });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Este e-mail ou placa já está cadastrado!' });
+    }
+    console.error('Erro no pré-cadastro de motorista:', err.message);
+    res.status(500).json({ error: 'Erro interno ao processar pré-cadastro.' });
+  }
+};

@@ -82,6 +82,11 @@ async function initDB() {
         "createdAt" TIMESTAMP DEFAULT NOW(),
         "updatedAt" TIMESTAMP DEFAULT NOW()
       );
+
+      -- Migrações incrementais seguras
+      ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "vehicleType" TEXT DEFAULT 'car';
+      ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "isAppLive" BOOLEAN DEFAULT false;
+      ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "launchStatus" TEXT DEFAULT 'PRE_LAUNCH';
     `);
 
     // Injeção de Admin Master

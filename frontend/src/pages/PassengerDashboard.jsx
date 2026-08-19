@@ -182,6 +182,7 @@ export default function PassengerDashboard() {
   const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
   const [compPriceRead, setCompPriceRead] = useState(0)
   const [selectedTravelCategory, setSelectedTravelCategory] = useState('todos')
+  const [isTravelSuggestionsOpen, setIsTravelSuggestionsOpen] = useState(false)
   
   const userEmail = user?.email?.toLowerCase() || ''
   const isTestAccount = userEmail.includes('cliente@zomp') || userEmail.includes('cliente@zom') || userEmail.includes('teste')
@@ -645,6 +646,7 @@ const POPULAR_DESTINATIONS = [
       }
 
       setSuggestions([]);
+      setIsTravelSuggestionsOpen(false);
 
       if (oCoords && coords) {
         await calculateRoute(oCoords, coords, []);
@@ -1358,66 +1360,6 @@ const POPULAR_DESTINATIONS = [
               ⏳ Calculando melhor rota...
             </div>
           )}
-        </div>
-      )}
-
-      {/* ===== IDLE: SUGESTÕES DE VIAGEM (Para onde vamos hoje?) ===== */}
-      {rideState === 'IDLE' && suggestions.length === 0 && (
-        <div className="travel-suggestions-sheet animate-fade-in-up">
-          <div className="travel-suggestions-header">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.15rem' }}>✨</span>
-                <span style={{ fontSize: '0.92rem', fontWeight: 900, color: '#111827' }}>Sugestões de Viagem</span>
-              </div>
-              <span style={{ fontSize: '0.70rem', fontWeight: 700, color: '#059669', background: '#ecfdf5', padding: '3px 8px', borderRadius: '100px' }}>
-                1 Toque p/ Pedir
-              </span>
-            </div>
-            
-            {/* Categorias / Chips de Filtro */}
-            <div className="travel-category-chips">
-              {[
-                { id: 'todos', label: '🔥 Populares', icon: '🔥' },
-                { id: 'aeroportos', label: 'Aeroportos', icon: '✈️' },
-                { id: 'shoppings', label: 'Shoppings', icon: '🛍️' },
-                { id: 'praias', label: 'Praias', icon: '🏖️' },
-                { id: 'turismo', label: 'Turismo', icon: '⚽' },
-                { id: 'terminais', label: 'Terminais', icon: '🚌' }
-              ].map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedTravelCategory(cat.id)}
-                  className={`travel-cat-chip ${selectedTravelCategory === cat.id ? 'active' : ''}`}
-                >
-                  <span>{cat.icon}</span>
-                  <span>{cat.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Grid / Lista de Sugestões de Destino */}
-          <div className="travel-destinations-scroll">
-            {filteredDestinations.slice(0, 6).map((dest, idx) => (
-              <div
-                key={idx}
-                className="travel-destination-card"
-                onClick={() => handleSelectDestinationSuggestion(dest)}
-              >
-                <div className="travel-dest-icon-box">
-                  <span>{dest.icon || '📍'}</span>
-                </div>
-                <div className="travel-dest-info">
-                  <div className="travel-dest-title">{dest.title}</div>
-                  <div className="travel-dest-sub">{dest.subtitle}</div>
-                </div>
-                {dest.tag && (
-                  <span className="travel-dest-tag">{dest.tag}</span>
-                )}
-              </div>
-            ))}
-          </div>
         </div>
       )}
 

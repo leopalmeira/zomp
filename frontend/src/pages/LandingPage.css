@@ -1243,3 +1243,366 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── MODAL DE PRÉ-CADASTRO DE MOTORISTAS ── */
+.lp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.lp-modal-card {
+  background: #121824;
+  border: 1px solid rgba(151, 233, 0, 0.25);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(151, 233, 0, 0.1);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  color: #fff;
+  position: relative;
+}
+
+.lp-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 14px;
+}
+
+.lp-modal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(151, 233, 0, 0.12);
+  color: #97E900;
+  border: 1px solid rgba(151, 233, 0, 0.3);
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.lp-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.lp-modal-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lp-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* Stepper */
+.lp-modal-stepper {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.lp-step-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lp-step-pill.active {
+  background: rgba(151, 233, 0, 0.15);
+  border-color: #97E900;
+  color: #97E900;
+}
+
+.lp-step-pill.done {
+  background: rgba(151, 233, 0, 0.08);
+  border-color: rgba(151, 233, 0, 0.4);
+  color: #e2e8f0;
+}
+
+.lp-step-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.70rem;
+}
+
+.lp-step-pill.active .lp-step-num {
+  background: #97E900;
+  color: #060d1a;
+  font-weight: 900;
+}
+
+.lp-step-pill.done .lp-step-num {
+  background: #97E900;
+  color: #060d1a;
+}
+
+/* Inputs */
+.lp-input-group {
+  margin-bottom: 14px;
+}
+
+.lp-input-group label {
+  display: block;
+  font-size: 0.80rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin-bottom: 6px;
+}
+
+.lp-modal-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-size: 0.90rem;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.lp-modal-input:focus {
+  border-color: #97E900;
+  background: rgba(151, 233, 0, 0.03);
+  box-shadow: 0 0 0 3px rgba(151, 233, 0, 0.15);
+}
+
+.lp-input-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .lp-input-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Seletor de Veículo */
+.lp-vehicle-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.lp-veh-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lp-veh-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(151, 233, 0, 0.3);
+}
+
+.lp-veh-card.selected {
+  background: rgba(151, 233, 0, 0.12);
+  border-color: #97E900;
+  box-shadow: 0 0 15px rgba(151, 233, 0, 0.15);
+}
+
+.lp-veh-card strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.lp-veh-card small {
+  display: block;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+/* Upload de Docs */
+.lp-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.lp-upload-lbl {
+  display: block;
+  font-size: 0.80rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin-bottom: 6px;
+}
+
+.lp-upload-btn-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lp-upload-btn-box:hover {
+  border-color: #97E900;
+  background: rgba(151, 233, 0, 0.04);
+}
+
+.lp-upload-btn-box.uploaded {
+  border-style: solid;
+  border-color: #00E676;
+  background: rgba(0, 230, 118, 0.08);
+  color: #00E676;
+  font-weight: 700;
+}
+
+.lp-preview-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #00E676;
+}
+
+/* Ações */
+.lp-modal-actions {
+  margin-top: 20px;
+}
+
+.lp-modal-actions-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.lp-cta-modal {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 0.95rem;
+}
+
+.lp-btn-back {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lp-btn-back:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* Erro */
+.lp-error-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+/* Sucesso */
+.lp-success-screen {
+  text-align: center;
+  padding: 10px 0;
+}
+
+.lp-success-icon-wrap {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(0, 230, 118, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px auto;
+  border: 2px solid #00E676;
+}
+
+.lp-success-info-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lp-s-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  color: #cbd5e1;
+}
+
+.lp-s-row strong {
+  color: #fff;
+}

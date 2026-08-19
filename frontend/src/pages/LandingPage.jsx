@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, useInView } from 'framer-motion'
-import { TrendingUp, User, Shield, Zap, Gift, Smartphone, CheckCircle, XCircle, ChevronDown, ArrowRight } from 'lucide-react'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { 
+  TrendingUp, User, Shield, Zap, Gift, Smartphone, CheckCircle, 
+  XCircle, ChevronDown, ArrowRight, Car, Bike, FileText, Camera, 
+  Check, X, Lock, Phone, CreditCard, AlertCircle, Sparkles 
+} from 'lucide-react'
+import { driverPreRegister } from '../services/api'
 import './LandingPage.css'
 
 /* ── Count-up animation ── */
@@ -56,6 +61,96 @@ export default function LandingPage() {
   const navigate = useNavigate()
   const [passengers, setPassengers] = useState(400)
 
+  // Estados do Modal de Pré-Cadastro do Motorista
+  const [showPreRegisterModal, setShowPreRegisterModal] = useState(false)
+  const [preRegStep, setPreRegStep] = useState(1)
+  const [preRegLoading, setPreRegLoading] = useState(false)
+  const [preRegError, setPreRegError] = useState('')
+  const [preRegSuccess, setPreRegSuccess] = useState(false)
+  const [registeredUser, setRegisteredUser] = useState(null)
+
+  const [preRegForm, setPreRegForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    pixKey: '',
+    vehicleType: 'car',
+    carModel: '',
+    carPlate: '',
+    carColor: '',
+    photo: null,
+    photoPreview: null,
+    cnh: null,
+    cnhPreview: null,
+    crlv: null,
+    crlvPreview: null
+  })
+
+  // Converter arquivo para base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = error => reject(error)
+    })
+  }
+
+  const handleFileChange = async (e, field) => {
+    const file = e.target.files[0]
+    if (file) {
+      const base64 = await fileToBase64(file)
+      setPreRegForm(prev => ({
+        ...prev,
+        [field]: base64,
+        [`${field}Preview`]: URL.createObjectURL(file)
+      }))
+    }
+  }
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setPreRegForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const openPreRegister = () => {
+    setPreRegError('')
+    setPreRegSuccess(false)
+    setPreRegStep(1)
+    setShowPreRegisterModal(true)
+  }
+
+  const handlePreRegSubmit = async (e) => {
+    if (e) e.preventDefault()
+    setPreRegError('')
+    setPreRegLoading(true)
+    try {
+      const payload = {
+        name: preRegForm.name,
+        email: preRegForm.email,
+        password: preRegForm.password,
+        phone: preRegForm.phone,
+        pixKey: preRegForm.pixKey,
+        vehicleType: preRegForm.vehicleType,
+        carModel: preRegForm.carModel,
+        carPlate: preRegForm.carPlate ? preRegForm.carPlate.toUpperCase().trim() : '',
+        carColor: preRegForm.carColor,
+        photo: preRegForm.photo,
+        cnh: preRegForm.cnh,
+        crlv: preRegForm.crlv
+      }
+
+      const res = await driverPreRegister(payload)
+      setRegisteredUser(res.user)
+      setPreRegSuccess(true)
+    } catch (err) {
+      setPreRegError(err.message || 'Erro ao enviar pré-cadastro. Verifique os dados.')
+    } finally {
+      setPreRegLoading(false)
+    }
+  }
+
   // Simulation Logic: 2 rides/week per passenger, 4 weeks/month, R$ 0.30 royalty
   const monthlyPassive = passengers * 2 * 4 * 0.30
   const quarterlyPassive = monthlyPassive * 3
@@ -65,12 +160,11 @@ export default function LandingPage() {
   const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.12 } } }
 
   const handleCta = async () => {
-    // Attempt PWA Install
     if (window.deferredPrompt) {
       window.deferredPrompt.prompt();
       window.deferredPrompt = null;
     }
-    navigate('/motorista/cadastro')
+    openPreRegister()
   }
 
   return (
@@ -423,6 +517,395 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* ── MODAL INTERATIVO DE PRÉ-CADASTRO COMPLETO ── */}
+      <AnimatePresence>
+        {showPreRegisterModal && (
+          <div className="lp-modal-overlay" onClick={() => setShowPreRegisterModal(false)}>
+            <motion.div
+              className="lp-modal-card"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ duration: 0.25 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header Modal */}
+              <div className="lp-modal-head">
+                <div>
+                  <div className="lp-modal-badge">
+                    <Sparkles size={13} />
+                    <span>Pré-Cadastro Pioneiro RJ</span>
+                  </div>
+                  <h3 className="lp-modal-title">Credenciamento de Motorista</h3>
+                </div>
+                <button
+                  type="button"
+                  className="lp-modal-close"
+                  onClick={() => setShowPreRegisterModal(false)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Se sucesso */}
+              {preRegSuccess ? (
+                <div className="lp-success-screen">
+                  <div className="lp-success-icon-wrap">
+                    <CheckCircle size={48} color="#00E676" />
+                  </div>
+                  <h3 style={{ color: '#fff', fontSize: '1.35rem', fontWeight: 900, marginBottom: '8px' }}>
+                    Pré-Cadastro Enviado com Sucesso! 🚀
+                  </h3>
+                  <p style={{ color: '#cbd5e1', fontSize: '0.92rem', lineHeight: '1.5', marginBottom: '20px' }}>
+                    Parabéns, <strong>{registeredUser?.name || preRegForm.name}</strong>! Seus dados e documentos foram enviados para o <strong>Painel de Controle da Zomp</strong>.
+                  </p>
+
+                  <div className="lp-success-info-box">
+                    <div className="lp-s-row">
+                      <span>Status do Cadastro:</span>
+                      <strong style={{ color: '#f59e0b' }}>⏳ Aguardando Aprovação</strong>
+                    </div>
+                    <div className="lp-s-row">
+                      <span>Vaga Garantida:</span>
+                      <strong style={{ color: '#00E676' }}>Rio de Janeiro (Pioneiro)</strong>
+                    </div>
+                    <div className="lp-s-row">
+                      <span>Veículo / Placa:</span>
+                      <strong>{preRegForm.carModel} ({preRegForm.carPlate.toUpperCase()})</strong>
+                    </div>
+                    <div className="lp-s-row">
+                      <span>Royalties por Corrida:</span>
+                      <strong style={{ color: '#00E676' }}>R$ 0,30 por passageiro indicado</strong>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '14px 0 20px', lineHeight: '1.4' }}>
+                    Nossa equipe de suporte validará sua documentação no painel. Assim que a grande estreia do app for liberada, você já estará pronto para faturar!
+                  </p>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      className="lp-cta-btn lp-cta-modal"
+                      onClick={() => navigate('/motorista/dashboard')}
+                    >
+                      Acessar Meu Painel Zomp →
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Formulário Multi-Passos */
+                <div>
+                  {/* Barra de Progresso */}
+                  <div className="lp-modal-stepper">
+                    {[
+                      { step: 1, label: 'Acesso & Contato' },
+                      { step: 2, label: 'Veículo' },
+                      { step: 3, label: 'Documentação' },
+                    ].map((s) => (
+                      <div
+                        key={s.step}
+                        className={`lp-step-pill ${preRegStep === s.step ? 'active' : preRegStep > s.step ? 'done' : ''}`}
+                        onClick={() => {
+                          if (preRegStep > s.step) setPreRegStep(s.step)
+                        }}
+                      >
+                        <span className="lp-step-num">{preRegStep > s.step ? '✓' : s.step}</span>
+                        <span className="lp-step-lbl">{s.label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {preRegError && (
+                    <div className="lp-error-alert">
+                      <AlertCircle size={16} />
+                      <span>{preRegError}</span>
+                    </div>
+                  )}
+
+                  {/* PASSO 1: Dados Pessoais e Acesso */}
+                  {preRegStep === 1 && (
+                    <div className="lp-form-step animate-fade-in">
+                      <div className="lp-input-group">
+                        <label>Nome Completo *</label>
+                        <input
+                          type="text"
+                          name="name"
+                          placeholder="Como no documento"
+                          value={preRegForm.name}
+                          onChange={handleInputChange}
+                          className="lp-modal-input"
+                          required
+                        />
+                      </div>
+
+                      <div className="lp-input-grid-2">
+                        <div className="lp-input-group">
+                          <label>E-mail *</label>
+                          <input
+                            type="email"
+                            name="email"
+                            placeholder="seu@email.com"
+                            value={preRegForm.email}
+                            onChange={handleInputChange}
+                            className="lp-modal-input"
+                            required
+                          />
+                        </div>
+                        <div className="lp-input-group">
+                          <label>Senha de Acesso *</label>
+                          <input
+                            type="password"
+                            name="password"
+                            placeholder="Mínimo 6 dígitos"
+                            value={preRegForm.password}
+                            onChange={handleInputChange}
+                            className="lp-modal-input"
+                            required
+                            minLength={6}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="lp-input-grid-2">
+                        <div className="lp-input-group">
+                          <label>WhatsApp / Telefone *</label>
+                          <input
+                            type="tel"
+                            name="phone"
+                            placeholder="(21) 99999-9999"
+                            value={preRegForm.phone}
+                            onChange={handleInputChange}
+                            className="lp-modal-input"
+                            required
+                          />
+                        </div>
+                        <div className="lp-input-group">
+                          <label>Chave PIX (Para Repasses) *</label>
+                          <input
+                            type="text"
+                            name="pixKey"
+                            placeholder="CPF, Telefone ou E-mail"
+                            value={preRegForm.pixKey}
+                            onChange={handleInputChange}
+                            className="lp-modal-input"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="lp-modal-actions">
+                        <button
+                          type="button"
+                          className="lp-cta-btn lp-cta-modal"
+                          disabled={!preRegForm.name || !preRegForm.email || !preRegForm.password || !preRegForm.phone}
+                          onClick={() => {
+                            if (!preRegForm.name || !preRegForm.email || !preRegForm.password || !preRegForm.phone) {
+                              setPreRegError('Por favor, preencha todos os campos obrigatórios.')
+                              return
+                            }
+                            setPreRegError('')
+                            setPreRegStep(2)
+                          }}
+                        >
+                          Avançar para Dados do Veículo →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PASSO 2: Veículo */}
+                  {preRegStep === 2 && (
+                    <div className="lp-form-step animate-fade-in">
+                      <div className="lp-input-group">
+                        <label>Categoria de Transporte *</label>
+                        <div className="lp-vehicle-selector">
+                          <div
+                            className={`lp-veh-card ${preRegForm.vehicleType === 'car' ? 'selected' : ''}`}
+                            onClick={() => setPreRegForm(p => ({ ...p, vehicleType: 'car' }))}
+                          >
+                            <Car size={26} color={preRegForm.vehicleType === 'car' ? '#00E676' : '#94a3b8'} />
+                            <div>
+                              <strong>Carro</strong>
+                              <small>Corridas e Conforto</small>
+                            </div>
+                          </div>
+
+                          <div
+                            className={`lp-veh-card ${preRegForm.vehicleType === 'moto' ? 'selected' : ''}`}
+                            onClick={() => setPreRegForm(p => ({ ...p, vehicleType: 'moto' }))}
+                          >
+                            <Bike size={26} color={preRegForm.vehicleType === 'moto' ? '#00E676' : '#94a3b8'} />
+                            <div>
+                              <strong>Moto</strong>
+                              <small>Rapidez e Economia</small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="lp-input-group">
+                        <label>Modelo do Veículo *</label>
+                        <input
+                          type="text"
+                          name="carModel"
+                          placeholder={preRegForm.vehicleType === 'moto' ? 'Ex: Honda CG 160 Fan' : 'Ex: Chevrolet Onix 1.0'}
+                          value={preRegForm.carModel}
+                          onChange={handleInputChange}
+                          className="lp-modal-input"
+                          required
+                        />
+                      </div>
+
+                      <div className="lp-input-grid-2">
+                        <div className="lp-input-group">
+                          <label>Placa do Veículo *</label>
+                          <input
+                            type="text"
+                            name="carPlate"
+                            placeholder="ABC-1234 ou ABC1D23"
+                            value={preRegForm.carPlate}
+                            onChange={(e) => setPreRegForm(p => ({ ...p, carPlate: e.target.value.toUpperCase() }))}
+                            className="lp-modal-input"
+                            required
+                          />
+                        </div>
+                        <div className="lp-input-group">
+                          <label>Cor *</label>
+                          <input
+                            type="text"
+                            name="carColor"
+                            placeholder="Ex: Prata, Preto, Vermelho"
+                            value={preRegForm.carColor}
+                            onChange={handleInputChange}
+                            className="lp-modal-input"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="lp-modal-actions-between">
+                        <button
+                          type="button"
+                          className="lp-btn-back"
+                          onClick={() => setPreRegStep(1)}
+                        >
+                          ← Voltar
+                        </button>
+                        <button
+                          type="button"
+                          className="lp-cta-btn lp-cta-modal"
+                          disabled={!preRegForm.carModel || !preRegForm.carPlate}
+                          onClick={() => {
+                            if (!preRegForm.carModel || !preRegForm.carPlate) {
+                              setPreRegError('Informe o modelo e a placa do veículo.')
+                              return
+                            }
+                            setPreRegError('')
+                            setPreRegStep(3)
+                          }}
+                        >
+                          Avançar para Documentação →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PASSO 3: Documentação */}
+                  {preRegStep === 3 && (
+                    <div className="lp-form-step animate-fade-in">
+                      <p style={{ fontSize: '0.84rem', color: '#94a3b8', marginBottom: '14px' }}>
+                        Envie fotos nítidas dos documentos para que a equipe aprove seu cadastro no Painel de Controle:
+                      </p>
+
+                      <div className="lp-upload-grid">
+                        {/* Foto de Perfil */}
+                        <div className="lp-upload-item">
+                          <label className="lp-upload-lbl">📸 Foto de Perfil (Rosto)</label>
+                          <input
+                            type="file"
+                            id="modal-photo"
+                            accept="image/*"
+                            hidden
+                            onChange={(e) => handleFileChange(e, 'photo')}
+                          />
+                          <label htmlFor="modal-photo" className={`lp-upload-btn-box ${preRegForm.photo ? 'uploaded' : ''}`}>
+                            {preRegForm.photoPreview ? (
+                              <img src={preRegForm.photoPreview} alt="Perfil" className="lp-preview-thumb" />
+                            ) : (
+                              <Camera size={22} color="#94a3b8" />
+                            )}
+                            <span>{preRegForm.photo ? '✓ Foto Selecionada' : 'Toque para escolher foto'}</span>
+                          </label>
+                        </div>
+
+                        {/* CNH */}
+                        <div className="lp-upload-item">
+                          <label className="lp-upload-lbl">🪪 Foto da CNH (Habilitação)</label>
+                          <input
+                            type="file"
+                            id="modal-cnh"
+                            accept="image/*"
+                            hidden
+                            onChange={(e) => handleFileChange(e, 'cnh')}
+                          />
+                          <label htmlFor="modal-cnh" className={`lp-upload-btn-box ${preRegForm.cnh ? 'uploaded' : ''}`}>
+                            {preRegForm.cnhPreview ? (
+                              <img src={preRegForm.cnhPreview} alt="CNH" className="lp-preview-thumb" />
+                            ) : (
+                              <FileText size={22} color="#94a3b8" />
+                            )}
+                            <span>{preRegForm.cnh ? '✓ CNH Selecionada' : 'Toque para escolher CNH'}</span>
+                          </label>
+                        </div>
+
+                        {/* CRLV */}
+                        <div className="lp-upload-item">
+                          <label className="lp-upload-lbl">📄 Foto do CRLV (Doc. do Veículo)</label>
+                          <input
+                            type="file"
+                            id="modal-crlv"
+                            accept="image/*"
+                            hidden
+                            onChange={(e) => handleFileChange(e, 'crlv')}
+                          />
+                          <label htmlFor="modal-crlv" className={`lp-upload-btn-box ${preRegForm.crlv ? 'uploaded' : ''}`}>
+                            {preRegForm.crlvPreview ? (
+                              <img src={preRegForm.crlvPreview} alt="CRLV" className="lp-preview-thumb" />
+                            ) : (
+                              <FileText size={22} color="#94a3b8" />
+                            )}
+                            <span>{preRegForm.crlv ? '✓ CRLV Selecionado' : 'Toque para escolher CRLV'}</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="lp-modal-actions-between" style={{ marginTop: '20px' }}>
+                        <button
+                          type="button"
+                          className="lp-btn-back"
+                          onClick={() => setPreRegStep(2)}
+                          disabled={preRegLoading}
+                        >
+                          ← Voltar
+                        </button>
+                        <button
+                          type="button"
+                          className="lp-cta-btn lp-cta-modal"
+                          onClick={handlePreRegSubmit}
+                          disabled={preRegLoading}
+                        >
+                          {preRegLoading ? 'Enviando ao Painel...' : '🚀 Finalizar Pré-Cadastro'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

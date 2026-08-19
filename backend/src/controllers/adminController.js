@@ -102,7 +102,7 @@ exports.getDrivers = async (req, res) => {
     const { rows } = await pool.query(`
       SELECT u.id, u.name, u.email, u."isApproved", u."qrCode", u.credits, u.balance, u.rating,
         u."ridesAccepted", u."ridesMissed", u."ridesCompleted", u.phone, u."pixKey",
-        u.photo, u.cnh, u.crlv, u."carPlate", u."carModel", u."carColor", u."createdAt",
+        u.photo, u.cnh, u.crlv, u."carPlate", u."carModel", u."carColor", u."vehicleType", u."createdAt",
         (SELECT COUNT(*) FROM "Referral" r WHERE r."referrerId" = u.id) as "linkedPassengers"
       FROM "User" u WHERE u.role = 'DRIVER' ORDER BY u."createdAt" DESC
     `);
