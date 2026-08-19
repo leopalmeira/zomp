@@ -59,7 +59,7 @@ function Countdown() {
 
 export default function LandingPage() {
   const navigate = useNavigate()
-  const [passengers, setPassengers] = useState(400)
+  const [passengers, setPassengers] = useState(1000)
 
   // Estados do Modal de Pré-Cadastro do Motorista
   const [showPreRegisterModal, setShowPreRegisterModal] = useState(false)
@@ -151,9 +151,8 @@ export default function LandingPage() {
     }
   }
 
-  // Simulation Logic: 2 rides/week per passenger, 4 weeks/month, R$ 0.30 royalty
-  const monthlyPassive = passengers * 2 * 4 * 0.30
-  const quarterlyPassive = monthlyPassive * 3
+  // Simulation Logic: 3 rides/week per passenger, 4 weeks/month, R$ 0.30 royalty
+  const monthlyPassive = passengers * 3 * 4 * 0.30
   const yearlyPassive = monthlyPassive * 12
 
   const fadeUp = { hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { duration: 0.7, ease: 'easeOut' } } }
@@ -351,8 +350,8 @@ export default function LandingPage() {
                 <input
                   type="range"
                   min="0"
-                  max="1000"
-                  step="10"
+                  max="2000"
+                  step="50"
                   value={passengers}
                   onChange={(e) => setPassengers(parseInt(e.target.value))}
                   className="lp-slider"
@@ -361,10 +360,10 @@ export default function LandingPage() {
 
               <div className="lp-calc-header"><span>Métrica Operacional</span><span>Valor Estimado</span></div>
               <div className="lp-calc-row"><span>Clientes Ativos na Rede</span><strong>{passengers}</strong></div>
-              <div className="lp-calc-row"><span>Frequência Semanal Média</span><strong>2 viagens</strong></div>
+              <div className="lp-calc-row"><span>Frequência Semanal Média</span><strong>3 viagens</strong></div>
               <div className="lp-calc-row"><span>Royalty por Operação</span><strong className="lp-accent">R$ 0,30</strong></div>
               <div className="lp-calc-divider" />
-              <div className="lp-calc-row"><span>Volume de Viagens/Mês</span><strong>{(passengers * 2 * 4).toLocaleString('pt-BR')}</strong></div>
+              <div className="lp-calc-row"><span>Volume de Viagens/Mês</span><strong>{(passengers * 3 * 4).toLocaleString('pt-BR')}</strong></div>
               <div className="lp-calc-row lp-calc-sub"><span>Rendimento Mensal Passivo</span><strong className="lp-accent">R$ {monthlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
               <div className="lp-calc-divider" />
               <div className="lp-calc-row lp-calc-total">
@@ -450,14 +449,14 @@ export default function LandingPage() {
           <motion.div className="lp-wallet-text" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <motion.div className="lp-section-tag" variants={fadeUp}>💳 Carteira Zomp — Exemplo Estimado</motion.div>
             <motion.h2 className="lp-section-title lp-left-title" variants={fadeUp}>
-              Até R$ 960 na conta<br /><span className="lp-accent">todo mês (a cada 30 dias)</span>
+              Até R$ 3.600 na conta<br /><span className="lp-accent">todo mês (a cada 30 dias)</span>
             </motion.h2>
             <motion.p className="lp-section-sub lp-left-sub" variants={fadeUp}>
-              Com 400 clientes vinculados fazendo 2 corridas por semana, R$ 0,30 por corrida vai direto pra sua carteira Zomp. O saque é liberado a cada 30 dias via PIX.
+              Com 1.000 clientes vinculados fazendo 3 corridas por semana, R$ 0,30 por corrida vai direto pra sua carteira Zomp. O saque é liberado a cada 30 dias via PIX.
             </motion.p>
             <motion.div className="lp-wallet-stats" variants={fadeUp}>
-              <div className="lp-wstat"><span className="lp-wstat-val">~R$ 960</span><span className="lp-wstat-lbl">por mês</span></div>
-              <div className="lp-wstat"><span className="lp-wstat-val">~R$ 11.520</span><span className="lp-wstat-lbl">ao ano</span></div>
+              <div className="lp-wstat"><span className="lp-wstat-val">~R$ 3.600</span><span className="lp-wstat-lbl">por mês</span></div>
+              <div className="lp-wstat"><span className="lp-wstat-val">~R$ 43.200</span><span className="lp-wstat-lbl">ao ano</span></div>
               <div className="lp-wstat"><span className="lp-wstat-val">65</span><span className="lp-wstat-lbl">corridas/semana mín.</span></div>
             </motion.div>
             <motion.p className="lp-sim-disclaimer" variants={fadeUp}>
@@ -494,7 +493,7 @@ export default function LandingPage() {
         <motion.div className="lp-stats-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val"><CountUp target={5000} suffix="+" /></span><span className="lp-stat-lbl">Vagas no RJ</span></motion.div>
           <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">R$ 0,30</span><span className="lp-stat-lbl">Royalty por Corrida</span></motion.div>
-          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">~R$ 960</span><span className="lp-stat-lbl">Saque Mensal Est.</span></motion.div>
+          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">~R$ 3.600</span><span className="lp-stat-lbl">Saque Mensal Est.</span></motion.div>
           <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">2 anos</span><span className="lp-stat-lbl">Vínculo Garantido</span></motion.div>
         </motion.div>
       </section>
