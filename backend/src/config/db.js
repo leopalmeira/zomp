@@ -53,12 +53,14 @@ async function initDB() {
         "royaltyPerRide" DECIMAL DEFAULT 0.30,
         "royaltyMonthlyLimit" INTEGER DEFAULT 8,
         "maxPassengersPerDriver" INTEGER DEFAULT 700,
-        "bindingMonthsFirst" INTEGER DEFAULT 36,
-        "bindingMonthsRenew" INTEGER DEFAULT 24,
+        "bindingMonthsFirst" INTEGER DEFAULT 12,
+        "bindingMonthsRenew" INTEGER DEFAULT 12,
         "autoSuspendMinAcceptance" INTEGER DEFAULT 70,
         "autoSuspendMinRating" DECIMAL DEFAULT 4.5,
-        "launchDate" DATE DEFAULT '2026-07-30',
-        "pricePerCredit" DECIMAL DEFAULT 1.50
+        "launchDate" DATE DEFAULT '2026-06-30',
+        "pricePerCredit" DECIMAL DEFAULT 1.50,
+        "driverSlots" INTEGER DEFAULT 5000,
+        "preRegisterEndDate" TEXT DEFAULT '2026-06-30T23:59:59-03:00'
       );
 
       CREATE TABLE IF NOT EXISTS "Referral" (
@@ -87,6 +89,8 @@ async function initDB() {
       ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "vehicleType" TEXT DEFAULT 'car';
       ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "isAppLive" BOOLEAN DEFAULT false;
       ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "launchStatus" TEXT DEFAULT 'PRE_LAUNCH';
+      ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "driverSlots" INTEGER DEFAULT 5000;
+      ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "preRegisterEndDate" TEXT DEFAULT '2026-06-30T23:59:59-03:00';
     `);
 
     // Injeção de Admin Master

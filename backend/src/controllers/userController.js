@@ -65,13 +65,16 @@ exports.linkReferral = async (req, res) => {
     );
 
     if (existing.length === 0) {
+      const { rows: cfgRows } = await pool.query('SELECT "bindingMonthsFirst" FROM "AdminConfig" WHERE id = $1', ['singleton']);
+      const months = (cfgRows.length > 0 && cfgRows[0].bindingMonthsFirst) ? parseInt(cfgRows[0].bindingMonthsFirst) : 12;
       const expiresAt = new Date();
-      expiresAt.setFullYear(expiresAt.getFullYear() + 2); // 2 anos de royalties
+      expiresAt.setMonth(expiresAt.getMonth() + months);
       await pool.query(
         'INSERT INTO "Referral" ("referrerId", "referredId", "expiresAt") VALUES ($1, $2, $3)',
         [driverId, passengerId, expiresAt]
       );
-      return res.json({ ok: true, message: 'Passageiro vinculado ao motorista parceiro com sucesso por 2 anos!' });
+      const anos = Math.round(months / 12);
+      return res.json({ ok: true, message: `Passageiro vinculado ao motorista parceiro com sucesso por ${anos || 1} ano(s)!` });
     }
 
     res.json({ ok: true, message: 'Passageiro já possui vínculo de indicação ativo' });

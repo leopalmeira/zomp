@@ -6,21 +6,22 @@ import {
   XCircle, ChevronDown, ArrowRight, Car, Bike, FileText, Camera, 
   Check, X, Lock, Phone, CreditCard, AlertCircle, Sparkles 
 } from 'lucide-react'
-import { driverPreRegister } from '../services/api'
+import { driverPreRegister, getPublicConfig } from '../services/api'
 import './LandingPage.css'
 
 /* ── Count-up animation ── */
-function CountUp({ target, prefix = '', suffix = '', duration = 2000 }) {
+function CountUp({ target = 5000, prefix = '', suffix = '', duration = 2000 }) {
   const [count, setCount] = useState(0)
   const ref = React.useRef(null)
   const inView = useInView(ref, { once: true })
   useEffect(() => {
     if (!inView) return
     let start = 0
-    const step = target / (duration / 16)
+    const finalTarget = Number(target) || 5000
+    const step = finalTarget / (duration / 16)
     const timer = setInterval(() => {
       start += step
-      if (start >= target) { setCount(target); clearInterval(timer) }
+      if (start >= finalTarget) { setCount(finalTarget); clearInterval(timer) }
       else setCount(Math.floor(start))
     }, 16)
     return () => clearInterval(timer)
@@ -28,19 +29,39 @@ function CountUp({ target, prefix = '', suffix = '', duration = 2000 }) {
   return <span ref={ref}>{prefix}{count.toLocaleString('pt-BR')}{suffix}</span>
 }
 
-/* ── Countdown até 30/06/2026 ── */
-function Countdown() {
-  const target = new Date('2026-06-30T23:59:59-03:00')
-  const [diff, setDiff] = useState(target - new Date())
+/* ── Countdown com Data Fixa Configurável no Painel Admin ── */
+function Countdown({ targetDate }) {
+  const parseTarget = (val) => {
+    if (!val) return new Date('2026-06-30T23:59:59-03:00')
+    if (typeof val === 'string' && val.length === 10) {
+      return new Date(`${val}T23:59:59-03:00`)
+    }
+    const d = new Date(val)
+    return isNaN(d.getTime()) ? new Date('2026-06-30T23:59:59-03:00') : d
+  }
+
+  const [diff, setDiff] = useState(() => {
+    const t = parseTarget(targetDate)
+    return Math.max(0, t - new Date())
+  })
+
   useEffect(() => {
-    const t = setInterval(() => setDiff(target - new Date()), 1000)
+    const newTarget = parseTarget(targetDate)
+    setDiff(Math.max(0, newTarget - new Date()))
+
+    const t = setInterval(() => {
+      const remaining = Math.max(0, newTarget - new Date())
+      setDiff(remaining)
+    }, 1000)
     return () => clearInterval(t)
-  }, [])
+  }, [targetDate])
+
   const d = Math.floor(diff / 86400000)
   const h = Math.floor((diff % 86400000) / 3600000)
   const m = Math.floor((diff % 3600000) / 60000)
   const s = Math.floor((diff % 60000) / 1000)
   const pad = n => String(n).padStart(2, '0')
+
   return (
     <div className="lp-countdown">
       <p className="lp-cd-label">⏳ Pré-cadastro de motoristas encerra em:</p>
@@ -60,6 +81,31 @@ function Countdown() {
 export default function LandingPage() {
   const navigate = useNavigate()
   const [passengers, setPassengers] = useState(1000)
+  const [systemConfig, setSystemConfig] = useState({
+    driverSlots: 5000,
+    bindingMonthsFirst: 12,
+    launchDate: '2026-06-30',
+    royaltyPerRide: 0.30,
+    pricePerCredit: 1.50
+  })
+
+  useEffect(() => {
+    getPublicConfig().then(data => {
+      if (data && !data.error) {
+        setSystemConfig(prev => ({
+          ...prev,
+          ...data,
+          driverSlots: data.driverSlots ? parseInt(data.driverSlots) : prev.driverSlots,
+          bindingMonthsFirst: data.bindingMonthsFirst ? parseInt(data.bindingMonthsFirst) : prev.bindingMonthsFirst,
+          launchDate: data.launchDate || data.preRegisterEndDate || prev.launchDate,
+          royaltyPerRide: data.royaltyPerRide ? parseFloat(data.royaltyPerRide) : prev.royaltyPerRide
+        }))
+      }
+    })
+  }, [])
+
+  const bindingYears = Math.max(1, Math.round((systemConfig.bindingMonthsFirst || 12) / 12))
+  const bindingYearsText = `${bindingYears} ${bindingYears === 1 ? 'ano' : 'anos'}`
 
   // Estados do Modal de Pré-Cadastro do Motorista
   const [showPreRegisterModal, setShowPreRegisterModal] = useState(false)
@@ -237,7 +283,7 @@ export default function LandingPage() {
 
           {/* Countdown */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }}>
-            <Countdown />
+            <Countdown targetDate={systemConfig.launchDate} />
           </motion.div>
 
           <motion.div className="lp-vagas-alert" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}>
@@ -338,7 +384,7 @@ export default function LandingPage() {
             Traga seus passageiros das outras plataformas<br /><span className="lp-accent">com Desconto Imbatível e garanta até 1.000 clientes</span>
           </motion.h2>
           <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            Você já transporta dezenas de passageiros todos os dias pela Uber, 99 ou Táxi. Na Zomp, você pode oferecer a eles a primeira viagem com um desconto imbatível. Ao realizarem a corrida com o seu QR Code/link, eles ficam vinculados a você por até 3 anos!
+            Você já transporta dezenas de passageiros todos os dias pela Uber, 99 ou Táxi. Na Zomp, você pode oferecer a eles a primeira viagem com um desconto imbatível. Ao realizarem a corrida com o seu QR Code/link, eles ficam vinculados a você por até {bindingYearsText}!
           </motion.p>
 
           <motion.div className="lp-capture-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -359,8 +405,8 @@ export default function LandingPage() {
             <motion.div className="lp-capture-card" variants={fadeUp}>
               <div className="lp-cap-step">03</div>
               <div className="lp-cap-icon-box"><Lock size={26} /></div>
-              <h4>Passageiro Vinculado por 3 Anos</h4>
-              <p>A partir dessa primeira viagem, o cliente está vinculado à sua rede. Toda corrida futura que ele fizer — com você ou qualquer outro motorista — gera <strong>R$ 0,30</strong> pra você!</p>
+              <h4>Passageiro Vinculado por {bindingYearsText}</h4>
+              <p>A partir dessa primeira viagem, o cliente está vinculado à sua rede. Toda corrida futura que ele fizer — com você ou qualquer outro motorista — gera <strong>R$ {systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')}</strong> pra você!</p>
             </motion.div>
 
             <motion.div className="lp-capture-card" variants={fadeUp}>
@@ -486,9 +532,9 @@ export default function LandingPage() {
             <ul className="lp-compare-list">
               {[
                 'Taxa Operacional Fixa e Transparente',
-                'Royalties de Rede (R$ 0,30 por viagem)',
+                `Royalties de Rede (R$ ${systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')} por viagem)`,
                 'Mínimo de 65 corridas/semana para manter Royalties',
-                'Patrimônio Digital Vinculado (2 anos)',
+                `Patrimônio Digital Vinculado (${bindingYearsText})`,
                 'Saque de Royalties a cada 30 dias via PIX',
                 'Sistema Anti-Concorrência (Preço Imbatível)',
                 'Suporte Corporativo Prioritário',
@@ -568,10 +614,10 @@ export default function LandingPage() {
       {/* ── STATS ── */}
       <section className="lp-stats-section">
         <motion.div className="lp-stats-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val"><CountUp target={5000} suffix="+" /></span><span className="lp-stat-lbl">Vagas no RJ</span></motion.div>
-          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">R$ 0,30</span><span className="lp-stat-lbl">Royalty por Corrida</span></motion.div>
+          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val"><CountUp target={systemConfig.driverSlots} suffix="+" /></span><span className="lp-stat-lbl">Vagas no RJ</span></motion.div>
+          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">R$ {systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')}</span><span className="lp-stat-lbl">Royalty por Corrida</span></motion.div>
           <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">~R$ 3.600</span><span className="lp-stat-lbl">Saque Mensal Est.</span></motion.div>
-          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">2 anos</span><span className="lp-stat-lbl">Vínculo Garantido</span></motion.div>
+          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">{bindingYearsText}</span><span className="lp-stat-lbl">Vínculo Garantido</span></motion.div>
         </motion.div>
       </section>
 
@@ -580,7 +626,7 @@ export default function LandingPage() {
         <motion.div className="lp-final-wrap" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.h2 variants={fadeUp}>Vagas limitadas.<br /><span className="lp-accent">Garanta a sua agora.</span></motion.h2>
           <motion.p variants={fadeUp}>Seja um dos primeiros a garantir Royalties na Zomp no Rio de Janeiro e construa sua renda passiva enquanto outros ficam pra trás.</motion.p>
-          <Countdown />
+          <Countdown targetDate={systemConfig.launchDate} />
           <motion.button className="lp-cta-btn lp-cta-xl" variants={fadeUp} onClick={handleCta}>
             🚀 Fazer meu Pré-Cadastro Gratuito
           </motion.button>

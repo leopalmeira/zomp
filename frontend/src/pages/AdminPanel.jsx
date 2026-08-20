@@ -242,21 +242,22 @@ export default function AdminPanel() {
       ]
     },
     {
-      title: '💎 Royalties & Rede de Fidelidade',
+      title: '💎 Royalties & Rede de Fidelidade (Landing Page & Sistema)',
       fields: [
         { key: 'royaltyPerRide', label: 'Royalty por Corrida Concluída', type: 'number', step: '0.05', prefix: 'R$' },
-        { key: 'royaltyMonthlyLimit', label: 'Limite Mensal de Saque de Royalties', type: 'number', step: '1' },
-        { key: 'maxPassengersPerDriver', label: 'Limite de Passageiros por Motorista', type: 'number', step: '50' },
-        { key: 'bindingMonthsFirst', label: 'Duração do Vínculo Inicial (meses)', type: 'number', step: '1' },
+        { key: 'driverSlots', label: 'Vagas de Motoristas para Cadastro (RJ)', type: 'number', step: '100' },
+        { key: 'bindingMonthsFirst', label: 'Duração do Vínculo Inicial (12 = 1 ano, 24 = 2 anos)', type: 'number', step: '1' },
         { key: 'bindingMonthsRenew', label: 'Duração da Renovação de Vínculo (meses)', type: 'number', step: '1' },
+        { key: 'maxPassengersPerDriver', label: 'Limite de Passageiros por Motorista', type: 'number', step: '50' },
+        { key: 'royaltyMonthlyLimit', label: 'Limite Mensal de Saque de Royalties', type: 'number', step: '1' },
       ]
     },
     {
-      title: '🛡️ Segurança, Critérios e Lançamento',
+      title: '🛡️ Segurança, Critérios e Contagem Regressiva',
       fields: [
+        { key: 'launchDate', label: 'Data de Encerramento do Pré-cadastro (Contador Regressivo)', type: 'date' },
         { key: 'autoSuspendMinAcceptance', label: 'Taxa Mínima de Aceitação para Suspensão (%)', type: 'number', step: '1' },
         { key: 'autoSuspendMinRating', label: 'Nota Mínima de Avaliação para Suspensão', type: 'number', step: '0.1' },
-        { key: 'launchDate', label: 'Data Oficial de Encerramento do Pré-cadastro', type: 'date' },
       ]
     }
   ]

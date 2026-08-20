@@ -413,8 +413,21 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - [LoginPage.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/LoginPage.jsx) e [RegisterPage.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/RegisterPage.jsx) enriquecidos com botão Google em SVG de alta fidelidade, feedback de carregamento suave e redirecionamento direto para a tela de pedido de corrida.
 
 ---
-**Status Atual**: ✅ Simulador 1.000 passageiros, Captação de Clientes, Mobile CSS e Google Auth 100% ativos e validados.
-**Versão**: 15.4.0
+### 🚀 v15.5.0 - Configurações Dinâmicas da Landing Page no Painel Admin (2026-08-20)
+* ⚙️ **Controle de Vagas de Motoristas pelo Painel Admin**:
+  - Adicionado o campo `driverSlots` na tabela `AdminConfig` e na aba **Configurações** do [AdminPanel.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/AdminPanel.jsx).
+  - A Landing Page consome dinamicamente esse valor via endpoint público `/api/config` e exibe o número de vagas configuradas (ex: `5.000+ Vagas no RJ`).
+* ⏳ **Contagem Regressiva com Data Fixa Configurável**:
+  - O administrador pode definir a data de encerramento do pré-cadastro (`launchDate` / `preRegisterEndDate`) diretamente pelo painel.
+  - O componente `Countdown` na Landing Page calcula a cada segundo a contagem regressiva em tempo real até a data configurada sempre que a página é carregada.
+* 🔗 **Tempo de Vínculo de Passageiro Flexível (Inicialmente 1 Ano)**:
+  - Configuração de `bindingMonthsFirst` padronizada inicialmente para **12 meses (1 ano)**, podendo ser alterada para qualquer período pelo admin.
+  - O [authController.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/controllers/authController.js) e [userController.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/controllers/userController.js) calculam dinamicamente a expiração (`expiresAt`) da tabela `Referral` com base no tempo configurado.
+  - Todas as menções de vínculo na Landing Page (Stats, Comparativo Zomp e Captação de Passageiros) são geradas dinamicamente com base nessa configuração (ex: `1 ano Vínculo Garantido`).
+
+---
+**Status Atual**: ✅ Configurações dinâmicas da Landing Page integradas ao Painel Admin e validadas.
+**Versão**: 15.5.0
 **Responsável**: Antigravity AI & Leandro Palmeira
 
 

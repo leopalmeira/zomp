@@ -27,8 +27,10 @@ exports.register = async (req, res) => {
     if (referrerQrCode && role === 'PASSENGER') {
       const { rows: driverRows } = await pool.query('SELECT id FROM "User" WHERE "qrCode" = $1', [referrerQrCode]);
       if (driverRows.length > 0) {
+        const { rows: cfgRows } = await pool.query('SELECT "bindingMonthsFirst" FROM "AdminConfig" WHERE id = $1', ['singleton']);
+        const months = (cfgRows.length > 0 && cfgRows[0].bindingMonthsFirst) ? parseInt(cfgRows[0].bindingMonthsFirst) : 12;
         const expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + 36);
+        expiresAt.setMonth(expiresAt.getMonth() + months);
         await pool.query(
           'INSERT INTO "Referral" ("referrerId", "referredId", "expiresAt") VALUES ($1, $2, $3)',
           [driverRows[0].id, user.id, expiresAt]
@@ -151,8 +153,10 @@ exports.googleAuth = async (req, res) => {
         try {
           const { rows: driverRows } = await pool.query('SELECT id FROM "User" WHERE "qrCode" = $1', [referrerQrCode]);
           if (driverRows.length > 0) {
+            const { rows: cfgRows } = await pool.query('SELECT "bindingMonthsFirst" FROM "AdminConfig" WHERE id = $1', ['singleton']);
+            const months = (cfgRows.length > 0 && cfgRows[0].bindingMonthsFirst) ? parseInt(cfgRows[0].bindingMonthsFirst) : 12;
             const expiresAt = new Date();
-            expiresAt.setMonth(expiresAt.getMonth() + 36);
+            expiresAt.setMonth(expiresAt.getMonth() + months);
             await pool.query(
               'INSERT INTO "Referral" ("referrerId", "referredId", "expiresAt") VALUES ($1, $2, $3)',
               [driverRows[0].id, user.id, expiresAt]

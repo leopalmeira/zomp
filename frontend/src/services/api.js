@@ -1,6 +1,14 @@
-// Em produção (Render), VITE_API_URL aponta para zomp-api.onrender.com/api
-// Em desenvolvimento local, usa /api (mesmo servidor)
-const API_BASE = import.meta.env.VITE_API_URL || 'https://zomp-api.onrender.com/api';
+export const API_BASE = import.meta.env.VITE_API_URL || 'https://zomp-api.onrender.com/api';
+
+export async function getPublicConfig() {
+  try {
+    const res = await fetch(`${API_BASE}/config`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
 
 function getToken() {
   return localStorage.getItem('zomp_token');
