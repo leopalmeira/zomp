@@ -14,12 +14,13 @@ exports.register = async (req, res) => {
 
     const hash = await bcrypt.hash(password, 10);
     const qrCode = role === 'DRIVER' ? `ZOMP-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}` : null;
+    const initialCredits = role === 'DRIVER' ? 10 : 0;
 
     const { rows } = await pool.query(`
-      INSERT INTO "User" (name, email, password, role, "qrCode", "isApproved")
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, name, email, role, "qrCode", "isApproved"
-    `, [name, email, hash, role.toUpperCase(), qrCode, role === 'PASSENGER']);
+      INSERT INTO "User" (name, email, password, role, "qrCode", "isApproved", credits)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id, name, email, role, "qrCode", "isApproved", credits
+    `, [name, email, hash, role.toUpperCase(), qrCode, role === 'PASSENGER', initialCredits]);
 
     const user = rows[0];
 
@@ -271,7 +272,7 @@ exports.driverPreRegister = async (req, res) => {
           "carModel", "carPlate", "carColor", photo, cnh, crlv,
           "qrCode", "isApproved", credits, balance, rating
         )
-        VALUES ($1, $2, $3, 'DRIVER', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, false, 0, 0, 5.0)
+        VALUES ($1, $2, $3, 'DRIVER', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, false, 10, 0, 5.0)
         RETURNING id, name, email, role, phone, "pixKey", "vehicleType", "carModel", "carPlate", "carColor", photo, cnh, crlv, "isApproved", "qrCode", "createdAt"
       `, [
         name,

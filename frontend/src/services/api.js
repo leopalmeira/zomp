@@ -133,7 +133,7 @@ export function getCurrentUser() {
 }
 
 export async function updateProfile(data) {
-  const res = await fetch(`${API_BASE}/user/profile`, {
+  const res = await fetch(`${API_BASE}/users/profile`, {
     method: 'PUT',
     headers: getHeaders(),
     body: JSON.stringify(data)
@@ -141,7 +141,6 @@ export async function updateProfile(data) {
   if (!res.ok) throw new Error('Erro ao atualizar perfil');
   const d = await res.json();
   const c = getCurrentUser();
-  // Não salvar photo no localStorage para evitar quota exceeded
   const { photo, ...userWithoutPhoto } = d;
   localStorage.setItem('zomp_user', JSON.stringify({ ...c, ...userWithoutPhoto, photo: photo || c?.photo }));
   return d;
@@ -341,6 +340,15 @@ export async function linkReferral(referrerQrCode) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Erro ao vincular indicação');
+  return data;
+}
+
+export async function getProfile() {
+  const res = await fetch(`${API_BASE}/users/profile`, {
+    headers: getHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao buscar perfil');
   return data;
 }
 

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, rateRide } from '../services/api'
+import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, rateRide, getProfile, updateProfile } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Circle } from 'react-leaflet'
-import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders } from 'lucide-react'
+import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders, Camera, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, X, Rocket, ShieldCheck, Gift } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Driver.css'
@@ -180,9 +180,40 @@ export default function DriverDashboard() {
   const [user, setUser] = useState(getCurrentUser())
   const [openFaq, setOpenFaq] = useState(null)
 
+  // Sincronização em tempo real do perfil completo do motorista com o banco de dados
+  useEffect(() => {
+    getProfile().then(data => {
+      if (data && !data.error) {
+        setUser(data);
+        localStorage.setItem('zomp_user', JSON.stringify(data));
+        if (data.credits !== undefined) setCredits(Number(data.credits));
+        if (data.photo) setSelfiePreview(data.photo);
+      }
+    }).catch(err => {
+      console.warn('Erro ao sincronizar perfil do motorista:', err);
+    });
+  }, []);
+
   useEffect(() => {
     if (!user || user.role !== 'DRIVER') { navigate('/motorista'); return }
   }, [navigate, user])
+
+  // Tour / Guia Interativo do Motorista (exibido nas 3 primeiras aberturas)
+  const [showDriverTour, setShowDriverTour] = useState(() => {
+    try {
+      const count = parseInt(localStorage.getItem('zomp_driver_tour_count') || '0', 10);
+      if (count < 3) {
+        localStorage.setItem('zomp_driver_tour_count', String(count + 1));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
+  const [tourStep, setTourStep] = useState(1);
+  const [selfiePreview, setSelfiePreview] = useState(user?.photo || null);
+  const [selfieSaving, setSelfieSaving] = useState(false);
 
   // GPS Tracking
   const [myPos, setMyPos] = useState([-22.9068, -43.1729])
@@ -320,13 +351,16 @@ export default function DriverDashboard() {
     setIsSwiping(false)
     if (slideX >= slideThreshold) {
       const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
-      if (!isTestDriver && (!user?.cnh || !user?.crlv)) {
-        setSlideX(0);
-        return alert("⚠️ Envie seus documentos no menu 'Documentos & Veículo' antes de ficar online.");
-      }
+      
       if (!isTestDriver && !user?.isApproved) {
         setSlideX(0);
         return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
+      }
+
+      if (!isTestDriver && Number(credits || 0) <= 0) {
+        setSlideX(0);
+        setShowRechargeModal(true);
+        return;
       }
 
       setIsOnline(true)
@@ -677,9 +711,7 @@ export default function DriverDashboard() {
   // Verificar créditos ao tentar ficar online
   const checkCreditsAndGoOnline = () => {
     const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
-    if (!isTestDriver && (!user?.cnh || !user?.crlv)) {
-      return alert("⚠️ Envie seus documentos no menu 'Documentos & Veículo' antes de ficar online.");
-    }
+
     if (!isTestDriver && !user?.isApproved) {
       return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
     }
@@ -1175,6 +1207,18 @@ export default function DriverDashboard() {
                 <span className="nav-icon"><RefreshCw size={18} /></span>
                 Atualizar App (Limpar Cache)
               </button>
+              <button
+                className="drawer-nav-item"
+                style={{ background: 'rgba(0, 230, 118, 0.08)', color: '#00E676', fontWeight: 800, border: '1px solid rgba(0, 230, 118, 0.2)' }}
+                onClick={() => {
+                  setTourStep(1);
+                  setShowDriverTour(true);
+                  setMenuOpen(false);
+                }}
+              >
+                <span className="nav-icon"><Rocket size={18} /></span>
+                🚀 Guia & Tour do Motorista
+              </button>
             </nav>
 
             <div className="drawer-footer">
@@ -1186,13 +1230,273 @@ export default function DriverDashboard() {
         </div>
       )}
 
+      {/* ===== MODAL TOUR & GUIA DO MOTORISTA (PRIMEIRAS 3 VEZES + SELFIE) ===== */}
+      {showDriverTour && (
+        <div className="modal-overlay" style={{ zIndex: 12000, padding: '16px', background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(10px)' }}>
+          <div className="modal-content animate-fade-in-up" style={{ maxWidth: '440px', width: '100%', padding: '24px', borderRadius: '24px', background: '#090d16', border: '1px solid rgba(0, 230, 118, 0.25)', color: '#fff', position: 'relative', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}>
+            
+            {/* Botão Fechar / Pular */}
+            <button
+              type="button"
+              onClick={() => setShowDriverTour(false)}
+              style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <X size={18} />
+            </button>
+
+            {/* Barra de Progresso do Tour */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '20px' }}>
+              {[1, 2, 3, 4, 5].map(step => (
+                <div
+                  key={step}
+                  onClick={() => setTourStep(step)}
+                  style={{
+                    flex: 1,
+                    height: '4px',
+                    borderRadius: '4px',
+                    background: tourStep >= step ? '#00E676' : 'rgba(255,255,255,0.15)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s'
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Passo 1: Ficar Online */}
+            {tourStep === 1 && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ width: '68px', height: '68px', borderRadius: '20px', background: 'rgba(0, 230, 118, 0.12)', border: '1px solid rgba(0, 230, 118, 0.3)', color: '#00E676', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <Radio size={34} />
+                </div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#00E676', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                  Passo 1 de 5 • Operação
+                </div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, margin: '0 0 10px', color: '#fff' }}>
+                  Como Ficar Online & Receber Viagens
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: '#94a3b8', lineHeight: 1.55, margin: '0 0 20px' }}>
+                  Basta tocar no botão verde <strong>"Ficar Online"</strong>. Quando um passageiro solicitar uma corrida próxima a você, o app emitirá um <strong>alerta sonoro</strong> e você poderá aceitar a viagem com apenas 1 toque na tela!
+                </p>
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '12px 16px', textAlign: 'left', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '20px' }}>
+                  🎯 <strong>Dica Sonar:</strong> Você pode ajustar o raio de distância de atendimento (500m até 50km ou Livre) no menu lateral.
+                </div>
+              </div>
+            )}
+
+            {/* Passo 2: Royalties e Rede */}
+            {tourStep === 2 && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ width: '68px', height: '68px', borderRadius: '20px', background: 'rgba(232, 184, 75, 0.12)', border: '1px solid rgba(232, 184, 75, 0.3)', color: '#E8B84B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <Gem size={34} />
+                </div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#E8B84B', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                  Passo 2 de 5 • Renda Passiva
+                </div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, margin: '0 0 10px', color: '#fff' }}>
+                  Royalties de R$ 0,30 por Viagem
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: '#94a3b8', lineHeight: 1.55, margin: '0 0 20px' }}>
+                  Traga seus passageiros da Uber, 99 ou Táxi para a Zomp com nosso <strong>Desconto Imbatível</strong>. Ao realizarem a primeira viagem com seu QR Code ou link, eles ficam vinculados a você por <strong>1 ano</strong> gerando royalties a cada corrida!
+                </p>
+                <div style={{ background: 'rgba(232, 184, 75, 0.06)', border: '1px solid rgba(232, 184, 75, 0.2)', borderRadius: '14px', padding: '12px 16px', textAlign: 'left', fontSize: '0.8rem', color: '#fef3c7', marginBottom: '20px' }}>
+                  💰 <strong>Simulação:</strong> 1.000 clientes vinculados fazendo em média 3 viagens por semana geram até <strong>R$ 3.600,00/mês</strong> em royalties via PIX.
+                </div>
+              </div>
+            )}
+
+            {/* Passo 3: Créditos */}
+            {tourStep === 3 && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ width: '68px', height: '68px', borderRadius: '20px', background: 'rgba(0, 230, 118, 0.12)', border: '1px solid rgba(0, 230, 118, 0.3)', color: '#00E676', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <Gift size={34} />
+                </div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#00E676', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                  Passo 3 de 5 • Modelo Justo
+                </div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, margin: '0 0 10px', color: '#fff' }}>
+                  10 Créditos de Presente de Boas-Vindas
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: '#94a3b8', lineHeight: 1.55, margin: '0 0 20px' }}>
+                  Você ganhou <strong>10 créditos de cortesia</strong> para começar a testar e lucrar imediatamente. Na Zomp não há taxas abusivas de 30% a 40%: cada viagem concluída consome apenas <strong>1 crédito (R$ 1,50)</strong> e todo o restante do dinheiro é 100% seu!
+                </p>
+                <div style={{ background: 'rgba(0, 230, 118, 0.06)', border: '1px solid rgba(0, 230, 118, 0.2)', borderRadius: '14px', padding: '12px 16px', textAlign: 'left', fontSize: '0.8rem', color: '#d1fae5', marginBottom: '20px' }}>
+                  🎫 <strong>Saldo Atual:</strong> Você tem <strong>{Number(credits || 10)} créditos disponíveis</strong> na sua conta.
+                </div>
+              </div>
+            )}
+
+            {/* Passo 4: Carteira & Saques */}
+            {tourStep === 4 && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ width: '68px', height: '68px', borderRadius: '20px', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <Wallet size={34} />
+                </div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                  Passo 4 de 5 • Pagamentos
+                </div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, margin: '0 0 10px', color: '#fff' }}>
+                  Carteira & Saques via PIX
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: '#94a3b8', lineHeight: 1.55, margin: '0 0 20px' }}>
+                  O passageiro paga diretamente a você no desembarque (em dinheiro ou PIX). Além disso, todos os seus royalties de rede acumulam na sua carteira e o saque pode ser realizado a cada 30 dias diretamente via PIX!
+                </p>
+                <div style={{ background: 'rgba(59, 130, 246, 0.06)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '14px', padding: '12px 16px', textAlign: 'left', fontSize: '0.8rem', color: '#bfdbfe', marginBottom: '20px' }}>
+                  ⚡ <strong>Agilidade:</strong> Tenha sua chave PIX sempre atualizada no menu <strong>Meu Perfil</strong>.
+                </div>
+              </div>
+            )}
+
+            {/* Passo 5: Selfie do Rosto */}
+            {tourStep === 5 && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ position: 'relative', width: '90px', height: '90px', margin: '0 auto 14px' }}>
+                  {selfiePreview ? (
+                    <img
+                      src={selfiePreview}
+                      alt="Sua Selfie"
+                      style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #00E676', boxShadow: '0 0 20px rgba(0, 230, 118, 0.4)' }}
+                    />
+                  ) : (
+                    <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(0, 230, 118, 0.1)', border: '2px dashed rgba(0, 230, 118, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00E676' }}>
+                      <Camera size={38} />
+                    </div>
+                  )}
+                  <label
+                    htmlFor="tour-selfie-file"
+                    style={{ position: 'absolute', bottom: '0', right: '0', width: '32px', height: '32px', borderRadius: '50%', background: '#00E676', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
+                    title="Tirar Foto com Câmera"
+                  >
+                    <Camera size={16} />
+                  </label>
+                  <input
+                    id="tour-selfie-file"
+                    type="file"
+                    accept="image/*"
+                    capture="user"
+                    style={{ display: 'none' }}
+                    onChange={handleSelfieUpload}
+                  />
+                </div>
+
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#00E676', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                  Passo 5 de 5 • Identificação & Segurança
+                </div>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 900, margin: '0 0 8px', color: '#fff' }}>
+                  Tire uma Selfie para o seu Perfil
+                </h3>
+                <p style={{ fontSize: '0.84rem', color: '#94a3b8', lineHeight: 1.5, margin: '0 0 16px' }}>
+                  Sua foto de rosto é exibida no <strong>App do Passageiro</strong> assim que você aceita a corrida. Isso traz profissionalismo, segurança e facilita a sua identificação no embarque!
+                </p>
+
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                  <label
+                    htmlFor="tour-selfie-file"
+                    className="btn-premium"
+                    style={{ flex: 1, padding: '12px', fontSize: '0.85rem', background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', textAlign: 'center', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  >
+                    <Camera size={16} /> {selfiePreview ? 'Alterar Foto' : '📸 Tirar Selfie Agora'}
+                  </label>
+                  {selfiePreview && (
+                    <button
+                      type="button"
+                      disabled={selfieSaving}
+                      className="btn-premium btn-green"
+                      style={{ padding: '12px 18px', fontSize: '0.85rem', fontWeight: 900, borderRadius: '12px' }}
+                      onClick={handleSaveSelfie}
+                    >
+                      {selfieSaving ? 'Salvando...' : '✓ Salvar'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Rodapé com Navegação */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
+              {tourStep > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setTourStep(tourStep - 1)}
+                  style={{ background: 'none', border: 'none', color: '#94a3b8', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <ChevronLeft size={16} /> Voltar
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowDriverTour(false)}
+                  style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                >
+                  Pular Guia
+                </button>
+              )}
+
+              {tourStep < 5 ? (
+                <button
+                  type="button"
+                  className="btn-premium btn-green"
+                  onClick={() => setTourStep(tourStep + 1)}
+                  style={{ padding: '10px 20px', fontSize: '0.9rem', fontWeight: 900, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  Próximo <ChevronRight size={16} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-premium btn-green"
+                  onClick={() => {
+                    if (selfiePreview && selfiePreview !== user?.photo) {
+                      handleSaveSelfie();
+                    } else {
+                      setShowDriverTour(false);
+                    }
+                  }}
+                  style={{ padding: '10px 22px', fontSize: '0.9rem', fontWeight: 900, borderRadius: '12px' }}
+                >
+                  🚀 Começar a Rodar
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* ===== PROFILE ===== */}
       {activeScreen === 'PROFILE' && (
         <div className="driver-inner-screen">
           <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Meu Perfil</h2></div>
           <div className="inner-body">
             <div style={{textAlign:'center',marginBottom:'28px'}}>
-              <div className="profile-avatar-lg">{user?.name?.charAt(0)}</div>
+              <div style={{position:'relative', width:'84px', height:'84px', margin:'0 auto 12px'}}>
+                {user?.photo ? (
+                  <img src={user.photo} alt={user?.name} style={{width:'84px', height:'84px', borderRadius:'50%', objectFit:'cover', border:'3px solid #00E676'}} />
+                ) : (
+                  <div className="profile-avatar-lg">{user?.name?.charAt(0)}</div>
+                )}
+                <label htmlFor="profile-photo-input" style={{position:'absolute', bottom:'0', right:'0', background:'#00E676', color:'#000', borderRadius:'50%', width:'28px', height:'28px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 2px 6px rgba(0,0,0,0.3)'}}>
+                  <Camera size={14} />
+                </label>
+                <input id="profile-photo-input" type="file" accept="image/*" capture="user" style={{display:'none'}} onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = async (ev) => {
+                      const base64 = ev.target.result;
+                      try {
+                        await updateProfile({ photo: base64 });
+                        const updated = { ...user, photo: base64 };
+                        setUser(updated);
+                        localStorage.setItem('zomp_user', JSON.stringify(updated));
+                        alert('Foto de perfil atualizada!');
+                      } catch(err) {
+                        alert('Erro ao atualizar foto: ' + err.message);
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }} />
+              </div>
               <h3 style={{fontSize:'1.2rem',fontWeight:800,marginBottom:'2px'}}>{user?.name}</h3>
               <p style={{color:'#71717a',fontWeight:600,fontSize:'0.9rem'}}>Motorista Parceiro</p>
             </div>
@@ -1202,12 +1506,7 @@ export default function DriverDashboard() {
             <div className="form-field"><label className="form-label">Chave PIX (Para Recebimento)</label><input className="form-input" placeholder="CPF, E-mail, ou Celular" value={profileData.pixKey} onChange={e => setProfileData({...profileData, pixKey: e.target.value})} /></div>
             <button className="btn-premium btn-dark" style={{marginTop:'8px'}} onClick={async () => { 
                 try {
-                  const res = await fetch(`${API}/user/profile`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(profileData)
-                  });
-                  if(!res.ok) throw new Error('Erro ao salvar');
+                  const data = await updateProfile(profileData);
                   const updatedUserLocal = {...user, ...profileData};
                   localStorage.setItem('zomp_user', JSON.stringify(updatedUserLocal));
                   setUser(updatedUserLocal);

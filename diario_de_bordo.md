@@ -432,12 +432,22 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Removido o botão e os hooks do Google OAuth das telas de Login ([LoginPage.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/LoginPage.jsx)) e Registro ([RegisterPage.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/RegisterPage.jsx)), mantendo a autenticação direta, segura e sem erros de dependência externa.
 
 ---
-**Status Atual**: ✅ Configurações dinâmicas da Landing Page e autenticação simplificada 100% integradas e validadas.
-**Versão**: 15.5.0
+### 🚀 v15.6.0 - Desbloqueio Online de Motoristas Aprovados, 10 Créditos de Cortesia, Tour Interativo e Selfie de Perfil (2026-08-20)
+* 🟢 **Desbloqueio Imediato para Motoristas Aprovados**:
+  - Ajustadas as verificações no [DriverDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/DriverDashboard.jsx) para que a aprovação do Administrador (`isApproved === true`) libere imediatamente o motorista para ficar online e receber corridas.
+  - Implementada a rota `GET /api/users/profile` no [userRoutes.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/routes/userRoutes.js) e [userController.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/controllers/userController.js) com sincronização em tempo real do perfil no carregamento do dashboard.
+* 🎁 **10 Créditos de Boas-Vindas para Motoristas**:
+  - Garantida a concessão de 10 créditos de cortesia em novos cadastros e pré-cadastros de motoristas.
+  - Atualizado o [db.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/config/db.js) para assegurar no mínimo 10 créditos a todos os motoristas cadastrados.
+* 🚀 **Guia e Tour Interativo do Motorista (Primeiras 3 Aberturas)**:
+  - Criado o modal de onboarding interativo com 5 passos explicativos exibido automaticamente nas primeiras 3 vezes que o motorista abre o app (e disponível a qualquer momento no menu lateral em *"🚀 Guia & Tour do Motorista"*).
+  - Passos explicam: (1) Como ficar online e aceitar corridas; (2) Royalties e rede de passageiros; (3) 10 créditos de cortesia e modelo justo; (4) Carteira e saques PIX; (5) Selfie do rosto para o perfil.
+* 📸 **Convite para Selfie do Rosto & Exibição para o Passageiro**:
+  - Adicionada funcionalidade de captura de selfie pela câmera do celular (`capture="user"`) ou upload de foto no passo 5 do Tour e no menu *"Meu Perfil"*, com salvamento direto no banco de dados (`photo`).
+  - A foto de rosto do motorista é exibida com destaque no card de corrida em andamento no App do Passageiro ([PassengerDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/PassengerDashboard.jsx)), garantindo segurança, identificação e credibilidade no embarque.
+
+---
+**Status Atual**: ✅ Desbloqueio online, 10 créditos, Tour Interativo e Selfie de Perfil 100% integrados e validados.
+**Versão**: 15.6.0
 **Responsável**: Antigravity AI & Leandro Palmeira
-
-
-
-
-
 

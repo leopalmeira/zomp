@@ -1,5 +1,19 @@
 const { pool } = require('../config/db');
 
+exports.getProfile = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, name, email, role, phone, "pixKey", photo, cnh, crlv, "carPlate", "carModel", "carColor", "isApproved", "qrCode", "vehicleType", credits, balance, rating, "ridesCompleted" FROM "User" WHERE id = $1',
+      [req.user.id]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Erro ao buscar perfil do usuário:', err.message);
+    res.status(500).json({ error: 'Erro ao buscar perfil' });
+  }
+};
+
 exports.updateProfile = async (req, res) => {
   try {
     const { name, phone, pixKey, photo, cnh, crlv, carPlate, carModel, carColor } = req.body;
