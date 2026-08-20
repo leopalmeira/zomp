@@ -474,7 +474,24 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
     - Chat interativo em tempo real com histórico e envio de mensagens para o time de suporte Zomp.
 
 ---
-**Status Atual**: ✅ Chat de Corrida e Central de Suporte & Reportar Problemas 100% integrados, validados e funcionais em ambos os apps.
-**Versão**: 15.7.0
+### 🚀 v15.8.0 - Notícias de Trânsito em Tempo Real (G1 / Google Notícias) e Preferências de Exibição (2026-08-20)
+* 🚗 **Feed de Notícias de Trânsito da Cidade com Fonte G1 / Google Notícias**:
+  - Criado o endpoint backend `GET /api/config/traffic-news` com busca em tempo real via feeds de trânsito e processamento de manchetes.
+  - Implementado sistema de cache inteligente de **1 hora** para manter as informações sempre atualizadas sem sobrecarregar a rede.
+  - Retorno de 4 notícias em tempo real sobre vias expressas, retenções, fluxo em pontes/túneis e trânsito da região.
+* 📰 **Ticker / Letreiro Discreto no App do Motorista**:
+  - Exibição de um letreiro elegante e discreto posicionado abaixo da previsão do tempo no [DriverDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/DriverDashboard.jsx).
+  - Rotação suave automática das 4 notícias com identificação da fonte (*"🚗 G1 / Google"*), status e indicador numérico `(1/4)`.
+  - Permite toque direto para avançar ou alternar a notícia rapidamente.
+* ⚙️ **Controles de Ocultação & Preferências no Menu Lateral**:
+  - No menu lateral do motorista (seção *Preferências & Visualização*), adicionados toggles para:
+    - ⛅ **Exibir / Ocultar Previsão do Tempo** (persistido em `localStorage`).
+    - 📰 **Exibir / Ocultar Notícias de Trânsito G1 / Google** (persistido em `localStorage`).
+    - 🎯 **Raio de Atuação (Sonar de Radar)**.
+    - 🌙 **Mapa Claro / Mapa Escuro**.
+
+---
+**Status Atual**: ✅ Notícias de Trânsito G1/Google com cache de 1 hora, letreiro discreto e toggles no menu 100% integrados e validados.
+**Versão**: 15.8.0
 **Responsável**: Antigravity AI & Leandro Palmeira
 

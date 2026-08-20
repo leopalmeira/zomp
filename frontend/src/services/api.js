@@ -412,4 +412,12 @@ export async function sendSupportMessage(ticketId, text) {
   return data;
 }
 
+export async function getTrafficNews() {
+  const res = await fetch(`${API_BASE}/config/traffic-news`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao buscar notícias de trânsito');
+  return data;
+}
+
+
 

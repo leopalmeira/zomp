@@ -4,6 +4,7 @@ const configController = require('../controllers/configController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 router.get('/', configController.getConfig);
+router.get('/traffic-news', configController.getTrafficNews);
 router.put('/', authMiddleware, configController.updateConfig);
 
 module.exports = router;

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, rateRide, getProfile, updateProfile, getRideMessages, sendRideMessage, createSupportTicket, getUserSupportTickets, getSupportMessages, sendSupportMessage } from '../services/api'
+import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, rateRide, getProfile, updateProfile, getRideMessages, sendRideMessage, createSupportTicket, getUserSupportTickets, getSupportMessages, sendSupportMessage, getTrafficNews } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Circle } from 'react-leaflet'
-import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders, Camera, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, X, Rocket, ShieldCheck, Gift, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, Send } from 'lucide-react'
+import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders, Camera, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, X, Rocket, ShieldCheck, Gift, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, Send, Newspaper } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Driver.css'
@@ -255,6 +255,38 @@ export default function DriverDashboard() {
   const [showWeatherTraffic, setShowWeatherTraffic] = useState(() => localStorage.getItem('zomp_driver_show_weather') !== 'false')
   const [showTrafficLayer, setShowTrafficLayer] = useState(() => localStorage.getItem('zomp_driver_traffic_layer') === 'true')
   
+  // Notícias de Trânsito em Tempo Real (Fonte: Google / G1 - Atualizado a cada 1 hora)
+  const [trafficNews, setTrafficNews] = useState([])
+  const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
+  const [showTrafficNews, setShowTrafficNews] = useState(() => localStorage.getItem('zomp_driver_show_news') !== 'false')
+
+  const fetchTrafficNews = useCallback(async () => {
+    try {
+      const data = await getTrafficNews()
+      if (data && Array.isArray(data.news) && data.news.length > 0) {
+        setTrafficNews(data.news)
+      }
+    } catch (e) {
+      console.warn('Erro ao buscar notícias de trânsito:', e)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchTrafficNews()
+    const nTimer = setInterval(fetchTrafficNews, 60 * 60 * 1000) // a cada 1 hora
+    return () => clearInterval(nTimer)
+  }, [fetchTrafficNews])
+
+  // Rotação suave do carrossel/letreiro de notícias de trânsito
+  useEffect(() => {
+    if (trafficNews.length > 1 && showTrafficNews) {
+      const rotTimer = setInterval(() => {
+        setCurrentNewsIndex(prev => (prev + 1) % trafficNews.length)
+      }, 5500)
+      return () => clearInterval(rotTimer)
+    }
+  }, [trafficNews.length, showTrafficNews])
+
   // Raio de Atuação (Sonar de Radar em volta do motorista)
   const [workRadiusKm, setWorkRadiusKm] = useState(() => {
     const saved = localStorage.getItem('zomp_driver_radius');
@@ -956,7 +988,7 @@ export default function DriverDashboard() {
 
         {/* OVERLAY WIDGET: CLIMA & TRÂNSITO */}
         {showWeatherTraffic && (
-          <div className="driver-widget-glass" style={{ marginTop: '10px' }}>
+          <div className="driver-widget-glass" style={{ marginTop: '8px' }}>
             <div className="weather-traffic-info" style={{ width: '100%', justifyContent: 'space-between' }}>
               {/* Clima Gratuito Open-Meteo */}
               <div className="weather-badge" title={`${weather.desc} • Vento ${weather.wind} km/h`}>
@@ -969,6 +1001,51 @@ export default function DriverDashboard() {
                 <span>{getTrafficInfo().icon}</span>
                 <span>{getTrafficInfo().label}</span>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* OVERLAY WIDGET: NOTÍCIAS DE TRÂNSITO EM TEMPO REAL (G1 / GOOGLE NOTÍCIAS) */}
+        {showTrafficNews && trafficNews.length > 0 && (
+          <div
+            className="driver-widget-glass animate-fade-in"
+            style={{
+              marginTop: '6px',
+              padding: '7px 12px',
+              background: 'rgba(9, 13, 22, 0.92)',
+              border: '1px solid rgba(0, 230, 118, 0.25)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+              cursor: 'pointer'
+            }}
+            onClick={() => setCurrentNewsIndex(prev => (prev + 1) % trafficNews.length)}
+            title="Toque para alternar a notícia"
+          >
+            <div style={{
+              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+              color: '#fff',
+              fontSize: '0.62rem',
+              fontWeight: 900,
+              padding: '2px 6px',
+              borderRadius: '6px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.4px',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <span>🚗</span> G1 / Google
+            </div>
+            <div style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', fontSize: '0.78rem', fontWeight: 700, color: '#f8fafc' }}>
+              <span style={{ color: '#00E676', marginRight: '5px' }}>●</span>
+              {trafficNews[currentNewsIndex]?.title}
+            </div>
+            <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, flexShrink: 0, background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '100px' }}>
+              {currentNewsIndex + 1}/4
             </div>
           </div>
         )}
@@ -1328,7 +1405,7 @@ export default function DriverDashboard() {
                 <span className="nav-icon"><HelpCircle size={18} /></span> FAQ
               </button>
 
-              <div className="drawer-section-label">Preferências & Mapa</div>
+              <div className="drawer-section-label">Preferências & Visualização</div>
               <button
                 className="drawer-nav-item"
                 onClick={() => {
@@ -1338,7 +1415,19 @@ export default function DriverDashboard() {
                 }}
               >
                 <span className="nav-icon"><CloudSun size={18} /></span>
-                {showWeatherTraffic ? 'Ocultar Clima & Trânsito' : 'Exibir Clima & Trânsito'}
+                {showWeatherTraffic ? '✓ Exibindo Previsão do Tempo' : '✕ Ocultar Previsão do Tempo'}
+              </button>
+
+              <button
+                className="drawer-nav-item"
+                onClick={() => {
+                  const nextVal = !showTrafficNews;
+                  setShowTrafficNews(nextVal);
+                  localStorage.setItem('zomp_driver_show_news', String(nextVal));
+                }}
+              >
+                <span className="nav-icon"><Newspaper size={18} /></span>
+                {showTrafficNews ? '✓ Exibindo Notícias G1/Google' : '✕ Ocultar Notícias de Trânsito'}
               </button>
 
               <button
