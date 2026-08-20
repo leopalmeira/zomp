@@ -428,8 +428,11 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 * 💡 **Detalhamento do Cálculo de Royalties no Card 04**:
   - Ajustado o texto explicativo do card 04 ("Meta: 1.000 Passageiros") deixando explícito que o valor de até **R$ 3.600,00/mês** em royalties é atingido com a média de **3 pedidos/corridas por semana** por cada passageiro vinculado na Zomp.
 
+* 🧹 **Remoção do Login com Google no App do Passageiro**:
+  - Removido o botão e os hooks do Google OAuth das telas de Login ([LoginPage.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/LoginPage.jsx)) e Registro ([RegisterPage.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/RegisterPage.jsx)), mantendo a autenticação direta, segura e sem erros de dependência externa.
+
 ---
-**Status Atual**: ✅ Configurações dinâmicas da Landing Page e detalhamento de royalties 100% integrados e validados.
+**Status Atual**: ✅ Configurações dinâmicas da Landing Page e autenticação simplificada 100% integradas e validadas.
 **Versão**: 15.5.0
 **Responsável**: Antigravity AI & Leandro Palmeira
 

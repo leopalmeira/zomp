@@ -399,7 +399,7 @@ export default function LandingPage() {
               <div className="lp-cap-step">02</div>
               <div className="lp-cap-icon-box"><Smartphone size={26} /></div>
               <h4>Realize a 1ª Corrida pela Zomp</h4>
-              <p>O passageiro escaneia seu QR Code no veículo ou acessa seu link de indicação, faz o login rápido com o Google em 5 segundos e chama a primeira corrida com super desconto.</p>
+              <p>O passageiro escaneia seu QR Code no veículo ou acessa seu link de indicação, cria sua conta em segundos e chama a primeira corrida com super desconto.</p>
             </motion.div>
 
             <motion.div className="lp-capture-card" variants={fadeUp}>
