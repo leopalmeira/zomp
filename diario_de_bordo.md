@@ -517,7 +517,14 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Build de produção do Vite validado com 100% de sucesso.
 
 ---
-**Status Atual**: ✅ Menu Lateral, Ações e Navegação do Motorista 100% corrigidos e operacionais.
-**Versão**: 15.8.3
+### 🚀 v15.8.4 - Auto-Update do Service Worker e Limpeza Profunda de Cache (2026-08-20)
+* ⚡ **Eliminação de Cache Antigo no Navegador do Usuário**:
+  - No [ErrorBoundary.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/components/ErrorBoundary.jsx), o botão *"Recarregar App"* agora executa a limpeza profunda de todas as chaves de Cache (`caches.delete()`) e desregistra Service Workers obsoletos antes de recarregar a página com bypass de cache.
+  - No [main.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/main.jsx), configurado `registerSW` com callback `onNeedRefresh` para atualização em tempo real assim que um novo build for detectado.
+  - Build de produção do Vite validado com 100% de sucesso.
+
+---
+**Status Atual**: ✅ Menu Lateral do Motorista, Limpeza de Cache e Navegação 100% atualizados e operacionais.
+**Versão**: 15.8.4
 **Responsável**: Antigravity AI & Leandro Palmeira
 

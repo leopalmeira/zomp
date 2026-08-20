@@ -39,9 +39,18 @@ class ErrorBoundary extends React.Component {
             {this.state.error?.message || 'Erro desconhecido'}
           </p>
           <button
-            onClick={() => {
-              this.setState({ hasError: false, error: null });
-              window.location.reload();
+            onClick={async () => {
+              try {
+                if ('caches' in window) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map(k => caches.delete(k)));
+                }
+                if ('serviceWorker' in navigator) {
+                  const regs = await navigator.serviceWorker.getRegistrations();
+                  for (let r of regs) await r.unregister();
+                }
+              } catch (e) {}
+              window.location.reload(true);
             }}
             style={{
               padding: '14px 32px',
