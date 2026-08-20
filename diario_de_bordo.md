@@ -524,7 +524,15 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Build de produção do Vite validado com 100% de sucesso.
 
 ---
-**Status Atual**: ✅ Menu Lateral do Motorista, Limpeza de Cache e Navegação 100% atualizados e operacionais.
-**Versão**: 15.8.4
+### 🚀 v15.8.5 - Estabilização & Inicialização Segura do App do Passageiro (2026-08-20)
+* 🛠️ **Eliminação de Erros de Inicialização (TDZ) no App do Passageiro**:
+  - Reorganizados todos os estados (`useState`, `useRef`) no topo de [PassengerDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/PassengerDashboard.jsx).
+  - Declaradas as funções `showToast`, `loadHistory`, `loadSupportTickets` e `handleSendRideMessage` antes de qualquer `useEffect` de polling.
+  - Implementada sincronização em tempo real do perfil do passageiro (`getProfile()`) e persistência segura em `localStorage`.
+  - Build de produção do Vite validado com 100% de sucesso.
+
+---
+**Status Atual**: ✅ App do Passageiro e App do Motorista 100% integrados, estáveis e conectados em tempo real.
+**Versão**: 15.8.5
 **Responsável**: Antigravity AI & Leandro Palmeira
 

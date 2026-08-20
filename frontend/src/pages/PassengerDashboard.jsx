@@ -139,12 +139,10 @@ function getHeaders() {
 
 export default function PassengerDashboard() {
   const navigate = useNavigate()
-  const user = getCurrentUser()
+  const [user, setUser] = useState(getCurrentUser())
 
-  // Map
+  // ── 1. MAPA & ENDEREÇOS ──
   const [mapCenter, setMapCenter] = useState([-22.9068, -43.1729])
-
-  // Origin & Destination
   const [originAddr, setOriginAddr] = useState('')
   const [originCoords, setOriginCoords] = useState(null)
   const [destAddr, setDestAddr] = useState('')
@@ -152,38 +150,47 @@ export default function PassengerDashboard() {
   const [gpsAddress, setGpsAddress] = useState('')
   const [gpsCoords, setGpsCoords] = useState(null)
 
-  // Keep refs for latest coords to avoid stale closures
   const originCoordsRef = useRef(null)
   const destCoordsRef = useRef(null)
   useEffect(() => { originCoordsRef.current = originCoords }, [originCoords])
   useEffect(() => { destCoordsRef.current = destCoords }, [destCoords])
 
-  // Stops
-  const [stops, setStops] = useState([]) // array of {addr: '', coords: null}
+  const [stops, setStops] = useState([])
   const stopsRef = useRef(stops)
   useEffect(() => { stopsRef.current = stops }, [stops])
 
-  // Suggestions
   const [suggestions, setSuggestions] = useState([])
-  const [sugTarget, setSugTarget] = useState(null) // 'origin' | 'dest'
+  const [sugTarget, setSugTarget] = useState(null)
   const debounceRef = useRef(null)
 
-  // Route
+  // ── 2. ROTA & VEÍCULO ──
   const [routeGeometry, setRouteGeometry] = useState([])
   const [routeKm, setRouteKm] = useState('0')
   const [routeDuration, setRouteDuration] = useState(0)
-  const [vehicleType, setVehicleType] = useState('car') // 'car' | 'moto'
-
-  // Missing States added to fix ReferenceError
-  const [rideState, setRideState] = useState('IDLE')
-  const [cancelCountdown, setCancelCountdown] = useState(119)
+  const [vehicleType, setVehicleType] = useState('car')
   const [isIntercity, setIsIntercity] = useState(false)
   const [passengersCount, setPassengersCount] = useState(1)
+
+  // ── 3. ESTADO DA CORRIDA & CONEXÃO ──
+  const [rideState, setRideState] = useState('IDLE')
+  const [cancelCountdown, setCancelCountdown] = useState(119)
+  const [activeRideId, setActiveRideId] = useState(null)
+  const [currentRide, setCurrentRide] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [searchingDrivers, setSearchingDrivers] = useState([])
+
+  // ── 4. PREÇO IMBATÍVEL & OCR ──
   const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
   const [compPriceRead, setCompPriceRead] = useState(0)
   const [selectedTravelCategory, setSelectedTravelCategory] = useState('todos')
   const [isTravelSuggestionsOpen, setIsTravelSuggestionsOpen] = useState(false)
-  
+  const [isAnalyzingScreenshot, setIsAnalyzingScreenshot] = useState(false)
+  const [calculatedDiscountAmount, setCalculatedDiscountAmount] = useState(2.00)
+  const [competitorPrintPrice, setCompetitorPrintPrice] = useState(0)
+  const [manualPriceInput, setManualPriceInput] = useState('')
+  const [manualPriceError, setManualPriceError] = useState('')
+  const [userPendingDebt, setUserPendingDebt] = useState(0)
+
   const userEmail = user?.email?.toLowerCase() || ''
   const isTestAccount = userEmail.includes('cliente@zomp') || userEmail.includes('cliente@zom') || userEmail.includes('teste')
 
@@ -199,36 +206,40 @@ export default function PassengerDashboard() {
     const saved = localStorage.getItem('zomp_imbativel_rides_left');
     return saved !== null ? parseInt(saved) : 3;
   });
-  const [activeRideId, setActiveRideId] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isChatOpen, setIsChatOpen] = useState(false)
-  const [chatMessages, setChatMessages] = useState([])
+
+  // ── 5. AGENDAMENTO, FRETE & PAGAMENTO ──
   const [scheduleData, setScheduleData] = useState({ date: '', time: '' })
   const [freightType, setFreightType] = useState('')
   const [freightDescription, setFreightDescription] = useState('')
   const [freightSecurityCode, setFreightSecurityCode] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('PIX')
   const [freightContactName, setFreightContactName] = useState('')
-  const [isAnalyzingScreenshot, setIsAnalyzingScreenshot] = useState(false)
-  const [calculatedDiscountAmount, setCalculatedDiscountAmount] = useState(2.00)
-  const [competitorPrintPrice, setCompetitorPrintPrice] = useState(0)
+  const [freightContactPhone, setFreightContactPhone] = useState('')
+  const [pixCopiedToast, setPixCopiedToast] = useState(false)
+
+  // ── 6. AVALIAÇÃO DO MOTORISTA ──
   const [passengerRatingModalOpen, setPassengerRatingModalOpen] = useState(false)
   const [lastCompletedRide, setLastCompletedRide] = useState(null)
   const [passengerRatingStars, setPassengerRatingStars] = useState(5)
   const [passengerRatingComment, setPassengerRatingComment] = useState('')
   const [isSubmittingRating, setIsSubmittingRating] = useState(false)
-  const [pixCopiedToast, setPixCopiedToast] = useState(false)
-  const [freightContactPhone, setFreightContactPhone] = useState('')
   const [ratingStars, setRatingStars] = useState(0)
-  const [manualPriceInput, setManualPriceInput] = useState('')
-  const [manualPriceError, setManualPriceError] = useState('')
-  const [userPendingDebt, setUserPendingDebt] = useState(0)
-  const [profileData, setProfileData] = useState({ name: 'Passageiro de Teste', email: 'cliente@zomp.com' })
-  const [chatInput, setChatInput] = useState('')
-  const [currentRide, setCurrentRide] = useState(null)
-  const [searchingDrivers, setSearchingDrivers] = useState([])
 
-  // Estados do Suporte & Reportar Problemas da Plataforma
+  // ── 7. PERFIL & SELFIE ──
+  const [profileData, setProfileData] = useState(() => {
+    const u = getCurrentUser() || {}
+    return { name: u.name || 'Passageiro', email: u.email || '' }
+  })
+  const [showSelfiePrompt, setShowSelfiePrompt] = useState(false)
+  const [selfiePreview, setSelfiePreview] = useState(null)
+  const [isUploadingSelfie, setIsUploadingSelfie] = useState(false)
+
+  // ── 8. CHAT DA CORRIDA ──
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatInput, setChatInput] = useState('')
+
+  // ── 9. SUPORTE DA PLATAFORMA ──
   const [supportTickets, setSupportTickets] = useState([])
   const [activeSupportTicket, setActiveSupportTicket] = useState(null)
   const [supportMessages, setSupportMessages] = useState([])
@@ -238,29 +249,167 @@ export default function PassengerDashboard() {
   const [isSupportLoading, setIsSupportLoading] = useState(false)
   const [isCreatingNewTicket, setIsCreatingNewTicket] = useState(false)
 
-  // Freight pricing constant
-  const FREIGHT_PRICE_PER_KM = 3.50
+  // ── 10. UI & HISTÓRICO ──
+  const [toast, setToast] = useState(null)
+  const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [menuScreen, setMenuScreen] = useState('MAIN')
+  const [expandedRide, setExpandedRide] = useState(null)
+  const [prioritizeFavs, setPrioritizeFavs] = useState(true)
+  const [rideHistory, setRideHistory] = useState([])
 
-  // Pricing state (dynamic from server)
+  const [scheduledRides, setScheduledRides] = useState(() => {
+    try {
+      const saved = localStorage.getItem('zomp_scheduled_rides')
+      return saved ? JSON.parse(saved) : []
+    } catch (e) { return [] }
+  })
+
+  const [favoriteDriversState, setFavoriteDriversState] = useState([
+    { id: 1, name: 'Carlos Santos', car: 'Chevrolet Onix', plate: 'BRA-2031', rating: '4.9', img: 'https://i.pravatar.cc/150?img=11', pixKey: '(21) 98888-7777' },
+    { id: 2, name: 'Ana Silva', car: 'Hyundai HB20', plate: 'XPT-9988', rating: '5.0', img: 'https://i.pravatar.cc/150?img=5', pixKey: 'anasilva@pix.com' }
+  ])
+
+  // Pricing state
+  const FREIGHT_PRICE_PER_KM = 3.50
   const [config, setConfig] = useState({
     pricePerKmCar: 1.80, pricePerKmMoto: 1.40,
     minFareCar: 7.00, minFareMoto: 5.50,
     minKmPriceImbativel: 1.00, discountImbativel: 2.00
   })
-
-  // Min price object
   const MIN_PRICE = { car: 7.00, moto: 5.50 }
 
-  // Selfie Logic
-  const [showSelfiePrompt, setShowSelfiePrompt] = useState(false)
-  const [selfiePreview, setSelfiePreview] = useState(null)
-  const [isUploadingSelfie, setIsUploadingSelfie] = useState(false)
+  // ── FUNÇÕES UTILITÁRIAS ESSENCIAIS ──
+  const showToast = useCallback((msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }, [])
 
-  // useEffect(() => {
-  //   if (user && !user.photo) {
-  //     setShowSelfiePrompt(true)
-  //   }
-  // }, [user])
+  const loadHistory = useCallback(async () => {
+    try {
+      const history = await getRideHistory();
+      if (!Array.isArray(history)) {
+        setRideHistory([]);
+        return;
+      }
+      const formatted = [];
+      for (const h of history) {
+        try {
+          const createdAt = h.createdAt || new Date().toISOString();
+          const datePart = createdAt.split('T')[0];
+          const dp = datePart.split('-');
+          formatted.push({
+            id: h.id,
+            rawDate: new Date(createdAt),
+            date: dp.length === 3 ? `${dp[2]}/${dp[1]}/${dp[0]}` : datePart,
+            origin: h.origin || '-',
+            dest: h.destination || '-',
+            price: h.price != null ? Number(h.price).toFixed(2) : '0.00',
+            vehicle: h.vehicleType === 'car' ? 'Carro' : 'Moto',
+            status: h.status || 'UNKNOWN'
+          });
+        } catch (itemErr) {
+          console.warn('Skipping malformed ride history item:', itemErr);
+        }
+      }
+      setRideHistory(formatted);
+    } catch (err) {
+      console.error('Failed to load history', err);
+      setRideHistory([]);
+    }
+  }, []);
+
+  const loadSupportTickets = useCallback(async () => {
+    try {
+      setIsSupportLoading(true);
+      const tickets = await getUserSupportTickets();
+      if (Array.isArray(tickets)) {
+        setSupportTickets(tickets);
+        if (tickets.length > 0 && !activeSupportTicket) {
+          setActiveSupportTicket(tickets[0]);
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar chamados de suporte:', e);
+    } finally {
+      setIsSupportLoading(false);
+    }
+  }, [activeSupportTicket]);
+
+  const handleCreateSupportTicket = async () => {
+    if (!supportInput.trim()) return;
+    setIsSendingSupport(true);
+    try {
+      const res = await createSupportTicket({
+        category: supportCategory,
+        subject: `Atendimento [${supportCategory}]`,
+        message: supportInput.trim()
+      });
+      setSupportInput('');
+      setIsCreatingNewTicket(false);
+      await loadSupportTickets();
+      if (res?.ticket) {
+        setActiveSupportTicket(res.ticket);
+      }
+    } catch (e) {
+      alert('Erro ao abrir chamado: ' + e.message);
+    } finally {
+      setIsSendingSupport(false);
+    }
+  };
+
+  const handleSendSupportMessage = async () => {
+    if (!supportInput.trim() || !activeSupportTicket?.id) return;
+    setIsSendingSupport(true);
+    try {
+      const sent = await sendSupportMessage(activeSupportTicket.id, supportInput.trim());
+      setSupportMessages(prev => [...prev, sent]);
+      setSupportInput('');
+    } catch (e) {
+      alert('Erro ao enviar mensagem para o suporte: ' + e.message);
+    } finally {
+      setIsSendingSupport(false);
+    }
+  };
+
+  const handleSendRideMessage = async (customText) => {
+    const textToSend = (customText || chatInput).trim();
+    if (!textToSend) return;
+    const rideId = activeRideId || currentRide?.id;
+    if (!rideId) return;
+
+    setChatInput('');
+    try {
+      const sent = await sendRideMessage(rideId, textToSend);
+      setChatMessages(prev => [...prev, sent]);
+    } catch (e) {
+      console.warn('Erro ao enviar mensagem:', e);
+    }
+  };
+
+  // ── SINCRONIZAÇÃO EM TEMPO REAL DO PERFIL ──
+  useEffect(() => {
+    getProfile().then(data => {
+      if (data && !data.error) {
+        setUser(data);
+        localStorage.setItem('zomp_user', JSON.stringify(data));
+        setProfileData({
+          name: data.name || 'Passageiro',
+          email: data.email || '',
+          phone: data.phone || ''
+        });
+      }
+    }).catch(err => {
+      console.warn('Erro ao sincronizar perfil do passageiro:', err);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!user || user.role !== 'PASSENGER') {
+      navigate('/passageiro');
+      return;
+    }
+  }, [navigate, user]);
 
   useEffect(() => {
     async function loadConfig() {
@@ -274,6 +423,14 @@ export default function PassengerDashboard() {
     }
     loadConfig();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('zomp_scheduled_rides', JSON.stringify(scheduledRides))
+  }, [scheduledRides])
+
+  useEffect(() => {
+    loadHistory();
+  }, [rideState, loadHistory]);
 
   // Manage 60-second countdown when ACCEPTED
   useEffect(() => {
@@ -319,7 +476,7 @@ export default function PassengerDashboard() {
       interval = setInterval(poll, 3000);
     }
     return () => clearInterval(interval);
-  }, [activeRideId, rideState]);
+  }, [activeRideId, rideState, loadHistory, showToast]);
 
   // Sincronização em tempo real do Chat com o Motorista durante a corrida
   useEffect(() => {
@@ -340,98 +497,6 @@ export default function PassengerDashboard() {
     return () => { if (interval) clearInterval(interval); };
   }, [isChatOpen, activeRideId, currentRide?.id]);
 
-  const handleSendRideMessage = async (customText) => {
-    const textToSend = (customText || chatInput).trim();
-    if (!textToSend) return;
-    const rideId = activeRideId || currentRide?.id;
-    if (!rideId) return;
-
-    setChatInput('');
-    try {
-      const sent = await sendRideMessage(rideId, textToSend);
-      setChatMessages(prev => [...prev, sent]);
-    } catch (e) {
-      console.warn('Erro ao enviar mensagem:', e);
-    }
-  };
-
-  // Sincronização do Suporte Oficial Zomp & Reportar Problemas
-  const loadSupportTickets = useCallback(async () => {
-    try {
-      setIsSupportLoading(true);
-      const tickets = await getUserSupportTickets();
-      if (Array.isArray(tickets)) {
-        setSupportTickets(tickets);
-        if (tickets.length > 0 && !activeSupportTicket) {
-          setActiveSupportTicket(tickets[0]);
-        }
-      }
-    } catch (e) {
-      console.warn('Erro ao carregar chamados de suporte:', e);
-    } finally {
-      setIsSupportLoading(false);
-    }
-  }, [activeSupportTicket]);
-
-  useEffect(() => {
-    if (menuScreen === 'SUPPORT') {
-      loadSupportTickets();
-    }
-  }, [menuScreen, loadSupportTickets]);
-
-  useEffect(() => {
-    let interval;
-    if (menuScreen === 'SUPPORT' && activeSupportTicket?.id) {
-      const fetchMsgs = async () => {
-        try {
-          const msgs = await getSupportMessages(activeSupportTicket.id);
-          if (Array.isArray(msgs)) setSupportMessages(msgs);
-        } catch (e) {
-          console.warn('Erro ao buscar mensagens do chamado:', e);
-        }
-      };
-      fetchMsgs();
-      interval = setInterval(fetchMsgs, 3000);
-    }
-    return () => { if (interval) clearInterval(interval); };
-  }, [menuScreen, activeSupportTicket?.id]);
-
-  const handleCreateSupportTicket = async () => {
-    if (!supportInput.trim()) return;
-    setIsSendingSupport(true);
-    try {
-      const res = await createSupportTicket({
-        category: supportCategory,
-        subject: `Atendimento [${supportCategory}]`,
-        message: supportInput.trim()
-      });
-      setSupportInput('');
-      setIsCreatingNewTicket(false);
-      await loadSupportTickets();
-      if (res?.ticket) {
-        setActiveSupportTicket(res.ticket);
-      }
-    } catch (e) {
-      alert('Erro ao abrir chamado: ' + e.message);
-    } finally {
-      setIsSendingSupport(false);
-    }
-  };
-
-  const handleSendSupportMessage = async () => {
-    if (!supportInput.trim() || !activeSupportTicket?.id) return;
-    setIsSendingSupport(true);
-    try {
-      const sent = await sendSupportMessage(activeSupportTicket.id, supportInput.trim());
-      setSupportMessages(prev => [...prev, sent]);
-      setSupportInput('');
-    } catch (e) {
-      alert('Erro ao enviar mensagem para o suporte: ' + e.message);
-    } finally {
-      setIsSendingSupport(false);
-    }
-  };
-
   // Simulated searching drivers for sonar
   useEffect(() => {
     if (rideState === 'SEARCHING' && originCoords) {
@@ -447,83 +512,10 @@ export default function PassengerDashboard() {
     }
   }, [rideState, originCoords]);
 
-  // UI
-  const [toast, setToast] = useState(null)
-  const showToast = (msg) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3000)
-  }
-  const [isSheetCollapsed, setIsSheetCollapsed] = useState(false)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [menuScreen, setMenuScreen] = useState('MAIN') // 'MAIN' | 'SCHEDULED'
-  const [expandedRide, setExpandedRide] = useState(null) // id of expanded ride
-  const [prioritizeFavs, setPrioritizeFavs] = useState(true)
-
-  // Scheduled rides list
-  const [scheduledRides, setScheduledRides] = useState(() => {
-    try {
-      const saved = localStorage.getItem('zomp_scheduled_rides')
-      return saved ? JSON.parse(saved) : []
-    } catch (e) { return [] }
-  })
-
-  // Persist scheduled rides to localStorage
-  useEffect(() => {
-    localStorage.setItem('zomp_scheduled_rides', JSON.stringify(scheduledRides))
-  }, [scheduledRides])
-
-  // Favorite drivers state
-  const [favoriteDriversState, setFavoriteDriversState] = useState([
-    { id: 1, name: 'Carlos Santos', car: 'Chevrolet Onix', plate: 'BRA-2031', rating: '4.9', img: 'https://i.pravatar.cc/150?img=11', pixKey: '(21) 98888-7777' },
-    { id: 2, name: 'Ana Silva', car: 'Hyundai HB20', plate: 'XPT-9988', rating: '5.0', img: 'https://i.pravatar.cc/150?img=5', pixKey: 'anasilva@pix.com' }
-  ])
-
-  // History state from API
-  const [rideHistory, setRideHistory] = useState([]);
-
-  const loadHistory = async () => {
-    try {
-      const history = await getRideHistory();
-      if (!Array.isArray(history)) {
-        setRideHistory([]);
-        return;
-      }
-      const formatted = [];
-      for (const h of history) {
-        try {
-          const createdAt = h.createdAt || new Date().toISOString();
-          const datePart = createdAt.split('T')[0];
-          const dp = datePart.split('-');
-          formatted.push({
-            id: h.id,
-            rawDate: new Date(createdAt),
-            date: dp.length === 3 ? `${dp[2]}/${dp[1]}/${dp[0]}` : datePart,
-            origin: h.origin || '-',
-            dest: h.destination || '-',
-            price: h.price != null ? Number(h.price).toFixed(2) : '0.00',
-            vehicle: h.vehicleType === 'car' ? 'Carro' : 'Moto',
-            status: h.status || 'UNKNOWN'
-          });
-        } catch (itemErr) {
-          console.warn('Skipping malformed ride history item:', itemErr);
-        }
-      }
-      setRideHistory(formatted);
-    } catch (err) {
-      console.error('Failed to load history', err);
-      setRideHistory([]);
-    }
-  };
-
-  useEffect(() => {
-    loadHistory();
-  }, [rideState]); // re-fetch history when ride state changes (e.g. after ride ends)
-
   const pendingFeeAmount = rideHistory
     .filter(h => h.status === 'CANCELED_FEE' && !h.feePaid)
     .reduce((sum, h) => sum + parseFloat(h.price || 0), 0)
 
-  // Dynamically evaluate if trip is intercity
   const isTripIntercity = isIntercity || parseFloat(routeKm) > 90
 
   // Compute price based on vehicle type and distance
