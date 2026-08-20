@@ -128,8 +128,9 @@ exports.completeRide = async (req, res) => {
 
     const ride = rows[0];
 
-    // Incrementar ridesCompleted do motorista
-    await pool.query('UPDATE "User" SET "ridesCompleted" = "ridesCompleted" + 1 WHERE id = $1', [req.user.id]);
+    // Incrementar ridesCompleted do motorista e passageiro, e consumir 1 crédito do motorista
+    await pool.query('UPDATE "User" SET "ridesCompleted" = "ridesCompleted" + 1, credits = GREATEST(COALESCE(credits, 0) - 1, 0) WHERE id = $1', [req.user.id]);
+    await pool.query('UPDATE "User" SET "ridesCompleted" = "ridesCompleted" + 1 WHERE id = $1', [ride.passengerId]);
 
     // Zera qualquer pendência do passageiro (ele acabou de quitar esta corrida e dívida anterior)
     await pool.query('UPDATE "User" SET "pendingDebt" = 0 WHERE id = $1', [ride.passengerId]);
@@ -142,8 +143,8 @@ exports.completeRide = async (req, res) => {
       await pool.query('UPDATE "User" SET "driverAppDebt" = COALESCE("driverAppDebt", 0) + $1 WHERE id = $2', [pendingDebtIncluded, req.user.id]);
     }
 
-    // Processar Royalties: se o passageiro é vinculado (indicado) a algum motorista,
-    // credita R$ 0,30 na carteira de royalties do motorista que indicou ao finalizar a corrida
+    // Processar Royalties:
+    // 1. Verifica se o passageiro já possui vínculo ativo com algum motorista
     let royaltyPaid = 0;
     try {
       const { rows: referrals } = await pool.query(`
@@ -151,12 +152,27 @@ exports.completeRide = async (req, res) => {
         WHERE r."referredId" = $1 AND r."expiresAt" > NOW()
       `, [ride.passengerId]);
 
-      if (referrals.length > 0) {
+      let targetReferrerId = referrals.length > 0 ? referrals[0].referrerId : null;
+
+      // 2. Se o passageiro NÃO possuía vínculo prévio, vincula-o automaticamente ao motorista da primeira corrida por 1 ano!
+      if (!targetReferrerId && ride.driverId) {
+        const expiresAt = new Date();
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        await pool.query(`
+          INSERT INTO "Referral" ("referrerId", "referredId", "expiresAt", "createdAt")
+          VALUES ($1, $2, $3, NOW())
+        `, [ride.driverId, ride.passengerId, expiresAt]);
+        targetReferrerId = ride.driverId;
+        console.log(`✅ [Vínculo Criado] Passageiro ${ride.passengerId} vinculado por 1 ano ao motorista ${ride.driverId}.`);
+      }
+
+      // 3. Credita os royalties no saldo da carteira do motorista vinculado
+      if (targetReferrerId) {
         const config = await pool.query('SELECT * FROM "AdminConfig" WHERE id = $1', ['singleton']);
         const royaltyValue = parseFloat(config.rows[0]?.royaltyPerRide || 0.30);
-        await pool.query('UPDATE "User" SET balance = balance + $1 WHERE id = $2', [royaltyValue, referrals[0].referrerId]);
+        await pool.query('UPDATE "User" SET balance = COALESCE(balance, 0) + $1 WHERE id = $2', [royaltyValue, targetReferrerId]);
         royaltyPaid = royaltyValue;
-        console.log(`✅ [Royalty] R$ ${royaltyValue.toFixed(2)} creditado ao motorista ${referrals[0].referrerId} (passageiro ${ride.passengerId} vinculado) na conclusão da corrida.`);
+        console.log(`✅ [Royalty Creditado] R$ ${royaltyValue.toFixed(2)} adicionado à carteira do motorista ${targetReferrerId}.`);
       }
     } catch (royaltyErr) {
       console.warn('Erro ao processar royalty na conclusão da corrida (não bloqueante):', royaltyErr.message);

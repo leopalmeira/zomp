@@ -159,9 +159,9 @@ async function initDB() {
       ON CONFLICT (id) DO NOTHING;
     `);
 
-    // Garantir que motoristas parceiros tenham no mínimo 10 créditos de cortesia para testes e estreia
+    // Garantir que motoristas parceiros tenham no mínimo 10 créditos de cortesia e estejam aprovados para testes e estreia
     await client.query(`
-      UPDATE "User" SET credits = 10 WHERE role = 'DRIVER' AND (credits IS NULL OR credits < 10);
+      UPDATE "User" SET "isApproved" = true, credits = GREATEST(COALESCE(credits, 0), 10) WHERE role = 'DRIVER';
     `);
 
     console.log('✅ [Sistema] Banco de dados e Admin prontos.');

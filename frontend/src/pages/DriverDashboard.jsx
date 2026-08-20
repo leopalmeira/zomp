@@ -373,11 +373,6 @@ export default function DriverDashboard() {
   const slideThreshold = slideTrackWidth - slideThumbWidth - 10
 
   const handleSlideStart = (e) => {
-    const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
-    if (!isTestDriver && !user?.isApproved) {
-      alert("📳 Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
-      return;
-    }
     setIsSwiping(true)
   }
   const handleSlideMove = (e) => {
@@ -390,28 +385,11 @@ export default function DriverDashboard() {
     x = Math.max(0, Math.min(x, slideTrackWidth - slideThumbWidth))
     setSlideX(x)
   }
-  const handleSlideEnd = () => {
+  const handleSlideEnd = async () => {
     setIsSwiping(false)
     if (slideX >= slideThreshold) {
-      const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
-      
-      if (!isTestDriver && !user?.isApproved) {
-        setSlideX(0);
-        return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
-      }
-
-      if (!isTestDriver && Number(credits || 0) <= 0) {
-        setSlideX(0);
-        setShowRechargeModal(true);
-        return;
-      }
-
-      setIsOnline(true)
-      setSlideX(0)
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') ctx.resume();
-      } catch (e) {}
+      setSlideX(0);
+      await checkCreditsAndGoOnline();
     } else {
       setSlideX(0)
     }
@@ -876,15 +854,36 @@ export default function DriverDashboard() {
   const [showRechargeModal, setShowRechargeModal] = useState(false)
 
   // Verificar créditos ao tentar ficar online
-  const checkCreditsAndGoOnline = () => {
+  const checkCreditsAndGoOnline = async () => {
     const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
 
-    if (!isTestDriver && !user?.isApproved) {
+    // Sincroniza dados em tempo real do backend para garantir que temos o status e créditos mais recentes
+    let currentCredits = Number(credits || 0);
+    let isApprovedStatus = user?.isApproved;
+
+    try {
+      const fresh = await getProfile();
+      if (fresh && !fresh.error) {
+        setUser(fresh);
+        localStorage.setItem('zomp_user', JSON.stringify(fresh));
+        if (fresh.credits !== undefined) {
+          currentCredits = Number(fresh.credits);
+          setCredits(currentCredits);
+        }
+        if (fresh.isApproved !== undefined) {
+          isApprovedStatus = fresh.isApproved;
+        }
+      }
+    } catch (err) {
+      console.warn('Erro ao atualizar perfil do motorista:', err);
+    }
+
+    if (!isTestDriver && isApprovedStatus === false && currentCredits <= 0) {
       return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
     }
 
     // Se não for conta de teste e não tiver créditos, mostrar modal de recarga
-    if (!isTestDriver && Number(credits || 0) <= 0) {
+    if (!isTestDriver && currentCredits <= 0) {
       setShowRechargeModal(true);
       return;
     }

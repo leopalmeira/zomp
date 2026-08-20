@@ -20,7 +20,7 @@ exports.register = async (req, res) => {
       INSERT INTO "User" (name, email, password, role, "qrCode", "isApproved", credits)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id, name, email, role, "qrCode", "isApproved", credits
-    `, [name, email, hash, role.toUpperCase(), qrCode, role === 'PASSENGER', initialCredits]);
+    `, [name, email, hash, role.toUpperCase(), qrCode, true, initialCredits]);
 
     const user = rows[0];
 

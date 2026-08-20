@@ -491,7 +491,19 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
     - 🌙 **Mapa Claro / Mapa Escuro**.
 
 ---
-**Status Atual**: ✅ Notícias de Trânsito G1/Google com cache de 1 hora, letreiro discreto e toggles no menu 100% integrados e validados.
-**Versão**: 15.8.0
+### 🚀 v15.8.1 - Liberação Imediata do Modo Online e Ciclo Completo de Royalties (2026-08-20)
+* 🔓 **Acesso Desimpedido ao Modo Online para Motoristas**:
+  - Ajustado o [authController.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/controllers/authController.js) e [db.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/config/db.js) para garantir `isApproved: true` e no mínimo 10 créditos de cortesia para todos os motoristas.
+  - Refatorado o `checkCreditsAndGoOnline` e o slider de ficar online em [DriverDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/DriverDashboard.jsx) para sincronizar dados em tempo real com o backend (`getProfile()`), eliminando bloqueios por cache ou status antigo do `localStorage`.
+* 💰 **Ciclo Completo de Corrida & Crédito de Royalties na Carteira**:
+  - No [ridesController.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/controllers/ridesController.js) (`completeRide`):
+    - Desconta 1 crédito do motorista ao concluir a viagem.
+    - Incrementa o contador de viagens concluídas do passageiro e do motorista.
+    - Se o passageiro não possuir vínculo anterior com nenhum motorista, o sistema cria o vínculo automático por **1 ano** com o motorista que realizou a corrida.
+    - Credita **R$ 0,30 de royalties** instantaneamente no saldo da carteira (`balance`) do motorista vinculado.
+
+---
+**Status Atual**: ✅ Modo Online 100% liberado para testes, ciclo de corridas e crédito de royalties na carteira validados.
+**Versão**: 15.8.1
 **Responsável**: Antigravity AI & Leandro Palmeira
 
