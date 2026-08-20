@@ -510,7 +510,14 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Build de produção do Vite validado com 100% de sucesso sem erros de runtime.
 
 ---
-**Status Atual**: ✅ Login e Dashboard do Motorista 100% estáveis, funcionais e sem erros de inicialização.
-**Versão**: 15.8.2
+### 🚀 v15.8.3 - Correção de Escopo do Menu Lateral do Motorista (2026-08-20)
+* 🛠️ **Restauração de Funções de Navegação e Ações do Menu**:
+  - Declaradas e posicionadas no escopo do componente [DriverDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/DriverDashboard.jsx) as funções `handleLogout`, `openScreen`, `handleCopy`, `handleSelfieUpload` e `handleSaveSelfie`.
+  - Corrigido o erro `handleLogout is not defined` acionado ao abrir a gaveta lateral do menu do motorista.
+  - Build de produção do Vite validado com 100% de sucesso.
+
+---
+**Status Atual**: ✅ Menu Lateral, Ações e Navegação do Motorista 100% corrigidos e operacionais.
+**Versão**: 15.8.3
 **Responsável**: Antigravity AI & Leandro Palmeira
 

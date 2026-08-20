@@ -885,6 +885,57 @@ export default function DriverDashboard() {
   const completedRides = rideHistory.filter(r => r.status === 'COMPLETED')
   const todayRides = completedRides.filter(r => new Date(r.createdAt).toDateString() === new Date().toDateString())
 
+  // ── REFERRAL, LOGOUT & MENU ──
+  const referralLink = `${window.location.origin}/passageiro/cadastro?ref=${encodeURIComponent(user?.qrCode || '')}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(referralLink)}&bgcolor=ffffff&color=18181b`;
+
+  const handleCopy = () => {
+    if (user?.qrCode) {
+      navigator.clipboard.writeText(referralLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/motorista');
+  };
+
+  const openScreen = (s) => {
+    setActiveScreen(s);
+    setMenuOpen(false);
+  };
+
+  // ── UPLOAD DE SELFIE DO TOUR ──
+  const handleSelfieUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setSelfiePreview(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveSelfie = async () => {
+    if (!selfiePreview) return;
+    setSelfieSaving(true);
+    try {
+      await updateProfile({ photo: selfiePreview });
+      const updatedUser = { ...user, photo: selfiePreview };
+      setUser(updatedUser);
+      localStorage.setItem('zomp_user', JSON.stringify(updatedUser));
+      alert('Foto de perfil salva com sucesso!');
+      setShowDriverTour(false);
+    } catch (err) {
+      alert('Erro ao salvar foto de perfil: ' + err.message);
+    } finally {
+      setSelfieSaving(false);
+    }
+  };
+
   return (
     <div className="driver-app">
       {/* MAP */}
