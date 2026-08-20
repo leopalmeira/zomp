@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, rateRide, getProfile, updateProfile } from '../services/api'
+import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, rateRide, getProfile, updateProfile, getRideMessages, sendRideMessage, createSupportTicket, getUserSupportTickets, getSupportMessages, sendSupportMessage } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Circle } from 'react-leaflet'
-import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders, Camera, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, X, Rocket, ShieldCheck, Gift } from 'lucide-react'
+import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders, Camera, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, X, Rocket, ShieldCheck, Gift, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, Send } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Driver.css'
@@ -525,6 +525,127 @@ export default function DriverDashboard() {
   const prevFirstRideIdRef = useRef(null)
   const [rideCountdown, setRideCountdown] = useState(15)
 
+  // Chat com o Passageiro durante a Corrida
+  const [isDriverChatOpen, setIsDriverChatOpen] = useState(false)
+  const [driverChatMessages, setDriverChatMessages] = useState([])
+  const [driverChatInput, setDriverChatInput] = useState('')
+
+  // Suporte da Plataforma & Reportar Problemas
+  const [driverSupportTickets, setDriverSupportTickets] = useState([])
+  const [activeDriverSupportTicket, setActiveDriverSupportTicket] = useState(null)
+  const [driverSupportMessages, setDriverSupportMessages] = useState([])
+  const [driverSupportCategory, setDriverSupportCategory] = useState('CREDITOS')
+  const [driverSupportInput, setDriverSupportInput] = useState('')
+  const [isSendingDriverSupport, setIsSendingDriverSupport] = useState(false)
+  const [isDriverSupportLoading, setIsDriverSupportLoading] = useState(false)
+  const [isCreatingNewDriverTicket, setIsCreatingNewDriverTicket] = useState(false)
+
+  // Sincronização em tempo real do Chat com o Passageiro
+  useEffect(() => {
+    let interval;
+    if (isDriverChatOpen && activeRide?.id) {
+      const fetchMsgs = async () => {
+        try {
+          const msgs = await getRideMessages(activeRide.id);
+          if (Array.isArray(msgs)) setDriverChatMessages(msgs);
+        } catch (e) {
+          console.warn('Erro ao buscar mensagens do chat do motorista:', e);
+        }
+      };
+      fetchMsgs();
+      interval = setInterval(fetchMsgs, 2500);
+    }
+    return () => { if (interval) clearInterval(interval); };
+  }, [isDriverChatOpen, activeRide?.id]);
+
+  const handleSendDriverRideMessage = async (customText) => {
+    const textToSend = (customText || driverChatInput).trim();
+    if (!textToSend || !activeRide?.id) return;
+
+    setDriverChatInput('');
+    try {
+      const sent = await sendRideMessage(activeRide.id, textToSend);
+      setDriverChatMessages(prev => [...prev, sent]);
+    } catch (e) {
+      console.warn('Erro ao enviar mensagem:', e);
+    }
+  };
+
+  // Sincronização do Suporte da Plataforma Zomp
+  const loadDriverSupportTickets = useCallback(async () => {
+    try {
+      setIsDriverSupportLoading(true);
+      const tickets = await getUserSupportTickets();
+      if (Array.isArray(tickets)) {
+        setDriverSupportTickets(tickets);
+        if (tickets.length > 0 && !activeDriverSupportTicket) {
+          setActiveDriverSupportTicket(tickets[0]);
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar tickets:', e);
+    } finally {
+      setIsDriverSupportLoading(false);
+    }
+  }, [activeDriverSupportTicket]);
+
+  useEffect(() => {
+    if (activeScreen === 'SUPPORT') {
+      loadDriverSupportTickets();
+    }
+  }, [activeScreen, loadDriverSupportTickets]);
+
+  useEffect(() => {
+    let interval;
+    if (activeScreen === 'SUPPORT' && activeDriverSupportTicket?.id) {
+      const fetchMsgs = async () => {
+        try {
+          const msgs = await getSupportMessages(activeDriverSupportTicket.id);
+          if (Array.isArray(msgs)) setDriverSupportMessages(msgs);
+        } catch (e) {
+          console.warn('Erro ao buscar mensagens:', e);
+        }
+      };
+      fetchMsgs();
+      interval = setInterval(fetchMsgs, 3000);
+    }
+    return () => { if (interval) clearInterval(interval); };
+  }, [activeScreen, activeDriverSupportTicket?.id]);
+
+  const handleCreateDriverSupportTicket = async () => {
+    if (!driverSupportInput.trim()) return;
+    setIsSendingDriverSupport(true);
+    try {
+      const res = await createSupportTicket({
+        category: driverSupportCategory,
+        subject: `Motorista [${driverSupportCategory}]`,
+        message: driverSupportInput.trim()
+      });
+      setDriverSupportInput('');
+      setIsCreatingNewDriverTicket(false);
+      await loadDriverSupportTickets();
+      if (res?.ticket) setActiveDriverSupportTicket(res.ticket);
+    } catch (e) {
+      alert('Erro ao abrir chamado: ' + e.message);
+    } finally {
+      setIsSendingDriverSupport(false);
+    }
+  };
+
+  const handleSendDriverSupportMessage = async () => {
+    if (!driverSupportInput.trim() || !activeDriverSupportTicket?.id) return;
+    setIsSendingDriverSupport(true);
+    try {
+      const sent = await sendSupportMessage(activeDriverSupportTicket.id, driverSupportInput.trim());
+      setDriverSupportMessages(prev => [...prev, sent]);
+      setDriverSupportInput('');
+    } catch (e) {
+      alert('Erro ao enviar mensagem: ' + e.message);
+    } finally {
+      setIsSendingDriverSupport(false);
+    }
+  };
+
   // Temporizador regressivo de 15 segundos para aceitar a corrida
   useEffect(() => {
     let countdownTimer;
@@ -925,8 +1046,26 @@ export default function DriverDashboard() {
                   </div>
                 )}
 
-                <button className="btn-premium btn-green" style={{ width: '100%' }} onClick={handleComplete}>
+                <button className="btn-premium btn-green" style={{ width: '100%', marginBottom: '8px' }} onClick={handleComplete}>
                   ✓ Confirmar Pagamento e Finalizar
+                </button>
+                <button
+                  className="btn-premium"
+                  style={{
+                    width: '100%',
+                    background: '#18181b',
+                    color: '#00E676',
+                    border: '1.5px solid #00E676',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontWeight: 800,
+                    fontSize: '0.92rem'
+                  }}
+                  onClick={() => setIsDriverChatOpen(true)}
+                >
+                  💬 Chat com o Passageiro
                 </button>
               </div>
             </div>
@@ -941,9 +1080,9 @@ export default function DriverDashboard() {
                   <div className="info-row">
                     <span className="info-label">Passageiro</span>
                     <div style={{textAlign:'right'}}>
-                      <div className="info-value">{activeRide.passenger?.name || 'Passageiro'}</div>
+                      <div className="info-value">{activeRide.passenger?.name || activeRide.passengerName || 'Passageiro'}</div>
                       <div style={{fontSize:'0.7rem', fontWeight:700, color:'#64748b'}}>
-                         ⭐ {formatNumber ? formatNumber(activeRide.passenger?.rating, 1, '5.0') : (activeRide.passenger?.rating?.toFixed(1) || '5.0')} • {activeRide.passenger?.ridesCompleted || 0} viagens
+                         ⭐ {formatNumber ? formatNumber(activeRide.passenger?.rating || activeRide.passengerRating, 1, '5.0') : (activeRide.passenger?.rating?.toFixed(1) || '5.0')} • {activeRide.passenger?.ridesCompleted || activeRide.passengerRidesCompleted || 0} viagens
                       </div>
                     </div>
                   </div>
@@ -966,6 +1105,26 @@ export default function DriverDashboard() {
                   <button className="btn-premium btn-green" style={{ flex: 1.5, margin: 0 }} onClick={handleComplete}>✓ Finalizar Corrida</button>
                   <button className="btn-premium" style={{ flex: 1.2, margin: 0, background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 800, cursor: 'pointer' }} onClick={handleNearDestination}>Simular 500m 🏁</button>
                 </div>
+
+                <button
+                  className="btn-premium"
+                  style={{
+                    width: '100%',
+                    marginTop: '10px',
+                    background: '#18181b',
+                    color: '#00E676',
+                    border: '1.5px solid #00E676',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontWeight: 800,
+                    fontSize: '0.92rem'
+                  }}
+                  onClick={() => setIsDriverChatOpen(true)}
+                >
+                  💬 Chat com o Passageiro
+                </button>
               </div>
             </div>
           )
@@ -1914,26 +2073,211 @@ export default function DriverDashboard() {
         </div>
       )}
 
-      {/* ===== SUPPORT ===== */}
+      {/* ===== SUPPORT & REPORTAR PROBLEMAS DO MOTORISTA ===== */}
       {activeScreen === 'SUPPORT' && (
-        <div className="driver-inner-screen">
-          <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Suporte</h2></div>
-          <div className="inner-body">
-            <div className="premium-card" style={{textAlign:'center',padding:'28px',marginBottom:'20px'}}>
-              <span style={{fontSize:'2.5rem',display:'block',marginBottom:'8px'}}>🎧</span>
-              <h3 style={{fontWeight:800,fontSize:'1.1rem',marginBottom:'4px'}}>Como podemos ajudar?</h3>
-              <p style={{color:'#71717a',fontWeight:600,fontSize:'0.85rem'}}>Escolha um canal de atendimento</p>
-            </div>
-            {[
-              {icon:'📧',title:'E-mail',sub:'suporte@zomp.app',bg:'#eff6ff',action:() => window.open('mailto:suporte@zomp.app')},
-              {icon:'💬',title:'WhatsApp',sub:'Atendimento rápido',bg:'#ecfdf5',action:() => window.open('https://wa.me/5500000000000')},
-              {icon:'📞',title:'Telefone',sub:'0800 000 ZOMP',bg:'#fef3c7',action:() => {}}
-            ].map((item,i) => (
-              <div key={i} className="support-item" onClick={item.action}>
-                <div className="support-icon" style={{background:item.bg}}>{item.icon}</div>
-                <div><div style={{fontWeight:700,fontSize:'0.95rem'}}>{item.title}</div><div style={{fontSize:'0.8rem',color:'#71717a',fontWeight:600}}>{item.sub}</div></div>
+        <div className="driver-inner-screen" style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f8fafc' }}>
+          <div className="inner-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button>
+              <div>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#090d16', margin: 0 }}>Suporte Oficial Zomp</h2>
+                <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700 }}>Canal de Ajuda & Resolução de Problemas</span>
               </div>
-            ))}
+            </div>
+            <button
+              className="btn-premium btn-green"
+              style={{ padding: '6px 12px', fontSize: '0.75rem', fontWeight: 800, width: 'auto', margin: 0 }}
+              onClick={() => setIsCreatingNewDriverTicket(!isCreatingNewDriverTicket)}
+            >
+              {isCreatingNewDriverTicket ? 'Ver Chamados' : '+ Novo Chamado'}
+            </button>
+          </div>
+
+          <div className="inner-body" style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+            {isCreatingNewDriverTicket ? (
+              <div className="premium-card" style={{ padding: '18px', border: '1.5px solid #cbd5e1' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#090d16', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Selecione o Assunto
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '14px' }}>
+                  {[
+                    { id: 'CREDITOS', label: '🎫 Créditos & Recargas' },
+                    { id: 'PAGAMENTO', label: '💰 Pagamento do Passageiro' },
+                    { id: 'NO_SHOW', label: '🚶 Passageiro Não Compareceu' },
+                    { id: 'APP_GPS', label: '⚠️ Problemas no App / GPS' },
+                    { id: 'SEGURANCA', label: '🚨 Segurança & Conduta' },
+                    { id: 'OUTROS', label: '💬 Outros Assuntos' },
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setDriverSupportCategory(cat.id)}
+                      style={{
+                        padding: '10px 8px',
+                        borderRadius: '10px',
+                        border: driverSupportCategory === cat.id ? '2px solid #00E676' : '1px solid #e2e8f0',
+                        background: driverSupportCategory === cat.id ? '#ecfdf5' : '#ffffff',
+                        color: driverSupportCategory === cat.id ? '#065f46' : '#1e293b',
+                        fontWeight: 800,
+                        fontSize: '0.76rem',
+                        cursor: 'pointer',
+                        textAlign: 'center'
+                      }}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#090d16', textTransform: 'uppercase', marginBottom: '6px' }}>
+                  Descreva o que aconteceu
+                </div>
+                <textarea
+                  value={driverSupportInput}
+                  onChange={(e) => setDriverSupportInput(e.target.value)}
+                  placeholder="Ex: O passageiro não realizou o pagamento do valor acordado ou tive problemas com os créditos..."
+                  style={{
+                    width: '100%',
+                    minHeight: '100px',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: '1.5px solid #cbd5e1',
+                    color: '#090d16',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    outline: 'none',
+                    marginBottom: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+
+                <button
+                  disabled={isSendingDriverSupport || !driverSupportInput.trim()}
+                  className="btn-premium btn-green"
+                  style={{ width: '100%', padding: '14px', fontWeight: 900 }}
+                  onClick={handleCreateDriverSupportTicket}
+                >
+                  {isSendingDriverSupport ? 'Enviando...' : '🚀 Abrir Chamado no Suporte'}
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
+                {driverSupportTickets.length === 0 ? (
+                  <div className="premium-card" style={{ textAlign: 'center', padding: '32px 16px' }}>
+                    <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '8px' }}>🎧</span>
+                    <h4 style={{ margin: '0 0 6px', color: '#090d16', fontWeight: 900 }}>Nenhum chamado registrado</h4>
+                    <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '0.82rem', fontWeight: 600 }}>Precisa de suporte com corridas, créditos ou passageiros?</p>
+                    <button className="btn-premium btn-green" onClick={() => setIsCreatingNewDriverTicket(true)} style={{ padding: '10px 20px', fontSize: '0.85rem' }}>
+                      Abrir Chamado Agora
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Seletor de Chamado */}
+                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }} className="hide-scrollbar">
+                      {driverSupportTickets.map(ticket => (
+                        <button
+                          key={ticket.id}
+                          onClick={() => setActiveDriverSupportTicket(ticket)}
+                          style={{
+                            padding: '8px 14px',
+                            borderRadius: '10px',
+                            border: activeDriverSupportTicket?.id === ticket.id ? '2px solid #00E676' : '1px solid #cbd5e1',
+                            background: activeDriverSupportTicket?.id === ticket.id ? '#ecfdf5' : '#ffffff',
+                            color: activeDriverSupportTicket?.id === ticket.id ? '#065f46' : '#090d16',
+                            fontWeight: 800,
+                            fontSize: '0.78rem',
+                            whiteSpace: 'nowrap',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          #{ticket.id.substring(0, 6)} • {ticket.category}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Chat Box do Chamado Ativo */}
+                    {activeDriverSupportTicket && (
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '16px', border: '1.5px solid #cbd5e1', overflow: 'hidden' }}>
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#090d16' }}>{activeDriverSupportTicket.subject || 'Atendimento'}</span>
+                            <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 800 }}>Protocolo: #{activeDriverSupportTicket.id.substring(0, 8).toUpperCase()}</div>
+                          </div>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 900, padding: '3px 8px', borderRadius: '6px', background: '#ecfdf5', color: '#059669' }}>
+                            ● Aberto
+                          </span>
+                        </div>
+
+                        <div style={{ flex: 1, padding: '14px', overflowY: 'auto', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '44vh' }}>
+                          {driverSupportMessages.map(msg => (
+                            <div
+                              key={msg.id}
+                              style={{
+                                alignSelf: msg.senderRole === 'USER' ? 'flex-end' : 'flex-start',
+                                background: msg.senderRole === 'USER' ? 'linear-gradient(135deg, #059669, #00E676)' : '#ffffff',
+                                color: msg.senderRole === 'USER' ? '#000000' : '#090d16',
+                                border: msg.senderRole === 'USER' ? 'none' : '1.5px solid #cbd5e1',
+                                padding: '10px 14px',
+                                borderRadius: msg.senderRole === 'USER' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                                maxWidth: '85%',
+                                fontSize: '0.88rem',
+                                fontWeight: 700,
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                              }}
+                            >
+                              <div style={{ fontSize: '0.68rem', fontWeight: 800, color: msg.senderRole === 'USER' ? 'rgba(0,0,0,0.6)' : '#059669', marginBottom: '2px' }}>
+                                {msg.senderName}
+                              </div>
+                              {msg.text}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div style={{ padding: '10px 14px', borderTop: '1px solid #e2e8f0', background: '#fff', display: 'flex', gap: '8px' }}>
+                          <input
+                            type="text"
+                            value={driverSupportInput}
+                            onChange={(e) => setDriverSupportInput(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleSendDriverSupportMessage(); }}
+                            placeholder="Digite sua mensagem para o suporte..."
+                            style={{
+                              flex: 1,
+                              padding: '10px 14px',
+                              borderRadius: '100px',
+                              border: '1.5px solid #cbd5e1',
+                              outline: 'none',
+                              fontSize: '0.88rem',
+                              fontWeight: 700,
+                              color: '#090d16'
+                            }}
+                          />
+                          <button
+                            disabled={isSendingDriverSupport || !driverSupportInput.trim()}
+                            onClick={handleSendDriverSupportMessage}
+                            style={{
+                              background: '#00E676',
+                              color: '#000',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '40px',
+                              height: '40px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              fontWeight: 900
+                            }}
+                          >
+                            ➤
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -2188,6 +2532,162 @@ export default function DriverDashboard() {
             >
               {isSubmittingDriverRating ? 'Enviando...' : '✓ Finalizar Avaliação'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== MODAL DE CHAT EM TEMPO REAL COM O PASSAGEIRO ===== */}
+      {isDriverChatOpen && activeRide && (
+        <div className="modal-overlay" style={{ zIndex: 10000, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div className="animate-slide-up" style={{
+            width: '100%',
+            maxWidth: '480px',
+            height: '86vh',
+            background: '#ffffff',
+            borderRadius: '24px 24px 0 0',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 -10px 40px rgba(0,0,0,0.3)'
+          }}>
+            {/* Header do Chat */}
+            <div style={{ padding: '16px 20px', borderBottom: '1.5px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 900, border: '2px solid #00E676' }}>
+                  👤
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#090d16' }}>
+                    {activeRide.passenger?.name || activeRide.passengerName || 'Passageiro'}
+                  </h4>
+                  <span style={{ fontSize: '0.76rem', color: '#059669', fontWeight: 800 }}>
+                    Corrida Ativa • R$ {Number(activeRide.price).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDriverChatOpen(false)}
+                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '34px', height: '34px', fontSize: '1.1rem', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Lista de Mensagens */}
+            <div style={{ flex: 1, padding: '16px', overflowY: 'auto', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94a3b8', margin: '4px 0 8px', fontWeight: 600 }}>
+                🔒 Conversa segura e monitorada pela Central Zomp
+              </div>
+
+              {driverChatMessages.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '30px 20px', color: '#94a3b8' }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '8px' }}>💬</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#64748b' }}>Fale com o passageiro</div>
+                  <div style={{ fontSize: '0.75rem', marginTop: '4px' }}>Toque em uma mensagem rápida abaixo ou digite.</div>
+                </div>
+              )}
+
+              {driverChatMessages.map(msg => {
+                const isMe = msg.senderRole === 'DRIVER' || msg.sender === 'me';
+                return (
+                  <div
+                    key={msg.id}
+                    style={{
+                      alignSelf: isMe ? 'flex-end' : 'flex-start',
+                      background: isMe ? '#18181b' : '#ffffff',
+                      color: isMe ? '#00E676' : '#090d16',
+                      border: isMe ? 'none' : '1.5px solid #cbd5e1',
+                      padding: '10px 16px',
+                      borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                      maxWidth: '82%',
+                      fontWeight: 700,
+                      fontSize: '0.92rem',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+                    }}
+                  >
+                    <div style={{ fontSize: '0.66rem', fontWeight: 800, color: isMe ? 'rgba(0,230,118,0.7)' : '#059669', marginBottom: '2px' }}>
+                      {isMe ? 'Você (Motorista)' : (msg.senderName || 'Passageiro')}
+                    </div>
+                    {msg.text}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Mensagens Rápidas do Motorista */}
+            <div style={{ padding: '8px 12px', background: '#ffffff', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '6px', overflowX: 'auto' }} className="hide-scrollbar">
+              {[
+                '📍 Cheguei ao local de embarque',
+                '🚗 Pisca-alerta ligado',
+                '⏳ Estou no trânsito, chego em 2 min',
+                '🏢 Estou em frente ao endereço informado',
+                '❓ Qual o seu ponto de referência?'
+              ].map((quickText, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleSendDriverRideMessage(quickText)}
+                  style={{
+                    whiteSpace: 'nowrap',
+                    padding: '6px 12px',
+                    borderRadius: '100px',
+                    border: '1px solid #cbd5e1',
+                    background: '#f8fafc',
+                    color: '#090d16',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {quickText}
+                </button>
+              ))}
+            </div>
+
+            {/* Input de Envio de Mensagem */}
+            <div style={{ padding: '12px 16px', borderTop: '1px solid #e2e8f0', background: '#fff', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="text"
+                value={driverChatInput}
+                onChange={(e) => setDriverChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSendDriverRideMessage();
+                }}
+                placeholder="Digite sua mensagem para o passageiro..."
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  borderRadius: '100px',
+                  border: '1.5px solid #cbd5e1',
+                  background: '#f8fafc',
+                  outline: 'none',
+                  fontWeight: 700,
+                  fontSize: '0.92rem',
+                  color: '#090d16'
+                }}
+              />
+              <button
+                disabled={!driverChatInput.trim()}
+                onClick={() => handleSendDriverRideMessage()}
+                style={{
+                  background: '#00E676',
+                  color: '#000',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '42px',
+                  height: '42px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: driverChatInput.trim() ? 'pointer' : 'default',
+                  opacity: driverChatInput.trim() ? 1 : 0.4,
+                  fontWeight: 900,
+                  fontSize: '1rem'
+                }}
+              >
+                ➤
+              </button>
+            </div>
           </div>
         </div>
       )}

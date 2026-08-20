@@ -12,6 +12,7 @@ const walletRoutes = require('./src/routes/walletRoutes');
 const creditsRoutes = require('./src/routes/creditsRoutes');
 const configRoutes = require('./src/routes/configRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
+const supportRoutes = require('./src/routes/supportRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,11 +25,13 @@ app.use(express.json({ limit: '10mb' }));
 // ============================================
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/rides', ridesRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/credits', creditsRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/support', supportRoutes);
 
 // ============================================
 // HEALTH CHECK

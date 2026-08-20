@@ -459,7 +459,22 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Saldo de créditos e pacotes PIX com cores vibrantes e leitura impecável em qualquer modelo de smartphone.
 
 ---
-**Status Atual**: ✅ Dados do motorista e contraste visual 100% visíveis, nítidos e validados.
-**Versão**: 15.6.1
+### 🚀 v15.7.0 - Chat em Tempo Real na Corrida (Passageiro & Motorista) e Central Oficial de Suporte Zomp (2026-08-20)
+* 💬 **Chat em Tempo Real durante a Corrida (Passageiro ↔ Motorista)**:
+  - Criadas as tabelas `RideMessage` no PostgreSQL e rotas `GET /api/rides/:id/messages` e `POST /api/rides/:id/messages`.
+  - No **App do Passageiro** ([PassengerDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/PassengerDashboard.jsx)), adicionado botão `💬 Mensagem / Chat` no card da corrida com modal completo, foto/nome/carro do motorista, histórico de mensagens e **Atalhos Rápidos** (*"Estou no local de embarque"*, *"Já estou descendo"*, *"Camisa azul / Perto da portaria"*, *"Pode aguardar 2 min?"*, *"Onde você está?"*).
+  - No **App do Motorista** ([DriverDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/DriverDashboard.jsx)), adicionado botão `💬 Chat com o Passageiro` na corrida ativa e na tela de chegada com **Atalhos Rápidos do Motorista** (*"Cheguei ao local de embarque"*, *"Pisca-alerta ligado"*, *"Estou no trânsito, chego em 2 min"*, *"Estou em frente ao endereço informado"*, *"Qual o ponto de referência?"*).
+  - Sincronização e polling automático a cada 2.5s enquanto o modal do chat estiver ativo.
+* 🎧 **Central Oficial de Atendimento & Reportar Problemas da Plataforma**:
+  - Criadas as tabelas `SupportTicket` e `SupportMessage` e o módulo `supportRoutes.js` / `supportController.js` para gerenciamento de chamados e conversas com a plataforma.
+  - Integrado no Drawer do Passageiro e na tela de Suporte do Motorista:
+    - Botão **+ Novo Chamado / Relatar Problema**.
+    - Categorização de problemas: Pagamentos/PIX, Corrida/Trajeto, Passageiro Não Compareceu, Minha Conta/Documentos, Segurança/Conduta e Dúvidas Gerais.
+    - Protocolo de atendimento automático gerado instantaneamente (ex: `#TICKET-ID`).
+    - Chat interativo em tempo real com histórico e envio de mensagens para o time de suporte Zomp.
+
+---
+**Status Atual**: ✅ Chat de Corrida e Central de Suporte & Reportar Problemas 100% integrados, validados e funcionais em ambos os apps.
+**Versão**: 15.7.0
 **Responsável**: Antigravity AI & Leandro Palmeira
 

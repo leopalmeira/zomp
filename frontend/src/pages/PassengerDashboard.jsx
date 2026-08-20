@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide, validateScreenshot, getUserDebt } from '../services/api'
+import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide, validateScreenshot, getUserDebt, getRideMessages, sendRideMessage, createSupportTicket, getUserSupportTickets, getSupportMessages, sendSupportMessage } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline, Popup } from 'react-leaflet'
-import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera } from 'lucide-react'
+import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, X, Sparkles, HelpCircle } from 'lucide-react'
 import L from 'leaflet'
 import Tesseract from 'tesseract.js'
 import 'leaflet/dist/leaflet.css'
@@ -228,6 +228,16 @@ export default function PassengerDashboard() {
   const [currentRide, setCurrentRide] = useState(null)
   const [searchingDrivers, setSearchingDrivers] = useState([])
 
+  // Estados do Suporte & Reportar Problemas da Plataforma
+  const [supportTickets, setSupportTickets] = useState([])
+  const [activeSupportTicket, setActiveSupportTicket] = useState(null)
+  const [supportMessages, setSupportMessages] = useState([])
+  const [supportCategory, setSupportCategory] = useState('PAGAMENTO')
+  const [supportInput, setSupportInput] = useState('')
+  const [isSendingSupport, setIsSendingSupport] = useState(false)
+  const [isSupportLoading, setIsSupportLoading] = useState(false)
+  const [isCreatingNewTicket, setIsCreatingNewTicket] = useState(false)
+
   // Freight pricing constant
   const FREIGHT_PRICE_PER_KM = 3.50
 
@@ -310,6 +320,117 @@ export default function PassengerDashboard() {
     }
     return () => clearInterval(interval);
   }, [activeRideId, rideState]);
+
+  // Sincronização em tempo real do Chat com o Motorista durante a corrida
+  useEffect(() => {
+    let interval;
+    const rideId = activeRideId || currentRide?.id;
+    if (isChatOpen && rideId) {
+      const fetchMsgs = async () => {
+        try {
+          const msgs = await getRideMessages(rideId);
+          if (Array.isArray(msgs)) setChatMessages(msgs);
+        } catch (e) {
+          console.warn('Erro ao sincronizar mensagens da corrida:', e);
+        }
+      };
+      fetchMsgs();
+      interval = setInterval(fetchMsgs, 2500);
+    }
+    return () => { if (interval) clearInterval(interval); };
+  }, [isChatOpen, activeRideId, currentRide?.id]);
+
+  const handleSendRideMessage = async (customText) => {
+    const textToSend = (customText || chatInput).trim();
+    if (!textToSend) return;
+    const rideId = activeRideId || currentRide?.id;
+    if (!rideId) return;
+
+    setChatInput('');
+    try {
+      const sent = await sendRideMessage(rideId, textToSend);
+      setChatMessages(prev => [...prev, sent]);
+    } catch (e) {
+      console.warn('Erro ao enviar mensagem:', e);
+    }
+  };
+
+  // Sincronização do Suporte Oficial Zomp & Reportar Problemas
+  const loadSupportTickets = useCallback(async () => {
+    try {
+      setIsSupportLoading(true);
+      const tickets = await getUserSupportTickets();
+      if (Array.isArray(tickets)) {
+        setSupportTickets(tickets);
+        if (tickets.length > 0 && !activeSupportTicket) {
+          setActiveSupportTicket(tickets[0]);
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar chamados de suporte:', e);
+    } finally {
+      setIsSupportLoading(false);
+    }
+  }, [activeSupportTicket]);
+
+  useEffect(() => {
+    if (menuScreen === 'SUPPORT') {
+      loadSupportTickets();
+    }
+  }, [menuScreen, loadSupportTickets]);
+
+  useEffect(() => {
+    let interval;
+    if (menuScreen === 'SUPPORT' && activeSupportTicket?.id) {
+      const fetchMsgs = async () => {
+        try {
+          const msgs = await getSupportMessages(activeSupportTicket.id);
+          if (Array.isArray(msgs)) setSupportMessages(msgs);
+        } catch (e) {
+          console.warn('Erro ao buscar mensagens do chamado:', e);
+        }
+      };
+      fetchMsgs();
+      interval = setInterval(fetchMsgs, 3000);
+    }
+    return () => { if (interval) clearInterval(interval); };
+  }, [menuScreen, activeSupportTicket?.id]);
+
+  const handleCreateSupportTicket = async () => {
+    if (!supportInput.trim()) return;
+    setIsSendingSupport(true);
+    try {
+      const res = await createSupportTicket({
+        category: supportCategory,
+        subject: `Atendimento [${supportCategory}]`,
+        message: supportInput.trim()
+      });
+      setSupportInput('');
+      setIsCreatingNewTicket(false);
+      await loadSupportTickets();
+      if (res?.ticket) {
+        setActiveSupportTicket(res.ticket);
+      }
+    } catch (e) {
+      alert('Erro ao abrir chamado: ' + e.message);
+    } finally {
+      setIsSendingSupport(false);
+    }
+  };
+
+  const handleSendSupportMessage = async () => {
+    if (!supportInput.trim() || !activeSupportTicket?.id) return;
+    setIsSendingSupport(true);
+    try {
+      const sent = await sendSupportMessage(activeSupportTicket.id, supportInput.trim());
+      setSupportMessages(prev => [...prev, sent]);
+      setSupportInput('');
+    } catch (e) {
+      alert('Erro ao enviar mensagem para o suporte: ' + e.message);
+    } finally {
+      setIsSendingSupport(false);
+    }
+  };
 
   // Simulated searching drivers for sonar
   useEffect(() => {
@@ -2542,23 +2663,9 @@ const POPULAR_DESTINATIONS = [
 
                   {/* ── Seção: SERVIÇOS ── */}
                   <div className="menu-section-label">Serviços Especiais</div>
-
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('LONG_TRIPS')}>
                     <span className="nav-icon"><Send size={17} /></span>
                     Viagens Longas
-                  </button>
-
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('FREIGHT_SELECTION')}>
-                    <span className="nav-icon"><Clock size={17} /></span>
-                    Fretes & Entregas
-                  </button>
-
-                  {/* ── Seção: CONTA ── */}
-                  <div className="menu-section-label">Conta</div>
-
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('PROFILE')}>
-                    <span className="nav-icon"><User size={17} /></span>
-                    Meu Perfil
                   </button>
 
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('HISTORY')}>
@@ -2566,7 +2673,13 @@ const POPULAR_DESTINATIONS = [
                     Histórico
                   </button>
 
+                  {/* ── Seção: AJUDA & SUPORTE ── */}
+                  <div className="menu-section-label">Ajuda & Suporte</div>
 
+                  <button className="menu-nav-btn" style={{ color: '#059669', fontWeight: 700 }} onClick={() => setMenuScreen('SUPPORT')}>
+                    <span className="nav-icon"><LifeBuoy size={17} color="#059669" /></span>
+                    Suporte & Reportar Problemas
+                  </button>
 
                   <div className="menu-spacer"></div>
 
@@ -2578,298 +2691,212 @@ const POPULAR_DESTINATIONS = [
                 </>
               )}
 
-              {menuScreen === 'LONG_TRIPS' && (
-                <div className="animate-fade-in">
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '8px', fontWeight: 700}}>
+              {/* ===== TELA DE SUPORTE & REPORTAR PROBLEMAS DO PASSAGEIRO ===== */}
+              {menuScreen === 'SUPPORT' && (
+                <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{ color: 'var(--primary)', marginBottom: '8px', fontWeight: 700 }}>
                     ← Voltar ao Menu
                   </button>
-                  <div style={{ padding: '0 4px 12px 4px' }}>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#18181b', margin: '0 0 4px 0' }}>Viagens Longas</h3>
-                    <p style={{ fontSize: '0.78rem', color: '#71717a', margin: 0, fontWeight: 500 }}>
-                      Destinos intermunicipais com tarifa especial
-                    </p>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#090d16', margin: '0 0 2px' }}>Suporte Zomp</h3>
+                      <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0, fontWeight: 600 }}>Atendimento Oficial & Resolução de Problemas</p>
+                    </div>
+                    <button
+                      className="btn"
+                      style={{ padding: '8px 14px', fontSize: '0.8rem', fontWeight: 800, background: isCreatingNewTicket ? '#e2e8f0' : 'var(--primary)', color: '#000', borderRadius: '10px' }}
+                      onClick={() => setIsCreatingNewTicket(!isCreatingNewTicket)}
+                    >
+                      {isCreatingNewTicket ? 'Ver Chamados' : '+ Novo Chamado'}
+                    </button>
                   </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '62vh', overflowY: 'auto', paddingRight: '4px' }} className="hide-scrollbar">
-                    {[
-                      { id: 'angra', title: 'Angra dos Reis', label: 'Praia', icon: '🏖️', distance: '~150 km' },
-                      { id: 'buzios', title: 'Armação dos Búzios', label: 'Praia', icon: '🏖️', distance: '~170 km' },
-                      { id: 'cabo', title: 'Cabo Frio', label: 'Praia', icon: '🏖️', distance: '~155 km' },
-                      { id: 'arraial', title: 'Arraial do Cabo', label: 'Praia', icon: '🏖️', distance: '~165 km' },
-                      { id: 'paraty', title: 'Paraty', label: 'Histórico', icon: '🏛️', distance: '~240 km' },
-                      { id: 'petropolis', title: 'Petrópolis', label: 'Serra', icon: '⛰️', distance: '~68 km' },
-                      { id: 'teresopolis', title: 'Teresópolis', label: 'Serra', icon: '⛰️', distance: '~95 km' },
-                      { id: 'friburgo', title: 'Nova Friburgo', label: 'Serra', icon: '⛰️', distance: '~135 km' },
-                      { id: 'saquarema', title: 'Saquarema', label: 'Praia', icon: '🏄', distance: '~100 km' },
-                      { id: 'mangaratiba', title: 'Mangaratiba', label: 'Praia', icon: '🏖️', distance: '~105 km' },
-                      { id: 'ostras', title: 'Rio das Ostras', label: 'Praia', icon: '🏖️', distance: '~170 km' },
-                      { id: 'resende', title: 'Resende', label: 'Interior', icon: '🌿', distance: '~160 km' },
-                      { id: 'vassouras', title: 'Vassouras', label: 'Histórico', icon: '🏛️', distance: '~115 km' },
-                      { id: 'campos', title: 'Campos dos Goytacazes', label: 'Norte', icon: '🌾', distance: '~275 km' }
-                    ].map(dest => (
-                      <div 
-                        key={dest.id} 
-                        className="intercity-dest-item"
-                        onClick={async () => {
-                          setIsMenuOpen(false);
-                          setMenuScreen('MAIN');
-                          setIsIntercity(true);
-                          setDestAddr(`${dest.title}, RJ`);
-                          setDestCoords(null);
-                          setIsLoading(true);
-                          try {
-                            const resolved = await resolveAddress(`${dest.title}, Rio de Janeiro, RJ, Brasil`);
-                            if (resolved) {
-                              const dCoords = [resolved.lat, resolved.lon];
-                              setDestCoords(dCoords);
-                              let oCoords = originCoordsRef.current;
-                              if (!oCoords) {
-                                try {
-                                  const gpsPos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 5000 }));
-                                  oCoords = [gpsPos.coords.latitude, gpsPos.coords.longitude];
-                                  setOriginCoords(oCoords);
-                                  setMapCenter(oCoords);
-                                } catch(e) {}
-                              }
-                              if (oCoords) {
-                                await calculateRoute(oCoords, dCoords);
-                              } else {
-                                alert('Ative o GPS ou digite seu endereço de partida.');
-                              }
-                            } else {
-                              alert('Não foi possível localizar ' + dest.title);
-                            }
-                          } catch(e) {
-                            console.error(e);
-                          } finally {
-                            setIsLoading(false);
-                          }
-                        }}
-                      >
-                        <div className="intercity-icon-wrap">
-                          <span>{dest.icon}</span>
-                        </div>
-                        <div className="intercity-info">
-                          <span className="intercity-title">{dest.title}</span>
-                          <span className="intercity-badge">{dest.label} • {dest.distance}</span>
-                        </div>
-                        <span className="intercity-arrow">→</span>
+
+                  {isCreatingNewTicket ? (
+                    <div style={{ background: '#fff', borderRadius: '16px', border: '1.5px solid #cbd5e1', padding: '16px' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#1e293b', textTransform: 'uppercase', marginBottom: '8px' }}>
+                        Selecione a Categoria
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {menuScreen === 'FREIGHT_SELECTION' && (
-                <div className="animate-fade-in">
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '8px', fontWeight: 700}}>
-                    ← Voltar ao Menu
-                  </button>
-                  <div style={{ padding: '0 4px 12px 4px' }}>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#18181b', margin: '0 0 4px 0' }}>Fretes & Entregas</h3>
-                    <p style={{ fontSize: '0.78rem', color: '#71717a', margin: 0, fontWeight: 500 }}>
-                      Selecione a modalidade de envio:
-                    </p>
-                  </div>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {[
-                      { id: 'caixas', icon: '📦', title: 'Caixas e Mudanças', desc: 'Móveis, caixas e volumes médios/grandes' },
-                      { id: 'sacos', icon: '🛍️', title: 'Sacos e Sacolas', desc: 'Compras, documentos e pequenos volumes' },
-                    ].map(item => (
-                      <div 
-                        key={item.id} 
-                        className="intercity-dest-item"
-                        style={{ padding: '14px 16px' }}
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          setMenuScreen('MAIN');
-                          setFreightType(item.id);
-                          setFreightDescription('');
-                          setDestAddr('');
-                          setDestCoords(null);
-                          setRouteGeometry([]);
-                          setRouteKm('0');
-                          setVehicleType('car');
-                          setFreightSecurityCode('');
-                          setRideState('FREIGHT');
-                        }}
-                      >
-                        <div className="intercity-icon-wrap" style={{ background: '#ecfdf5', fontSize: '1.3rem' }}>
-                          <span>{item.icon}</span>
-                        </div>
-                        <div className="intercity-info">
-                          <span className="intercity-title">{item.title}</span>
-                          <span className="intercity-badge" style={{ color: '#71717a', fontWeight: 500, fontSize: '0.72rem' }}>{item.desc}</span>
-                        </div>
-                        <span className="intercity-arrow">→</span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '14px' }}>
+                        {[
+                          { id: 'PAGAMENTO', label: '💳 Pagamentos / PIX' },
+                          { id: 'CORRIDA', label: '🚗 Corrida & Trajeto' },
+                          { id: 'SEGURANCA', label: '🚨 Segurança & Conduta' },
+                          { id: 'CADASTRO', label: '👤 Minha Conta' },
+                          { id: 'OUTROS', label: '💬 Outros Assuntos' },
+                        ].map(cat => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => setSupportCategory(cat.id)}
+                            style={{
+                              padding: '10px 8px',
+                              borderRadius: '10px',
+                              border: supportCategory === cat.id ? '2px solid #059669' : '1px solid #e2e8f0',
+                              background: supportCategory === cat.id ? '#ecfdf5' : '#f8fafc',
+                              color: supportCategory === cat.id ? '#065f46' : '#334155',
+                              fontWeight: 800,
+                              fontSize: '0.76rem',
+                              cursor: 'pointer',
+                              textAlign: 'center'
+                            }}
+                          >
+                            {cat.label}
+                          </button>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {menuScreen === 'SCHEDULED' && (
-                <>
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
-                    ← Voltar ao Menu
-                  </button>
-                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '6px'}}>Corridas Agendadas</h3>
-                  <p className="hint-text" style={{marginBottom: '16px'}}>Toque em uma corrida para ver os detalhes</p>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#1e293b', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        Descreva seu problema ou dúvida
+                      </div>
+                      <textarea
+                        value={supportInput}
+                        onChange={(e) => setSupportInput(e.target.value)}
+                        placeholder="Ex: Tive um problema com o valor cobrado na corrida, gostaria de ajuda do suporte..."
+                        style={{
+                          width: '100%',
+                          minHeight: '90px',
+                          padding: '12px',
+                          borderRadius: '12px',
+                          border: '1.5px solid #cbd5e1',
+                          color: '#090d16',
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          outline: 'none',
+                          marginBottom: '14px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
 
-                  {scheduledRides.length === 0 ? (
-                    <div style={{textAlign: 'center', padding: '40px 0'}}>
-                      <div style={{fontSize: '3.5rem', marginBottom: '16px'}}>📋</div>
-                      <p style={{color: '#3f3f46', fontWeight: 700, fontSize: '1.05rem'}}>Nenhuma corrida agendada</p>
-                      <p className="hint-text" style={{marginTop: '8px'}}>Agende uma viagem para vê-la aqui.</p>
+                      <button
+                        disabled={isSendingSupport || !supportInput.trim()}
+                        className="btn btn-primary"
+                        style={{ width: '100%', padding: '14px', fontWeight: 900, fontSize: '0.95rem' }}
+                        onClick={handleCreateSupportTicket}
+                      >
+                        {isSendingSupport ? 'Enviando...' : '🚀 Abrir Chamado no Suporte'}
+                      </button>
                     </div>
                   ) : (
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '14px'}}>
-                      {scheduledRides.map((ride) => {
-                        // Format date to Brazilian (DD/MM/YYYY)
-                        const dateParts = ride.date.split('-')
-                        const dateBR = dateParts.length === 3
-                          ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`
-                          : ride.date
-
-                        // Simulated driver acceptance (after 30min from creation)
-                        const isAccepted = (Date.now() - ride.id) > 1800000
-                        const acceptedDriver = isAccepted ? favoriteDriversState[0] : null
-
-                        return (
-                          <div
-                            key={ride.id}
-                            className="scheduled-ride-card"
-                            onClick={() => setExpandedRide(expandedRide === ride.id ? null : ride.id)}
-                          >
-                            {/* Card Header */}
-                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                              <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                <div style={{
-                                  fontSize: '1.8rem',
-                                  width: '48px', height: '48px',
-                                  background: ride.vehicle === 'car' ? '#ecfdf5' : '#fef3c7',
-                                  borderRadius: '14px',
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                }}>
-                                  {ride.vehicle === 'car' ? '🚗' : '🏍️'}
-                                </div>
-                                <div>
-                                  <div style={{fontWeight: 800, fontSize: '1rem', color: 'var(--text-dark)'}}>
-                                    {dateBR} às {ride.time}
-                                  </div>
-                                  <div style={{fontWeight: 700, fontSize: '1.1rem', color: '#065f46'}}>
-                                    R$ {ride.price}
-                                  </div>
-                                </div>
-                              </div>
-                              <div style={{textAlign: 'right'}}>
-                                <span style={{
-                                  display: 'inline-block',
-                                  padding: '4px 10px',
-                                  borderRadius: '20px',
-                                  fontSize: '0.7rem',
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      {/* Lista de Chamados */}
+                      {supportTickets.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '32px 16px', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💬</div>
+                          <h4 style={{ margin: '0 0 6px', color: '#18181b', fontWeight: 800 }}>Nenhum chamado aberto</h4>
+                          <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '0.82rem' }}>Precisa de ajuda com alguma corrida, cobrança ou sugestão?</p>
+                          <button className="btn btn-primary" onClick={() => setIsCreatingNewTicket(true)} style={{ padding: '10px 20px', fontWeight: 800, fontSize: '0.85rem' }}>
+                            Falar com o Suporte Agora
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '10px' }}>
+                          {/* Seletor de Chamado */}
+                          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }} className="hide-scrollbar">
+                            {supportTickets.map(ticket => (
+                              <button
+                                key={ticket.id}
+                                onClick={() => setActiveSupportTicket(ticket)}
+                                style={{
+                                  padding: '8px 14px',
+                                  borderRadius: '10px',
+                                  border: activeSupportTicket?.id === ticket.id ? '2px solid #059669' : '1px solid #e2e8f0',
+                                  background: activeSupportTicket?.id === ticket.id ? '#ecfdf5' : '#fff',
+                                  color: activeSupportTicket?.id === ticket.id ? '#065f46' : '#64748b',
                                   fontWeight: 800,
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.5px',
-                                  background: isAccepted ? '#dcfce7' : '#fef9c3',
-                                  color: isAccepted ? '#166534' : '#854d0e'
-                                }}>
-                                  {isAccepted ? '✓ Confirmada' : '⏳ Aguardando'}
+                                  fontSize: '0.78rem',
+                                  whiteSpace: 'nowrap',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                #{ticket.id.substring(0, 6)} • {ticket.category}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Chat Box do Chamado Ativo */}
+                          {activeSupportTicket && (
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: '16px', border: '1.5px solid #cbd5e1', overflow: 'hidden' }}>
+                              <div style={{ padding: '10px 14px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                  <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#090d16' }}>{activeSupportTicket.subject || 'Atendimento'}</span>
+                                  <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700 }}>Protocolo: #{activeSupportTicket.id.substring(0, 8).toUpperCase()}</div>
+                                </div>
+                                <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', background: '#ecfdf5', color: '#059669' }}>
+                                  ● Aberto
                                 </span>
-                                <div style={{fontSize: '0.75rem', color: '#a1a1aa', marginTop: '4px', fontWeight: 600}}>
-                                  {ride.vehicle === 'car' ? 'Carro' : 'Moto'} • {ride.km} km
-                                </div>
                               </div>
-                            </div>
 
-                            {/* Expanded Details */}
-                            {expandedRide === ride.id && (
-                              <div style={{marginTop: '14px', borderTop: '1px solid #e4e4e7', paddingTop: '14px'}}>
-                                {/* Route */}
-                                <div style={{marginBottom: '14px'}}>
-                                  <div style={{fontSize: '0.75rem', fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px'}}>Trajeto</div>
-                                  <div style={{display: 'flex', gap: '10px', alignItems: 'flex-start'}}>
-                                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '2px'}}>
-                                      <div style={{width: '8px', height: '8px', borderRadius: '50%', background: '#00E676'}}></div>
-                                      <div style={{width: '2px', height: '20px', background: '#d4d4d8'}}></div>
-                                      <div style={{width: '8px', height: '8px', borderRadius: '50%', background: '#EF4444'}}></div>
+                              <div style={{ flex: 1, padding: '14px', overflowY: 'auto', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '42vh' }}>
+                                {supportMessages.map(msg => (
+                                  <div
+                                    key={msg.id}
+                                    style={{
+                                      alignSelf: msg.senderRole === 'USER' ? 'flex-end' : 'flex-start',
+                                      background: msg.senderRole === 'USER' ? 'var(--primary)' : '#fff',
+                                      color: msg.senderRole === 'USER' ? '#000' : '#18181b',
+                                      border: msg.senderRole === 'USER' ? 'none' : '1px solid #e2e8f0',
+                                      padding: '10px 14px',
+                                      borderRadius: msg.senderRole === 'USER' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                                      maxWidth: '85%',
+                                      fontSize: '0.86rem',
+                                      fontWeight: 600,
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                                    }}
+                                  >
+                                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: msg.senderRole === 'USER' ? '#064e3b' : '#059669', marginBottom: '3px' }}>
+                                      {msg.senderName}
                                     </div>
-                                    <div>
-                                      <div style={{fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '8px'}}>
-                                        {ride.origin}
-                                      </div>
-                                      <div style={{fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-dark)'}}>
-                                        {ride.dest}
-                                      </div>
-                                    </div>
+                                    {msg.text}
                                   </div>
-                                </div>
+                                ))}
+                              </div>
 
-                                {/* Driver Info */}
-                                {isAccepted && acceptedDriver && (
-                                  <div style={{marginBottom: '14px'}}>
-                                    <div style={{fontSize: '0.75rem', fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px'}}>Motorista Confirmado</div>
-                                    <div style={{
-                                      display: 'flex', alignItems: 'center', gap: '12px',
-                                      background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0'
-                                    }}>
-                                      <img src={acceptedDriver.img} alt={acceptedDriver.name} style={{width:'44px', height:'44px', borderRadius:'50%', objectFit:'cover', border:'2px solid #fff'}} />
-                                      <div style={{flex: 1}}>
-                                        <div style={{fontWeight: 800, fontSize: '0.95rem'}}>{acceptedDriver.name}</div>
-                                        <div style={{fontSize: '0.8rem', fontWeight: 600, color: '#f59e0b'}}>⭐ {acceptedDriver.rating}</div>
-                                      </div>
-                                      <div style={{textAlign: 'right'}}>
-                                        <div style={{fontWeight: 700, fontSize: '0.8rem'}}>{acceptedDriver.car}</div>
-                                        <div style={{
-                                          fontSize: '0.75rem', fontWeight: 700,
-                                          background: '#e4e4e7', padding: '2px 8px', borderRadius: '4px',
-                                          marginTop: '2px', fontFamily: 'monospace'
-                                        }}>{acceptedDriver.plate}</div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {!isAccepted && (
-                                  <div style={{
-                                    background: '#fefce8', border: '1px solid #fde68a',
-                                    borderRadius: '12px', padding: '12px', marginBottom: '14px',
-                                    display: 'flex', alignItems: 'center', gap: '10px'
-                                  }}>
-                                    <span style={{fontSize: '1.3rem'}}>⏳</span>
-                                    <div>
-                                      <div style={{fontWeight: 700, fontSize: '0.85rem', color: '#92400e'}}>Aguardando motorista</div>
-                                      <div style={{fontSize: '0.75rem', color: '#a16207'}}>Notificaremos quando alguém aceitar sua corrida.</div>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Cancel Button */}
-                                <button
-                                  className="btn btn-secondary"
+                              <div style={{ padding: '10px', borderTop: '1px solid #e2e8f0', background: '#fff', display: 'flex', gap: '8px' }}>
+                                <input
+                                  type="text"
+                                  value={supportInput}
+                                  onChange={(e) => setSupportInput(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === 'Enter') handleSendSupportMessage(); }}
+                                  placeholder="Digite sua mensagem para o suporte..."
                                   style={{
-                                    width: '100%', padding: '12px',
-                                    fontSize: '0.85rem', color: '#ef4444',
-                                    fontWeight: 700, borderColor: '#fecaca'
+                                    flex: 1,
+                                    padding: '10px 14px',
+                                    borderRadius: '100px',
+                                    border: '1.5px solid #cbd5e1',
+                                    outline: 'none',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 600,
+                                    color: '#090d16'
                                   }}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (confirm('Deseja cancelar esta corrida agendada?')) {
-                                      setScheduledRides(prev => prev.filter(r => r.id !== ride.id))
-                                    }
+                                />
+                                <button
+                                  disabled={isSendingSupport || !supportInput.trim()}
+                                  onClick={handleSendSupportMessage}
+                                  style={{
+                                    background: 'var(--primary)',
+                                    color: '#000',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '38px',
+                                    height: '38px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    fontWeight: 900
                                   }}
                                 >
-                                  ✕ Cancelar Agendamento
+                                  ➤
                                 </button>
                               </div>
-                            )}
-                          </div>
-                        )
-                      })}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
-                </>
+                </div>
               )}
 
               {menuScreen === 'PROFILE' && (
@@ -2964,76 +2991,147 @@ const POPULAR_DESTINATIONS = [
                 </div>
               )}
 
-
-
             </div>
           </div>
         </div>
       )}
 
-      {/* ===== CHAT OVERLAY ===== */}
+      {/* ===== MODAL DE CHAT EM TEMPO REAL COM O MOTORISTA ===== */}
       {isChatOpen && (
-        <div className="side-menu-overlay" style={{zIndex: 9999}}>
+        <div className="side-menu-overlay" style={{ zIndex: 9999, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}>
           <div className="side-menu-drawer animate-slide-up" style={{
             width: '100%', 
-            height: '85vh', 
+            maxWidth: '480px',
+            height: '86vh', 
             top: 'auto', 
             bottom: 0, 
+            left: '50%',
+            transform: 'translateX(-50%)',
             borderRadius: '24px 24px 0 0',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            background: '#ffffff',
+            boxShadow: '0 -10px 40px rgba(0,0,0,0.3)'
           }}>
-            <div style={{padding: '16px 20px', borderBottom: '1px solid #e4e4e7', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                <img src={favoriteDriversState[0].img} style={{width:'40px', height:'40px', borderRadius:'50%'}} alt="" />
+            {/* Header do Chat */}
+            <div style={{ padding: '16px 20px', borderBottom: '1.5px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ position: 'relative' }}>
+                  <img
+                    src={currentRide?.driverPhoto || favoriteDriversState[0].img}
+                    style={{ width: '46px', height: '46px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #00E676' }}
+                    alt=""
+                  />
+                  <div style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', borderRadius: '50%', background: '#00E676', border: '2px solid #fff' }} />
+                </div>
                 <div>
-                  <h4 style={{margin:0, fontSize:'1rem'}}>{favoriteDriversState[0].name}</h4>
-                  <span style={{fontSize:'0.8rem', color:'#059669', fontWeight:700}}>Online</span>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#090d16' }}>
+                    {currentRide?.driverName || favoriteDriversState[0].name}
+                  </h4>
+                  <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>
+                    {currentRide?.driverCarModel || favoriteDriversState[0].car} • {currentRide?.driverCarPlate || favoriteDriversState[0].plate}
+                  </span>
                 </div>
               </div>
-              <button onClick={() => setIsChatOpen(false)} style={{background:'none', border:'none', fontSize:'1.5rem', cursor:'pointer', color:'#a1a1aa'}}>✕</button>
+              <button
+                onClick={() => setIsChatOpen(false)}
+                style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '34px', height: '34px', fontSize: '1.1rem', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}
+              >
+                ✕
+              </button>
             </div>
             
-            <div style={{flex: 1, padding: '20px', overflowY: 'auto', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '12px'}}>
-              <div style={{textAlign: 'center', fontSize: '0.8rem', color: '#a1a1aa', margin: '10px 0'}}>As mensagens são monitoradas por segurança</div>
-              {chatMessages.map(msg => (
-                <div key={msg.id} style={{
-                  alignSelf: msg.sender === 'me' ? 'flex-end' : 'flex-start',
-                  background: msg.sender === 'me' ? 'var(--primary)' : '#e4e4e7',
-                  color: msg.sender === 'me' ? '#000' : '#18181b',
-                  padding: '10px 16px',
-                  borderRadius: msg.sender === 'me' ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                  maxWidth: '80%',
-                  fontWeight: 600,
-                  fontSize: '0.95rem'
-                }}>
-                  {msg.text}
+            {/* Lista de Mensagens */}
+            <div style={{ flex: 1, padding: '16px', overflowY: 'auto', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94a3b8', margin: '4px 0 8px', fontWeight: 600 }}>
+                🔒 Conversa segura e monitorada pela Central Zomp
+              </div>
+
+              {chatMessages.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '30px 20px', color: '#94a3b8' }}>
+                  <div style={{ fontSize: '2rem', marginBottom: '8px' }}>💬</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#64748b' }}>Envie uma mensagem para o motorista</div>
+                  <div style={{ fontSize: '0.75rem', marginTop: '4px' }}>Use os atalhos rápidos abaixo ou digite seu recado.</div>
                 </div>
+              )}
+
+              {chatMessages.map(msg => {
+                const isMe = msg.senderRole === 'PASSENGER' || msg.sender === 'me';
+                return (
+                  <div
+                    key={msg.id}
+                    style={{
+                      alignSelf: isMe ? 'flex-end' : 'flex-start',
+                      background: isMe ? 'linear-gradient(135deg, #059669, #00E676)' : '#ffffff',
+                      color: isMe ? '#000000' : '#090d16',
+                      border: isMe ? 'none' : '1.5px solid #cbd5e1',
+                      padding: '10px 16px',
+                      borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                      maxWidth: '82%',
+                      fontWeight: 700,
+                      fontSize: '0.92rem',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+                    }}
+                  >
+                    <div style={{ fontSize: '0.66rem', fontWeight: 800, color: isMe ? 'rgba(0,0,0,0.6)' : '#059669', marginBottom: '2px' }}>
+                      {isMe ? 'Você' : (msg.senderName || 'Motorista')}
+                    </div>
+                    {msg.text}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Mensagens Rápidas Inteligentes do Passageiro */}
+            <div style={{ padding: '8px 12px', background: '#ffffff', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '6px', overflowX: 'auto' }} className="hide-scrollbar">
+              {[
+                '📍 Estou no local de embarque',
+                '🚪 Já estou descendo',
+                '👕 Camisa azul / Perto da portaria',
+                '⏳ Pode aguardar 2 minutinhos?',
+                '❓ Onde você está?'
+              ].map((quickText, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleSendRideMessage(quickText)}
+                  style={{
+                    whiteSpace: 'nowrap',
+                    padding: '6px 12px',
+                    borderRadius: '100px',
+                    border: '1px solid #cbd5e1',
+                    background: '#f8fafc',
+                    color: '#090d16',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {quickText}
+                </button>
               ))}
             </div>
 
-            <div style={{padding: '16px', borderTop: '1px solid #e4e4e7', background: '#fff', display: 'flex', gap: '10px'}}>
+            {/* Input de Envio de Mensagem */}
+            <div style={{ padding: '12px 16px', borderTop: '1px solid #e2e8f0', background: '#fff', display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input 
                 type="text" 
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Envie uma mensagem..."
                 onKeyDown={(e) => {
-                  if(e.key === 'Enter' && chatInput.trim()) {
-                    const newMsg = {id: Date.now(), sender: 'me', text: chatInput.trim()}
-                    setChatMessages(prev => [...prev, newMsg])
-                    setChatInput('')
-
-                    // Auto-reply mock
-                    setTimeout(() => {
-                      setChatMessages(prev => [...prev, {id: Date.now()+1, sender: 'driver', text: 'Entendido, já estou a caminho!'}])
-                    }, 2000)
-                  }
+                  if (e.key === 'Enter') handleSendRideMessage();
                 }}
+                placeholder="Digite sua mensagem para o motorista..."
                 style={{
-                  flex: 1, padding: '14px 16px', borderRadius: '100px', 
-                  border: '1px solid #d4d4d8', background: '#f4f4f5', 
-                  outline: 'none', fontWeight: 600, fontSize: '0.95rem'
+                  flex: 1,
+                  padding: '12px 16px',
+                  borderRadius: '100px', 
+                  border: '1.5px solid #cbd5e1',
+                  background: '#f8fafc', 
+                  outline: 'none',
+                  fontWeight: 700,
+                  fontSize: '0.92rem',
+                  color: '#090d16'
                 }} 
               />
               <button 

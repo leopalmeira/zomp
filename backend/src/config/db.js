@@ -85,6 +85,39 @@ async function initDB() {
         "updatedAt" TIMESTAMP DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS "RideMessage" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "rideId" UUID REFERENCES "Ride"(id) ON DELETE CASCADE,
+        "senderId" UUID REFERENCES "User"(id),
+        "senderRole" TEXT NOT NULL,
+        "senderName" TEXT NOT NULL,
+        "text" TEXT NOT NULL,
+        "createdAt" TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS "SupportTicket" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "userId" UUID REFERENCES "User"(id) ON DELETE CASCADE,
+        "userRole" TEXT NOT NULL,
+        "userName" TEXT NOT NULL,
+        "userEmail" TEXT NOT NULL,
+        "category" TEXT NOT NULL,
+        "subject" TEXT NOT NULL,
+        "message" TEXT NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'OPEN',
+        "createdAt" TIMESTAMP DEFAULT NOW(),
+        "updatedAt" TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS "SupportMessage" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "ticketId" UUID REFERENCES "SupportTicket"(id) ON DELETE CASCADE,
+        "senderRole" TEXT NOT NULL,
+        "senderName" TEXT NOT NULL,
+        "text" TEXT NOT NULL,
+        "createdAt" TIMESTAMP DEFAULT NOW()
+      );
+
       -- Migrações incrementais seguras
       ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "vehicleType" TEXT DEFAULT 'car';
       ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "isAppLive" BOOLEAN DEFAULT false;

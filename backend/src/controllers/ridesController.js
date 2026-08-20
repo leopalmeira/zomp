@@ -418,3 +418,41 @@ exports.validateScreenshotAi = async (req, res) => {
   }
 };
 
+exports.getRideMessages = async (req, res) => {
+  try {
+    const { id: rideId } = req.params;
+    const { rows } = await pool.query(
+      'SELECT id, "rideId", "senderId", "senderRole", "senderName", text, "createdAt" FROM "RideMessage" WHERE "rideId" = $1 ORDER BY "createdAt" ASC',
+      [rideId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro ao buscar mensagens da corrida:', err.message);
+    res.status(500).json({ error: 'Erro ao buscar mensagens da corrida' });
+  }
+};
+
+exports.sendRideMessage = async (req, res) => {
+  try {
+    const { id: rideId } = req.params;
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'Mensagem não pode ser vazia' });
+    }
+
+    const { rows: userRows } = await pool.query('SELECT name, role FROM "User" WHERE id = $1', [req.user.id]);
+    const sender = userRows[0] || { name: 'Usuário', role: req.user.role };
+
+    const { rows } = await pool.query(`
+      INSERT INTO "RideMessage" ("rideId", "senderId", "senderRole", "senderName", text)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, "rideId", "senderId", "senderRole", "senderName", text, "createdAt"
+    `, [rideId, req.user.id, sender.role, sender.name, text.trim()]);
+
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error('Erro ao enviar mensagem na corrida:', err.message);
+    res.status(500).json({ error: 'Erro ao enviar mensagem' });
+  }
+};
+

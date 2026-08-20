@@ -15,5 +15,7 @@ router.post('/:id/near-destination', authMiddleware, ridesController.nearDestina
 router.post('/:id/discount', authMiddleware, ridesController.applyDiscount);
 router.post('/:id/rate', authMiddleware, ridesController.rateRide);
 router.put('/:id/cancel', authMiddleware, ridesController.cancelRide);
+router.get('/:id/messages', authMiddleware, ridesController.getRideMessages);
+router.post('/:id/messages', authMiddleware, ridesController.sendRideMessage);
 
 module.exports = router;

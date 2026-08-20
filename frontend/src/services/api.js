@@ -352,4 +352,64 @@ export async function getProfile() {
   return data;
 }
 
+export async function getRideMessages(rideId) {
+  const res = await fetch(`${API_BASE}/rides/${rideId}/messages`, {
+    headers: getHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao buscar mensagens');
+  return data;
+}
+
+export async function sendRideMessage(rideId, text) {
+  const res = await fetch(`${API_BASE}/rides/${rideId}/messages`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ text }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao enviar mensagem');
+  return data;
+}
+
+export async function createSupportTicket(ticketData) {
+  const res = await fetch(`${API_BASE}/support/tickets`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(ticketData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao abrir chamado');
+  return data;
+}
+
+export async function getUserSupportTickets() {
+  const res = await fetch(`${API_BASE}/support/tickets`, {
+    headers: getHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao buscar chamados');
+  return data;
+}
+
+export async function getSupportMessages(ticketId) {
+  const res = await fetch(`${API_BASE}/support/tickets/${ticketId}/messages`, {
+    headers: getHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao buscar mensagens do chamado');
+  return data;
+}
+
+export async function sendSupportMessage(ticketId, text) {
+  const res = await fetch(`${API_BASE}/support/tickets/${ticketId}/messages`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ text }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro ao enviar mensagem para suporte');
+  return data;
+}
+
 
