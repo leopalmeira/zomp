@@ -413,7 +413,7 @@ export default function LandingPage() {
               <div className="lp-cap-step">04</div>
               <div className="lp-cap-icon-box"><TrendingUp size={26} /></div>
               <h4>Meta: 1.000 Passageiros</h4>
-              <p>Indicando de 3 a 5 passageiros por dia, em poucos meses você atinge a meta de <strong>1.000 clientes vinculados</strong>, gerando <strong>R$ 3.600,00/mês</strong> em royalties via PIX.</p>
+              <p>Indicando de 3 a 5 passageiros por dia, você atinge a meta de <strong>1.000 clientes vinculados</strong>. Com eles realizando em média <strong>3 pedidos por semana</strong> pela Zomp, você alcança até <strong>R$ 3.600,00/mês</strong> em royalties via PIX.</p>
             </motion.div>
           </motion.div>
 

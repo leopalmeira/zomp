@@ -425,8 +425,11 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - O [authController.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/controllers/authController.js) e [userController.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/controllers/userController.js) calculam dinamicamente a expiração (`expiresAt`) da tabela `Referral` com base no tempo configurado.
   - Todas as menções de vínculo na Landing Page (Stats, Comparativo Zomp e Captação de Passageiros) são geradas dinamicamente com base nessa configuração (ex: `1 ano Vínculo Garantido`).
 
+* 💡 **Detalhamento do Cálculo de Royalties no Card 04**:
+  - Ajustado o texto explicativo do card 04 ("Meta: 1.000 Passageiros") deixando explícito que o valor de até **R$ 3.600,00/mês** em royalties é atingido com a média de **3 pedidos/corridas por semana** por cada passageiro vinculado na Zomp.
+
 ---
-**Status Atual**: ✅ Configurações dinâmicas da Landing Page integradas ao Painel Admin e validadas.
+**Status Atual**: ✅ Configurações dinâmicas da Landing Page e detalhamento de royalties 100% integrados e validados.
 **Versão**: 15.5.0
 **Responsável**: Antigravity AI & Leandro Palmeira
 
