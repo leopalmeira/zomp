@@ -188,6 +188,17 @@ export default function DriverDashboard() {
         localStorage.setItem('zomp_user', JSON.stringify(data));
         if (data.credits !== undefined) setCredits(Number(data.credits));
         if (data.photo) setSelfiePreview(data.photo);
+        setProfileData({
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          cnh: data.cnh || '',
+          crlv: data.crlv || '',
+          carPlate: data.carPlate || '',
+          carModel: data.carModel || '',
+          carColor: data.carColor || '',
+          pixKey: data.pixKey || '',
+        });
       }
     }).catch(err => {
       console.warn('Erro ao sincronizar perfil do motorista:', err);
@@ -676,17 +687,20 @@ export default function DriverDashboard() {
   }, [activeRide])
 
   // Profile & Docs
-  const [profileData, setProfileData] = useState({ 
-    name: user?.name || '', 
-    email: user?.email || '', 
-    phone: '',
-    cnh: user?.cnh || '',
-    crlv: user?.crlv || '',
-    carPlate: user?.carPlate || '',
-    carModel: user?.carModel || '',
-    carColor: user?.carColor || '',
-    pixKey: user?.pixKey || '',
-  })
+  const [profileData, setProfileData] = useState(() => {
+    const u = getCurrentUser() || {};
+    return {
+      name: u.name || '',
+      email: u.email || '',
+      phone: u.phone || '',
+      cnh: u.cnh || '',
+      crlv: u.crlv || '',
+      carPlate: u.carPlate || '',
+      carModel: u.carModel || '',
+      carColor: u.carColor || '',
+      pixKey: u.pixKey || '',
+    };
+  });
 
 
 
@@ -1465,19 +1479,22 @@ export default function DriverDashboard() {
       {/* ===== PROFILE ===== */}
       {activeScreen === 'PROFILE' && (
         <div className="driver-inner-screen">
-          <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Meu Perfil</h2></div>
+          <div className="inner-header">
+            <button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button>
+            <h2 style={{ color: '#090d16', fontWeight: 900 }}>Meu Perfil</h2>
+          </div>
           <div className="inner-body">
-            <div style={{textAlign:'center',marginBottom:'28px'}}>
-              <div style={{position:'relative', width:'84px', height:'84px', margin:'0 auto 12px'}}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ position: 'relative', width: '88px', height: '88px', margin: '0 auto 12px' }}>
                 {user?.photo ? (
-                  <img src={user.photo} alt={user?.name} style={{width:'84px', height:'84px', borderRadius:'50%', objectFit:'cover', border:'3px solid #00E676'}} />
+                  <img src={user.photo} alt={user?.name} style={{ width: '88px', height: '88px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #00E676', boxShadow: '0 4px 14px rgba(0, 230, 118, 0.3)' }} />
                 ) : (
-                  <div className="profile-avatar-lg">{user?.name?.charAt(0)}</div>
+                  <div className="profile-avatar-lg" style={{ width: '88px', height: '88px' }}>{user?.name?.charAt(0) || 'M'}</div>
                 )}
-                <label htmlFor="profile-photo-input" style={{position:'absolute', bottom:'0', right:'0', background:'#00E676', color:'#000', borderRadius:'50%', width:'28px', height:'28px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 2px 6px rgba(0,0,0,0.3)'}}>
-                  <Camera size={14} />
+                <label htmlFor="profile-photo-input" style={{ position: 'absolute', bottom: '0', right: '0', background: '#00E676', color: '#000', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+                  <Camera size={16} />
                 </label>
-                <input id="profile-photo-input" type="file" accept="image/*" capture="user" style={{display:'none'}} onChange={async (e) => {
+                <input id="profile-photo-input" type="file" accept="image/*" capture="user" style={{ display: 'none' }} onChange={async (e) => {
                   const file = e.target.files[0];
                   if (file) {
                     const reader = new FileReader();
@@ -1497,20 +1514,38 @@ export default function DriverDashboard() {
                   }
                 }} />
               </div>
-              <h3 style={{fontSize:'1.2rem',fontWeight:800,marginBottom:'2px'}}>{user?.name}</h3>
-              <p style={{color:'#71717a',fontWeight:600,fontSize:'0.9rem'}}>Motorista Parceiro</p>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#090d16', margin: '0 0 2px' }}>{user?.name || 'Motorista Parceiro'}</h3>
+              <p style={{ color: '#059669', fontWeight: 800, fontSize: '0.88rem', margin: 0 }}>
+                {user?.isApproved ? '✓ Motorista Homologado Zomp' : '⏳ Cadastro em Análise'}
+              </p>
             </div>
-            <div className="form-field"><label className="form-label">Nome Completo</label><input className="form-input" value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} /></div>
-            <div className="form-field"><label className="form-label">E-mail</label><input className="form-input" type="email" value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} /></div>
-            <div className="form-field"><label className="form-label">Telefone</label><input className="form-input" type="tel" placeholder="(00) 00000-0000" value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} /></div>
-            <div className="form-field"><label className="form-label">Chave PIX (Para Recebimento)</label><input className="form-input" placeholder="CPF, E-mail, ou Celular" value={profileData.pixKey} onChange={e => setProfileData({...profileData, pixKey: e.target.value})} /></div>
-            <button className="btn-premium btn-dark" style={{marginTop:'8px'}} onClick={async () => { 
+
+            <div className="premium-card" style={{ padding: '18px', marginBottom: '16px', background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '18px' }}>
+              <div className="form-field">
+                <label className="form-label" style={{ color: '#1e293b', fontWeight: 800 }}>Nome Completo</label>
+                <input className="form-input" style={{ color: '#090d16', fontWeight: 700 }} value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} placeholder="Seu nome completo" />
+              </div>
+              <div className="form-field">
+                <label className="form-label" style={{ color: '#1e293b', fontWeight: 800 }}>E-mail</label>
+                <input className="form-input" style={{ color: '#090d16', fontWeight: 700 }} type="email" value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} placeholder="seu.email@exemplo.com" />
+              </div>
+              <div className="form-field">
+                <label className="form-label" style={{ color: '#1e293b', fontWeight: 800 }}>Telefone / WhatsApp</label>
+                <input className="form-input" style={{ color: '#090d16', fontWeight: 700 }} type="tel" placeholder="(00) 00000-0000" value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} />
+              </div>
+              <div className="form-field">
+                <label className="form-label" style={{ color: '#1e293b', fontWeight: 800 }}>Chave PIX (Para Recebimento dos Royalties)</label>
+                <input className="form-input" style={{ color: '#090d16', fontWeight: 700 }} placeholder="CPF, E-mail, Celular ou Aleatória" value={profileData.pixKey} onChange={e => setProfileData({...profileData, pixKey: e.target.value})} />
+              </div>
+            </div>
+
+            <button className="btn-premium btn-dark" style={{ width: '100%', padding: '16px', fontWeight: 900, borderRadius: '14px', fontSize: '1rem' }} onClick={async () => { 
                 try {
                   const data = await updateProfile(profileData);
                   const updatedUserLocal = {...user, ...profileData};
                   localStorage.setItem('zomp_user', JSON.stringify(updatedUserLocal));
                   setUser(updatedUserLocal);
-                  alert('Perfil salvo!');
+                  alert('Perfil salvo com sucesso!');
                   setActiveScreen(null);
                 } catch(e) { alert(e.message) }
               }}>Salvar Alterações</button>
@@ -1521,50 +1556,93 @@ export default function DriverDashboard() {
       {/* ===== DOCUMENTS & VEHICLES ===== */}
       {activeScreen === 'DOCS' && (
         <div className="driver-inner-screen">
-          <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Documentos & Veículo</h2></div>
+          <div className="inner-header">
+            <button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button>
+            <h2 style={{ color: '#090d16', fontWeight: 900 }}>Documentos & Veículo</h2>
+          </div>
           <div className="inner-body">
-            <div className="section-title">Informações do Veículo</div>
-            <div className="premium-card" style={{padding: '16px'}}>
-              <div className="form-field"><label className="form-label">Placa do Veículo</label><input className="form-input" placeholder="ABC-1234" value={profileData.carPlate} onChange={e => setProfileData({...profileData, carPlate: e.target.value.toUpperCase()})} /></div>
-              <div className="form-field"><label className="form-label">Modelo</label><input className="form-input" placeholder="Ex: Chevrolet Onix" value={profileData.carModel} onChange={e => setProfileData({...profileData, carModel: e.target.value})} /></div>
-              <div className="form-field"><label className="form-label">Cor</label><input className="form-input" placeholder="Ex: Prata" value={profileData.carColor} onChange={e => setProfileData({...profileData, carColor: e.target.value})} /></div>
+            
+            {/* Card de Status de Credenciamento */}
+            <div style={{
+              background: user?.isApproved ? '#ecfdf5' : '#fffbeb',
+              border: `1.5px solid ${user?.isApproved ? '#10b981' : '#f59e0b'}`,
+              borderRadius: '16px',
+              padding: '14px 16px',
+              marginBottom: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <div style={{ fontSize: '1.8rem' }}>{user?.isApproved ? '🛡️' : '⏳'}</div>
+              <div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 900, color: user?.isApproved ? '#065f46' : '#92400e', textTransform: 'uppercase' }}>
+                  {user?.isApproved ? 'Status: Motorista Aprovado & Liberado' : 'Status: Aguardando Validação'}
+                </div>
+                <div style={{ fontSize: '0.78rem', color: user?.isApproved ? '#047857' : '#b45309', fontWeight: 600 }}>
+                  {user?.isApproved ? 'Seu cadastro está homologado para ficar online e realizar viagens na Zomp.' : 'Seus dados foram enviados para o Painel de Controle e estão aguardando validação.'}
+                </div>
+              </div>
             </div>
 
-            <div className="section-title" style={{marginTop: '20px'}}>Documentos (Fotos)</div>
-            <div className="premium-card" style={{padding: '16px'}}>
+            <div className="section-title" style={{ color: '#090d16', fontWeight: 900, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '10px' }}>
+              🚗 Informações do Veículo
+            </div>
+            <div className="premium-card" style={{ padding: '16px', marginBottom: '18px', background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '16px' }}>
               <div className="form-field">
-                <label className="form-label">CNH</label>
-                <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
-                  <input type="file" accept="image/*" style={{display:'none'}} id="upload-cnh" onChange={(e) => { if(e.target.files[0]) setProfileData({...profileData, cnh: 'uploaded'})}} />
-                  <label htmlFor="upload-cnh" className="btn-premium btn-dark" style={{flex:1, textAlign:'center', padding:'10px'}}>+ Enviar CNH</label>
-                  {profileData.cnh && <span style={{color: '#059669', fontWeight: 800}}>✓ OK</span>}
+                <label className="form-label" style={{ color: '#1e293b', fontWeight: 800 }}>Placa do Veículo</label>
+                <input className="form-input" style={{ color: '#090d16', fontWeight: 800, textTransform: 'uppercase' }} placeholder="ABC-1234" value={profileData.carPlate} onChange={e => setProfileData({...profileData, carPlate: e.target.value.toUpperCase()})} />
+              </div>
+              <div className="form-field">
+                <label className="form-label" style={{ color: '#1e293b', fontWeight: 800 }}>Modelo do Carro</label>
+                <input className="form-input" style={{ color: '#090d16', fontWeight: 700 }} placeholder="Ex: Chevrolet Onix, Toyota Corolla" value={profileData.carModel} onChange={e => setProfileData({...profileData, carModel: e.target.value})} />
+              </div>
+              <div className="form-field">
+                <label className="form-label" style={{ color: '#1e293b', fontWeight: 800 }}>Cor do Veículo</label>
+                <input className="form-input" style={{ color: '#090d16', fontWeight: 700 }} placeholder="Ex: Prata, Preto, Branco" value={profileData.carColor} onChange={e => setProfileData({...profileData, carColor: e.target.value})} />
+              </div>
+            </div>
+
+            <div className="section-title" style={{ color: '#090d16', fontWeight: 900, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '10px' }}>
+              📄 Documentação (Fotos)
+            </div>
+            <div className="premium-card" style={{ padding: '16px', marginBottom: '18px', background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '16px' }}>
+              <div className="form-field">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label className="form-label" style={{ color: '#1e293b', fontWeight: 800, margin: 0 }}>CNH (Carteira Nacional de Habilitação)</label>
+                  {profileData.cnh && <span style={{ color: '#059669', fontWeight: 900, fontSize: '0.8rem' }}>✓ Cadastrada</span>}
+                </div>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input type="file" accept="image/*" style={{ display: 'none' }} id="upload-cnh" onChange={(e) => { if(e.target.files[0]) setProfileData({...profileData, cnh: 'uploaded'})}} />
+                  <label htmlFor="upload-cnh" className="btn-premium btn-dark" style={{ flex: 1, textAlign: 'center', padding: '12px', fontSize: '0.88rem', borderRadius: '12px' }}>
+                    {profileData.cnh ? '📷 Alterar / Reenviar CNH' : '+ Enviar Foto da CNH'}
+                  </label>
                 </div>
               </div>
-              <div className="form-field" style={{marginTop: '16px'}}>
-                <label className="form-label">CRLV do Veículo</label>
-                <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
-                  <input type="file" accept="image/*" style={{display:'none'}} id="upload-crlv" onChange={(e) => { if(e.target.files[0]) setProfileData({...profileData, crlv: 'uploaded'})}} />
-                  <label htmlFor="upload-crlv" className="btn-premium btn-dark" style={{flex:1, textAlign:'center', padding:'10px'}}>+ Enviar CRLV</label>
-                  {profileData.crlv && <span style={{color: '#059669', fontWeight: 800}}>✓ OK</span>}
+
+              <div className="form-field" style={{ marginTop: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label className="form-label" style={{ color: '#1e293b', fontWeight: 800, margin: 0 }}>CRLV (Documento do Veículo)</label>
+                  {profileData.crlv && <span style={{ color: '#059669', fontWeight: 900, fontSize: '0.8rem' }}>✓ Cadastrado</span>}
+                </div>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input type="file" accept="image/*" style={{ display: 'none' }} id="upload-crlv" onChange={(e) => { if(e.target.files[0]) setProfileData({...profileData, crlv: 'uploaded'})}} />
+                  <label htmlFor="upload-crlv" className="btn-premium btn-dark" style={{ flex: 1, textAlign: 'center', padding: '12px', fontSize: '0.88rem', borderRadius: '12px' }}>
+                    {profileData.crlv ? '📷 Alterar / Reenviar CRLV' : '+ Enviar Foto do CRLV'}
+                  </label>
                 </div>
               </div>
             </div>
 
-            <button className="btn-premium btn-green" style={{marginTop:'16px'}} onClick={async () => {
+            <button className="btn-premium btn-green" style={{ width: '100%', padding: '16px', fontWeight: 900, borderRadius: '14px', fontSize: '1rem' }} onClick={async () => {
                 try {
-                  const res = await fetch(`${API}/user/profile`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(profileData)
-                  });
-                  if(!res.ok) throw new Error('Erro ao salvar');
-                  const updatedUserLocal = {...user, ...profileData, isApproved: user.isApproved}; // preserve approval status from local
+                  const res = await updateProfile(profileData);
+                  const updatedUserLocal = {...user, ...profileData, isApproved: user.isApproved};
                   localStorage.setItem('zomp_user', JSON.stringify(updatedUserLocal));
                   setUser(updatedUserLocal);
                   alert('Documentos e dados salvos com sucesso!');
                   setActiveScreen(null);
                 } catch(e) { alert(e.message) }
-            }}>Salvar Documentos</button>
+            }}>Salvar Informações do Veículo</button>
           </div>
         </div>
       )}
@@ -1572,7 +1650,7 @@ export default function DriverDashboard() {
       {/* ===== HISTORY ===== */}
       {activeScreen === 'HISTORY' && (
         <div className="driver-inner-screen">
-          <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Histórico</h2></div>
+          <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2 style={{ color: '#090d16', fontWeight: 900 }}>Histórico</h2></div>
           <div className="inner-body">
             <div className="stats-row">
               <div className="stat-mini"><div className="stat-num">{completedRides.length}</div><div className="stat-lbl">Total</div></div>
@@ -1605,49 +1683,77 @@ export default function DriverDashboard() {
       {/* ===== CREDITS ===== */}
       {activeScreen === 'CREDITS' && (
         <div className="driver-inner-screen">
-          <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Créditos</h2></div>
+          <div className="inner-header">
+            <button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button>
+            <h2 style={{ color: '#090d16', fontWeight: 900 }}>Meus Créditos</h2>
+          </div>
           <div className="inner-body">
-            <div className="premium-card-dark">
+            <div className="premium-card-dark" style={{ background: 'linear-gradient(135deg, #090d16 0%, #111827 50%, #064e3b 100%)', border: '1px solid rgba(0, 230, 118, 0.3)', borderRadius: '20px', padding: '24px' }}>
               <div style={{position:'relative',zIndex:2}}>
-                <div style={{fontSize:'0.75rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',color:'#9ca3af',marginBottom:'8px'}}>Seus Créditos</div>
-                <div style={{display:'flex',alignItems:'baseline',gap:'6px',marginBottom:'6px'}}>
-                  <span style={{fontSize:'3rem',fontWeight:800}}>{credits}</span>
-                  <span style={{fontSize:'1rem',color:'#9ca3af',fontWeight:600}}>créditos</span>
+                <div style={{fontSize:'0.8rem',fontWeight:800,textTransform:'uppercase',letterSpacing:'1.2px',color:'#a7f3d0',marginBottom:'8px'}}>Seus Créditos Disponíveis</div>
+                <div style={{display:'flex',alignItems:'baseline',gap:'8px',marginBottom:'8px'}}>
+                  <span style={{fontSize:'3.2rem',fontWeight:900,color:'#00E676',lineHeight:1}}>{credits}</span>
+                  <span style={{fontSize:'1.1rem',color:'#e2e8f0',fontWeight:700}}>créditos</span>
                 </div>
-                <div style={{fontSize:'0.8rem',color:'#6b7280'}}>1 crédito = 1 corrida • R$ 1,50 cada</div>
+                <div style={{fontSize:'0.84rem',color:'#cbd5e1',fontWeight:600}}>1 crédito = 1 corrida concluída • R$ 1,50 cada</div>
               </div>
             </div>
 
             {credits <= 3 && (
-              <div className="tip-card" style={{background:'#fef2f2',borderColor:'#fecaca'}}>
+              <div className="tip-card" style={{background:'#fef2f2',borderColor:'#fecaca',margin:'14px 0'}}>
                 <span className="tip-icon">⚠️</span>
                 <div><div className="tip-title" style={{color:'#b91c1c'}}>Créditos baixos!</div><div className="tip-text" style={{color:'#dc2626'}}>Compre um pacote para continuar aceitando corridas.</div></div>
               </div>
             )}
 
-            <div className="section-title" style={{marginTop:'20px'}}>Comprar Pacotes</div>
-
-            <div className="credit-package" onClick={() => handleBuyCreditsInit(10)}>
-              <div className="credit-pkg-icon" style={{background:'#ecfdf5'}}>🎫</div>
-              <div className="credit-pkg-info"><h4>10 Créditos</h4><p>Pacote Básico • 10 corridas</p></div>
-              <div className="credit-pkg-price"><div className="price">R$ 15,00</div><div className="unit">R$ 1,50/un</div></div>
+            <div style={{ color: '#090d16', fontSize: '1.05rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px', margin: '22px 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🎫 Comprar Pacotes de Créditos
             </div>
 
-            <div className="credit-package popular" onClick={() => handleBuyCreditsInit(22)}>
-              <div className="credit-pkg-icon" style={{background:'#d1fae5'}}>⭐</div>
-              <div className="credit-pkg-info"><h4>22 Créditos</h4><p style={{color:'#059669',fontWeight:700}}>+2 Corridas Grátis</p></div>
-              <div className="credit-pkg-price"><div className="price">R$ 30,00</div><div className="unit">R$ 1,36/un</div></div>
+            <div className="credit-package" onClick={() => handleBuyCreditsInit(10)} style={{ border: '2px solid #e2e8f0', background: '#fff', borderRadius: '16px', padding: '16px 20px', marginBottom: '12px' }}>
+              <div className="credit-pkg-icon" style={{background:'#ecfdf5', fontSize: '1.6rem'}}>🎫</div>
+              <div className="credit-pkg-info">
+                <h4 style={{ color: '#090d16', fontWeight: 900, fontSize: '1.05rem', margin: '0 0 2px' }}>10 Créditos</h4>
+                <p style={{ color: '#64748b', fontWeight: 700, fontSize: '0.82rem', margin: 0 }}>Pacote Básico • 10 corridas</p>
+              </div>
+              <div className="credit-pkg-price" style={{ textAlign: 'right' }}>
+                <div className="price" style={{ color: '#047857', fontWeight: 900, fontSize: '1.25rem' }}>R$ 15,00</div>
+                <div className="unit" style={{ color: '#64748b', fontWeight: 700, fontSize: '0.75rem' }}>R$ 1,50/un</div>
+              </div>
             </div>
 
-            <div className="credit-package" onClick={() => handleBuyCreditsInit(35)} style={{background: '#fef3c7', borderColor: '#f59e0b', transform: 'scale(1.02)'}}>
-              <div className="credit-pkg-icon" style={{background:'#f59e0b', color:'#fff'}}>🏆</div>
-              <div className="credit-pkg-info"><h4>35 Créditos</h4><p style={{color:'#b45309',fontWeight:800}}>+5 Corridas Grátis (Econômico)</p></div>
-              <div className="credit-pkg-price"><div className="price" style={{color:'#92400e'}}>R$ 45,00</div><div className="unit" style={{color:'#b45309'}}>R$ 1,28/un</div></div>
+            <div className="credit-package popular" onClick={() => handleBuyCreditsInit(22)} style={{ border: '2px solid #10b981', background: 'linear-gradient(135deg, #ecfdf5, #f0fdf4)', borderRadius: '16px', padding: '16px 20px', marginBottom: '12px' }}>
+              <div className="credit-pkg-icon" style={{background:'#d1fae5', fontSize: '1.6rem'}}>⭐</div>
+              <div className="credit-pkg-info">
+                <h4 style={{ color: '#090d16', fontWeight: 900, fontSize: '1.05rem', margin: '0 0 2px' }}>22 Créditos</h4>
+                <p style={{color:'#059669',fontWeight:800, fontSize: '0.82rem', margin: 0}}>+2 Corridas Grátis (Bônus)</p>
+              </div>
+              <div className="credit-pkg-price" style={{ textAlign: 'right' }}>
+                <div className="price" style={{ color: '#047857', fontWeight: 900, fontSize: '1.25rem' }}>R$ 30,00</div>
+                <div className="unit" style={{ color: '#059669', fontWeight: 700, fontSize: '0.75rem' }}>R$ 1,36/un</div>
+              </div>
             </div>
 
-            <div className="tip-card" style={{marginTop:'20px', background:'#ecfdf5', borderColor:'#a7f3d0'}}>
-              <span className="tip-icon">🎁</span>
-              <div><div className="tip-title">Presente de Cadastro!</div><div className="tip-text">Como cortesia por se cadastrar na plataforma Zomp, você recebeu automaticamente <b>10 créditos gratuitos</b> em sua conta. Aproveite para começar a gerar renda agora mesmo!</div></div>
+            <div className="credit-package" onClick={() => handleBuyCreditsInit(35)} style={{background: '#fffbeb', border: '2px solid #f59e0b', borderRadius: '16px', padding: '16px 20px', marginBottom: '14px', transform: 'scale(1.01)'}}>
+              <div className="credit-pkg-icon" style={{background:'#f59e0b', color:'#fff', fontSize: '1.6rem'}}>🏆</div>
+              <div className="credit-pkg-info">
+                <h4 style={{ color: '#090d16', fontWeight: 900, fontSize: '1.05rem', margin: '0 0 2px' }}>35 Créditos</h4>
+                <p style={{color:'#b45309',fontWeight:800, fontSize: '0.82rem', margin: 0}}>+5 Corridas Grátis (Econômico)</p>
+              </div>
+              <div className="credit-pkg-price" style={{ textAlign: 'right' }}>
+                <div className="price" style={{color:'#92400e', fontWeight: 900, fontSize: '1.25rem'}}>R$ 45,00</div>
+                <div className="unit" style={{color:'#b45309', fontWeight: 700, fontSize: '0.75rem'}}>R$ 1,28/un</div>
+              </div>
+            </div>
+
+            <div className="tip-card" style={{marginTop:'16px', background:'#ecfdf5', border:'1.5px solid #6ee7b7', borderRadius: '16px', padding: '14px 16px'}}>
+              <span className="tip-icon" style={{ fontSize: '1.5rem' }}>🎁</span>
+              <div>
+                <div className="tip-title" style={{ color: '#065f46', fontWeight: 900, fontSize: '0.9rem' }}>Presente de Cadastro Zomp!</div>
+                <div className="tip-text" style={{ color: '#047857', fontWeight: 600, fontSize: '0.82rem', lineHeight: 1.45 }}>
+                  Como cortesia por se cadastrar na plataforma Zomp, você recebeu automaticamente <strong>10 créditos gratuitos</strong> em sua conta para testar e faturar imediatamente.
+                </div>
+              </div>
             </div>
           </div>
         </div>

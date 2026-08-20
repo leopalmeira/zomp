@@ -447,7 +447,19 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - A foto de rosto do motorista é exibida com destaque no card de corrida em andamento no App do Passageiro ([PassengerDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/PassengerDashboard.jsx)), garantindo segurança, identificação e credibilidade no embarque.
 
 ---
-**Status Atual**: ✅ Desbloqueio online, 10 créditos, Tour Interativo e Selfie de Perfil 100% integrados e validados.
-**Versão**: 15.6.0
+### 🚀 v15.6.1 - Alto Contraste & Visibilidade Completa dos Dados do Motorista (2026-08-20)
+* 👁️ **Visibilidade Máxima dos Dados Cadastrados**:
+  - Sincronização automática e populamento completo de `profileData` ao carregar o dashboard do motorista com dados do banco (`name`, `email`, `phone`, `carPlate`, `carModel`, `carColor`, `pixKey`, `cnh`, `crlv`, `photo`).
+  - Corrigidas as cores dos textos e campos pré-preenchidos em [DriverDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/DriverDashboard.jsx) e [Driver.css](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/Driver.css), aplicando `color: #090d16 !important; font-weight: 700;` com alto contraste nos inputs (`.form-input`), labels (`.form-label`) e títulos (`.section-title`).
+* 🛡️ **Card de Credenciamento & Documentação**:
+  - Na tela *Documentos & Veículo*, adicionado card em destaque informando se o motorista já está **Homologado & Aprovado** para estrear ou em análise.
+  - Exibição com status nítido dos documentos enviados (CNH e CRLV) e botões de fácil edição/reenvio.
+* 🎫 **Telas de Créditos & Meu Perfil Otimizadas**:
+  - Títulos de seções como *"Comprar Pacotes de Créditos"* estilizados em texto escuro, nítido e em caixa alta, eliminando completamente qualquer estilo com degradê claro ou invisível.
+  - Saldo de créditos e pacotes PIX com cores vibrantes e leitura impecável em qualquer modelo de smartphone.
+
+---
+**Status Atual**: ✅ Dados do motorista e contraste visual 100% visíveis, nítidos e validados.
+**Versão**: 15.6.1
 **Responsável**: Antigravity AI & Leandro Palmeira
 

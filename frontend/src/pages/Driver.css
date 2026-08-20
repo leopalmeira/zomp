@@ -655,29 +655,47 @@
 }
 .form-label {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #71717a;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1e293b !important;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
   margin-bottom: 6px;
 }
 .form-input {
   width: 100%;
   padding: 14px 16px;
   border-radius: 12px;
-  border: 1.5px solid #e4e4e7;
-  background: #fff;
-  font-weight: 600;
-  font-size: 0.95rem;
+  border: 1.5px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  font-weight: 700;
+  font-size: 1rem;
   outline: none;
   transition: all 0.2s;
   font-family: inherit;
-  color: #18181b;
+  color: #090d16 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.form-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
 }
 .form-input:focus {
-  border-color: #00E676;
-  box-shadow: 0 0 0 3px rgba(0,230,118,0.1);
+  border-color: #00E676 !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(0,230,118,0.15);
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #090d16 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Button Premium */
