@@ -88,24 +88,80 @@ exports.login = async (req, res) => {
 
 exports.googleAuth = async (req, res) => {
   try {
-    const { token: googleToken, role } = req.body;
-    const { OAuth2Client } = require('google-auth-library');
-    const client = new OAuth2Client();
-    const ticket = await client.verifyIdToken({ idToken: googleToken });
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
+    const { token: googleToken, role, referrerQrCode } = req.body;
+    if (!googleToken) {
+      return res.status(400).json({ error: 'Token do Google não informado' });
+    }
+
+    let email, name, picture;
+
+    // 1. Tentar buscar dados do perfil via endpoint Google UserInfo (funciona com access_token do useGoogleLogin)
+    try {
+      const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${googleToken}` }
+      });
+      if (userInfoRes.ok) {
+        const userInfo = await userInfoRes.json();
+        email = userInfo.email;
+        name = userInfo.name || (userInfo.email ? userInfo.email.split('@')[0] : 'Usuário Google');
+        picture = userInfo.picture;
+      }
+    } catch (errUserInfo) {
+      console.log('Tentativa UserInfo API falhou, tentando validação de idToken...');
+    }
+
+    // 2. Se não encontrou via UserInfo, tenta validar como idToken (JWT) via google-auth-library
+    if (!email) {
+      try {
+        const { OAuth2Client } = require('google-auth-library');
+        const client = new OAuth2Client();
+        const ticket = await client.verifyIdToken({ idToken: googleToken });
+        const payload = ticket.getPayload();
+        email = payload.email;
+        name = payload.name || payload.email.split('@')[0];
+        picture = payload.picture;
+      } catch (errIdToken) {
+        console.warn('Tentativa idToken falhou:', errIdToken.message);
+      }
+    }
+
+    if (!email) {
+      return res.status(400).json({ error: 'Não foi possível validar o login com Google. Tente novamente ou use e-mail e senha.' });
+    }
+
+    const targetRole = (role || 'PASSENGER').toUpperCase();
 
     let { rows } = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
     let user = rows[0];
 
     if (!user) {
-      const qrCode = role === 'DRIVER' ? `ZOMP-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}` : null;
+      const qrCode = targetRole === 'DRIVER' 
+        ? `ZOMP-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}` 
+        : null;
+      
       const result = await pool.query(`
         INSERT INTO "User" (name, email, password, role, photo, "qrCode", "isApproved")
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
-      `, [name, email, 'GOOGLE_AUTH', role || 'PASSENGER', picture, qrCode, (role || 'PASSENGER') === 'PASSENGER']);
+      `, [name, email, 'GOOGLE_AUTH', targetRole, picture || null, qrCode, targetRole === 'PASSENGER']);
       user = result.rows[0];
+
+      // Vincular referral se o passageiro foi indicado por um motorista
+      if (referrerQrCode && targetRole === 'PASSENGER') {
+        try {
+          const { rows: driverRows } = await pool.query('SELECT id FROM "User" WHERE "qrCode" = $1', [referrerQrCode]);
+          if (driverRows.length > 0) {
+            const expiresAt = new Date();
+            expiresAt.setMonth(expiresAt.getMonth() + 36);
+            await pool.query(
+              'INSERT INTO "Referral" ("referrerId", "referredId", "expiresAt") VALUES ($1, $2, $3)',
+              [driverRows[0].id, user.id, expiresAt]
+            );
+          }
+        } catch (refErr) {
+          console.error('Erro ao vincular referral no Google Auth:', refErr.message);
+        }
+      }
     }
 
     const authToken = jwt.sign({ id: user.id, role: user.role.toUpperCase() }, JWT_SECRET, { expiresIn: '7d' });
@@ -118,7 +174,16 @@ exports.googleAuth = async (req, res) => {
         email: user.email,
         qrCode: user.qrCode,
         isApproved: user.isApproved,
-        photo: user.photo
+        photo: user.photo,
+        carPlate: user.carPlate,
+        carModel: user.carModel,
+        carColor: user.carColor,
+        cnh: user.cnh,
+        crlv: user.crlv,
+        rating: user.rating,
+        ridesCompleted: user.ridesCompleted,
+        ridesAccepted: user.ridesAccepted,
+        ridesMissed: user.ridesMissed
       }
     });
   } catch (err) {

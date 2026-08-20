@@ -395,8 +395,26 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Busca rápida local ancorada no catálogo de pontos de referência e integração com geocodificação Photon/Nominatim com badges de categoria e ícones.
 
 ---
-**Status Atual**: ✅ Sugestões inteligentes de viagem e endereços ativas no app do passageiro.
-**Versão**: 15.3.0
+### 🚀 v15.4.0 - Simulador de 1.000 Passageiros, Captação com Desconto Imbatível, Mobile CSS e Google Auth (2026-08-20)
+* 💰 **Simulador Oficial de Ganhos até 1.000 Passageiros**:
+  - Slider interativo com range expandido de 0 a 1.000 clientes vinculados e atalhos rápidos (`100`, `300`, `500`, `1.000 Clientes - Meta`).
+  - Projeção de ganhos transparente: 1.000 clientes × 3 corridas/semana = 12.000 viagens/mês gerando **R$ 3.600,00/mês** (R$ 43.200,00/ano) em royalties via PIX.
+  - Card informativo com a regra de saque a cada 30 dias via PIX e manutenção do benefício com no mínimo 65 corridas/semana.
+* 🚀 **Estratégia de Captação & Fidelização de Clientes das Concorrentes**:
+  - Nova seção dedicada na Landing Page: *"Como trazer passageiros das outras plataformas com Desconto Imbatível e garantir sua rede"*.
+  - Passo a passo visual de 4 etapas orientando o motorista a apresentar o desconto da Zomp nas viagens de Uber/99 e realizar a 1ª viagem com seu QR Code/Link para vincular o passageiro à sua carteira por até 3 anos (36 meses).
+* 🚗 **Destaque e Visibilidade Total para "Comece a Dirigir e Lucrar Agora"**:
+  - Redesenho completo da seção de acesso rápido com tipografia de alto impacto, iluminação neon Zomp `#97E900`, card com micro-animações Antigravity e CTA touch-friendly.
+* 📱 **Suite Completa de Responsividade Mobile (Antigravity Kit)**:
+  - Implementadas Media Queries dedicadas para smartphones (320px a 768px) no [LandingPage.css](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/LandingPage.css).
+  - Ajustes finos de espaçamento, touch targets de 44px+, grids responsivos de 1 coluna em celulares, hero section compacta e countdown perfeitamente alinhado.
+* 🔐 **Login com Google Ultrarrápido no App do Passageiro**:
+  - [authController.js](file:///c:/Users/User/Desktop/zomp-master/backend/src/controllers/authController.js) atualizado com suporte a `access_token` (via Google UserInfo API) e `idToken` (via OAuth2Client), criando o usuário passageiro automaticamente com status aprovado e vinculando o código de indicação (`refCode`) imediatamente.
+  - [LoginPage.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/LoginPage.jsx) e [RegisterPage.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/RegisterPage.jsx) enriquecidos com botão Google em SVG de alta fidelidade, feedback de carregamento suave e redirecionamento direto para a tela de pedido de corrida.
+
+---
+**Status Atual**: ✅ Simulador 1.000 passageiros, Captação de Clientes, Mobile CSS e Google Auth 100% ativos e validados.
+**Versão**: 15.4.0
 **Responsável**: Antigravity AI & Leandro Palmeira
 
 

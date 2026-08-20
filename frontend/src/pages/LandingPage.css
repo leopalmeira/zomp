@@ -585,6 +585,160 @@
   margin: 0 0 28px;
 }
 
+/* ── ACESSO RÁPIDO MOTORISTA ── */
+.lp-entry-section {
+  padding: 80px 5% 50px;
+  position: relative;
+  z-index: 1;
+}
+
+.lp-entry-wrapper {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.lp-entry-title {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 900;
+  color: #ffffff;
+  margin-bottom: 16px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+}
+
+.lp-entry-subtitle {
+  font-size: 1.05rem;
+  color: #94a3b8;
+  max-width: 600px;
+  margin: 0 auto 36px;
+  line-height: 1.5;
+}
+
+.lp-entry-grid {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.lp-entry-card {
+  background: linear-gradient(145deg, rgba(15, 29, 53, 0.95), rgba(6, 13, 26, 0.98));
+  border: 1.5px solid rgba(151, 233, 0, 0.4);
+  border-radius: 24px;
+  padding: 36px 32px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(151, 233, 0, 0.08);
+  width: 100%;
+  max-width: 620px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-entry-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #97E900, transparent);
+}
+
+.lp-entry-card:hover {
+  transform: translateY(-4px);
+  border-color: #97E900;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(151, 233, 0, 0.2);
+}
+
+.lp-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.lp-entry-badge {
+  background: rgba(151, 233, 0, 0.15);
+  color: #97E900;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  border: 1px solid rgba(151, 233, 0, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.lp-entry-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(151, 233, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #97E900;
+  border: 1px solid rgba(151, 233, 0, 0.25);
+}
+
+.lp-entry-card-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.lp-entry-card-desc {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.lp-entry-card-desc strong {
+  color: #f1f5f9;
+}
+
+.lp-entry-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  margin-bottom: 24px;
+}
+
+.lp-entry-feat-item {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.lp-entry-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #97E900;
+  color: #040914;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 14px 24px;
+  border-radius: 14px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 18px rgba(151, 233, 0, 0.3);
+}
+
+.lp-entry-card:hover .lp-entry-btn {
+  background: #a3ff00;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(151, 233, 0, 0.45);
+}
+
 /* ── HOW IT WORKS ── */
 .lp-how-section {
   padding: 100px 5%;
@@ -636,6 +790,130 @@
   line-height: 1.6;
 }
 
+/* ── CAPTAÇÃO & FIDELIZAÇÃO DE PASSAGEIROS ── */
+.lp-capture-section {
+  padding: 90px 5%;
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(12, 26, 46, 0.4) 0%, rgba(6, 13, 26, 0.9) 100%);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.lp-capture-wrap {
+  max-width: 1140px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.lp-capture-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin: 48px auto 40px;
+  text-align: left;
+}
+
+.lp-capture-card {
+  background: rgba(12, 26, 46, 0.7);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 28px 22px;
+  position: relative;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+}
+
+.lp-capture-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(151, 233, 0, 0.4);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+}
+
+.lp-cap-step {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: rgba(151, 233, 0, 0.4);
+  line-height: 1;
+  margin-bottom: 14px;
+}
+
+.lp-cap-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(151, 233, 0, 0.1);
+  color: #97E900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  border: 1px solid rgba(151, 233, 0, 0.2);
+}
+
+.lp-capture-card h4 {
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.lp-capture-card p {
+  color: #94a3b8;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  flex-grow: 1;
+}
+
+.lp-capture-card p strong {
+  color: #97E900;
+}
+
+.lp-capture-highlight-box {
+  background: linear-gradient(135deg, rgba(151, 233, 0, 0.08) 0%, rgba(232, 184, 75, 0.05) 100%);
+  border: 1px solid rgba(151, 233, 0, 0.3);
+  border-radius: 20px;
+  padding: 30px 36px;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.lp-cap-hl-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.lp-cap-badge {
+  display: inline-block;
+  background: #97E900;
+  color: #040914;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.lp-cap-hl-content h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.lp-cap-hl-content p {
+  color: #cbd5e1;
+  font-size: 0.92rem;
+  max-width: 650px;
+  line-height: 1.5;
+}
+
 /* ── SIMULADOR ── */
 .lp-sim-section {
   padding: 100px 5%;
@@ -647,8 +925,8 @@
   max-width: 1180px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 50px;
   align-items: center;
 }
 
@@ -713,23 +991,100 @@
   margin-bottom: 24px;
   padding: 20px;
   background: rgba(151, 233, 0, 0.04);
-  border: 1px solid rgba(151, 233, 0, 0.1);
+  border: 1px solid rgba(151, 233, 0, 0.15);
   border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.lp-simulator-header span {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--txt);
+.lp-sim-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.lp-simulator-header strong {
-  color: var(--green);
-  font-size: 1.2rem;
-  margin-left: 4px;
+.lp-sim-slider-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.lp-sim-count-badge {
+  background: rgba(151, 233, 0, 0.15);
+  border: 1px solid rgba(151, 233, 0, 0.35);
+  color: #97E900;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.9rem;
+}
+
+.lp-sim-presets {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.lp-preset-title {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.lp-preset-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lp-preset-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lp-preset-btn:hover {
+  background: rgba(151, 233, 0, 0.12);
+  border-color: rgba(151, 233, 0, 0.4);
+  color: #97E900;
+}
+
+.lp-preset-btn.active {
+  background: #97E900;
+  color: #040914;
+  border-color: #97E900;
+  box-shadow: 0 0 10px rgba(151, 233, 0, 0.4);
+}
+
+.lp-sim-notice-card {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(151, 233, 0, 0.06);
+  border: 1px solid rgba(151, 233, 0, 0.2);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.lp-notice-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.lp-notice-text {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.45;
 }
 
 .lp-slider {
@@ -740,6 +1095,12 @@
   border-radius: 10px;
   outline: none;
   cursor: pointer;
+}
+
+.lp-tag-gold {
+  background: rgba(232, 184, 75, 0.1) !important;
+  color: var(--gold) !important;
+  border-color: rgba(232, 184, 75, 0.3) !important;
 }
 
 .lp-slider::-webkit-slider-thumb {
@@ -1605,4 +1966,290 @@
 
 .lp-s-row strong {
   color: #fff;
+}
+
+/* =========================================================
+   ── RESPONSIVIDADE MOBILE COMPLETA (ANTIGRAVITY KIT) ──
+   ========================================================= */
+
+@media (max-width: 1024px) {
+  .lp-sim-wrap {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  
+  .lp-capture-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .lp-wallet-wrap {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .lp-compare-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .lp-nav {
+    padding: 12px 4%;
+  }
+
+  .lp-nav-logo {
+    height: 26px;
+  }
+
+  .lp-nav-links {
+    gap: 10px;
+  }
+
+  .lp-nav-links button {
+    font-size: 0.82rem;
+  }
+
+  .lp-hero {
+    min-height: auto;
+    padding-bottom: 60px;
+  }
+
+  .lp-hero-content {
+    padding: 110px 4% 40px;
+    max-width: 100%;
+  }
+
+  .lp-hero-h1 {
+    font-size: 1.85rem !important;
+    line-height: 1.18;
+    margin-bottom: 20px;
+    letter-spacing: -0.3px;
+  }
+
+  .lp-text-mude {
+    font-size: 1.15rem;
+    margin-top: 10px;
+  }
+
+  .lp-hero-sub {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+
+  .lp-reflection-box {
+    padding: 14px 18px;
+    margin-bottom: 28px;
+    border-radius: 0 12px 12px 0;
+  }
+
+  .lp-reflection-text {
+    font-size: 0.94rem;
+    line-height: 1.45;
+  }
+
+  .lp-countdown {
+    padding: 14px 12px;
+  }
+
+  .lp-cd-label {
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+  }
+
+  .lp-cd-boxes {
+    gap: 6px;
+  }
+
+  .lp-cd-box {
+    padding: 8px 6px;
+    min-width: 50px;
+    border-radius: 8px;
+  }
+
+  .lp-cd-num {
+    font-size: 1.25rem;
+  }
+
+  .lp-cd-unit {
+    font-size: 0.65rem;
+  }
+
+  /* Acesso Rápido */
+  .lp-entry-section {
+    padding: 50px 4% 30px;
+  }
+
+  .lp-entry-title {
+    font-size: 1.7rem;
+  }
+
+  .lp-entry-subtitle {
+    font-size: 0.92rem;
+    margin-bottom: 24px;
+  }
+
+  .lp-entry-card {
+    padding: 24px 18px;
+    border-radius: 20px;
+  }
+
+  .lp-entry-card-title {
+    font-size: 1.25rem;
+  }
+
+  .lp-entry-card-desc {
+    font-size: 0.88rem;
+  }
+
+  /* Captação */
+  .lp-capture-section {
+    padding: 60px 4%;
+  }
+
+  .lp-capture-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin: 32px 0 24px;
+  }
+
+  .lp-capture-card {
+    padding: 20px 18px;
+    border-radius: 16px;
+  }
+
+  .lp-capture-card h4 {
+    font-size: 1.05rem;
+  }
+
+  .lp-capture-card p {
+    font-size: 0.86rem;
+  }
+
+  .lp-capture-highlight-box {
+    padding: 20px 18px;
+    border-radius: 16px;
+  }
+
+  .lp-cap-hl-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+  }
+
+  .lp-cap-hl-content button {
+    width: 100%;
+  }
+
+  /* Simulador */
+  .lp-sim-section {
+    padding: 60px 4%;
+  }
+
+  .lp-calc-table {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .lp-simulator-header {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .lp-sim-slider-label {
+    font-size: 0.86rem;
+  }
+
+  .lp-sim-count-badge {
+    font-size: 0.82rem;
+    padding: 3px 10px;
+  }
+
+  .lp-calc-row {
+    font-size: 0.85rem;
+    padding: 8px 0;
+  }
+
+  .lp-gold-val {
+    font-size: 1.45rem !important;
+  }
+
+  .lp-sim-pill {
+    padding: 10px 20px;
+  }
+
+  .lp-sim-pill-val {
+    font-size: 1.15rem;
+  }
+
+  /* Como Funciona */
+  .lp-how-section {
+    padding: 60px 4%;
+  }
+
+  .lp-how-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin: 30px auto 0;
+  }
+
+  .lp-how-step {
+    padding: 24px 18px;
+    border-radius: 16px;
+  }
+
+  /* Seção Carteira */
+  .lp-wallet-section {
+    padding: 60px 4%;
+  }
+
+  .lp-wallet-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* Modal de Cadastro Responsivo */
+  .lp-modal-content {
+    padding: 24px 18px;
+    max-width: 95%;
+    border-radius: 20px;
+  }
+
+  .lp-cta-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .lp-hero-h1 {
+    font-size: 1.55rem !important;
+    line-height: 1.2;
+  }
+
+  .lp-entry-title {
+    font-size: 1.45rem;
+  }
+
+  .lp-preset-btns {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .lp-preset-btn {
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 0.78rem;
+  }
+
+  .lp-section-title {
+    font-size: 1.5rem !important;
+  }
+
+  .lp-modal-step-title {
+    font-size: 1.25rem;
+  }
 }

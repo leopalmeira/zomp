@@ -252,56 +252,51 @@ export default function LandingPage() {
       </section>
 
       {/* ── ACESSO RÁPIDO MOTORISTA ── */}
-      <section className="lp-entry-section" style={{ padding: '65px 5%' }}>
-        <motion.div className="lp-section-tag" style={{ textAlign: 'center', display: 'block', margin: '0 auto 20px auto' }}>
-          🚗 Acesse o App do Motorista Zomp
-        </motion.div>
-        <h2 style={{ textAlign: 'center', marginBottom: '40px', fontSize: '2rem', fontWeight: 'bold' }}>
-          Comece a dirigir e lucrar agora
-        </h2>
-        
-        <motion.div 
-          variants={stagger} 
-          initial="hidden" 
-          whileInView="visible" 
-          viewport={{ once: true }}
-          style={{ 
-            display: 'flex', 
-            justifyContent: 'center',
-            maxWidth: '500px', 
-            margin: '0 auto' 
-          }}
-        >
-          {/* Card Motorista */}
-          <motion.div 
-            className="lp-entry-card lp-entry-driver" 
-            variants={fadeUp} 
-            onClick={() => navigate('/motorista')}
-            style={{
-              background: 'rgba(151, 233, 0, 0.03)',
-              border: '1px solid var(--green-glow)',
-              borderRadius: '16px',
-              padding: '30px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              minHeight: '220px',
-              width: '100%'
-            }}
-          >
-            <div>
-              <div className="lp-entry-badge" style={{ backgroundColor: 'rgba(151, 233, 0, 0.15)', color: 'var(--green)', display: 'inline-block', padding: '4px 8px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '15px' }}>💎 Renda Passiva</div>
-              <div className="lp-entry-icon" style={{ color: 'var(--green)', marginBottom: '15px' }}><TrendingUp size={32} /></div>
-              <h3 style={{ fontSize: '1.4rem', marginBottom: '10px' }}>App do Motorista Parceiro</h3>
-              <p style={{ color: 'var(--txt2)', fontSize: '0.9rem', lineHeight: '1.4' }}>
-                Dirija, faça corridas e ganhe royalties diários indicando passageiros para sua rede.
-              </p>
-            </div>
-            <div className="lp-entry-btn" style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--green)', fontWeight: 'bold', fontSize: '0.9rem' }}>Acessar App Motorista <ArrowRight size={16} /></div>
+      <section className="lp-entry-section">
+        <div className="lp-entry-wrapper">
+          <motion.div className="lp-section-tag lp-tag-vibrant" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+            🚗 Plataforma do Motorista Zomp
           </motion.div>
-        </motion.div>
+          <motion.h2 className="lp-entry-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            Comece a dirigir e <span className="lp-accent">lucrar agora</span>
+          </motion.h2>
+          <motion.p className="lp-entry-subtitle" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            Chega de trabalhar apenas para enriquecer plataformas convencionais. Acesse o aplicativo do motorista parceiro, valide seus dados e comece a acumular royalties diários com a sua própria rede.
+          </motion.p>
+          
+          <motion.div 
+            className="lp-entry-grid"
+            variants={stagger} 
+            initial="hidden" 
+            whileInView="visible" 
+            viewport={{ once: true }}
+          >
+            {/* Card Motorista Principal */}
+            <motion.div 
+              className="lp-entry-card lp-entry-driver" 
+              variants={fadeUp} 
+              onClick={() => navigate('/motorista')}
+            >
+              <div className="lp-entry-header">
+                <div className="lp-entry-badge">💎 Renda Passiva + Taxa Fixa</div>
+                <div className="lp-entry-icon"><TrendingUp size={28} /></div>
+              </div>
+              <h3 className="lp-entry-card-title">App do Motorista Parceiro</h3>
+              <p className="lp-entry-card-desc">
+                Dirija com taxa fixa de apenas <strong>R$ 1,50 por corrida</strong> e receba <strong>R$ 0,30 de royalties</strong> em todas as viagens dos passageiros vinculados à sua rede.
+              </p>
+              <div className="lp-entry-features">
+                <div className="lp-entry-feat-item">✓ Pagamento mensal via PIX</div>
+                <div className="lp-entry-feat-item">✓ Mínimo de 65 corridas/semana</div>
+                <div className="lp-entry-feat-item">✓ Sem taxas variáveis abusivas</div>
+              </div>
+              <div className="lp-entry-btn">
+                <span>Acessar App do Motorista</span>
+                <ArrowRight size={18} />
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
       </section>
 
       {/* ── COMO FUNCIONA O ONBOARDING ── */}
@@ -333,50 +328,132 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
+      {/* ── ESTRATÉGIA DE VINCULAÇÃO DE PASSAGEIROS ── */}
+      <section className="lp-capture-section">
+        <div className="lp-capture-wrap">
+          <motion.div className="lp-section-tag lp-tag-gold" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+            🚀 Estratégia de Captação & Fidelização
+          </motion.div>
+          <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            Traga seus passageiros das outras plataformas<br /><span className="lp-accent">com Desconto Imbatível e garanta até 1.000 clientes</span>
+          </motion.h2>
+          <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            Você já transporta dezenas de passageiros todos os dias pela Uber, 99 ou Táxi. Na Zomp, você pode oferecer a eles a primeira viagem com um desconto imbatível. Ao realizarem a corrida com o seu QR Code/link, eles ficam vinculados a você por até 3 anos!
+          </motion.p>
+
+          <motion.div className="lp-capture-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <motion.div className="lp-capture-card" variants={fadeUp}>
+              <div className="lp-cap-step">01</div>
+              <div className="lp-cap-icon-box"><Sparkles size={26} /></div>
+              <h4>Apresente o Desconto Imbatível</h4>
+              <p>Durante a corrida na outra plataforma, mostre que a Zomp é até 25% mais em conta para o passageiro, sem preços dinâmicos abusivos e com suporte humano.</p>
+            </motion.div>
+
+            <motion.div className="lp-capture-card" variants={fadeUp}>
+              <div className="lp-cap-step">02</div>
+              <div className="lp-cap-icon-box"><Smartphone size={26} /></div>
+              <h4>Realize a 1ª Corrida pela Zomp</h4>
+              <p>O passageiro escaneia seu QR Code no veículo ou acessa seu link de indicação, faz o login rápido com o Google em 5 segundos e chama a primeira corrida com super desconto.</p>
+            </motion.div>
+
+            <motion.div className="lp-capture-card" variants={fadeUp}>
+              <div className="lp-cap-step">03</div>
+              <div className="lp-cap-icon-box"><Lock size={26} /></div>
+              <h4>Passageiro Vinculado por 3 Anos</h4>
+              <p>A partir dessa primeira viagem, o cliente está vinculado à sua rede. Toda corrida futura que ele fizer — com você ou qualquer outro motorista — gera <strong>R$ 0,30</strong> pra você!</p>
+            </motion.div>
+
+            <motion.div className="lp-capture-card" variants={fadeUp}>
+              <div className="lp-cap-step">04</div>
+              <div className="lp-cap-icon-box"><TrendingUp size={26} /></div>
+              <h4>Meta: 1.000 Passageiros</h4>
+              <p>Indicando de 3 a 5 passageiros por dia, em poucos meses você atinge a meta de <strong>1.000 clientes vinculados</strong>, gerando <strong>R$ 3.600,00/mês</strong> em royalties via PIX.</p>
+            </motion.div>
+          </motion.div>
+
+          <motion.div className="lp-capture-highlight-box" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <div className="lp-cap-hl-content">
+              <div>
+                <span className="lp-cap-badge">⚡ A Revolução do Motorista Parceiro</span>
+                <h3>Transforme cada corrida passageira em um ativo que paga royalties</h3>
+                <p>Nas outras plataformas o cliente desembarca e você volta à estaca zero. Na Zomp, cada passageiro fidelizado se transforma em renda passiva recorrente depositada na sua conta.</p>
+              </div>
+              <button className="lp-cta-btn lp-cta-lg" onClick={handleCta}>
+                Garantir Minha Vaga de Motorista →
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── SIMULADOR ── */}
       <section className="lp-sim-section">
         <div className="lp-sim-wrap">
           <div className="lp-sim-left">
             <motion.div className="lp-section-tag lp-tag-vibrant" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-              💰 Simulado de Ganhos
+              💰 Simulador Oficial de Ganhos
             </motion.div>
             <motion.h2 className="lp-section-title lp-left-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-              Alavancagem de Ganhos<br /><span className="lp-accent">sem aumento de jornada.</span>
+              Alavancagem de Ganhos<br /><span className="lp-accent">com até 1.000 passageiros vinculados.</span>
             </motion.h2>
 
             <motion.div className="lp-calc-table" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               <div className="lp-simulator-header">
-                <span>Clientes na sua Rede: <strong>{passengers}</strong></span>
+                <div className="lp-sim-top-row">
+                  <span className="lp-sim-slider-label">Passageiros na sua Rede:</span>
+                  <span className="lp-sim-count-badge"><strong>{passengers}</strong> / 1.000</span>
+                </div>
                 <input
                   type="range"
                   min="0"
-                  max="2000"
-                  step="50"
+                  max="1000"
+                  step="10"
                   value={passengers}
                   onChange={(e) => setPassengers(parseInt(e.target.value))}
                   className="lp-slider"
+                  aria-label="Quantidade de passageiros vinculados"
                 />
+
+                {/* Presets Rápidos */}
+                <div className="lp-sim-presets">
+                  <span className="lp-preset-title">Atalhos rápidos:</span>
+                  <div className="lp-preset-btns">
+                    {[100, 300, 500, 1000].map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        className={`lp-preset-btn ${passengers === val ? 'active' : ''}`}
+                        onClick={() => setPassengers(val)}
+                      >
+                        {val === 1000 ? '⭐ 1.000 (Meta)' : `${val}`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="lp-calc-header"><span>Métrica Operacional</span><span>Valor Estimado</span></div>
-              <div className="lp-calc-row"><span>Clientes Ativos na Rede</span><strong>{passengers}</strong></div>
-              <div className="lp-calc-row"><span>Frequência Semanal Média</span><strong>3 viagens</strong></div>
+              <div className="lp-calc-row"><span>Clientes Ativos na Rede</span><strong>{passengers.toLocaleString('pt-BR')}</strong></div>
+              <div className="lp-calc-row"><span>Frequência Semanal Média</span><strong>3 viagens / semana</strong></div>
               <div className="lp-calc-row"><span>Royalty por Operação</span><strong className="lp-accent">R$ 0,30</strong></div>
               <div className="lp-calc-divider" />
-              <div className="lp-calc-row"><span>Volume de Viagens/Mês</span><strong>{(passengers * 3 * 4).toLocaleString('pt-BR')}</strong></div>
+              <div className="lp-calc-row"><span>Volume de Viagens / Mês</span><strong>{(passengers * 3 * 4).toLocaleString('pt-BR')} corridas</strong></div>
               <div className="lp-calc-row lp-calc-sub"><span>Rendimento Mensal Passivo</span><strong className="lp-accent">R$ {monthlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
               <div className="lp-calc-divider" />
               <div className="lp-calc-row lp-calc-total">
                 <span>💰 Saque Disponível a cada 30 dias</span>
                 <strong className="lp-gold-val">R$ {monthlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
               </div>
-              <div style={{ marginTop: '10px', padding: '8px 12px', borderRadius: '10px', background: 'rgba(151, 233, 0, 0.08)', border: '1px solid rgba(151, 233, 0, 0.2)', fontSize: '0.78rem', color: '#cbd5e1', lineHeight: '1.4' }}>
-                📅 <strong style={{ color: '#97E900' }}>Pagamento mensal (a cada 30 dias) via PIX.</strong> Para receber, é necessário completar no mínimo 65 corridas por semana. O valor é aproximado e depende da carteira de clientes vinculados a você.
+              <div className="lp-sim-notice-card">
+                <div className="lp-notice-icon">📅</div>
+                <div className="lp-notice-text">
+                  <strong style={{ color: '#97E900' }}>Pagamento mensal (a cada 30 dias) via PIX.</strong> Para receber, é necessário completar no mínimo 65 corridas por semana. O valor é aproximado e depende da carteira de clientes vinculados a você.
+                </div>
               </div>
             </motion.div>
 
             <motion.p className="lp-sim-disclaimer" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-              * Valores aproximados. Ganhos reais dependem da quantidade de clientes vinculados à sua carteira e da frequência de viagens deles. Mínimo de 65 corridas/semana para ativar o recebimento.
+              * Valores aproximados baseados na média de 3 corridas/semana por passageiro. Ganhos reais creditados a cada 30 dias via PIX. Mínimo de 65 corridas/semana para ativar o recebimento.
             </motion.p>
             <motion.button className="lp-cta-btn lp-cta-lg" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} onClick={handleCta}>
               Iniciar Construção de Ativos →
@@ -387,7 +464,7 @@ export default function LandingPage() {
             <img src="/zomp_network_v5.png" alt="Modelo de Negócios Zomp" className="lp-sim-img" />
             <div className="lp-sim-pill">
               <span className="lp-sim-pill-val">+R$ {yearlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / ano</span>
-              <span className="lp-sim-pill-lbl">Renda Extra Passiva Estimada</span>
+              <span className="lp-sim-pill-lbl">Renda Extra Passiva Estimada ({passengers} passageiros)</span>
             </div>
           </motion.div>
         </div>

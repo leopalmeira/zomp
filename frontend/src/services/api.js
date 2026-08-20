@@ -83,11 +83,11 @@ export async function login({ email, password }) {
   return data;
 }
 
-export async function googleLogin(token, role) {
+export async function googleLogin(token, role, referrerQrCode) {
   const res = await fetch(`${API_BASE}/auth/google`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, role }),
+    body: JSON.stringify({ token, role, referrerQrCode }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Erro na autenticação com Google');
