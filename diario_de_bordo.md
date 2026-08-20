@@ -532,7 +532,13 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Build de produção do Vite validado com 100% de sucesso.
 
 ---
-**Status Atual**: ✅ App do Passageiro e App do Motorista 100% integrados, estáveis e conectados em tempo real.
-**Versão**: 15.8.5
+### 🚀 v15.8.6 - Correção de Importação de Perfil no App do Passageiro (2026-08-20)
+* 🛠️ **Importação de `getProfile` e `updateProfile`**:
+  - Adicionados os métodos `getProfile` e `updateProfile` à declaração de importação de `../services/api` no [PassengerDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/PassengerDashboard.jsx), eliminando o erro `getProfile is not defined`.
+  - Build de produção do Vite validado com 100% de sucesso.
+
+---
+**Status Atual**: ✅ App do Passageiro 100% conectado e carregando o Dashboard sem nenhum erro de referência.
+**Versão**: 15.8.6
 **Responsável**: Antigravity AI & Leandro Palmeira
 

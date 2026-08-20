@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide, validateScreenshot, getUserDebt, getRideMessages, sendRideMessage, createSupportTicket, getUserSupportTickets, getSupportMessages, sendSupportMessage } from '../services/api'
+import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide, validateScreenshot, getUserDebt, getRideMessages, sendRideMessage, createSupportTicket, getUserSupportTickets, getSupportMessages, sendSupportMessage, getProfile, updateProfile } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline, Popup } from 'react-leaflet'
 import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, X, Sparkles, HelpCircle } from 'lucide-react'
 import L from 'leaflet'
