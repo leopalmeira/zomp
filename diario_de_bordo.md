@@ -503,7 +503,14 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
     - Credita **R$ 0,30 de royalties** instantaneamente no saldo da carteira (`balance`) do motorista vinculado.
 
 ---
-**Status Atual**: ✅ Modo Online 100% liberado para testes, ciclo de corridas e crédito de royalties na carteira validados.
-**Versão**: 15.8.1
+### 🚀 v15.8.2 - Correção Crítica de Inicialização de Estados no App do Motorista (2026-08-20)
+* 🛠️ **Eliminação do Erro de Temporal Dead Zone (TDZ)**:
+  - Reorganizadas todas as declarações de estado (`useState` e `useRef`) no topo do [DriverDashboard.jsx](file:///c:/Users/User/Desktop/zomp-master/frontend/src/pages/DriverDashboard.jsx), garantindo que `setCredits`, `setProfileData`, `setSelfiePreview` e demais setters estejam inicializados antes de qualquer `useEffect` ou callback assíncrono.
+  - Corrigido o fechamento residual em `handleNearDestination`.
+  - Build de produção do Vite validado com 100% de sucesso sem erros de runtime.
+
+---
+**Status Atual**: ✅ Login e Dashboard do Motorista 100% estáveis, funcionais e sem erros de inicialização.
+**Versão**: 15.8.2
 **Responsável**: Antigravity AI & Leandro Palmeira
 

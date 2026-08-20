@@ -177,10 +177,123 @@ const DRIVER_FAQS = [
 
 export default function DriverDashboard() {
   const navigate = useNavigate()
+
+  // ── 1. ESTADOS DO USUÁRIO & PERFIL ──
   const [user, setUser] = useState(getCurrentUser())
   const [openFaq, setOpenFaq] = useState(null)
+  const [profileData, setProfileData] = useState(() => {
+    const u = getCurrentUser() || {};
+    return {
+      name: u.name || '',
+      email: u.email || '',
+      phone: u.phone || '',
+      cnh: u.cnh || '',
+      crlv: u.crlv || '',
+      carPlate: u.carPlate || '',
+      carModel: u.carModel || '',
+      carColor: u.carColor || '',
+      pixKey: u.pixKey || '',
+    };
+  });
+  const [selfiePreview, setSelfiePreview] = useState(getCurrentUser()?.photo || null);
+  const [selfieSaving, setSelfieSaving] = useState(false);
 
-  // Sincronização em tempo real do perfil completo do motorista com o banco de dados
+  // ── 2. CARTEIRA & CRÉDITOS ──
+  const [wallet, setWallet] = useState({ balance: 0 });
+  const [credits, setCredits] = useState(0);
+  const [driverAppDebt, setDriverAppDebt] = useState(0);
+  const [linkedPassengers, setLinkedPassengers] = useState(0);
+  const [globalLaunchDate, setGlobalLaunchDate] = useState(null);
+  const [pixModal, setPixModal] = useState(null);
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
+
+  // ── 3. STATUS, MAPA & TEMA ──
+  const [isOnline, setIsOnline] = useState(false);
+  const [darkMap, setDarkMap] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeScreen, setActiveScreen] = useState(null);
+  const [rideHistory, setRideHistory] = useState([]);
+
+  // ── 4. CLIMA, TRÂNSITO & NOTÍCIAS ──
+  const [weather, setWeather] = useState({ temp: 26, icon: '☀️', desc: 'Ensolarado', wind: 12 });
+  const [showWeatherTraffic, setShowWeatherTraffic] = useState(() => localStorage.getItem('zomp_driver_show_weather') !== 'false');
+  const [showTrafficLayer, setShowTrafficLayer] = useState(() => localStorage.getItem('zomp_driver_traffic_layer') === 'true');
+  const [trafficNews, setTrafficNews] = useState([]);
+  const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
+  const [showTrafficNews, setShowTrafficNews] = useState(() => localStorage.getItem('zomp_driver_show_news') !== 'false');
+
+  // ── 5. SONAR & POSIÇÃO GPS ──
+  const [myPos, setMyPos] = useState([-22.9068, -43.1729]);
+  const [workRadiusKm, setWorkRadiusKm] = useState(() => {
+    const saved = localStorage.getItem('zomp_driver_radius');
+    return saved !== null ? parseFloat(saved) : 0;
+  });
+  const [showRadiusSelector, setShowRadiusSelector] = useState(false);
+  const workRadiusKmRef = useRef(workRadiusKm);
+  const myPosRef = useRef(myPos);
+
+  // ── 6. SLIDER & GESTOS ──
+  const [slideX, setSlideX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const slideTrackWidth = 280;
+  const slideThumbWidth = 60;
+  const slideThreshold = slideTrackWidth - slideThumbWidth - 10;
+
+  // ── 7. CORRIDAS & CONTADORES ──
+  const [pendingRides, setPendingRides] = useState([]);
+  const [activeRide, setActiveRide] = useState(null);
+  const [seenRidesCount, setSeenRidesCount] = useState({});
+  const seenRidesCountRef = useRef({});
+  const prevRideCountRef = useRef(0);
+  const prevFirstRideIdRef = useRef(null);
+  const [rideCountdown, setRideCountdown] = useState(15);
+  const [completedRideData, setCompletedRideData] = useState(null);
+  const [showPixCompletionModal, setShowPixCompletionModal] = useState(false);
+  const [showDriverRatingModal, setShowDriverRatingModal] = useState(false);
+  const [driverRatingStars, setDriverRatingStars] = useState(5);
+  const [driverRatingComment, setDriverRatingComment] = useState('');
+  const [isSubmittingDriverRating, setIsSubmittingDriverRating] = useState(false);
+
+  // ── 8. CHAT DA CORRIDA ──
+  const [isDriverChatOpen, setIsDriverChatOpen] = useState(false);
+  const [driverChatMessages, setDriverChatMessages] = useState([]);
+  const [driverChatInput, setDriverChatInput] = useState('');
+
+  // ── 9. SUPORTE & CHAMADOS ──
+  const [driverSupportTickets, setDriverSupportTickets] = useState([]);
+  const [activeDriverSupportTicket, setActiveDriverSupportTicket] = useState(null);
+  const [driverSupportMessages, setDriverSupportMessages] = useState([]);
+  const [driverSupportCategory, setDriverSupportCategory] = useState('CREDITOS');
+  const [driverSupportInput, setDriverSupportInput] = useState('');
+  const [isSendingDriverSupport, setIsSendingDriverSupport] = useState(false);
+  const [isDriverSupportLoading, setIsDriverSupportLoading] = useState(false);
+  const [isCreatingNewDriverTicket, setIsCreatingNewDriverTicket] = useState(false);
+
+  // ── 10. TOUR INTERATIVO & INDICAÇÃO ──
+  const [showDriverTour, setShowDriverTour] = useState(() => {
+    try {
+      const count = parseInt(localStorage.getItem('zomp_driver_tour_count') || '0', 10);
+      if (count < 3) {
+        localStorage.setItem('zomp_driver_tour_count', String(count + 1));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
+  const [tourStep, setTourStep] = useState(1);
+  const [copied, setCopied] = useState(false);
+
+  // ── REFS DE CONTROLE ──
+  useEffect(() => { workRadiusKmRef.current = workRadiusKm; }, [workRadiusKm]);
+  useEffect(() => { myPosRef.current = myPos; }, [myPos]);
+
+  // ── MAP TILES ──
+  const lightTile = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+  const darkTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+  // ── SINCRONIZAÇÃO EM TEMPO REAL DO PERFIL ──
   useEffect(() => {
     getProfile().then(data => {
       if (data && !data.error) {
@@ -206,28 +319,10 @@ export default function DriverDashboard() {
   }, []);
 
   useEffect(() => {
-    if (!user || user.role !== 'DRIVER') { navigate('/motorista'); return }
-  }, [navigate, user])
+    if (!user || user.role !== 'DRIVER') { navigate('/motorista'); return; }
+  }, [navigate, user]);
 
-  // Tour / Guia Interativo do Motorista (exibido nas 3 primeiras aberturas)
-  const [showDriverTour, setShowDriverTour] = useState(() => {
-    try {
-      const count = parseInt(localStorage.getItem('zomp_driver_tour_count') || '0', 10);
-      if (count < 3) {
-        localStorage.setItem('zomp_driver_tour_count', String(count + 1));
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  });
-  const [tourStep, setTourStep] = useState(1);
-  const [selfiePreview, setSelfiePreview] = useState(user?.photo || null);
-  const [selfieSaving, setSelfieSaving] = useState(false);
-
-  // GPS Tracking
-  const [myPos, setMyPos] = useState([-22.9068, -43.1729])
+  // ── GPS TRACKING ──
   useEffect(() => {
     let watchId;
     if (navigator.geolocation) {
@@ -235,91 +330,42 @@ export default function DriverDashboard() {
         (pos) => setMyPos([pos.coords.latitude, pos.coords.longitude]),
         (err) => console.error(err), 
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
-      )
+      );
     }
     return () => {
       if (watchId) navigator.geolocation.clearWatch(watchId);
-    }
-  }, [])
+    };
+  }, []);
 
-  // Online
-  const [isOnline, setIsOnline] = useState(false)
-
-  // Map Theme
-  const [darkMap, setDarkMap] = useState(false)
-  const lightTile = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-  const darkTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-
-  // Clima e Trânsito na Região (Open-Meteo API Grátis)
-  const [weather, setWeather] = useState({ temp: 26, icon: '☀️', desc: 'Ensolarado', wind: 12 })
-  const [showWeatherTraffic, setShowWeatherTraffic] = useState(() => localStorage.getItem('zomp_driver_show_weather') !== 'false')
-  const [showTrafficLayer, setShowTrafficLayer] = useState(() => localStorage.getItem('zomp_driver_traffic_layer') === 'true')
-  
-  // Notícias de Trânsito em Tempo Real (Fonte: Google / G1 - Atualizado a cada 1 hora)
-  const [trafficNews, setTrafficNews] = useState([])
-  const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
-  const [showTrafficNews, setShowTrafficNews] = useState(() => localStorage.getItem('zomp_driver_show_news') !== 'false')
-
+  // ── BUSCA DE NOTÍCIAS DE TRÂNSITO (G1 / GOOGLE NOTÍCIAS A CADA 1 HORA) ──
   const fetchTrafficNews = useCallback(async () => {
     try {
-      const data = await getTrafficNews()
+      const data = await getTrafficNews();
       if (data && Array.isArray(data.news) && data.news.length > 0) {
-        setTrafficNews(data.news)
+        setTrafficNews(data.news);
       }
     } catch (e) {
-      console.warn('Erro ao buscar notícias de trânsito:', e)
+      console.warn('Erro ao buscar notícias de trânsito:', e);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    fetchTrafficNews()
-    const nTimer = setInterval(fetchTrafficNews, 60 * 60 * 1000) // a cada 1 hora
-    return () => clearInterval(nTimer)
-  }, [fetchTrafficNews])
+    fetchTrafficNews();
+    const nTimer = setInterval(fetchTrafficNews, 60 * 60 * 1000);
+    return () => clearInterval(nTimer);
+  }, [fetchTrafficNews]);
 
-  // Rotação suave do carrossel/letreiro de notícias de trânsito
+  // Rotação suave do carrossel de notícias
   useEffect(() => {
     if (trafficNews.length > 1 && showTrafficNews) {
       const rotTimer = setInterval(() => {
-        setCurrentNewsIndex(prev => (prev + 1) % trafficNews.length)
-      }, 5500)
-      return () => clearInterval(rotTimer)
+        setCurrentNewsIndex(prev => (prev + 1) % trafficNews.length);
+      }, 5500);
+      return () => clearInterval(rotTimer);
     }
-  }, [trafficNews.length, showTrafficNews])
+  }, [trafficNews.length, showTrafficNews]);
 
-  // Raio de Atuação (Sonar de Radar em volta do motorista)
-  const [workRadiusKm, setWorkRadiusKm] = useState(() => {
-    const saved = localStorage.getItem('zomp_driver_radius');
-    return saved !== null ? parseFloat(saved) : 0; // Padrão Livre (0) para receber todas as corridas disponíveis
-  })
-  const [showRadiusSelector, setShowRadiusSelector] = useState(false)
-
-  const workRadiusKmRef = useRef(workRadiusKm)
-  const myPosRef = useRef(myPos)
-  useEffect(() => { workRadiusKmRef.current = workRadiusKm }, [workRadiusKm])
-  useEffect(() => { myPosRef.current = myPos }, [myPos])
-
-  // Ao alterar o raio de atuação, filtra imediatamente as corridas pendentes em tela
-  useEffect(() => {
-    setPendingRides(prev => prev.filter(ride => {
-      if (workRadiusKm <= 0) return true;
-      if (!Array.isArray(myPos) || !myPos[0]) return true;
-      if (ride.originLat != null && ride.originLon != null) {
-        const dOrig = getDistanceFromLatLonInKm(myPos[0], myPos[1], parseFloat(ride.originLat), parseFloat(ride.originLon));
-        if (dOrig !== null && dOrig > (workRadiusKm * 1.3)) return false;
-      }
-      return true;
-    }));
-  }, [workRadiusKm, myPos]);
-
-  const formatRadiusLabel = (r) => {
-    if (r === 0) return 'Livre 🌐';
-    if (r === 0.5) return '500 m';
-    if (r === 1) return '1 km';
-    return `${r} km`;
-  };
-
-  // Atualização do Clima em Tempo Real via Open-Meteo
+  // ── ATUALIZAÇÃO DO CLIMA (OPEN-METEO) ──
   const fetchWeather = useCallback(async (lat, lon) => {
     try {
       const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
@@ -365,223 +411,80 @@ export default function DriverDashboard() {
     return { status: 'FLUINDO', label: 'Trânsito Fluindo', color: '#10b981', icon: '🟢' };
   };
 
-  // Slide to go online
-  const [slideX, setSlideX] = useState(0)
-  const [isSwiping, setIsSwiping] = useState(false)
-  const slideTrackWidth = 280
-  const slideThumbWidth = 60
-  const slideThreshold = slideTrackWidth - slideThumbWidth - 10
+  const formatRadiusLabel = (r) => {
+    if (r === 0) return 'Livre 🌐';
+    if (r === 0.5) return '500 m';
+    if (r === 1) return '1 km';
+    return `${r} km`;
+  };
 
-  const handleSlideStart = (e) => {
-    setIsSwiping(true)
-  }
-  const handleSlideMove = (e) => {
-    if (!isSwiping) return
-    const touch = e.touches ? e.touches[0] : e
-    const track = e.currentTarget.closest('.slide-track')
-    if (!track) return
-    const rect = track.getBoundingClientRect()
-    let x = touch.clientX - rect.left - slideThumbWidth / 2
-    x = Math.max(0, Math.min(x, slideTrackWidth - slideThumbWidth))
-    setSlideX(x)
-  }
-  const handleSlideEnd = async () => {
-    setIsSwiping(false)
-    if (slideX >= slideThreshold) {
-      setSlideX(0);
-      await checkCreditsAndGoOnline();
-    } else {
-      setSlideX(0)
-    }
-  }
-
-  // Wallet & Credits
-  const [wallet, setWallet] = useState({ balance: 0 })
-  const [credits, setCredits] = useState(0)
-  const [driverAppDebt, setDriverAppDebt] = useState(0)
-  const [linkedPassengers, setLinkedPassengers] = useState(0)
-  const [globalLaunchDate, setGlobalLaunchDate] = useState(null)
-
+  // ── BUSCA DE CARTEIRA, CRÉDITOS E CONFIGURAÇÕES ──
   const fetchWallet = useCallback(async () => {
     try {
-      const d = await getWallet()
-      setWallet(d)
+      const d = await getWallet();
+      setWallet(d);
     } catch (err) {
-      console.warn('Erro ao buscar carteira:', err)
+      console.warn('Erro ao buscar carteira:', err);
     }
-  }, [])
+  }, []);
+
   const fetchCredits = useCallback(async () => {
     try {
-      // Conta de teste sempre tem 1000 créditos
       if ((user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com')) {
         setCredits(1000);
         return;
       }
-      const res = await fetch(`${API}/credits`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
-      const d = await res.json()
-      if (d.credits !== undefined) setCredits(d.credits)
-      if (d.driverAppDebt !== undefined) setDriverAppDebt(parseFloat(d.driverAppDebt) || 0)
+      const res = await fetch(`${API}/credits`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } });
+      const d = await res.json();
+      if (d.credits !== undefined) setCredits(d.credits);
+      if (d.driverAppDebt !== undefined) setDriverAppDebt(parseFloat(d.driverAppDebt) || 0);
     } catch (err) {
-      console.warn('Erro ao buscar creditos:', err)
+      console.warn('Erro ao buscar creditos:', err);
     }
-  }, [user?.email])
+  }, [user?.email]);
+
   const fetchLinkedPassengers = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/user/driver/linked-passengers`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
-      const d = await res.json()
-      if (d.linkedPassengers !== undefined) setLinkedPassengers(d.linkedPassengers)
+      const res = await fetch(`${API}/user/driver/linked-passengers`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } });
+      const d = await res.json();
+      if (d.linkedPassengers !== undefined) setLinkedPassengers(d.linkedPassengers);
     } catch (err) {
-      console.warn('Erro ao buscar passageiros vinculados:', err)
+      console.warn('Erro ao buscar passageiros vinculados:', err);
     }
-  }, [])
+  }, []);
+
   const fetchGlobalConfig = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/config`)
-      const d = await res.json()
-      if (d.launchDate) setGlobalLaunchDate(d.launchDate)
+      const res = await fetch(`${API}/config`);
+      const d = await res.json();
+      if (d.launchDate) setGlobalLaunchDate(d.launchDate);
     } catch (err) {
-      console.warn('Erro ao buscar configuracao global:', err)
+      console.warn('Erro ao buscar configuracao global:', err);
     }
-  }, [])
-  useEffect(() => { fetchWallet(); fetchCredits(); fetchLinkedPassengers(); fetchGlobalConfig() }, [fetchWallet, fetchCredits, fetchLinkedPassengers, fetchGlobalConfig])
+  }, []);
 
-  // Notification, WakeLock & Background Sync
   useEffect(() => {
-    let wakeLock = null;
-    const requestWakeLock = async () => {
+    fetchWallet();
+    fetchCredits();
+    fetchLinkedPassengers();
+    fetchGlobalConfig();
+  }, [fetchWallet, fetchCredits, fetchLinkedPassengers, fetchGlobalConfig]);
+
+  // ── HISTÓRICO DE CORRIDAS ──
+  useEffect(() => {
+    const load = async () => {
       try {
-        if ('wakeLock' in navigator && isOnline) {
-          wakeLock = await navigator.wakeLock.request('screen');
-        }
-      } catch (err) {}
-    };
-
-    if (isOnline) {
-      requestWakeLock();
-      if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission();
+        const res = await fetch(`${API}/rides`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } });
+        const d = await res.json();
+        if (Array.isArray(d)) setRideHistory(d);
+      } catch (err) {
+        console.warn('Erro ao carregar historico do motorista:', err);
       }
-    }
-    return () => {
-      if (wakeLock) wakeLock.release().catch(() => {});
     };
-  }, [isOnline]);
+    load();
+  }, [activeRide]);
 
-  const sendNotification = async (title, body, ride) => {
-    try {
-      if ("Notification" in window) {
-        if (Notification.permission === "default") {
-          await Notification.requestPermission();
-        }
-        if (Notification.permission === "granted") {
-          // Dispara via Service Worker para funcionar em segundo plano / tela de bloqueio
-          if ('serviceWorker' in navigator) {
-            try {
-              const reg = await navigator.serviceWorker.ready;
-              if (reg && reg.showNotification) {
-                reg.showNotification(title, {
-                  body,
-                  icon: '/favicon.svg',
-                  badge: '/favicon.svg',
-                  tag: 'new-ride-' + (ride?.id || Date.now()),
-                  renotify: true,
-                  requireInteraction: true,
-                  vibrate: [500, 200, 500, 200, 500, 200, 500],
-                  data: { url: '/motorista', rideId: ride?.id }
-                });
-                return;
-              }
-            } catch (swErr) {
-              console.warn('SW notification fallback:', swErr);
-            }
-          }
-
-          // Fallback para Notification API padrão
-          const n = new Notification(title, {
-            body,
-            icon: '/favicon.svg',
-            vibrate: [500, 200, 500, 200, 500],
-            tag: 'new-ride-' + (ride?.id || Date.now()),
-            renotify: true,
-            requireInteraction: true
-          });
-          n.onclick = () => {
-            window.focus();
-            n.close();
-          };
-        }
-      }
-    } catch (e) {
-      console.warn('Notification error:', e);
-    }
-    if ("vibrate" in navigator) {
-      try { navigator.vibrate([500, 200, 500, 200, 500]); } catch (e) {}
-    }
-  }
-
-  // Pending Rides & Visualizações
-  const [seenRidesCount, setSeenRidesCount] = useState({})
-  const seenRidesCountRef = useRef({})
-  const [completedRideData, setCompletedRideData] = useState(null)
-  const [showPixCompletionModal, setShowPixCompletionModal] = useState(false)
-  const [showDriverRatingModal, setShowDriverRatingModal] = useState(false)
-  const [driverRatingStars, setDriverRatingStars] = useState(5)
-  const [driverRatingComment, setDriverRatingComment] = useState('')
-  const [isSubmittingDriverRating, setIsSubmittingDriverRating] = useState(false)
-
-  const [pendingRides, setPendingRides] = useState([])
-  const [activeRide, setActiveRide] = useState(null)
-  const prevRideCountRef = useRef(0)
-  const prevFirstRideIdRef = useRef(null)
-  const [rideCountdown, setRideCountdown] = useState(15)
-
-  // Chat com o Passageiro durante a Corrida
-  const [isDriverChatOpen, setIsDriverChatOpen] = useState(false)
-  const [driverChatMessages, setDriverChatMessages] = useState([])
-  const [driverChatInput, setDriverChatInput] = useState('')
-
-  // Suporte da Plataforma & Reportar Problemas
-  const [driverSupportTickets, setDriverSupportTickets] = useState([])
-  const [activeDriverSupportTicket, setActiveDriverSupportTicket] = useState(null)
-  const [driverSupportMessages, setDriverSupportMessages] = useState([])
-  const [driverSupportCategory, setDriverSupportCategory] = useState('CREDITOS')
-  const [driverSupportInput, setDriverSupportInput] = useState('')
-  const [isSendingDriverSupport, setIsSendingDriverSupport] = useState(false)
-  const [isDriverSupportLoading, setIsDriverSupportLoading] = useState(false)
-  const [isCreatingNewDriverTicket, setIsCreatingNewDriverTicket] = useState(false)
-
-  // Sincronização em tempo real do Chat com o Passageiro
-  useEffect(() => {
-    let interval;
-    if (isDriverChatOpen && activeRide?.id) {
-      const fetchMsgs = async () => {
-        try {
-          const msgs = await getRideMessages(activeRide.id);
-          if (Array.isArray(msgs)) setDriverChatMessages(msgs);
-        } catch (e) {
-          console.warn('Erro ao buscar mensagens do chat do motorista:', e);
-        }
-      };
-      fetchMsgs();
-      interval = setInterval(fetchMsgs, 2500);
-    }
-    return () => { if (interval) clearInterval(interval); };
-  }, [isDriverChatOpen, activeRide?.id]);
-
-  const handleSendDriverRideMessage = async (customText) => {
-    const textToSend = (customText || driverChatInput).trim();
-    if (!textToSend || !activeRide?.id) return;
-
-    setDriverChatInput('');
-    try {
-      const sent = await sendRideMessage(activeRide.id, textToSend);
-      setDriverChatMessages(prev => [...prev, sent]);
-    } catch (e) {
-      console.warn('Erro ao enviar mensagem:', e);
-    }
-  };
-
-  // Sincronização do Suporte da Plataforma Zomp
+  // ── SUPORTE DA PLATAFORMA ──
   const loadDriverSupportTickets = useCallback(async () => {
     try {
       setIsDriverSupportLoading(true);
@@ -656,16 +559,170 @@ export default function DriverDashboard() {
     }
   };
 
-  // Temporizador regressivo de 15 segundos para aceitar a corrida
+  // ── CHAT DA CORRIDA ──
+  useEffect(() => {
+    let interval;
+    if (isDriverChatOpen && activeRide?.id) {
+      const fetchMsgs = async () => {
+        try {
+          const msgs = await getRideMessages(activeRide.id);
+          if (Array.isArray(msgs)) setDriverChatMessages(msgs);
+        } catch (e) {
+          console.warn('Erro ao buscar mensagens do chat do motorista:', e);
+        }
+      };
+      fetchMsgs();
+      interval = setInterval(fetchMsgs, 2500);
+    }
+    return () => { if (interval) clearInterval(interval); };
+  }, [isDriverChatOpen, activeRide?.id]);
+
+  const handleSendDriverRideMessage = async (customText) => {
+    const textToSend = (customText || driverChatInput).trim();
+    if (!textToSend || !activeRide?.id) return;
+
+    setDriverChatInput('');
+    try {
+      const sent = await sendRideMessage(activeRide.id, textToSend);
+      setDriverChatMessages(prev => [...prev, sent]);
+    } catch (e) {
+      console.warn('Erro ao enviar mensagem:', e);
+    }
+  };
+
+  // ── CHECK CREDITS & GO ONLINE ──
+  const checkCreditsAndGoOnline = async () => {
+    const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
+
+    let currentCredits = Number(credits || 0);
+    let isApprovedStatus = user?.isApproved;
+
+    try {
+      const fresh = await getProfile();
+      if (fresh && !fresh.error) {
+        setUser(fresh);
+        localStorage.setItem('zomp_user', JSON.stringify(fresh));
+        if (fresh.credits !== undefined) {
+          currentCredits = Number(fresh.credits);
+          setCredits(currentCredits);
+        }
+        if (fresh.isApproved !== undefined) {
+          isApprovedStatus = fresh.isApproved;
+        }
+      }
+    } catch (err) {
+      console.warn('Erro ao atualizar perfil do motorista:', err);
+    }
+
+    if (!isTestDriver && isApprovedStatus === false && currentCredits <= 0) {
+      return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
+    }
+
+    if (!isTestDriver && currentCredits <= 0) {
+      setShowRechargeModal(true);
+      return;
+    }
+
+    setIsOnline(true);
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+    } catch (e) {}
+  };
+
+  // ── SLIDE HANDLERS ──
+  const handleSlideStart = (e) => {
+    setIsSwiping(true);
+  };
+  const handleSlideMove = (e) => {
+    if (!isSwiping) return;
+    const touch = e.touches ? e.touches[0] : e;
+    const track = e.currentTarget.closest('.slide-track');
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
+    let x = touch.clientX - rect.left - slideThumbWidth / 2;
+    x = Math.max(0, Math.min(x, slideTrackWidth - slideThumbWidth));
+    setSlideX(x);
+  };
+  const handleSlideEnd = async () => {
+    setIsSwiping(false);
+    if (slideX >= slideThreshold) {
+      setSlideX(0);
+      await checkCreditsAndGoOnline();
+    } else {
+      setSlideX(0);
+    }
+  };
+
+  // ── NOTIFICAÇÕES & ALERTA SONORO ──
+  const sendNotification = async (title, body, ride) => {
+    try {
+      if ("Notification" in window) {
+        if (Notification.permission === "default") {
+          await Notification.requestPermission();
+        }
+        if (Notification.permission === "granted") {
+          if ('serviceWorker' in navigator) {
+            try {
+              const reg = await navigator.serviceWorker.ready;
+              if (reg && reg.showNotification) {
+                reg.showNotification(title, {
+                  body,
+                  icon: '/favicon.svg',
+                  badge: '/favicon.svg',
+                  tag: 'new-ride-' + (ride?.id || Date.now()),
+                  renotify: true,
+                  requireInteraction: true,
+                  vibrate: [500, 200, 500, 200, 500, 200, 500],
+                  data: { url: '/motorista', rideId: ride?.id }
+                });
+                return;
+              }
+            } catch (swErr) {
+              console.warn('SW notification fallback:', swErr);
+            }
+          }
+          const n = new Notification(title, {
+            body,
+            icon: '/favicon.svg',
+            vibrate: [500, 200, 500, 200, 500],
+            tag: 'new-ride-' + (ride?.id || Date.now()),
+            renotify: true,
+            requireInteraction: true
+          });
+          n.onclick = () => { window.focus(); n.close(); };
+        }
+      }
+    } catch (e) {
+      console.warn('Notification error:', e);
+    }
+    if ("vibrate" in navigator) {
+      try { navigator.vibrate([500, 200, 500, 200, 500]); } catch (e) {}
+    }
+  };
+
+  // ── WAKELOCK ──
+  useEffect(() => {
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && isOnline) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {}
+    };
+    if (isOnline) { requestWakeLock(); }
+    return () => { if (wakeLock) wakeLock.release().catch(() => {}); };
+  }, [isOnline]);
+
+  // ── TEMPORIZADOR DE CORRIDA ──
   useEffect(() => {
     let countdownTimer;
     if (isOnline && pendingRides.length > 0 && !activeRide) {
       setRideCountdown(15);
       countdownTimer = setInterval(() => {
         setRideCountdown(prev => {
-          if (prev <= 1) {
-            return 15; // Reinicia o ciclo sem ocultar a corrida ativa
-          }
+          if (prev <= 1) return 15;
           return prev - 1;
         });
       }, 1000);
@@ -673,7 +730,7 @@ export default function DriverDashboard() {
     return () => { if (countdownTimer) clearInterval(countdownTimer); };
   }, [isOnline, pendingRides.length > 0 ? pendingRides[0]?.id : null, activeRide]);
 
-  // Alarme sonoro — toca para qualquer nova chamada que chegar ao motorista
+  // ── SOM DE TOQUE DE CHAMADA ──
   useEffect(() => {
     let ringTimer;
     if (isOnline && pendingRides.length > 0 && !activeRide) {
@@ -682,17 +739,13 @@ export default function DriverDashboard() {
         playLongRideSound();
       } else {
         playRingSound();
-        ringTimer = setInterval(() => {
-          playRingSound();
-        }, 3500);
+        ringTimer = setInterval(() => { playRingSound(); }, 3500);
       }
     }
-    return () => {
-      if (ringTimer) clearInterval(ringTimer);
-    };
+    return () => { if (ringTimer) clearInterval(ringTimer); };
   }, [isOnline, pendingRides.length > 0 ? pendingRides[0]?.id : null, activeRide]);
 
-  // Polling em tempo real de novas corridas
+  // ── POLLING DE CORRIDAS PENDENTES ──
   useEffect(() => {
     let interval;
     if (isOnline && !activeRide) {
@@ -701,14 +754,11 @@ export default function DriverDashboard() {
           const rawRides = await getPendingRides();
           const r = Array.isArray(rawRides) ? rawRides.filter(ride => {
             if (!ride || ride.status !== 'PENDING') return false;
-            
-            // Ignora apenas se o motorista apertou o botão "Recusar" explicitamente nesta sessão
             if ((seenRidesCountRef.current[ride.id] || 0) >= 1) return false;
 
             const currentRadius = Number(workRadiusKmRef.current ?? workRadiusKm);
             const currentPos = myPosRef.current || myPos;
 
-            // Filtro de Raio Sonar (apenas se configurado maior que 0 e com GPS válido)
             if (currentRadius > 0 && Array.isArray(currentPos) && currentPos[0] && currentPos[1]) {
               const driverLat = currentPos[0];
               const driverLon = currentPos[1];
@@ -722,7 +772,6 @@ export default function DriverDashboard() {
                 }
               }
             }
-
             return true;
           }) : [];
 
@@ -761,16 +810,17 @@ export default function DriverDashboard() {
     return () => clearInterval(interval);
   }, [isOnline, activeRide]);
 
+  // ── AÇÕES DE CORRIDA ──
   const handleAccept = async (rideId) => {
     try {
-      const accepted = await acceptRide(rideId)
-      setActiveRide(accepted)
-      setPendingRides([])
-      fetchCredits()
+      const accepted = await acceptRide(rideId);
+      setActiveRide(accepted);
+      setPendingRides([]);
+      fetchCredits();
     } catch (e) {
-      alert(e.message || 'Corrida indisponível.')
+      alert(e.message || 'Corrida indisponível.');
     }
-  }
+  };
 
   const handleComplete = async () => {
     try {
@@ -783,8 +833,8 @@ export default function DriverDashboard() {
         fetchWallet();
         fetchCredits();
       }
-    } catch (err) { alert(err.message || 'Erro ao finalizar.') }
-  }
+    } catch (err) { alert(err.message || 'Erro ao finalizar.'); }
+  };
 
   const handleNearDestination = async () => {
     try {
@@ -796,104 +846,7 @@ export default function DriverDashboard() {
     } catch (err) {
       alert(err.message || 'Erro ao definir status da corrida.');
     }
-  }
-
-  // Menu & Screen
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [activeScreen, setActiveScreen] = useState(null)
-
-  // History
-  const [rideHistory, setRideHistory] = useState([])
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch(`${API}/rides`, { headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' } })
-        const d = await res.json()
-        if (Array.isArray(d)) setRideHistory(d)
-      } catch (err) {
-        console.warn('Erro ao carregar historico do motorista:', err)
-      }
-    }
-    load()
-  }, [activeRide])
-
-  // Profile & Docs
-  const [profileData, setProfileData] = useState(() => {
-    const u = getCurrentUser() || {};
-    return {
-      name: u.name || '',
-      email: u.email || '',
-      phone: u.phone || '',
-      cnh: u.cnh || '',
-      crlv: u.crlv || '',
-      carPlate: u.carPlate || '',
-      carModel: u.carModel || '',
-      carColor: u.carColor || '',
-      pixKey: u.pixKey || '',
-    };
-  });
-
-
-
-  // QR
-  const [copied, setCopied] = useState(false)
-  const referralLink = `${window.location.origin}/passageiro/cadastro?ref=${encodeURIComponent(user?.qrCode || '')}`
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(referralLink)}&bgcolor=ffffff&color=18181b`
-
-  const handleCopy = () => {
-    if (user?.qrCode) { navigator.clipboard.writeText(referralLink); setCopied(true); setTimeout(() => setCopied(false), 2000) }
-  }
-
-  const handleLogout = () => { logout(); navigate('/motorista') }
-  const openScreen = (s) => { setActiveScreen(s); setMenuOpen(false) }
-
-  // Credit purchase: Payment Initialization (PIX)
-  const [pixModal, setPixModal] = useState(null)
-  
-  // Modal de recarga de créditos (aparece quando credits <= 0)
-  const [showRechargeModal, setShowRechargeModal] = useState(false)
-
-  // Verificar créditos ao tentar ficar online
-  const checkCreditsAndGoOnline = async () => {
-    const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
-
-    // Sincroniza dados em tempo real do backend para garantir que temos o status e créditos mais recentes
-    let currentCredits = Number(credits || 0);
-    let isApprovedStatus = user?.isApproved;
-
-    try {
-      const fresh = await getProfile();
-      if (fresh && !fresh.error) {
-        setUser(fresh);
-        localStorage.setItem('zomp_user', JSON.stringify(fresh));
-        if (fresh.credits !== undefined) {
-          currentCredits = Number(fresh.credits);
-          setCredits(currentCredits);
-        }
-        if (fresh.isApproved !== undefined) {
-          isApprovedStatus = fresh.isApproved;
-        }
-      }
-    } catch (err) {
-      console.warn('Erro ao atualizar perfil do motorista:', err);
-    }
-
-    if (!isTestDriver && isApprovedStatus === false && currentCredits <= 0) {
-      return alert("⏳ Seus dados estão em análise. Aguarde a aprovação da Zomp para acessar o modo Online.");
-    }
-
-    // Se não for conta de teste e não tiver créditos, mostrar modal de recarga
-    if (!isTestDriver && currentCredits <= 0) {
-      setShowRechargeModal(true);
-      return;
-    }
-
-    setIsOnline(true);
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      if (ctx.state === 'suspended') ctx.resume();
-    } catch (e) {}
-  }
+  };
 
   // Tabela oficial de pacotes (mantém os descontos de 22 e 35 créditos)
   const CREDIT_PACKAGE_PRICES = { 10: 15, 22: 30, 35: 45 }
