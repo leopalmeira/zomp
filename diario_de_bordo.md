@@ -1,13 +1,13 @@
 # 📓 Diário de Bordo — Zomp Mobilidade
 
-## 🔗 Links Rápidos de Produção
+## 🔗 Links Rápidos de Produção Oficial
 
 | App | Link | Descrição |
 |-----|------|-----------|
-| 🌐 **Site Principal** | [zomp-app.onrender.com](https://zomp-app.onrender.com) | Landing Page institucional |
-| 📱 **App Passageiro** | [zomp-passageiro.onrender.com](https://zomp-passageiro.onrender.com) | Solicitar corridas |
-| 🚗 **App Motorista** | [zomp-motorista.onrender.com](https://zomp-motorista.onrender.com) | Aceitar corridas e renda passiva |
-| 🖥️ **Painel Admin** | [zomp-admin.onrender.com](https://zomp-admin.onrender.com) | Gerenciar plataforma (link privado) |
+| 🌐 **Site Principal** | [zomp.com.br](https://zomp.com.br) | Landing Page institucional |
+| 📱 **App Passageiro** | [zomp.com.br/passageiro](https://zomp.com.br/passageiro) | Solicitar corridas |
+| 🚗 **App Motorista** | [zomp.com.br/motorista](https://zomp.com.br/motorista) | Aceitar corridas e renda passiva |
+| 🖥️ **Painel Admin** | [zomp.com.br/admin/login](https://zomp.com.br/admin/login) | Gerenciar plataforma (link privado) |
 | ⚡ **API Backend** | [zomp-api.onrender.com/api/health](https://zomp-api.onrender.com/api/health) | Health check da API |
 
 ### 🔐 Credenciais de Teste
@@ -30,14 +30,11 @@ Email: leandro2703palmeira@gmail.com
 Senha: Lps27031981@
 ```
 
-### 🏗️ Arquitetura de Deploy (Render)
+### 🏗️ Arquitetura de Deploy (Render & Domínio Próprio)
 ```
-zomp-api         → Node.js (backend/index.js)       — Backend / API REST
-zomp-app         → Static SPA (frontend/dist)        — Site Principal (Landing + apps)
-zomp-passageiro  → Static Redirect                   — Redireciona para /passageiro
-zomp-motorista   → Static Redirect                   — Redireciona para /motorista
-zomp-admin       → Static Redirect                   — Redireciona para /admin/login
-zomp-db          → PostgreSQL (plano free)            — Banco de dados
+zomp-app         → Static SPA (frontend/dist)        — zomp.com.br / www.zomp.com.br
+zomp-api         → Node.js (backend/index.js)       — zomp-api.onrender.com
+zomp-db          → PostgreSQL (plano free)            — Banco de dados interno
 ```
 
 ---
@@ -538,7 +535,33 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
   - Build de produção do Vite validado com 100% de sucesso.
 
 ---
-**Status Atual**: ✅ App do Passageiro 100% conectado e carregando o Dashboard sem nenhum erro de referência.
-**Versão**: 15.8.6
+### 🚀 v16.0.0 - Aquisição & Configuração do Domínio Oficial zomp.com.br (2026-08-27)
+* 🌐 **Vinculação do Domínio Registro.br ao Render**:
+  - Adquirido o domínio oficial `zomp.com.br` no Registro.br.
+  - Configurados os registros DNS na Zona Avançada do Registro.br:
+    - `A` (@) ➜ `216.24.57.1` (IP oficial Static Sites do Render)
+    - `CNAME` (`www`) ➜ `zomp-app.onrender.com`
+  - Cadastrados os domínios personalizados no Render (`zomp.com.br` e `www.zomp.com.br`) no serviço `zomp-app`.
+  - Processo de propagação de DNS e emissão automática de certificado SSL (HTTPS) em andamento.
+* 🧹 **Limpeza e Otimização da Infraestrutura no Render**:
+  - Atualizado o [render.yaml](file:///c:/Users/User/Desktop/zomp-master/render.yaml) para manter estritamente os 3 serviços essenciais:
+    1. `zomp-app` (Frontend React SPA na raiz `zomp.com.br`)
+    2. `zomp-api` (Backend Node.js / Express)
+    3. `zomp-db` (PostgreSQL Database)
+  - Eliminados os serviços estáticos de redirecionamento provisórios (`zomp-passageiro`, `zomp-motorista` e `zomp-admin`).
+* 📱 **Atualização de Links e QR Codes de Produção**:
+  - Atualizados [CREDENCIAS.md](file:///c:/Users/User/Desktop/zomp-master/CREDENCIAS.md) e [README.md](file:///c:/Users/User/Desktop/zomp-master/README.md) com as rotas canônicas:
+    - Landing Page: `https://zomp.com.br`
+    - Passageiro: `https://zomp.com.br/passageiro`
+    - Motorista: `https://zomp.com.br/motorista`
+    - Admin: `https://zomp.com.br/admin/login`
+  - Atualizados os QR Codes de onboarding do motorista em [index.html](file:///c:/Users/User/Desktop/zomp-master/frontend/public/onboarding/index.html) para direcionar ao `https://zomp.com.br/motorista/cadastro`.
+* ✉️ **Próximos Passos (E-mail Corporativo)**:
+  - Definido para implementação posterior: ativação de encaminhamento de e-mails corporativos (`@zomp.com.br`) via ImprovMX ou caixa de correio dedicada.
+
+---
+**Status Atual**: ✅ Domínio `zomp.com.br` apontado e vinculado. Propagação em andamento no Render.
+**Versão**: 16.0.0
 **Responsável**: Antigravity AI & Leandro Palmeira
+
 
