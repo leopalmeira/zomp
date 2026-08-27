@@ -8,9 +8,9 @@ O projeto é dividido em **Frontend** (React + Vite) e **Backend** (Node.js + Po
 
 | Serviço | Link | Descrição |
 |---------|------|-----------|
-| 🌐 **Site Principal** | [zomp-app.onrender.com](https://zomp-app.onrender.com) | Landing Page institucional |
-| 📱 **App Passageiro** | [zomp-passageiro.onrender.com](https://zomp-passageiro.onrender.com) | Solicitar corridas |
-| 🚗 **App Motorista** | [zomp-motorista.onrender.com](https://zomp-motorista.onrender.com) | Aceitar corridas e renda passiva |
+| 🌐 **Site Principal** | [zomp.com.br](https://zomp.com.br) | Landing Page institucional |
+| 📱 **App Passageiro** | [zomp.com.br/passageiro](https://zomp.com.br/passageiro) | Solicitar corridas |
+| 🚗 **App Motorista** | [zomp.com.br/motorista](https://zomp.com.br/motorista) | Aceitar corridas e renda passiva |
 | ⚡ **API Backend** | [zomp-api.onrender.com/api/health](https://zomp-api.onrender.com/api/health) | Health check da API |
 
 > 🔐 Credenciais de teste e acesso ao Painel Admin estão no arquivo `CREDENCIAS.md` (não versionado publicamente).

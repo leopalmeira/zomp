@@ -35,24 +35,7 @@ services:
       - key: VITE_API_URL
         value: https://zomp-api.onrender.com/api
 
-  - type: web
-    name: zomp-passageiro
-    runtime: static
-    rootDir: redirects/passageiro
-    staticPublishPath: .
-
-  - type: web
-    name: zomp-motorista
-    runtime: static
-    rootDir: redirects/motorista
-    staticPublishPath: .
-
-  - type: web
-    name: zomp-admin
-    runtime: static
-    rootDir: redirects/admin
-    staticPublishPath: .
-
 databases:
   - name: zomp-db
     plan: free
+
