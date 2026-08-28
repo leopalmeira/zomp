@@ -43,11 +43,24 @@ exports.getStats = async (req, res) => {
     const activeRidesCount = rides.filter(r => r.status === 'ACCEPTED' || r.status === 'PENDING').length;
     const completedRides = rides.filter(r => r.status === 'COMPLETED');
 
+    // Preço por crédito configurado no sistema (padrão R$ 1,50)
+    const cfgRes = await pool.query('SELECT "pricePerCredit" FROM "AdminConfig" WHERE id = $1', ['singleton']);
+    const pricePerCredit = safeNum(cfgRes.rows[0]?.pricePerCredit, 1.50);
+
+    const completedCount = completedRides.length;
+    // Volume total transacionado nas corridas (pago pelos passageiros aos motoristas)
     const grossRevenue = completedRides.reduce((sum, r) => sum + safeNum(r.price), 0);
-    const serverFeesTotal = completedRides.length * 0.10;
-    const taxes = grossRevenue * 0.06;
-    const royaltiesTotal = completedRides.length * 0.30;
-    const netProfit = grossRevenue - taxes - serverFeesTotal - royaltiesTotal;
+    // Venda de créditos / Receita bruta da plataforma
+    const creditSalesTotal = completedCount * pricePerCredit;
+    // Imposto de 6% DAS Simples Nacional incidente sobre a Receita Bruta da Plataforma (venda de créditos)
+    const taxes = creditSalesTotal * 0.06;
+    // Taxa fixa de servidor (R$ 0,10 por corrida)
+    const serverFeesTotal = completedCount * 0.10;
+    // Royalties aos motoristas indicadores (R$ 0,30 por corrida)
+    const royaltiesTotal = completedCount * 0.30;
+    // Lucro Líquido Real da Plataforma
+    const netProfit = creditSalesTotal - taxes - serverFeesTotal - royaltiesTotal;
+    const unitNetProfit = pricePerCredit - (pricePerCredit * 0.06) - 0.10 - 0.30;
 
     const royaltyFundBalance = users.reduce((sum, u) => {
       const bal = safeNum(u.balance);
@@ -58,14 +71,18 @@ exports.getStats = async (req, res) => {
       totalDrivers,
       totalPassengers,
       totalRides,
+      completedRidesCount: completedCount,
       activeRidesCount,
       royaltyFundBalance,
       financials: {
         grossRevenue,
+        creditSalesTotal,
+        pricePerCredit,
         taxes,
         serverFeesTotal,
         royaltiesTotal,
-        netProfit
+        netProfit,
+        unitNetProfit
       }
     });
   } catch (err) {

@@ -494,40 +494,56 @@ export default function AdminPanel() {
           <div className="ap-finance">
             <div className="ap-fin-grid">
               <div className="ap-fin-card">
-                <span className="ap-fin-label">Faturamento Bruto</span>
-                <strong className="ap-fin-val">R$ {safeNum(stats.financials?.grossRevenue).toFixed(2)}</strong>
-                <small className="ap-fin-sub">Soma de todas as corridas concluídas</small>
-              </div>
-              <div className="ap-fin-card">
-                <span className="ap-fin-label">Custos (Servidor + Taxas)</span>
-                <strong className="ap-fin-val" style={{color:'#ef4444'}}>
-                  - R$ {(safeNum(stats.financials?.taxes) + safeNum(stats.financials?.serverFeesTotal)).toFixed(2)}
+                <span className="ap-fin-label">Venda de Créditos (Faturamento do App)</span>
+                <strong className="ap-fin-val" style={{color:'#00E676'}}>
+                  R$ {safeNum(stats.financials?.creditSalesTotal).toFixed(2)}
                 </strong>
-                <small className="ap-fin-sub">Infraestrutura e tributação estimada</small>
+                <small className="ap-fin-sub">
+                  Receita bruta com créditos ({stats.completedRidesCount || stats.totalRides || 0} corridas × R$ {safeNum(stats.financials?.pricePerCredit || 1.50).toFixed(2)})
+                </small>
               </div>
+
               <div className="ap-fin-card">
-                <span className="ap-fin-label">Royalties Distribuídos</span>
+                <span className="ap-fin-label">Impostos s/ Faturamento Bruto</span>
+                <strong className="ap-fin-val" style={{color:'#f87171'}}>
+                  - R$ {safeNum(stats.financials?.taxes).toFixed(2)}
+                </strong>
+                <small className="ap-fin-sub">6% DAS Simples Nacional sobre a venda de créditos</small>
+              </div>
+
+              <div className="ap-fin-card">
+                <span className="ap-fin-label">Custos (Servidor + Royalties)</span>
                 <strong className="ap-fin-val" style={{color:'#f59e0b'}}>
-                  - R$ {safeNum(stats.financials?.royaltiesTotal).toFixed(2)}
+                  - R$ {(safeNum(stats.financials?.serverFeesTotal) + safeNum(stats.financials?.royaltiesTotal)).toFixed(2)}
                 </strong>
-                <small className="ap-fin-sub">Crédito aos motoristas indicadores</small>
+                <small className="ap-fin-sub">R$ 0,10 servidor + R$ 0,30 royalties / corrida</small>
               </div>
+
               <div className="ap-fin-card vibrant">
                 <span className="ap-fin-label">Lucro Líquido do App</span>
                 <strong className="ap-fin-val" style={{color:'#00E676'}}>
                   R$ {safeNum(stats.financials?.netProfit).toFixed(2)}
                 </strong>
-                <small className="ap-fin-sub">Margem final após deduções</small>
+                <small className="ap-fin-sub">
+                  Margem real (R$ {safeNum(stats.financials?.unitNetProfit || 1.01).toFixed(2)} líquido por corrida)
+                </small>
               </div>
             </div>
 
             <div className="ap-fin-detail">
-              <h3>📊 Detalhamento Contábil</h3>
-              <div className="ap-fin-row"><span>Total de Corridas Faturadas</span><strong>{stats.totalRides || 0} corridas</strong></div>
+              <h3>📊 Detalhamento Contábil & Fiscal</h3>
+              <div className="ap-fin-row"><span>Total de Corridas Faturadas (Concluídas)</span><strong>{stats.completedRidesCount || stats.totalRides || 0} corridas</strong></div>
+              <div className="ap-fin-row"><span>Volume Total Transacionado (GMV pago aos Motoristas)</span><strong>R$ {safeNum(stats.financials?.grossRevenue).toFixed(2)}</strong></div>
               <div className="ap-fin-row"><span>Ticket Médio por Corrida</span><strong>R$ {stats.totalRides ? (safeNum(stats.financials?.grossRevenue) / stats.totalRides).toFixed(2) : '0.00'}</strong></div>
-              <div className="ap-fin-row"><span>Taxa de Servidor Fixa (R$ 0,10 por corrida)</span><strong>R$ {safeNum(stats.financials?.serverFeesTotal).toFixed(2)}</strong></div>
-              <div className="ap-fin-row"><span>Impostos Estimados (6% DAS Simples Nacional)</span><strong>R$ {safeNum(stats.financials?.taxes).toFixed(2)}</strong></div>
-              <div className="ap-fin-row"><span>Custo de Royalties (R$ 0,30 por corrida)</span><strong>R$ {safeNum(stats.financials?.royaltiesTotal).toFixed(2)}</strong></div>
+              <div className="ap-fin-row"><span>Valor de Venda por Crédito / Corrida</span><strong style={{color:'#00E676'}}>R$ {safeNum(stats.financials?.pricePerCredit || 1.50).toFixed(2)}</strong></div>
+              <div className="ap-fin-row"><span>Valor Total da Venda de Créditos (Faturamento Bruto)</span><strong style={{color:'#00E676'}}>R$ {safeNum(stats.financials?.creditSalesTotal).toFixed(2)}</strong></div>
+              <div className="ap-fin-row"><span>Imposto DAS Simples Nacional (6% sobre Venda de Créditos)</span><strong style={{color:'#f87171'}}>- R$ {safeNum(stats.financials?.taxes).toFixed(2)}</strong></div>
+              <div className="ap-fin-row"><span>Taxa de Servidor & Cloud Fixa (R$ 0,10 por corrida)</span><strong style={{color:'#f59e0b'}}>- R$ {safeNum(stats.financials?.serverFeesTotal).toFixed(2)}</strong></div>
+              <div className="ap-fin-row"><span>Custo de Royalties Distribuídos (R$ 0,30 por corrida)</span><strong style={{color:'#f59e0b'}}>- R$ {safeNum(stats.financials?.royaltiesTotal).toFixed(2)}</strong></div>
+              <div className="ap-fin-row" style={{background:'rgba(0,230,118,0.06)', padding:'14px 12px', borderRadius:'10px', marginTop:'6px'}}>
+                <span style={{color:'#fff', fontWeight:700}}>Lucro Líquido Real da Plataforma</span>
+                <strong style={{color:'#00E676', fontSize:'1.15rem'}}>R$ {safeNum(stats.financials?.netProfit).toFixed(2)} <span style={{fontSize:'0.75rem', color:'#a7f3d0', fontWeight:600}}>(R$ {safeNum(stats.financials?.unitNetProfit || 1.01).toFixed(2)} / corrida)</span></strong>
+              </div>
             </div>
           </div>
         )}
