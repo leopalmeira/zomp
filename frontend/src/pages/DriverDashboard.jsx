@@ -759,15 +759,34 @@ export default function DriverDashboard() {
             const currentRadius = Number(workRadiusKmRef.current ?? workRadiusKm);
             const currentPos = myPosRef.current || myPos;
 
+            // Filtro rigoroso de Raio de Atuação (Sonar):
+            // Tanto a ORIGEM quanto o DESTINO devem estar estritamente dentro do raio configurado pelo motorista
             if (currentRadius > 0 && Array.isArray(currentPos) && currentPos[0] && currentPos[1]) {
               const driverLat = currentPos[0];
               const driverLon = currentPos[1];
               const origLat = ride.originLat != null ? parseFloat(ride.originLat) : null;
               const origLon = ride.originLon != null ? parseFloat(ride.originLon) : null;
+              const destLat = ride.destLat != null ? parseFloat(ride.destLat) : null;
+              const destLon = ride.destLon != null ? parseFloat(ride.destLon) : null;
+              const distanceKm = ride.distanceKm != null ? parseFloat(ride.distanceKm) : null;
 
+              // 1. Ponto de EMBARQUE (Origem): Deve estar estritamente dentro do raio
               if (origLat != null && origLon != null && !isNaN(origLat) && !isNaN(origLon)) {
                 const distOrigin = getDistanceFromLatLonInKm(driverLat, driverLon, origLat, origLon);
-                if (distOrigin !== null && distOrigin > (currentRadius * 1.3)) {
+                if (distOrigin !== null && distOrigin > currentRadius) {
+                  return false;
+                }
+              }
+
+              // 2. Ponto de DESEMBARQUE (Destino): Também deve estar estritamente dentro do raio
+              if (destLat != null && destLon != null && !isNaN(destLat) && !isNaN(destLon)) {
+                const distDest = getDistanceFromLatLonInKm(driverLat, driverLon, destLat, destLon);
+                if (distDest !== null && distDest > currentRadius) {
+                  return false;
+                }
+              } else if (distanceKm != null && !isNaN(distanceKm)) {
+                // Fallback de segurança caso coordenadas de destino não estejam geocodificadas
+                if (distanceKm > currentRadius) {
                   return false;
                 }
               }

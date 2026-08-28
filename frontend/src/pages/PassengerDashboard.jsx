@@ -1654,12 +1654,21 @@ const POPULAR_DESTINATIONS = [
 
                   const freightPrice = Math.max(parseFloat(routeKm) * FREIGHT_PRICE_PER_KM, 15.00);
                   try {
+                    let finalFreightOriginLat = originCoords ? originCoords[0] : (Array.isArray(mapCenter) && mapCenter[0] ? mapCenter[0] : null);
+                    let finalFreightOriginLon = originCoords ? originCoords[1] : (Array.isArray(mapCenter) && mapCenter[1] ? mapCenter[1] : null);
+                    let finalFreightDestLat = destCoords ? destCoords[0] : null;
+                    let finalFreightDestLon = destCoords ? destCoords[1] : null;
+
                     const ridePayload = {
                       origin: originAddr?.trim() || 'Coleta Frete',
                       destination: destAddr?.trim() || 'Entrega Frete',
                       price: freightPrice,
                       distanceKm: parseFloat(routeKm) || 1.0,
-                      vehicleType: `freight_${freightType || 'caixas'}`
+                      vehicleType: `freight_${freightType || 'caixas'}`,
+                      originLat: finalFreightOriginLat,
+                      originLon: finalFreightOriginLon,
+                      destLat: finalFreightDestLat,
+                      destLon: finalFreightDestLon
                     };
                     const newRide = await requestRide(ridePayload);
                     if (newRide?.id) {
