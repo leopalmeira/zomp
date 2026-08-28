@@ -30,7 +30,7 @@ export default function AuthMapBg() {
         style={{ width: '100%', height: '100%', position: 'absolute', zIndex: 0, background: '#0c0f14' }}
       >
         <TileLayer
-          url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           opacity={0.8}
         />
         <MapPanLoop />

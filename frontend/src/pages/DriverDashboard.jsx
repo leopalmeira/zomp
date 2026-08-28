@@ -291,7 +291,7 @@ export default function DriverDashboard() {
 
   // ── MAP TILES ──
   const lightTile = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  const darkTile = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png';
+  const darkTile = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   // ── SINCRONIZAÇÃO EM TEMPO REAL DO PERFIL ──
   useEffect(() => {
@@ -939,7 +939,7 @@ export default function DriverDashboard() {
   return (
     <div className="driver-app">
       {/* MAP */}
-      <div className="driver-map-bg">
+      <div className={`driver-map-bg${darkMap ? ' dark-map' : ''}`}>
         <MapContainer center={myPos} zoom={15} zoomControl={false} attributionControl={false} style={{ width: '100%', height: '100%' }}>
           <TileLayer url={darkMap ? darkTile : lightTile} />
           {/* Sonar de Raio de Atuação em volta do motorista */}
