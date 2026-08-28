@@ -88,6 +88,7 @@ body {
 @media (min-width: 520px) {
   html, body {
     background: #0a0a0a !important;
+    overflow: hidden;
   }
   
   .app-container {
@@ -114,6 +115,7 @@ body {
     border-radius: 0 0 16px 16px;
     z-index: 99999;
     box-shadow: inset 0 -1px 3px rgba(0,0,0,0.3);
+    pointer-events: none;
   }
 
   /* Background com logo sutil atrás do frame */

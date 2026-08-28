@@ -56,7 +56,7 @@ export default function RegisterPage({ forceRole }) {
         {/* Banner Baixar App */}
         <DownloadAppBanner role={forceRole || 'PASSENGER'} />
 
-        <div className="logo-container" style={{ marginBottom: '30px', transform: 'scale(1.2)' }}>
+        <div className="logo-container" style={{ marginBottom: '8px' }}>
           <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
         </div>
 
@@ -67,16 +67,16 @@ export default function RegisterPage({ forceRole }) {
           {refCode && !isDriver && (
             <div style={{
               background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-              padding: '14px 16px',
-              borderRadius: '14px',
-              marginBottom: '12px',
-              border: '2px solid #34d399',
-              boxShadow: '0 4px 12px rgba(5,150,105,0.3)'
+              padding: '10px 12px',
+              borderRadius: '10px',
+              marginBottom: '6px',
+              border: '1px solid #34d399',
+              boxShadow: '0 4px 12px rgba(5,150,105,0.2)'
             }}>
-              <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: '#fff' }}>
+              <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: '#fff' }}>
                 🌟 Você foi indicado por um motorista parceiro Zomp!
               </p>
-              <p style={{ margin: '4px 0 0', fontSize: '0.7rem', fontWeight: 600, color: '#ecfdf5' }}>
+              <p style={{ margin: '2px 0 0', fontSize: '0.65rem', fontWeight: 600, color: '#ecfdf5' }}>
                 Seu vínculo será criado automaticamente ao finalizar o cadastro.
               </p>
             </div>
@@ -123,9 +123,9 @@ export default function RegisterPage({ forceRole }) {
           </div>
 
           {!isDriver && (
-            <div className="input-group" style={{ marginTop: '8px' }}>
-              <label htmlFor="reg-referral" style={{ color: 'var(--primary-hover)' }}>
-                Código de Indicação {refCode ? '(✅ Vinculado automaticamente!)' : '(Opcional)'}
+            <div className="input-group" style={{ marginTop: '4px' }}>
+              <label htmlFor="reg-referral" style={{ color: 'var(--primary-hover)', fontSize: '0.68rem' }}>
+                Código de Indicação {refCode ? '(✅ Vinculado!)' : '(Opcional)'}
               </label>
               <input
                 id="reg-referral"
@@ -148,12 +148,12 @@ export default function RegisterPage({ forceRole }) {
             type="submit"
             className="btn btn-primary btn-submit"
             disabled={loading}
-            style={{ marginTop: '16px' }}
+            style={{ marginTop: '8px' }}
           >
             {loading ? 'Processando...' : 'Finalizar Cadastro'}
           </button>
 
-          <p className="auth-link" style={{ marginTop: '16px' }}>
+          <p className="auth-link" style={{ marginTop: '8px' }}>
             Já possui uma conta Zomp? <Link to={loginLink}>Entrar</Link>
           </p>
         </form>

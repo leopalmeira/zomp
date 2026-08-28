@@ -5,7 +5,7 @@ import { login } from '../services/api'
 import AuthMapBg from '../components/AuthMapBg'
 import DownloadAppBanner from '../components/DownloadAppBanner'
 import './Auth.css'
-import { ArrowRight, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, ShieldCheck, Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react'
 
 export default function LoginPage({ forceRole }) {
   const navigate = useNavigate()
@@ -13,6 +13,7 @@ export default function LoginPage({ forceRole }) {
   const refCode = searchParams.get('ref') || ''
   
   const [form, setForm] = useState({ email: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -49,93 +50,103 @@ export default function LoginPage({ forceRole }) {
       {/* Decorative Gradient Overlay for Driver */}
       {isDriver && <div className="driver-ambient-glow"></div>}
 
-      <div className="auth-container animate-fade-in">
+      <div className="auth-container">
 
-        {/* ===== BANNER BAIXAR APP (DOWNLOAD DIRETO) ===== */}
-        {!isAdmin && <DownloadAppBanner role={forceRole || 'PASSENGER'} />}
+        {/* Top bar with Download App Pill */}
+        <div className="auth-top-section">
+          {!isAdmin && <DownloadAppBanner role={forceRole || 'PASSENGER'} />}
 
-        {!isDriver && !isAdmin && (
-          <>
-            <div className="logo-container" style={{ marginBottom: '12px', transform: 'scale(1.2)' }}>
-              <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
-            </div>
-            <p style={{ 
-              textAlign: 'center',
-              fontSize: '0.85rem', 
-              color: '#97E900', 
-              fontWeight: 800, 
-              marginBottom: '24px', 
-              textTransform: 'uppercase', 
-              letterSpacing: '1px',
-              textShadow: '0 0 10px rgba(151, 233, 0, 0.3)'
-            }}>
-              Preço Imbatível Contra a Concorrência ⚡
-            </p>
-          </>
-        )}
-
-        {isAdmin && (
-          <>
-            <div className="logo-container" style={{ marginBottom: '32px' }}>
-              <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" style={{ height: '60px' }} />
-            </div>
-            <h1>Painel Admin</h1>
-            <span className="driver-slogan" style={{ color: '#97E900' }}>Acesso restrito ao administrador</span>
-            <p className="auth-subtitle">
-              Digite suas credenciais de administrador para continuar.
-            </p>
-          </>
-        )}
-
-        {isDriver && (
-          <motion.div 
-            className="driver-premium-header"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-          >
-            <div className="driver-logo-wrapper">
-              <img src="/logo.svg" alt="Zomp" className="driver-logo" />
-              <div className="driver-badge">
-                <ShieldCheck size={14} className="badge-icon" />
-                <span>Para Parceiros</span>
+          {!isDriver && !isAdmin && (
+            <div className="passenger-header-block">
+              <div className="logo-container">
+                <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" />
               </div>
+              <p className="passenger-slogan-tag">
+                Preço Imbatível Contra a Concorrência ⚡
+              </p>
             </div>
+          )}
 
-            <h1 className="driver-hero-title">
-              Sua jornada como <br/><span className="text-glow-green">Investidor</span> começa aqui.
-            </h1>
-          </motion.div>
-        )}
+          {isAdmin && (
+            <div className="admin-header-block">
+              <div className="logo-container" style={{ marginBottom: '24px' }}>
+                <img src="/logo.svg" alt="Zomp Logo" className="logo-img-auth" style={{ height: '52px' }} />
+              </div>
+              <h1>Painel Admin</h1>
+              <span className="driver-slogan" style={{ color: '#97E900' }}>Acesso restrito ao administrador</span>
+              <p className="auth-subtitle">
+                Digite suas credenciais de administrador para continuar.
+              </p>
+            </div>
+          )}
 
+          {isDriver && (
+            <motion.div 
+              className="driver-premium-header"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <div className="driver-logo-wrapper">
+                <img src="/logo.svg" alt="Zomp" className="driver-logo" />
+                <div className="driver-badge">
+                  <span className="driver-badge-dot"></span>
+                  <ShieldCheck size={13} className="badge-icon" />
+                  <span>Para Parceiros</span>
+                </div>
+              </div>
+
+              <h1 className="driver-hero-title">
+                Sua jornada como <br/><span className="text-glow-green">Investidor</span> começa aqui.
+              </h1>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Form docked cleanly at the bottom */}
         <form onSubmit={handleSubmit} className={`auth-form ${isDriver ? 'driver-form-enhanced' : ''}`}>
 
           {error && <div className="auth-error">⚠ {error}</div>}
 
           <div className="input-group">
             <label htmlFor="login-email">E-mail de Acesso</label>
-            <input
-              id="login-email"
-              className="input premium-input"
-              type="email"
-              placeholder="seu@email.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-            />
+            <div className="input-with-icon">
+              <Mail size={16} className="field-icon" />
+              <input
+                id="login-email"
+                className="input premium-input with-leading-icon"
+                type="email"
+                placeholder="seu@email.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+              />
+            </div>
           </div>
 
           <div className="input-group">
             <label htmlFor="login-password">Senha</label>
-            <input
-              id="login-password"
-              className="input premium-input"
-              type="password"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-            />
+            <div className="input-with-icon">
+              <Lock size={16} className="field-icon" />
+              <input
+                id="login-password"
+                className="input premium-input with-leading-icon with-trailing-icon"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                aria-label={showPassword ? 'Ocultar senha' : 'Ver senha'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -144,10 +155,15 @@ export default function LoginPage({ forceRole }) {
             className="btn btn-primary btn-submit enhanced-submit"
             disabled={loading}
           >
-            {loading ? 'Autenticando...' : (
+            {loading ? (
+              <span className="btn-loading-content">
+                <span className="auth-spinner"></span> Autenticando...
+              </span>
+            ) : (
               isAdmin ? 'Acessar Terminal' : (
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  Entrar na Conta <ArrowRight size={20} />
+                <span className="btn-inner-content">
+                  <span>Entrar na Conta</span>
+                  <ArrowRight size={18} className="btn-arrow-icon" />
                 </span>
               )
             )}
@@ -156,7 +172,9 @@ export default function LoginPage({ forceRole }) {
           {!isAdmin && (
             <div className="auth-extra-actions">
               <div className="auth-footer-links">
-                <p>{isDriver ? 'Ainda não é parceiro?' : 'Novo no Zomp?'}</p>
+                <p className="auth-footer-prompt">
+                  {isDriver ? 'Ainda não é parceiro?' : 'Novo no Zomp?'}
+                </p>
                 <Link to={registerLink} className="btn-secondary-outline">
                   {isDriver ? 'Criar Conta de Motorista' : 'Criar Conta de Passageiro'}
                 </Link>
