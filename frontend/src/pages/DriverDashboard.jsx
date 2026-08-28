@@ -1,24 +1,48 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, rateRide, getProfile, updateProfile, getRideMessages, sendRideMessage, createSupportTicket, getUserSupportTickets, getSupportMessages, sendSupportMessage, getTrafficNews } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Circle } from 'react-leaflet'
-import { User, FileText, Clock, Ticket, Gem, UserPlus, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders, Camera, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, X, Rocket, ShieldCheck, Gift, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, Send, Newspaper } from 'lucide-react'
+import { User, FileText, Clock, Ticket, Gem, UserPlus, Users, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders, Camera, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, X, Rocket, ShieldCheck, Gift, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, Send, Newspaper } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Driver.css'
 
 function MapController({ center }) {
   const map = useMap()
+  const lastCenterRef = useRef(null)
+
   useEffect(() => {
-    if (center) map.flyTo(center, 15, { duration: 1.2 })
+    if (!center || !Array.isArray(center) || center[0] == null || center[1] == null) return
+
+    if (!lastCenterRef.current) {
+      lastCenterRef.current = center
+      map.setView(center, map.getZoom() || 15)
+      return
+    }
+
+    const dLat = Math.abs(center[0] - lastCenterRef.current[0])
+    const dLon = Math.abs(center[1] - lastCenterRef.current[1])
+    // Apenas anima se houver deslocamento real (> 30 metros), eliminando tremor de micro-flutuação de GPS
+    if (dLat > 0.0003 || dLon > 0.0003) {
+      lastCenterRef.current = center
+      map.panTo(center, { animate: true, duration: 0.8 })
+    }
   }, [center, map])
+
   return null
 }
 
 const driverIcon = L.divIcon({
-  className: 'custom-pin-icon',
-  html: `<div style="background:#00E676;width:24px;height:24px;border-radius:50%;border:4px solid #18181b;box-shadow:0 3px 10px rgba(0,0,0,0.4);"></div>`,
-  iconSize: [24, 24], iconAnchor: [12, 12]
+  className: 'driver-sonar-icon-wrapper',
+  html: `
+    <div class="driver-sonar-pin">
+      <div class="driver-sonar-wave"></div>
+      <div class="driver-sonar-wave wave-2"></div>
+      <div class="driver-sonar-core"></div>
+    </div>
+  `,
+  iconSize: [48, 48],
+  iconAnchor: [24, 24]
 })
 
 const API = import.meta.env.VITE_API_URL || 'https://zomp-api.onrender.com/api'
@@ -213,6 +237,14 @@ export default function DriverDashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeScreen, setActiveScreen] = useState(null);
   const [rideHistory, setRideHistory] = useState([]);
+
+  const circlePathOptions = useMemo(() => ({
+    color: '#00E676',
+    fillColor: '#00E676',
+    fillOpacity: isOnline ? 0.12 : 0.05,
+    weight: 2,
+    dashArray: '6, 6'
+  }), [isOnline]);
 
   // ── 4. CLIMA, TRÂNSITO & NOTÍCIAS ──
   const [weather, setWeather] = useState({ temp: 26, icon: '☀️', desc: 'Ensolarado', wind: 12 });
@@ -966,13 +998,7 @@ export default function DriverDashboard() {
             <Circle
               center={myPos}
               radius={workRadiusKm * 1000}
-              pathOptions={{
-                color: '#00E676',
-                fillColor: '#00E676',
-                fillOpacity: isOnline ? 0.14 : 0.05,
-                weight: 2.5,
-                dashArray: '6, 6'
-              }}
+              pathOptions={circlePathOptions}
             />
           )}
           <MapController center={myPos} />
@@ -983,7 +1009,18 @@ export default function DriverDashboard() {
       {/* TOP HEADER COM MENU, CLIMA, TRÂNSITO E STATUS ONLINE */}
       <div className="driver-top-header-integrated">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <button className="driver-menu-btn" onClick={() => setMenuOpen(true)}>☰</button>
+          <button
+            className="driver-menu-btn"
+            onClick={() => {
+              fetchLinkedPassengers();
+              fetchCredits();
+              fetchWallet();
+              setMenuOpen(true);
+            }}
+            title="Abrir Menu do Motorista"
+          >
+            ☰
+          </button>
 
           {/* Sonar / Raio de Atuação Rápido */}
           <button
@@ -1362,72 +1399,137 @@ export default function DriverDashboard() {
         <div className="driver-side-overlay" onClick={() => setMenuOpen(false)}>
           <div className="driver-side-drawer" onClick={e => e.stopPropagation()}>
             <div className="drawer-header">
-              <div style={{textAlign: 'center', marginBottom: '20px'}}>
-                <img src="/logo.svg" alt="Zomp Logo" style={{height: '40px', filter: 'drop-shadow(0 0 10px rgba(151, 233, 0, 0.4))'}} />
+              <div className="drawer-top-bar">
+                <div className="drawer-brand">
+                  <img src="/logo.svg" alt="Zomp" className="drawer-logo-img" />
+                  <span className="drawer-partner-tag">PARCEIRO</span>
+                </div>
+                <button className="drawer-close-btn" onClick={() => setMenuOpen(false)} aria-label="Fechar menu">
+                  <X size={20} />
+                </button>
               </div>
-              <div className="drawer-profile-box">
-                <div className="drawer-avatar">{user?.name?.charAt(0) || 'M'}</div>
-                <div className="drawer-user-info">
-                  <h3>{user?.name}</h3>
-                  <div style={{display:'flex', gap:'8px', alignItems:'center'}}>
-                    <span style={{fontSize:'0.75rem', fontWeight:800, color:'#f59e0b'}}>⭐ {formatNumber(user?.rating, 1, '5.0')}</span>
-                    <span style={{fontSize:'0.65rem', fontWeight:700, color:'#9ca3af'}}>• {user?.ridesCompleted || 0} viagens</span>
+
+              {/* Driver Profile Card */}
+              <div className="drawer-profile-card">
+                <div className="drawer-avatar-wrapper">
+                  {selfiePreview ? (
+                    <img src={selfiePreview} alt={user?.name} className="drawer-avatar-img" />
+                  ) : (
+                    <div className="drawer-avatar">{user?.name?.charAt(0) || 'M'}</div>
+                  )}
+                  <span className={`drawer-avatar-status ${isOnline ? 'online' : 'offline'}`}></span>
+                </div>
+
+                <div className="drawer-user-details">
+                  <div className="drawer-user-name-row">
+                    <h3>{user?.name || 'Motorista Parceiro'}</h3>
+                    <ShieldCheck size={16} className="verified-shield-icon" title="Motorista Verificado" />
                   </div>
+                  
+                  <div className="drawer-user-badges">
+                    <span className="rating-pill">⭐ {formatNumber(user?.rating, 1, '5.0')}</span>
+                    <span className="trips-pill">• {user?.ridesCompleted || 0} viagens</span>
+                  </div>
+
+                  {(profileData.carModel || profileData.carPlate) && (
+                    <div className="drawer-vehicle-tag">
+                      🚗 {profileData.carModel || 'Veículo'} • <strong style={{ color: '#00E676' }}>{profileData.carPlate || '—'}</strong>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="drawer-balance-row">
-                <div className="balance-item">
-                  <span className="lbl">Aceitação</span>
-                  <div className={`val ${((user?.ridesAccepted || 1) / (user?.ridesAccepted + user?.ridesMissed || 1) * 100) < 70 ? 'red' : 'green'}`}>
+
+              {/* 🌟 HERO CARD: PASSAGEIROS VINCULADOS (REDE DE CLIENTES DO MOTORISTA) 🌟 */}
+              <div className="drawer-passengers-hero-card" onClick={() => openScreen('REFERRAL')}>
+                <div className="dph-header">
+                  <div className="dph-icon-box">
+                    <Users size={20} />
+                  </div>
+                  <div className="dph-info">
+                    <span className="dph-label">Sua Rede de Clientes</span>
+                    <div className="dph-count-row">
+                      <span className="dph-number">{linkedPassengers}</span>
+                      <span className="dph-subtext">{linkedPassengers === 1 ? 'passageiro vinculado' : 'passageiros vinculados'}</span>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} className="dph-arrow" />
+                </div>
+                <div className="dph-footer-line">
+                  <span className="dph-badge">✨ R$ 0,30 de Royalty / corrida</span>
+                  <span className="dph-cta">Indicar +</span>
+                </div>
+              </div>
+
+              {/* Quick Metrics Grid */}
+              <div className="drawer-stats-grid">
+                <div className="drawer-stat-box" onClick={() => openScreen('ROYALTIES')}>
+                  <span className="stat-label">Royalties</span>
+                  <span className="stat-value neon-green">R$ {Number(wallet.balance || 0).toFixed(2)}</span>
+                  <span className="stat-sub">Ver Extrato ›</span>
+                </div>
+
+                <div className="drawer-stat-box" onClick={() => openScreen('CREDITS')}>
+                  <span className="stat-label">Créditos</span>
+                  <span className="stat-value">{Number(credits || 0)} <small>un</small></span>
+                  <span className="stat-sub">Recarregar ›</span>
+                </div>
+
+                <div className="drawer-stat-box">
+                  <span className="stat-label">Aceitação</span>
+                  <span className={`stat-value ${(((user?.ridesAccepted || 1) / (user?.ridesAccepted + user?.ridesMissed || 1)) * 100) < 70 ? 'stat-red' : 'stat-green'}`}>
                     {(((user?.ridesAccepted || 1) / (user?.ridesAccepted + user?.ridesMissed || 1)) * 100).toFixed(0)}%
-                  </div>
-                </div>
-                <div className="balance-item">
-                  <span className="lbl">Royalties</span>
-                  <div className="val">R$ {Number(wallet.balance || 0).toFixed(2)}</div>
-                </div>
-              </div>
-              <div className="drawer-credits-row">
-                <div className="balance-item" style={{width:'100%'}}>
-                  <span className="lbl">Créditos de Corrida</span>
-                  <div className="val" style={{color:'#059669', fontSize:'1.4rem'}}>{Number(credits || 0)} <span style={{fontSize:'0.8rem', fontWeight:600, color:'#71717a'}}>créditos</span></div>
+                  </span>
+                  <span className="stat-sub">Desempenho</span>
                 </div>
               </div>
             </div>
 
-            <div className="drawer-section-label">Principal</div>
+            {/* Navigation List */}
             <nav className="drawer-nav">
+              <div className="drawer-section-label">Principal</div>
               <button className={`drawer-nav-item ${activeScreen === 'PROFILE' ? 'active' : ''}`} onClick={() => openScreen('PROFILE')}>
-                <span className="nav-icon"><User size={18} /></span> Perfil Interativo
+                <span className="nav-icon"><User size={18} /></span>
+                <span className="nav-text">Perfil & Veículo</span>
               </button>
               <button className={`drawer-nav-item ${activeScreen === 'DOCS' ? 'active' : ''}`} onClick={() => openScreen('DOCS')}>
-                <span className="nav-icon"><FileText size={18} /></span> Documentação
+                <span className="nav-icon"><FileText size={18} /></span>
+                <span className="nav-text">Documentação</span>
               </button>
               <button className={`drawer-nav-item ${activeScreen === 'HISTORY' ? 'active' : ''}`} onClick={() => openScreen('HISTORY')}>
-                <span className="nav-icon"><Clock size={18} /></span> Histórico
+                <span className="nav-icon"><Clock size={18} /></span>
+                <span className="nav-text">Histórico de Corridas</span>
               </button>
               
-              <div className="drawer-section-label">Financeiro</div>
+              <div className="drawer-section-label">Financeiro & Royalties</div>
               <button className={`drawer-nav-item ${activeScreen === 'CREDITS' ? 'active' : ''}`} onClick={() => openScreen('CREDITS')}>
-                <span className="nav-icon"><Ticket size={18} /></span> Meus Créditos
-                <span className="nav-badge">{Number(credits || 0)}</span>
+                <span className="nav-icon"><Ticket size={18} /></span>
+                <span className="nav-text">Meus Créditos</span>
+                <span className="nav-badge-neon">{Number(credits || 0)}</span>
               </button>
               <button className={`drawer-nav-item ${activeScreen === 'ROYALTIES' ? 'active' : ''}`} onClick={() => openScreen('ROYALTIES')}>
-                <span className="nav-icon"><Gem size={18} /></span> Extrato Royalties
+                <span className="nav-icon"><Gem size={18} /></span>
+                <span className="nav-text">Extrato de Royalties</span>
+                <span className="nav-badge-gold">R$ {Number(wallet.balance || 0).toFixed(2)}</span>
               </button>
 
-              <div className="drawer-section-label">Sistema & Ajuda</div>
-              <button className={`drawer-nav-item ${activeScreen === 'REFERRAL' ? 'active' : ''}`} onClick={() => openScreen('REFERRAL')}>
-                <span className="nav-icon"><UserPlus size={18} /></span> Indicar Passageiro
+              <div className="drawer-section-label">Sua Rede & Indicação</div>
+              <button className={`drawer-nav-item highlight-item ${activeScreen === 'REFERRAL' ? 'active' : ''}`} onClick={() => openScreen('REFERRAL')}>
+                <span className="nav-icon"><UserPlus size={18} /></span>
+                <span className="nav-text">Indicar Passageiros</span>
+                <span className="nav-badge-passengers">{linkedPassengers} vinculados</span>
               </button>
+
+              <div className="drawer-section-label">Suporte & Ajuda</div>
               <button className={`drawer-nav-item ${activeScreen === 'SUPPORT' ? 'active' : ''}`} onClick={() => openScreen('SUPPORT')}>
-                <span className="nav-icon"><Headset size={18} /></span> Suporte
+                <span className="nav-icon"><Headset size={18} /></span>
+                <span className="nav-text">Central de Suporte</span>
               </button>
               <button className={`drawer-nav-item ${activeScreen === 'FAQ' ? 'active' : ''}`} onClick={() => openScreen('FAQ')}>
-                <span className="nav-icon"><HelpCircle size={18} /></span> FAQ
+                <span className="nav-icon"><HelpCircle size={18} /></span>
+                <span className="nav-text">Perguntas Frequentes</span>
               </button>
 
-              <div className="drawer-section-label">Preferências & Visualização</div>
+              <div className="drawer-section-label">Preferências & Mapa</div>
               <button
                 className="drawer-nav-item"
                 onClick={() => {
@@ -1437,7 +1539,7 @@ export default function DriverDashboard() {
                 }}
               >
                 <span className="nav-icon"><CloudSun size={18} /></span>
-                {showWeatherTraffic ? '✓ Exibindo Previsão do Tempo' : '✕ Ocultar Previsão do Tempo'}
+                <span className="nav-text">{showWeatherTraffic ? 'Previsão do Tempo (Ativa)' : 'Previsão do Tempo (Oculta)'}</span>
               </button>
 
               <button
@@ -1449,7 +1551,7 @@ export default function DriverDashboard() {
                 }}
               >
                 <span className="nav-icon"><Newspaper size={18} /></span>
-                {showTrafficNews ? '✓ Exibindo Notícias G1/Google' : '✕ Ocultar Notícias de Trânsito'}
+                <span className="nav-text">{showTrafficNews ? 'Notícias de Trânsito (Ativas)' : 'Notícias de Trânsito (Ocultas)'}</span>
               </button>
 
               <button
@@ -1460,16 +1562,17 @@ export default function DriverDashboard() {
                 }}
               >
                 <span className="nav-icon"><Radio size={18} /></span>
-                Raio Sonar: {formatRadiusLabel(workRadiusKm)}
+                <span className="nav-text">Raio Sonar: {formatRadiusLabel(workRadiusKm)}</span>
               </button>
 
               <button className="drawer-nav-item" onClick={() => { setDarkMap(!darkMap); setMenuOpen(false) }}>
-                <span className="nav-icon">{darkMap ? <Sun size={18} /> : <Moon size={18} />}</span> {darkMap ? 'Modo Claro' : 'Mapa Escuro'}
+                <span className="nav-icon">{darkMap ? <Sun size={18} /> : <Moon size={18} />}</span>
+                <span className="nav-text">{darkMap ? 'Modo Claro' : 'Mapa Escuro'}</span>
               </button>
 
               <button
                 className="drawer-nav-item"
-                style={{ color: '#00E676', fontWeight: 800 }}
+                style={{ color: '#00E676' }}
                 onClick={async () => {
                   try {
                     if ('caches' in window) {
@@ -1489,11 +1592,11 @@ export default function DriverDashboard() {
                 }}
               >
                 <span className="nav-icon"><RefreshCw size={18} /></span>
-                Atualizar App (Limpar Cache)
+                <span className="nav-text">Atualizar App (Limpar Cache)</span>
               </button>
+
               <button
-                className="drawer-nav-item"
-                style={{ background: 'rgba(0, 230, 118, 0.08)', color: '#00E676', fontWeight: 800, border: '1px solid rgba(0, 230, 118, 0.2)' }}
+                className="drawer-nav-item tour-item"
                 onClick={() => {
                   setTourStep(1);
                   setShowDriverTour(true);
@@ -1501,14 +1604,16 @@ export default function DriverDashboard() {
                 }}
               >
                 <span className="nav-icon"><Rocket size={18} /></span>
-                🚀 Guia & Tour do Motorista
+                <span className="nav-text">🚀 Guia & Tour do Motorista</span>
               </button>
             </nav>
 
             <div className="drawer-footer">
               <button className="logout-btn" onClick={handleLogout}>
-                <LogOut size={18} /> Sair da Conta
+                <LogOut size={18} />
+                <span>Sair da Conta</span>
               </button>
+              <span className="drawer-version-tag">Zomp Parceiro • v8.7.0</span>
             </div>
           </div>
         </div>
