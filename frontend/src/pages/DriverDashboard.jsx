@@ -290,8 +290,8 @@ export default function DriverDashboard() {
   useEffect(() => { myPosRef.current = myPos; }, [myPos]);
 
   // ── MAP TILES ──
-  const lightTile = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-  const darkTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+  const lightTile = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const darkTile = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png';
 
   // ── SINCRONIZAÇÃO EM TEMPO REAL DO PERFIL ──
   useEffect(() => {

@@ -1257,7 +1257,7 @@ const POPULAR_DESTINATIONS = [
       {/* ===== MAP ===== */}
       <div className="passenger-map-bg">
         <MapContainer center={mapCenter} zoom={16} zoomControl={false} style={{width:'100%', height:'100%'}}>
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
           <MapController center={mapCenter} markers={allMarkers} />
           {originCoords && (
             <Marker position={originCoords} icon={rideState === 'SEARCHING' ? sonarIcon : originIcon}>
