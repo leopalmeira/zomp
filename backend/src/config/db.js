@@ -59,7 +59,7 @@ async function initDB() {
         "autoSuspendMinRating" DECIMAL DEFAULT 4.5,
         "launchDate" DATE DEFAULT '2026-06-30',
         "pricePerCredit" DECIMAL DEFAULT 1.50,
-        "driverSlots" INTEGER DEFAULT 5000,
+        "driverSlots" INTEGER DEFAULT 3300,
         "preRegisterEndDate" TEXT DEFAULT '2026-06-30T23:59:59-03:00'
       );
 
@@ -122,8 +122,9 @@ async function initDB() {
       ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "vehicleType" TEXT DEFAULT 'car';
       ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "isAppLive" BOOLEAN DEFAULT false;
       ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "launchStatus" TEXT DEFAULT 'PRE_LAUNCH';
-      ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "driverSlots" INTEGER DEFAULT 5000;
+      ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "driverSlots" INTEGER DEFAULT 3300;
       ALTER TABLE "AdminConfig" ADD COLUMN IF NOT EXISTS "preRegisterEndDate" TEXT DEFAULT '2026-06-30T23:59:59-03:00';
+      UPDATE "AdminConfig" SET "driverSlots" = 3300 WHERE "driverSlots" = 5000;
     `);
 
     // Injeção de Admin Master

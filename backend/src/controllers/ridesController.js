@@ -143,10 +143,10 @@ exports.completeRide = async (req, res) => {
       await pool.query('UPDATE "User" SET "driverAppDebt" = COALESCE("driverAppDebt", 0) + $1 WHERE id = $2', [pendingDebtIncluded, req.user.id]);
     }
 
-    // Processar Royalties:
-    // 1. Verifica se o passageiro já possui vínculo ativo com algum motorista
+    // Processar Royalties e Vínculo Automático do Passageiro:
     let royaltyPaid = 0;
     try {
+      // 1. Verifica se o passageiro já possui vínculo ativo com algum motorista
       const { rows: referrals } = await pool.query(`
         SELECT r."referrerId" FROM "Referral" r
         WHERE r."referredId" = $1 AND r."expiresAt" > NOW()
@@ -154,16 +154,22 @@ exports.completeRide = async (req, res) => {
 
       let targetReferrerId = referrals.length > 0 ? referrals[0].referrerId : null;
 
-      // 2. Se o passageiro NÃO possuía vínculo prévio, vincula-o automaticamente ao motorista da primeira corrida por 1 ano!
+      // 2. Se o passageiro NÃO possui vínculo prévio com nenhum motorista,
+      // ele fica AUTOMATICAMENTE vinculado ao primeiro motorista que realizou a viagem!
       if (!targetReferrerId && ride.driverId) {
+        const { rows: cfgRows } = await pool.query('SELECT "bindingMonthsFirst" FROM "AdminConfig" WHERE id = $1', ['singleton']);
+        const months = (cfgRows.length > 0 && cfgRows[0].bindingMonthsFirst) ? parseInt(cfgRows[0].bindingMonthsFirst) : 12;
         const expiresAt = new Date();
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+        expiresAt.setMonth(expiresAt.getMonth() + months);
+
         await pool.query(`
           INSERT INTO "Referral" ("referrerId", "referredId", "expiresAt", "createdAt")
           VALUES ($1, $2, $3, NOW())
+          ON CONFLICT DO NOTHING
         `, [ride.driverId, ride.passengerId, expiresAt]);
+
         targetReferrerId = ride.driverId;
-        console.log(`✅ [Vínculo Criado] Passageiro ${ride.passengerId} vinculado por 1 ano ao motorista ${ride.driverId}.`);
+        console.log(`✅ [Vínculo Automático Criado] Passageiro ${ride.passengerId} vinculado por ${months} meses ao primeiro motorista ${ride.driverId}.`);
       }
 
       // 3. Credita os royalties no saldo da carteira do motorista vinculado

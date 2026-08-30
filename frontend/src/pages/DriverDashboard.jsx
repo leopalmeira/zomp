@@ -195,7 +195,7 @@ const DRIVER_FAQS = [
   },
   {
     q: '👑 Como funcionam os Royalties de R$ 0,30 por passageiro?',
-    a: 'Ao indicar passageiros com seu QR Code ou transportá-los pela primeira vez, você ganha R$ 0,30 por cada corrida que eles fizerem no aplicativo durante 3 meses. Você pode solicitar o saque do saldo diretamente no menu Royalties!'
+    a: 'Ao indicar passageiros com seu QR Code ou transportá-los pela primeira vez, você ganha R$ 0,30 por cada corrida que eles fizerem no aplicativo durante 1 ano (12 meses). O ciclo de saque do saldo pode ser solicitado a cada 30 dias diretamente no menu Royalties!'
   }
 ];
 
@@ -2202,31 +2202,56 @@ export default function DriverDashboard() {
       {/* ===== ROYALTIES ===== */}
       {activeScreen === 'ROYALTIES' && (
         <div className="driver-inner-screen">
-          <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Royalties</h2></div>
+          <div className="inner-header">
+            <button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button>
+            <h2>Extrato de Royalties</h2>
+          </div>
           <div className="inner-body">
-            <div className="premium-card-dark">
+            <div className="premium-card-dark" style={{ background: 'linear-gradient(135deg, #090d16 0%, #111827 50%, #064e3b 100%)', border: '1px solid rgba(0, 230, 118, 0.35)', borderRadius: '20px', padding: '24px', position: 'relative' }}>
               <div style={{position:'relative',zIndex:2}}>
-                <div style={{fontSize:'0.75rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'1px',color:'#9ca3af',marginBottom:'8px'}}>Saldo de Royalties</div>
-                <div style={{display:'flex',alignItems:'baseline',gap:'6px',marginBottom:'6px'}}>
-                  <span style={{fontSize:'1.2rem',color:'#9ca3af'}}>R$</span>
-                  <span style={{fontSize:'3rem',fontWeight:800}}>{Number(wallet.balance || 0).toFixed(2)}</span>
+                <div style={{fontSize:'0.78rem',fontWeight:800,textTransform:'uppercase',letterSpacing:'1.2px',color:'#a7f3d0',marginBottom:'8px'}}>
+                  Saldo de Royalties Acumulado
                 </div>
-                <div style={{fontSize:'0.8rem',color:'#6b7280'}}>R$ 0,30 por corrida de cada passageiro vinculado</div>
+                <div style={{display:'flex',alignItems:'baseline',gap:'6px',marginBottom:'6px'}}>
+                  <span style={{fontSize:'1.4rem',color:'#6ee7b7',fontWeight:800}}>R$</span>
+                  <span style={{fontSize:'3.2rem',fontWeight:900,color:'#ffffff',lineHeight:1}}>{Number(wallet.balance || 0).toFixed(2)}</span>
+                </div>
+                <div style={{fontSize:'0.82rem',color:'#d1fae5',fontWeight:700}}>
+                  ✨ R$ 0,30 por corrida concluída de cada passageiro vinculado (válido por 1 ano)
+                </div>
               </div>
             </div>
 
-            <div className="stats-row">
-              <div className="stat-mini"><div className="stat-num">{linkedPassengers}</div><div className="stat-lbl">Vinculados</div></div>
-              <div className="stat-mini"><div className="stat-num">3 meses</div><div className="stat-lbl">Ciclo saque</div></div>
+            <div className="stats-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div className="stat-mini" style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
+                <div className="stat-num" style={{ fontSize: '1.8rem', fontWeight: 900, color: '#090d16' }}>{linkedPassengers}</div>
+                <div className="stat-lbl" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Passageiros Vinculados</div>
+              </div>
+              <div className="stat-mini" style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
+                <div className="stat-num" style={{ fontSize: '1.8rem', fontWeight: 900, color: '#090d16' }}>30 dias</div>
+                <div className="stat-lbl" style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ciclo Saque (Mensal)</div>
+              </div>
             </div>
 
-            <button className="btn-premium btn-green" style={{marginTop:'8px'}} disabled={Number(wallet.balance || 0) < 1} onClick={() => alert('Saque solicitado!')}>
-              {Number(wallet.balance || 0) >= 1 ? '💰 Solicitar Saque' : 'Saldo Insuficiente (mín. R$ 1,00)'}
+            <button
+              className="btn-premium btn-green"
+              style={{ width: '100%', padding: '16px', borderRadius: '14px', fontSize: '1rem', fontWeight: 900 }}
+              disabled={Number(wallet.balance || 0) < 1}
+              onClick={() => alert(`Solicitação de saque de R$ ${Number(wallet.balance || 0).toFixed(2)} enviada com sucesso! O pagamento será processado via PIX na sua chave cadastrada.`)}
+            >
+              {Number(wallet.balance || 0) >= 1 ? `💰 Solicitar Saque via PIX (R$ ${Number(wallet.balance || 0).toFixed(2)})` : 'Saldo Mínimo para Saque: R$ 1,00'}
             </button>
 
-            <div className="tip-card" style={{marginTop:'16px'}}>
-              <span className="tip-icon">👑</span>
-              <div><div className="tip-title">Como funciona?</div><div className="tip-text">Cada passageiro que você transporta pela primeira vez fica vinculado por 2 anos a você. A cada corrida futura dele, R$ 0,30 é creditado na sua carteira.</div></div>
+            <div className="tip-card" style={{marginTop:'16px', background:'#ecfdf5', border:'1.5px solid #6ee7b7', borderRadius: '16px', padding: '16px'}}>
+              <span className="tip-icon" style={{ fontSize: '1.6rem' }}>👑</span>
+              <div>
+                <div className="tip-title" style={{ color: '#065f46', fontWeight: 900, fontSize: '0.95rem', marginBottom: '4px' }}>
+                  Como funciona a Rede de Royalties Zomp?
+                </div>
+                <div className="tip-text" style={{ color: '#047857', fontWeight: 600, fontSize: '0.84rem', lineHeight: 1.5 }}>
+                  Todo passageiro que você indicar ou transportar pela primeira vez fica <strong>automaticamente vinculado ao seu perfil por 1 ano (12 meses)</strong>. A cada corrida futura que ele fizer pelo app, <strong>R$ 0,30 é creditado imediatamente</strong> na sua carteira. Os saques são disponibilizados a cada <strong>30 dias (mensal)</strong> direto na sua chave PIX.
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2235,35 +2260,50 @@ export default function DriverDashboard() {
       {/* ===== REFERRAL ===== */}
       {activeScreen === 'REFERRAL' && (
         <div className="driver-inner-screen">
-          <div className="inner-header"><button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button><h2>Indicar Passageiro</h2></div>
+          <div className="inner-header">
+            <button className="inner-back-btn" onClick={() => setActiveScreen(null)}>←</button>
+            <h2>Indicar Passageiros</h2>
+          </div>
           <div className="inner-body">
-            <div className="qr-card">
-              <h3 style={{fontSize:'1.15rem',fontWeight:800,marginBottom:'4px'}}>Seu QR Code</h3>
-              <p style={{color:'#71717a',fontSize:'0.85rem',fontWeight:600}}>Compartilhe para vincular passageiros</p>
-              <img src={qrUrl} alt="QR Code" />
-              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',marginTop:'12px'}}>
-                <code style={{background:'#f4f4f5',padding:'8px 16px',borderRadius:'100px',fontWeight:700,fontSize:'0.95rem',letterSpacing:'0.05em'}}>{user?.qrCode || '---'}</code>
-                <button className="btn-premium btn-dark" style={{width:'auto',padding:'8px 16px',fontSize:'0.85rem',borderRadius:'100px'}} onClick={handleCopy}>
-                  {copied ? '✓' : '📋'}
+            <div className="qr-card" style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '20px', padding: '22px', textAlign: 'center', marginBottom: '16px' }}>
+              <h3 style={{fontSize:'1.2rem',fontWeight:900,color:'#090d16',marginBottom:'4px'}}>Seu QR Code de Parceiro</h3>
+              <p style={{color:'#64748b',fontSize:'0.84rem',fontWeight:700,marginBottom:'12px'}}>Apresente ao passageiro para vincular a conta dele à sua</p>
+              <img src={qrUrl} alt="QR Code" style={{ width: '180px', height: '180px', margin: '0 auto', display: 'block', borderRadius: '12px' }} />
+              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',marginTop:'14px'}}>
+                <code style={{background:'#f1f5f9',padding:'10px 18px',borderRadius:'100px',fontWeight:900,fontSize:'1rem',letterSpacing:'0.06em',color:'#0f172a'}}>{user?.qrCode || '---'}</code>
+                <button className="btn-premium btn-dark" style={{width:'auto',padding:'10px 18px',fontSize:'0.85rem',borderRadius:'100px',fontWeight:800}} onClick={handleCopy}>
+                  {copied ? '✓ Copiado' : '📋 Copiar Código'}
                 </button>
               </div>
             </div>
 
-            <div className="section-title">Como funciona</div>
-            <div className="premium-card">
-              <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
-                {['Mostre o QR Code ao passageiro','Ele escaneia durante o cadastro','Vínculo de 2 anos criado!','Ganhe R$ 0,30 por corrida dele'].map((step, i) => (
+            <div className="section-title" style={{ color: '#090d16', fontWeight: 900, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '10px' }}>
+              Passo a Passo de Indicação
+            </div>
+            <div className="premium-card" style={{ padding: '18px', border: '1.5px solid #e2e8f0', borderRadius: '18px', marginBottom: '16px' }}>
+              <div style={{display:'flex',flexDirection:'column',gap:'14px'}}>
+                {[
+                  'Mostre seu QR Code ou envie seu link de indicação',
+                  'O passageiro se cadastra ou faz a 1ª viagem com você',
+                  'Vínculo de 1 ano gerado automaticamente!',
+                  'Ganhe R$ 0,30 por corrida dele durante 12 meses'
+                ].map((step, i) => (
                   <div key={i} style={{display:'flex',gap:'12px',alignItems:'center'}}>
-                    <div style={{width:'28px',height:'28px',borderRadius:'50%',background: i < 4 ? '#ecfdf5' : '#f4f4f5',color:'#059669',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:'0.8rem',flexShrink:0}}>{i+1}</div>
-                    <span style={{fontWeight:600,fontSize:'0.9rem',color:'#3f3f46'}}>{step}</span>
+                    <div style={{width:'30px',height:'30px',borderRadius:'50%',background:'#ecfdf5',color:'#059669',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontSize:'0.85rem',flexShrink:0, border:'1.5px solid #a7f3d0'}}>{i+1}</div>
+                    <span style={{fontWeight:700,fontSize:'0.88rem',color:'#1e293b'}}>{step}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="tip-card">
-              <span className="tip-icon">💡</span>
-              <div><div className="tip-title">Dica</div><div className="tip-text">Mesmo sem indicação, o primeiro passageiro que você levar é vinculado automaticamente a você!</div></div>
+            <div className="tip-card" style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '16px', padding: '16px' }}>
+              <span className="tip-icon" style={{ fontSize: '1.5rem' }}>💡</span>
+              <div>
+                <div className="tip-title" style={{ color: '#166534', fontWeight: 900, fontSize: '0.9rem' }}>Vínculo Automático na 1ª Viagem!</div>
+                <div className="tip-text" style={{ color: '#15803d', fontWeight: 600, fontSize: '0.82rem', lineHeight: 1.45 }}>
+                  Mesmo se o passageiro não tiver escaneado seu QR Code antes, se ele não possuir vínculo prévio, <strong>a primeira corrida que você realizar com ele vinculará automaticamente o passageiro ao seu perfil!</strong>
+                </div>
+              </div>
             </div>
           </div>
         </div>
