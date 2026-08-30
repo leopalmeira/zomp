@@ -88,7 +88,17 @@ body {
 @media (min-width: 520px) {
   html, body {
     background: #0a0a0a !important;
-    overflow: hidden;
+  }
+  
+  body:has(.app-container) {
+    overflow: hidden !important;
+  }
+  
+  body:has(.lp-root),
+  html:has(.lp-root) {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
   }
   
   .app-container {
