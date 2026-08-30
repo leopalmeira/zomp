@@ -564,4 +564,21 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 **Versão**: 16.0.0
 **Responsável**: Antigravity AI & Leandro Palmeira
 
+---
+### 🚀 v16.1.0 - Restauração Completa da Landing Page Profissional TOTVS e Meta de 3.300 Vagas RJ (2026-08-30)
+* 🏛️ **Design Profissional TOTVS Enterprise Dark**:
+  - Nova roupagem corporativa de alto impacto: fundo escuro estruturado (`#070d18` / `#0d192d`), tipografia nítida, painéis em glassmorphism e iluminação neon verde Zomp (`#97E900` / `#00E676`).
+* 📍 **Meta Oficial de 3.300 Vagas de Motoristas no Rio de Janeiro**:
+  - Atualizado para **3.300 vagas no RJ** na Landing Page, arquivos de onboarding HTML e migração padrão no banco (`AdminConfig.driverSlots`).
+* 🌟 **Todas as Informações Históricas Restauradas e Consolidadas**:
+  - **Top 4 Pilares de Ouro**: Taxa Fixa Garantida (R$ 1,50 | 3 anos), Royalties Recorrentes (R$ 0,30), Renda Passiva Diária e Mais Liberdade.
+  - **Matriz Comparativa Completa**: Tabela de 3 colunas (ZOMP vs UBER vs 99).
+  - **Banner de Preço Imbatível & Recursos de Captação**: Comparação de tarifas reais (Zomp R$ 23,50 vs Uber R$ 28,90 vs 99 R$ 27,80) e ferramentas de fidelização (Agendamento, Favoritos, Intermunicipais e Entregas).
+  - **Estratégia de Captação & Fidelização (01 a 04)** com foco em 1.000 passageiros e até R$ 3.600,00/mês de royalties via PIX.
+  - **Simulador Oficial de Ganhos com Slider até 1.000 passageiros**, infográfico de rede e regra de 65 corridas/semana.
+  - **Carteira Zomp — Exemplo Estimado**, Onboarding em 3 passos, Features, Estatísticas e Modal de Pré-Cadastro multi-etapas.
 
+---
+**Status Atual**: ✅ Landing Page 100% restaurada, testada e commitada.
+**Versão**: 16.1.0
+**Responsável**: Antigravity AI & Leandro Palmeira
