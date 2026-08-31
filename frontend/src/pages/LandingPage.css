@@ -63,23 +63,50 @@
   top: 0;
   left: 0;
   width: 100%;
-  padding: 16px 5%;
+  padding: 14px 5%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   z-index: 100;
-  background: rgba(6, 13, 26, 0.85);
+  background: rgba(6, 13, 26, 0.92);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lp-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .lp-nav-logo {
-  height: 30px;
+  height: 34px;
+  width: auto;
+  filter: drop-shadow(0 0 12px rgba(151, 233, 0, 0.35));
+  transition: transform 0.2s ease;
+}
+
+.lp-nav-logo:hover {
+  transform: scale(1.03);
+}
+
+.lp-nav-driver-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--green);
+  background: rgba(151, 233, 0, 0.1);
+  border: 1px solid rgba(151, 233, 0, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
 }
 
 .lp-nav-links {
   display: flex;
-  gap: 28px;
+  align-items: center;
+  gap: 22px;
 }
 
 .lp-nav-links button {
@@ -87,13 +114,29 @@
   border: none;
   color: var(--txt2);
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: color 0.2s;
 }
 
 .lp-nav-links button:hover {
   color: var(--txt);
+}
+
+.lp-nav-driver-btn {
+  color: var(--green) !important;
+  font-size: 0.85rem !important;
+  background: rgba(151, 233, 0, 0.1) !important;
+  padding: 7px 14px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(151, 233, 0, 0.3) !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+}
+
+.lp-nav-driver-btn:hover {
+  background: rgba(151, 233, 0, 0.2) !important;
+  box-shadow: 0 0 15px rgba(151, 233, 0, 0.3);
 }
 
 /* ── BUTTONS ── */
@@ -2789,19 +2832,29 @@
 
 @media (max-width: 768px) {
   .lp-nav {
-    padding: 12px 4%;
+    padding: 12px 16px;
+    justify-content: center;
+    background: rgba(6, 13, 26, 0.95);
   }
 
-  .lp-nav-logo {
-    height: 26px;
-  }
-
-  .lp-nav-links {
+  .lp-nav-brand {
+    justify-content: center;
     gap: 10px;
   }
 
-  .lp-nav-links button {
-    font-size: 0.82rem;
+  .lp-nav-logo {
+    height: 36px;
+    filter: drop-shadow(0 0 16px rgba(151, 233, 0, 0.5));
+  }
+
+  .lp-nav-driver-badge {
+    font-size: 0.68rem;
+    padding: 3px 8px;
+  }
+
+  /* NO MOBILE: Oculta links do topo para manter o header 100% limpo e valorizar o logo Zomp */
+  .lp-nav-links {
+    display: none !important;
   }
 
   .lp-hero {
@@ -2810,7 +2863,7 @@
   }
 
   .lp-hero-content {
-    padding: 110px 4% 40px;
+    padding: 85px 4% 40px;
     max-width: 100%;
   }
 

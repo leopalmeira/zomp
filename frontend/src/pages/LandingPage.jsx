@@ -222,12 +222,15 @@ export default function LandingPage() {
       <div className="lp-ambient a1" /><div className="lp-ambient a2" />
 
       {/* ── NAVBAR ── */}
-      <nav className="lp-nav" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-        <img src="/logo.svg" alt="Zomp" className="lp-nav-logo" />
-        <div className="lp-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-          <button onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button>
-          <button onClick={() => document.getElementById('torneios-sec')?.scrollIntoView({ behavior: 'smooth' })}>🏆 Torneios & Prêmios</button>
-          <button onClick={() => navigate('/motorista')} style={{ color: 'var(--green)', fontSize: '0.85rem', background: 'rgba(151, 233, 0, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid var(--green-dim)' }}>🚗 Entrar como Motorista</button>
+      <nav className="lp-nav">
+        <div className="lp-nav-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ cursor: 'pointer' }}>
+          <img src="/logo.svg" alt="Zomp" className="lp-nav-logo" />
+          <span className="lp-nav-driver-badge">PARCEIRO OFICIAL</span>
+        </div>
+        <div className="lp-nav-links">
+          <button type="button" onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button>
+          <button type="button" onClick={() => document.getElementById('torneios-sec')?.scrollIntoView({ behavior: 'smooth' })}>🏆 Torneios & Prêmios</button>
+          <button type="button" onClick={() => navigate('/motorista')} className="lp-nav-driver-btn">🚗 Entrar como Motorista</button>
         </div>
       </nav>
 
