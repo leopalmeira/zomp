@@ -402,18 +402,20 @@ exports.validateScreenshotAi = async (req, res) => {
     }
 
     let discountAmount = 2.00;
-    if (competitorPrice >= 30.00) {
-      discountAmount = 3.00; // R$ 3,00 de desconto para print >= R$ 30,00
-    } else if (competitorPrice >= 18.00 && competitorPrice < 30.00) {
-      discountAmount = 2.50; // R$ 2,50 de desconto para print entre R$ 18,00 e R$ 29,99
-    } else if (competitorPrice >= 12.00 && competitorPrice < 18.00) {
-      discountAmount = 2.00; // R$ 2,00 de desconto para print entre R$ 12,00 e R$ 17,99
+    if (competitorPrice >= 35.00) {
+      discountAmount = 3.50; // R$ 3,50 de desconto para print >= R$ 35,00
+    } else if (competitorPrice >= 25.00) {
+      discountAmount = 2.00; // R$ 2,00 de desconto para print >= R$ 25,00 (ex: R$ 27 vira R$ 25)
+    } else if (competitorPrice >= 15.00) {
+      discountAmount = 2.00; // R$ 2,00 de desconto para print entre R$ 15,00 e R$ 24,99
+    } else if (competitorPrice >= 10.00) {
+      discountAmount = 1.50; // R$ 1,50 de desconto para print entre R$ 10,00 e R$ 14,99
     } else {
-      discountAmount = 1.50; // R$ 1,50 de desconto para valores menores
+      discountAmount = 1.00; // R$ 1,00 de desconto para valores menores
     }
 
     // Preço final no Zomp é o valor no print do cliente MENOS o desconto
-    const newPrice = Math.max(competitorPrice - discountAmount, 8.00);
+    const newPrice = Math.max(competitorPrice - discountAmount, 7.00);
 
     // Registra o log de desconto no banco
     if (!isTestAccount) {

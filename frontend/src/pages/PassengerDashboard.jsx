@@ -11,17 +11,34 @@ import './Passenger.css'
 // Helper: Cálculo de desconto aplicado DIRETAMENTE sobre o valor do print da concorrência
 export const calculateDiscountForPrintPrice = (val) => {
   const p = parseFloat(val) || 0;
-  if (p >= 30.00) return 3.00; // Desconto de R$ 3,00 para print >= R$ 30,00
-  if (p >= 18.00 && p < 30.00) return 2.50; // Desconto de R$ 2,50 para print de R$ 18,00 a R$ 29,99
-  if (p >= 12.00 && p < 18.00) return 2.00; // Desconto de R$ 2,00 para print de R$ 12,00 a R$ 17,99
-  return 1.50; // Desconto de R$ 1,50 para valores menores
+  if (p >= 35.00) return 3.50; // Desconto de R$ 3,50 para print >= R$ 35,00
+  if (p >= 25.00) return 2.00; // Desconto de R$ 2,00 (ex: R$ 27 vira R$ 25)
+  if (p >= 15.00) return 2.00; // Desconto de R$ 2,00 para print de R$ 15,00 a R$ 24,99
+  if (p >= 10.00) return 1.50; // Desconto de R$ 1,50 para print de R$ 10,00 a R$ 14,99
+  return 1.00; // Desconto de R$ 1,00 para valores menores
 };
 
 // Helper: Extração de valores monetários via OCR no print do passageiro
 export const extractPriceFromOcrText = (text) => {
   if (!text) return null;
+  // 1. Procura primeiro valores explícitos com prefixo de moeda (ex: R$ 27,00, R$ 27.90)
+  const explicitMatches = [];
+  const explicitRegex = /(?:R\$\s*|BRL\s*|\$\s*)(\d{1,3}(?:[.,]\d{2}))/gi;
+  let expMatch;
+  while ((expMatch = explicitRegex.exec(text)) !== null) {
+    const rawVal = expMatch[1].replace(',', '.');
+    const val = parseFloat(rawVal);
+    if (val >= 6.00 && val <= 500.00) {
+      explicitMatches.push(val);
+    }
+  }
+  if (explicitMatches.length > 0) {
+    return explicitMatches[0];
+  }
+
+  // 2. Fallback: procura números com duas casas decimais no padrão financeiro
   const matches = [];
-  const regex = /(?:R\$\s*|R\$\s*)?(\d{1,3}(?:[.,]\d{2}))/gi;
+  const regex = /(\d{1,3}(?:[.,]\d{2}))/g;
   let match;
   while ((match = regex.exec(text)) !== null) {
     const rawVal = match[1].replace(',', '.');
@@ -181,6 +198,7 @@ export default function PassengerDashboard() {
 
   // ── 4. PREÇO IMBATÍVEL & OCR ──
   const [hasCompetitionDiscount, setHasCompetitionDiscount] = useState(false)
+  const [showCompetitionModal, setShowCompetitionModal] = useState(false)
   const [compPriceRead, setCompPriceRead] = useState(0)
   const [selectedTravelCategory, setSelectedTravelCategory] = useState('todos')
   const [isTravelSuggestionsOpen, setIsTravelSuggestionsOpen] = useState(false)
@@ -534,10 +552,17 @@ export default function PassengerDashboard() {
     const basePrice = Math.max(calculated, type === 'car' ? config.minFareCar : config.minFareMoto) + stopsFee + extraPsg
 
     // REGRA PREÇO IMBATÍVEL: se tivermos um print validado da concorrência (Uber/99)
-    // O desconto incide DIRETAMENTE SOBRE O VALOR DO PRINT (ex: Zomp R$ 35, print Uber R$ 32 -> Desconto sobre os R$ 32 -> Zomp R$ 29)
+    // O desconto incide DIRETAMENTE SOBRE O VALOR DO PRINT (ex: Zomp R$ 29, print Uber R$ 27 -> Desconto de R$ 2,00 -> Zomp Carro R$ 25, Moto ainda mais em conta)
     if (hasCompetitionDiscount && competitorPrintPrice > 0) {
       const discount = calculatedDiscountAmount || calculateDiscountForPrintPrice(competitorPrintPrice);
-      const discountedPrintPrice = Math.max(competitorPrintPrice - discount, type === 'car' ? config.minFareCar : config.minFareMoto) + stopsFee + extraPsg;
+      let discountedPrintPrice;
+      if (type === 'car') {
+        discountedPrintPrice = Math.max(competitorPrintPrice - discount, config.minFareCar) + stopsFee + extraPsg;
+      } else {
+        // Moto com desconto adicional proporcional, garantindo valor mais barato e tarifa mínima
+        const motoBase = (competitorPrintPrice - discount) * 0.72;
+        discountedPrintPrice = Math.max(motoBase, config.minFareMoto) + stopsFee;
+      }
       const finalDiscounted = includeFee ? discountedPrintPrice + pendingFeeAmount : discountedPrintPrice;
       return finalDiscounted.toFixed(2);
     }
@@ -1151,7 +1176,12 @@ const POPULAR_DESTINATIONS = [
         const discount = calculatedDiscountAmount || calculateDiscountForPrintPrice(competitorPrintPrice);
         const stopsFee = stops.filter(s => s.addr).length * 2.00;
         const extraPsg = (vehicleType === 'car' && passengersCount > 1) ? (passengersCount - 1) * 2.50 : 0;
-        ridePrice = Math.max(competitorPrintPrice - discount, vehicleType === 'car' ? config.minFareCar : config.minFareMoto) + stopsFee + extraPsg;
+        if (vehicleType === 'car') {
+          ridePrice = Math.max(competitorPrintPrice - discount, config.minFareCar) + stopsFee + extraPsg;
+        } else {
+          const motoBase = (competitorPrintPrice - discount) * 0.72;
+          ridePrice = Math.max(motoBase, config.minFareMoto) + stopsFee;
+        }
         if (pendingFeeAmount > 0) {
           ridePrice += pendingFeeAmount;
         }
@@ -1199,6 +1229,7 @@ const POPULAR_DESTINATIONS = [
       // Limpa totalmente o print de tela para nunca persistir em novas solicitações
       setManualPriceInput('');
       setHasCompetitionDiscount(false);
+      setShowCompetitionModal(false);
       setCompetitorPrintPrice(0);
       setCalculatedDiscountAmount(0);
       setManualPriceError('');
@@ -1210,6 +1241,7 @@ const POPULAR_DESTINATIONS = [
       alert('Erro ao solicitar corrida. Tente novamente.');
       setManualPriceInput('');
       setHasCompetitionDiscount(false);
+      setShowCompetitionModal(false);
       setCompetitorPrintPrice(0);
       setCalculatedDiscountAmount(0);
       setManualPriceError('');
@@ -1240,6 +1272,7 @@ const POPULAR_DESTINATIONS = [
     setStops([])
     // Reset competition discount (per-trip only - nunca persiste para novas solicitações)
     setHasCompetitionDiscount(false)
+    setShowCompetitionModal(false)
     setCompPriceRead(0)
     setManualPriceInput('')
     setCompetitorPrintPrice(0)
@@ -1937,6 +1970,7 @@ const POPULAR_DESTINATIONS = [
                             setCalculatedDiscountAmount(discount);
                             setManualPriceInput(imageSrc);
                             setHasCompetitionDiscount(true);
+                            setShowCompetitionModal(true);
                             setManualPriceError('');
                             
                             const leftCount = isTestAccount ? 999 : (result.ridesLeftToday ?? 3);
@@ -1948,6 +1982,7 @@ const POPULAR_DESTINATIONS = [
                             setIsAnalyzingScreenshot(false);
                             setManualPriceError(err.message || 'Erro ao validar print da concorrência.');
                             setHasCompetitionDiscount(false);
+                            setShowCompetitionModal(false);
                             setManualPriceInput('');
                           }
                         };
@@ -2011,8 +2046,26 @@ const POPULAR_DESTINATIONS = [
                       marginTop: '12px',
                       boxShadow: '0 10px 25px -5px rgba(5, 150, 105, 0.4)'
                     }}>
-                      <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                        <Check size={18} strokeWidth={3} /> <span>PRINT UBER/99 VALIDADO COM SUCESSO!</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Check size={18} strokeWidth={3} /> <span>PRINT UBER/99 VALIDADO!</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowCompetitionModal(true)}
+                          style={{
+                            background: 'rgba(255,255,255,0.25)',
+                            border: '1px solid rgba(255,255,255,0.4)',
+                            color: '#fff',
+                            borderRadius: '8px',
+                            padding: '3px 8px',
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Ver Destaque ↗
+                        </button>
                       </div>
                       <div style={{ background: 'rgba(255,255,255,0.2)', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '100px', marginBottom: '8px' }}>
                         <span style={{ fontSize: '0.9rem' }}>🏆</span>
@@ -3353,6 +3406,114 @@ const POPULAR_DESTINATIONS = [
           </div>
         </div>
       )}
+
+      {/* ===== MODAL DE PREÇO IMBATÍVEL (CONSEGUIMOS BATER O PREÇO DA CONCORRÊNCIA) ===== */}
+      {showCompetitionModal && hasCompetitionDiscount && competitorPrintPrice > 0 && (
+        <div className="competition-modal-overlay">
+          <div className="competition-modal-card">
+            {/* Botão Fechar X no canto superior direito */}
+            <button 
+              className="competition-modal-close" 
+              onClick={() => setShowCompetitionModal(false)}
+              title="Fechar"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Cabeçalho com Destaque */}
+            <div className="competition-modal-header">
+              <div className="competition-modal-badge">
+                <span>🔥</span>
+                <span>Preço Imbatível Zomp</span>
+              </div>
+              <h2 className="competition-modal-title">
+                CONSEGUIMOS BATER O PREÇO DA CONCORRÊNCIA!
+              </h2>
+              <p className="competition-modal-subtitle">
+                Seu print da Uber / 99 foi lido com sucesso. Aplicamos o desconto diretamente em cima do valor da concorrência!
+              </p>
+            </div>
+
+            {/* Box Comparativo de Preços */}
+            <div className="competition-price-comparison-box">
+              <div className="price-item competitor">
+                <span className="price-label">📱 Print Uber/99</span>
+                <span className="price-val strikethrough">R$ {competitorPrintPrice.toFixed(2)}</span>
+              </div>
+
+              <div className="price-divider">
+                <span>VS</span>
+              </div>
+
+              <div className="price-item zomp-highlight">
+                <span className="price-label">⚡ Novo Preço Zomp</span>
+                <span className="price-val highlight">
+                  R$ {getPrice(routeKm, vehicleType, false)}
+                </span>
+              </div>
+            </div>
+
+            {/* Banner de Economia */}
+            <div className="competition-savings-banner">
+              <Sparkles size={18} />
+              <span>Você economiza <strong>R$ {calculatedDiscountAmount.toFixed(2)}</strong> sobre o preço do print!</span>
+            </div>
+
+            {/* Seletor de Veículo: Escolher Carro ou Moto */}
+            <div className="competition-vehicle-selector">
+              <label className="selector-title">Escolha seu Veículo:</label>
+              <div className="selector-options">
+                <div 
+                  className={`vehicle-card ${vehicleType === 'car' ? 'selected' : ''}`}
+                  onClick={() => setVehicleType('car')}
+                >
+                  <div className="veh-top">
+                    <span className="veh-icon">🚗</span>
+                    {vehicleType === 'car' && <span className="veh-check">✓</span>}
+                  </div>
+                  <span className="veh-name">Carro</span>
+                  <span className="veh-sub">Conforto & Mais Seguro</span>
+                  <span className="veh-price">R$ {getPrice(routeKm, 'car', false)}</span>
+                </div>
+
+                <div 
+                  className={`vehicle-card ${vehicleType === 'moto' ? 'selected' : ''}`}
+                  onClick={() => setVehicleType('moto')}
+                >
+                  <div className="veh-top">
+                    <span className="veh-icon">🏍️</span>
+                    {vehicleType === 'moto' && <span className="veh-check">✓</span>}
+                  </div>
+                  <span className="veh-name">Moto</span>
+                  <span className="veh-sub">Rápida & Mais Barata</span>
+                  <span className="veh-price">R$ {getPrice(routeKm, 'moto', false)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Botão de Chamar Agora */}
+            <button 
+              className="competition-call-btn"
+              disabled={isLoading}
+              onClick={async () => {
+                setShowCompetitionModal(false);
+                await handleCallNow();
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>⚡</span>
+              {isLoading 
+                ? 'Chamando Motorista...' 
+                : `CHAMAR ${vehicleType === 'car' ? 'CARRO' : 'MOTO'} POR R$ ${getPrice(routeKm, vehicleType, false)}`
+              }
+            </button>
+
+            <p className="competition-footer-hint">
+              💡 Cancele a corrida no app concorrente e chame o Zomp com economia garantida!
+            </p>
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div style={{
           position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)',
