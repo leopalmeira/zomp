@@ -17,7 +17,12 @@ import {
   Target,
   Star,
   Heart,
-  PackageOpen
+  PackageOpen,
+  Trophy,
+  Flame,
+  Smartphone,
+  Sparkles,
+  Car
 } from 'lucide-react';
 
 const LandingDriver = () => {
@@ -194,6 +199,91 @@ const LandingDriver = () => {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* PROGRAMA DE TORNEIOS ZOMP */}
+      <section className="driver-tournament-section">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+          className="driver-tourn-wrap"
+        >
+          <div className="tourn-badge-tag">🏆 PROGRAMA DE TORNEIOS ZOMP</div>
+          <motion.h2 className="section-title" variants={fadeUp}>
+            DIRIGIR NA ZOMP PODE LEVAR VOCÊ <span className="highlight-green">MUITO MAIS LONGE</span>
+          </motion.h2>
+          <motion.p className="pitch-subtitle" variants={fadeUp}>
+            Todos os meses, os motoristas da Zomp disputam grandes prêmios no <strong>Torneio Zomp</strong>. O caminho começa na fase classificatória.
+          </motion.p>
+
+          {/* PIPELINE VISUAL */}
+          <div className="tourn-pipeline-grid">
+            <div className="tourn-pipe-card">
+              <div className="tourn-pipe-step-num">1ª ETAPA</div>
+              <div className="tourn-pipe-icon"><Target size={30} color="#22c55e" /></div>
+              <h4>Fase Classificatória</h4>
+              <p className="tourn-date-pill">📅 Do dia 1º ao dia 15</p>
+              <p>Realizar pelo menos <strong>15 corridas/dia em 7 dias diferentes</strong> dentro do período.</p>
+              <div className="tourn-pipe-footer">✓ Conquistou a meta? Avança!</div>
+            </div>
+
+            <div className="tourn-pipe-card">
+              <div className="tourn-pipe-step-num">2ª ETAPA</div>
+              <div className="tourn-pipe-icon"><Flame size={30} color="#ef4444" /></div>
+              <h4>Fase Eliminatória</h4>
+              <p className="tourn-date-pill">🔥 Disputa de Ranking</p>
+              <p>Os classificados disputam posições no <strong>Ranking Oficial</strong> por produtividade e consistência.</p>
+              <div className="tourn-pipe-footer">👑 Fique entre os 30 melhores!</div>
+            </div>
+
+            <div className="tourn-pipe-card featured-gold">
+              <div className="tourn-pipe-step-num">3ª ETAPA</div>
+              <div className="tourn-pipe-icon"><Trophy size={30} color="#facc15" /></div>
+              <h4>Premiação Mensal</h4>
+              <p className="tourn-date-pill">🏆 30 Premiados / Mês</p>
+              <p><strong>3 Carros</strong>, <strong>17 PIX de R$ 3.000</strong> e <strong>10 Smartphones Samsung</strong>!</p>
+              <div className="tourn-pipe-footer">✨ Entrega todos os meses</div>
+            </div>
+          </div>
+
+          {/* GRID DE PRÊMIOS */}
+          <div className="tourn-prizes-row">
+            <div className="tourn-prize-box gold">
+              <div className="prize-badge">🥇🥈🥉 1º, 2º e 3º LUGAR</div>
+              <Car size={36} className="prize-icon-gold" />
+              <h3>3 CARROS TODOS OS MESES</h3>
+              <p>Os três primeiros colocados do ranking recebem <strong>um carro cada</strong>!</p>
+              <span className="prize-sub-tag">3 Motoristas Premiados</span>
+            </div>
+
+            <div className="tourn-prize-box silver">
+              <div className="prize-badge">🏅 DO 4º AO 20º LUGAR</div>
+              <TrendingUp size={36} className="prize-icon-green" />
+              <h3>R$ 3.000,00 VIA PIX</h3>
+              <p>Cada motorista do 4º ao 20º lugar recebe <strong>R$ 3.000 via PIX</strong> direto na conta.</p>
+              <span className="prize-sub-tag">17 Motoristas Premiados (R$ 51.000/mês)</span>
+            </div>
+
+            <div className="tourn-prize-box bronze">
+              <div className="prize-badge">📱 DO 21º AO 30º LUGAR</div>
+              <Smartphone size={36} className="prize-icon-blue" />
+              <h3>SMARTPHONES SAMSUNG</h3>
+              <p>Aparelho Samsung novo no valor aproximado de R$ 1.000 cada.</p>
+              <span className="prize-sub-tag">10 Motoristas Premiados</span>
+            </div>
+          </div>
+
+          {/* CTA DO TORNEIO */}
+          <div className="tourn-cta-banner">
+            <h3>A Zomp foi criada para transformar dedicação em novas oportunidades.</h3>
+            <p>Entre na plataforma, conquiste sua classificação e dispute seu lugar entre os melhores.</p>
+            <button className="btn-primary pulse-animation" onClick={handlePreCadastro} style={{ margin: '20px auto 0 auto' }}>
+              QUERO PARTICIPAR DO TORNEIO ZOMP →
+            </button>
+          </div>
+        </motion.div>
       </section>
 
       {/* ARGUMENTO DE VENDAS PARA O MOTORISTA */}

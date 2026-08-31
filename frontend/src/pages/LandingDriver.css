@@ -357,6 +357,193 @@
   }
 }
 
+/* DRIVER TOURNAMENT SECTION */
+.driver-tournament-section {
+  padding: 70px 20px;
+  background: linear-gradient(180deg, #060d1a 0%, #0a1828 50%, #060d1a 100%);
+  border-top: 1px solid rgba(250, 204, 21, 0.2);
+  border-bottom: 1px solid rgba(250, 204, 21, 0.2);
+}
+
+.driver-tourn-wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.tourn-badge-tag {
+  display: inline-block;
+  background: rgba(250, 204, 21, 0.15);
+  border: 1px solid #facc15;
+  color: #fef08a;
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  margin-bottom: 16px;
+}
+
+.tourn-pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 36px 0;
+  text-align: left;
+}
+
+.tourn-pipe-card {
+  background: rgba(12, 26, 46, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tourn-pipe-card.featured-gold {
+  border-color: rgba(250, 204, 21, 0.4);
+  background: linear-gradient(145deg, rgba(20, 36, 60, 0.85), rgba(10, 20, 36, 0.95));
+}
+
+.tourn-pipe-step-num {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.tourn-pipe-icon {
+  margin-bottom: 12px;
+}
+
+.tourn-pipe-card h4 {
+  font-size: 1.15rem;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.tourn-date-pill {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.tourn-pipe-card p {
+  font-size: 0.86rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+  flex-grow: 1;
+}
+
+.tourn-pipe-footer {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #22c55e;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tourn-prizes-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.tourn-prize-box {
+  background: rgba(12, 26, 46, 0.85);
+  border-radius: 20px;
+  padding: 26px 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.tourn-prize-box.gold {
+  border-color: rgba(250, 204, 21, 0.4);
+  background: linear-gradient(155deg, rgba(30, 42, 64, 0.9), rgba(12, 24, 40, 0.95));
+}
+
+.tourn-prize-box.silver {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.tourn-prize-box.bronze {
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.prize-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.15);
+  padding: 4px 10px;
+  border-radius: 100px;
+  margin-bottom: 16px;
+}
+
+.prize-icon-gold { color: #facc15; margin-bottom: 12px; }
+.prize-icon-green { color: #22c55e; margin-bottom: 12px; }
+.prize-icon-blue { color: #60a5fa; margin-bottom: 12px; }
+
+.tourn-prize-box h3 {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.tourn-prize-box p {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  margin-bottom: 16px;
+  flex-grow: 1;
+}
+
+.prize-sub-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+.tourn-cta-banner {
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.1), rgba(34, 197, 94, 0.1));
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  border-radius: 20px;
+  padding: 32px 24px;
+  margin-top: 20px;
+}
+
+.tourn-cta-banner h3 {
+  font-size: 1.35rem;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.tourn-cta-banner p {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .tourn-pipeline-grid,
+  .tourn-prizes-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
 /* SALES PITCH SECTION */
 .sales-pitch-section {
   padding: 60px 20px;
