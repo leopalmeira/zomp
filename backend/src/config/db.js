@@ -57,10 +57,10 @@ async function initDB() {
         "bindingMonthsRenew" INTEGER DEFAULT 12,
         "autoSuspendMinAcceptance" INTEGER DEFAULT 70,
         "autoSuspendMinRating" DECIMAL DEFAULT 4.5,
-        "launchDate" DATE DEFAULT '2026-06-30',
+        "launchDate" DATE DEFAULT '2026-11-01',
         "pricePerCredit" DECIMAL DEFAULT 1.50,
         "driverSlots" INTEGER DEFAULT 3300,
-        "preRegisterEndDate" TEXT DEFAULT '2026-06-30T23:59:59-03:00'
+        "preRegisterEndDate" TEXT DEFAULT '2026-11-01T23:59:59-03:00'
       );
 
       CREATE TABLE IF NOT EXISTS "Referral" (

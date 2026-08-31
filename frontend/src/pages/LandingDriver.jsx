@@ -29,9 +29,9 @@ const LandingDriver = () => {
     seconds: 0
   });
 
-  // Target Date: June 30th (of current year or next depending on current date, let's use 2026-06-30 since testing in 2026)
+  // Target Date: 01 de Novembro de 2026
   useEffect(() => {
-    const targetDate = new Date('2026-06-30T23:59:59').getTime();
+    const targetDate = new Date('2026-11-01T23:59:59').getTime();
 
     const updateCountdown = () => {
       const now = new Date().getTime();
@@ -111,7 +111,7 @@ const LandingDriver = () => {
               GARANTIR MINHA VAGA AGORA
               <ArrowRight className="btn-icon" size={24} />
             </button>
-            <p className="vagas-restantes">🔥 Apenas 5.000 vagas no RJ</p>
+            <p className="vagas-restantes">🔥 Apenas 3.300 vagas no RJ</p>
           </motion.div>
         </motion.div>
       </section>
@@ -131,7 +131,7 @@ const LandingDriver = () => {
         </motion.div>
         <motion.div className="glass-card benefit-card" variants={fadeUp}>
           <div className="icon-wrapper green-bg"><Users size={32} /></div>
-          <h3>ROYALTIES RECORRENTES <br/><span>R$ 0,50</span></h3>
+          <h3>ROYALTIES RECORRENTES <br/><span>R$ 0,30</span></h3>
           <p>por cada corrida feita por clientes vinculados à sua rede</p>
         </motion.div>
         <motion.div className="glass-card benefit-card" variants={fadeUp}>
@@ -173,7 +173,7 @@ const LandingDriver = () => {
               </tr>
               <tr className="matrix-row">
                 <td>Royalties Vitais</td>
-                <td className="matrix-val-zomp">R$ 0,50 /corrida</td>
+                <td className="matrix-val-zomp">R$ 0,30 /corrida</td>
                 <td className="matrix-val-bad">Zero</td>
               </tr>
               <tr className="matrix-row">
@@ -188,7 +188,7 @@ const LandingDriver = () => {
               </tr>
               <tr className="matrix-row">
                 <td>Conceito</td>
-                <td className="matrix-val-zomp">Motorista Investidor</td>
+                <td className="matrix-val-zomp">Motorista Parceiro</td>
                 <td className="matrix-val-bad">Troca Tempo p/ Dinheiro</td>
               </tr>
             </tbody>
@@ -267,9 +267,12 @@ const LandingDriver = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
+          <div className="launch-app-date-pill">
+            🚀 O APP ESTARÁ NO AR EM: <strong>01/11/2026</strong>
+          </div>
           <h2 className="attention-title text-yellow">ATENÇÃO, MOTORISTA!</h2>
-          <h3 className="launch-subtitle">PRÉ-CADASTRO ABERTO ATÉ <span className="highlight-white">30 DE JUNHO</span></h3>
-          <p className="launch-desc">Não perca essa oportunidade. Entrando agora na fase de onboarding, você será pioneiro recebendo royalties limitados.</p>
+          <h3 className="launch-subtitle">PRÉ-CADASTRO ABERTO • ESTREIA EM <span className="highlight-white">01 DE NOVEMBRO DE 2026</span></h3>
+          <p className="launch-desc">Não perca essa oportunidade. Entrando agora na fase de onboarding, você será pioneiro recebendo royalties recorrentes.</p>
           
           <div className="timer-wrapper">
             <div className="time-box">
@@ -296,7 +299,7 @@ const LandingDriver = () => {
           <div className="vagas-alert">
              <Target className="alert-icon text-yellow" size={40} />
              <h4>EXCLUSIVO PARA RIO DE JANEIRO - VAGAS LIMITADAS!</h4>
-             <p>TOTAL DE APENAS <strong>5.000 MOTORISTAS</strong></p>
+             <p>TOTAL DE APENAS <strong>3.300 MOTORISTAS</strong></p>
              <button className="btn-primary mt-3" onClick={handlePreCadastro}>
                FAZER MEU PRÉ-CADASTRO
              </button>
@@ -309,6 +312,11 @@ const LandingDriver = () => {
           <div className="f-feat"><ShieldCheck size={20} className="text-green" /> Seguro e Confiável</div>
           <div className="f-feat"><Star size={20} className="text-green" /> Plataforma Feita para Valorizar o Motorista</div>
           <div className="f-feat"><TrendingUp size={20} className="text-green" /> Construa Sua Renda Passiva</div>
+        </div>
+        <div className="footer-cnpj-bar">
+          <p className="footer-cnpj-text">
+            🏢 <strong>ZOMP MOBILIDADE TECNOLÓGICA</strong> • CNPJ: <strong>65.628.833/0001-47</strong> • Rio de Janeiro - RJ
+          </p>
         </div>
         <div className="footer-bottom">
           <p><strong><span className="highlight-green">ZOMP.</span> MAIS QUE CORRIDAS. É SUA NOVA FONTE DE RENDA.</strong></p>

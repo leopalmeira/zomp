@@ -5,8 +5,7 @@ import {
   TrendingUp, User, Shield, Zap, Gift, Smartphone, CheckCircle, 
   XCircle, ChevronDown, ArrowRight, Car, Bike, FileText, Camera, 
   Check, X, Lock, Phone, CreditCard, AlertCircle, Sparkles,
-  Banknote, Users, Crown, CalendarCheck, Heart, MapPin, PackageOpen,
-  Star, ShieldCheck, Target, Award, DollarSign
+  Trophy, Flame, Award, Calendar, Target, Crown
 } from 'lucide-react'
 import { driverPreRegister, getPublicConfig } from '../services/api'
 import './LandingPage.css'
@@ -34,12 +33,12 @@ function CountUp({ target = 3300, prefix = '', suffix = '', duration = 2000 }) {
 /* ── Countdown com Data Fixa Configurável no Painel Admin ── */
 function Countdown({ targetDate }) {
   const parseTarget = (val) => {
-    if (!val) return new Date('2026-06-30T23:59:59-03:00')
+    if (!val) return new Date('2026-11-01T23:59:59-03:00')
     if (typeof val === 'string' && val.length === 10) {
       return new Date(`${val}T23:59:59-03:00`)
     }
     const d = new Date(val)
-    return isNaN(d.getTime()) ? new Date('2026-06-30T23:59:59-03:00') : d
+    return isNaN(d.getTime()) ? new Date('2026-11-01T23:59:59-03:00') : d
   }
 
   const [diff, setDiff] = useState(() => {
@@ -66,6 +65,10 @@ function Countdown({ targetDate }) {
 
   return (
     <div className="lp-countdown">
+      <div className="lp-cd-launch-badge">
+        <span className="lp-cd-launch-icon">🚀</span>
+        <span className="lp-cd-launch-txt">O APP ESTARÁ NO AR EM: <strong>01/11/2026</strong></span>
+      </div>
       <p className="lp-cd-label">⏳ Pré-cadastro de motoristas encerra em:</p>
       <div className="lp-cd-boxes">
         <div className="lp-cd-box"><span className="lp-cd-num">{d}</span><span className="lp-cd-unit">dias</span></div>
@@ -86,7 +89,7 @@ export default function LandingPage() {
   const [systemConfig, setSystemConfig] = useState({
     driverSlots: 3300,
     bindingMonthsFirst: 12,
-    launchDate: '2026-06-30',
+    launchDate: '2026-11-01',
     royaltyPerRide: 0.30,
     pricePerCredit: 1.50
   })
@@ -200,7 +203,7 @@ export default function LandingPage() {
   }
 
   // Simulation Logic: 3 rides/week per passenger, 4 weeks/month, R$ 0.30 royalty
-  const monthlyPassive = passengers * 3 * 4 * (systemConfig.royaltyPerRide || 0.30)
+  const monthlyPassive = passengers * 3 * 4 * 0.30
   const yearlyPassive = monthlyPassive * 12
 
   const fadeUp = { hidden: { y: 30, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { duration: 0.7, ease: 'easeOut' } } }
@@ -214,37 +217,17 @@ export default function LandingPage() {
     openPreRegister()
   }
 
-  const scrollToSection = (id) => {
-    const el = document.getElementById(id)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
-
   return (
-    <div className="lp-root totvs-professional-theme">
+    <div className="lp-root">
       <div className="lp-ambient a1" /><div className="lp-ambient a2" />
 
       {/* ── NAVBAR ── */}
-      <nav className="lp-nav">
-        <div className="lp-nav-brand">
-          <img src="/logo.svg" alt="Zomp" className="lp-nav-logo" />
-          <div className="lp-nav-rj-tag">
-            <span>RIO DE JANEIRO</span>
-          </div>
-        </div>
-        <div className="lp-nav-links">
-          <button onClick={() => scrollToSection('pilares-sec')}>Pilares</button>
-          <button onClick={() => scrollToSection('comparativo-sec')}>Comparativo</button>
-          <button onClick={() => scrollToSection('captacao-sec')}>Captação</button>
-          <button onClick={() => scrollToSection('simulador-sec')}>Simulador</button>
-          <button onClick={() => scrollToSection('como-funciona-sec')}>Como Funciona</button>
-          <button 
-            className="lp-nav-driver-btn"
-            onClick={() => navigate('/motorista')} 
-          >
-            🚗 Entrar como Motorista
-          </button>
+      <nav className="lp-nav" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+        <img src="/logo.svg" alt="Zomp" className="lp-nav-logo" />
+        <div className="lp-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+          <button onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button>
+          <button onClick={() => document.getElementById('torneios-sec')?.scrollIntoView({ behavior: 'smooth' })}>🏆 Torneios & Prêmios</button>
+          <button onClick={() => navigate('/motorista')} style={{ color: 'var(--green)', fontSize: '0.85rem', background: 'rgba(151, 233, 0, 0.08)', padding: '5px 10px', borderRadius: '6px', border: '1px solid var(--green-dim)' }}>🚗 Entrar como Motorista</button>
         </div>
       </nav>
 
@@ -257,7 +240,7 @@ export default function LandingPage() {
 
         <div className="lp-hero-content">
           <motion.div className="lp-badge" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            💎 EXPANSÃO RJ • {systemConfig.driverSlots.toLocaleString('pt-BR')} VAGAS DE MOTORISTAS PARCEIROS
+            💎 Invista no seu Futuro
           </motion.div>
 
           <motion.h1 className="lp-hero-h1" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, delay: 0.2 }}>
@@ -299,7 +282,7 @@ export default function LandingPage() {
           </motion.div>
 
           <motion.div className="lp-hero-actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
-            <button className="lp-cta-btn lp-cta-lg pulse-glow-btn" onClick={handleCta}>
+            <button className="lp-cta-btn lp-cta-lg" onClick={handleCta}>
               Ativar minha Renda Passiva →
             </button>
           </motion.div>
@@ -311,67 +294,13 @@ export default function LandingPage() {
 
           <motion.div className="lp-vagas-alert" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}>
             <span className="lp-dot" />
-            <span>Fase de Expansão: {systemConfig.driverSlots.toLocaleString('pt-BR')} Vagas para Credenciamento de Motoristas no Rio de Janeiro</span>
+            <span>Fase de Expansão: Credenciamento de Motoristas no Rio de Janeiro</span>
           </motion.div>
         </div>
 
         <motion.div className="lp-scroll-hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}>
-          <ChevronDown size={18} /> <span>Explore o modelo de negócios Zomp</span> <ChevronDown size={18} />
+          <ChevronDown size={18} /> <span>Explore o modelo de negócios</span> <ChevronDown size={18} />
         </motion.div>
-      </section>
-
-      {/* ── TOP 4 PILARES DE OURO (VALUE PROPS) ── */}
-      <section className="lp-value-props-section" id="pilares-sec">
-        <div className="lp-container">
-          <motion.div className="lp-section-tag lp-tag-vibrant" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-            ⭐ Os 4 Pilares da Revolução Zomp
-          </motion.div>
-          <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            O que faz a Zomp ser <span className="lp-accent">única no Brasil</span>
-          </motion.h2>
-
-          <motion.div className="lp-props-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <motion.div className="lp-prop-card" variants={fadeUp}>
-              <div className="lp-prop-icon-wrap"><Banknote size={32} /></div>
-              <div className="lp-prop-content">
-                <span className="lp-prop-tag">ECONOMIA REAL</span>
-                <h3>TAXA FIXA GARANTIDA</h3>
-                <div className="lp-prop-main-val">R$ 1,50</div>
-                <p className="lp-prop-desc">Por corrida realizada | Fixa por 3 anos 🔒</p>
-              </div>
-            </motion.div>
-
-            <motion.div className="lp-prop-card" variants={fadeUp}>
-              <div className="lp-prop-icon-wrap"><Users size={32} /></div>
-              <div className="lp-prop-content">
-                <span className="lp-prop-tag">RENDA RECORRENTE</span>
-                <h3>ROYALTIES DE REDE</h3>
-                <div className="lp-prop-main-val">R$ 0,30</div>
-                <p className="lp-prop-desc">Por cada corrida feita por passageiros vinculados</p>
-              </div>
-            </motion.div>
-
-            <motion.div className="lp-prop-card" variants={fadeUp}>
-              <div className="lp-prop-icon-wrap"><TrendingUp size={32} /></div>
-              <div className="lp-prop-content">
-                <span className="lp-prop-tag">GANHOS AUTOMÁTICOS</span>
-                <h3>RENDA PASSIVA</h3>
-                <div className="lp-prop-main-val">DIÁRIA</div>
-                <p className="lp-prop-desc">Mesmo quando você não estiver dirigindo ou online</p>
-              </div>
-            </motion.div>
-
-            <motion.div className="lp-prop-card" variants={fadeUp}>
-              <div className="lp-prop-icon-wrap"><Crown size={32} /></div>
-              <div className="lp-prop-content">
-                <span className="lp-prop-tag">EMPREENDEDORISMO</span>
-                <h3>MAIS VALOR & LIBERDADE</h3>
-                <div className="lp-prop-main-val">VOCÊ NO CONTROLE</div>
-                <p className="lp-prop-desc">Construa ativos digitais e valorize seu tempo</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
       </section>
 
       {/* ── ACESSO RÁPIDO MOTORISTA ── */}
@@ -380,10 +309,10 @@ export default function LandingPage() {
           <motion.div className="lp-section-tag lp-tag-vibrant" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
             🚗 Plataforma do Motorista Zomp
           </motion.div>
-          <motion.h2 className="lp-entry-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            Comece a dirigir e <span className="lp-accent">lucrar agora</span>
+          <motion.h2 className="lp-entry-title" initial={{ opacity: 1, y: 0 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.1 }}>
+            Comece a dirigir e <span className="lp-accent lp-accent-glow">lucrar agora</span>
           </motion.h2>
-          <motion.p className="lp-entry-subtitle" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          <motion.p className="lp-entry-subtitle" initial={{ opacity: 1 }} whileInView={{ opacity: 1 }} viewport={{ once: true, amount: 0.1 }}>
             Chega de trabalhar apenas para enriquecer plataformas convencionais. Acesse o aplicativo do motorista parceiro, valide seus dados e comece a acumular royalties diários com a sua própria rede.
           </motion.p>
           
@@ -422,175 +351,37 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── MATRIZ COMPARATIVA OFICIAL (ZOMP vs UBER vs 99) ── */}
-      <section className="lp-why-section" id="comparativo-sec">
-        <div className="lp-container">
-          <motion.div className="lp-section-tag" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-            📊 Análise Competitiva Direta
-          </motion.div>
-          <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            COMPARE E VEJA A DIFERENÇA!
-          </motion.h2>
-          <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            Diferente das plataformas convencionais de gig economy, a Zomp opera em um modelo de ganho real e sustentável, transformando você em um sócio de lucros.
-          </motion.p>
-
-          {/* Tabela Comparativa Matriz */}
-          <motion.div className="lp-matrix-table-wrapper" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <table className="lp-comparison-matrix">
-              <thead>
-                <tr>
-                  <th>Recurso / Critério</th>
-                  <th className="lp-matrix-th-zomp">
-                    <div className="lp-th-logo-badge">ZOMP MOBILIDADE</div>
-                  </th>
-                  <th>UBER</th>
-                  <th>99 APP</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="lp-matrix-row">
-                  <td className="lp-matrix-feature-name">Taxa Fixa Garantida</td>
-                  <td className="lp-matrix-cell-zomp"><strong>R$ 1,50</strong> (Fixa por 3 anos)</td>
-                  <td className="lp-matrix-cell-bad">Variável (Altas taxas de 20% a 40%)</td>
-                  <td className="lp-matrix-cell-bad">Variável (Altas taxas de 20% a 40%)</td>
-                </tr>
-                <tr className="lp-matrix-row">
-                  <td className="lp-matrix-feature-name">Royalties por Passageiro</td>
-                  <td className="lp-matrix-cell-zomp"><strong>R$ 0,30</strong> por corrida</td>
-                  <td className="lp-matrix-cell-bad">Zero</td>
-                  <td className="lp-matrix-cell-bad">Zero</td>
-                </tr>
-                <tr className="lp-matrix-row">
-                  <td className="lp-matrix-feature-name">Renda Passiva Contínua</td>
-                  <td className="lp-matrix-cell-zomp"><strong>Sim</strong> (Acumula 24/7)</td>
-                  <td className="lp-matrix-cell-bad">Não (Zero)</td>
-                  <td className="lp-matrix-cell-bad">Não (Zero)</td>
-                </tr>
-                <tr className="lp-matrix-row">
-                  <td className="lp-matrix-feature-name">Base de Passageiros</td>
-                  <td className="lp-matrix-cell-zomp"><strong>Sua Propriedade</strong> ({bindingYearsText})</td>
-                  <td className="lp-matrix-cell-bad">Do Aplicativo</td>
-                  <td className="lp-matrix-cell-bad">Do Aplicativo</td>
-                </tr>
-                <tr className="lp-matrix-row">
-                  <td className="lp-matrix-feature-name">Conceito Operacional</td>
-                  <td className="lp-matrix-cell-zomp"><strong>Motorista Investidor</strong></td>
-                  <td className="lp-matrix-cell-bad">Troca Tempo por Dinheiro</td>
-                  <td className="lp-matrix-cell-bad">Troca Tempo por Dinheiro</td>
-                </tr>
-              </tbody>
-            </table>
-          </motion.div>
-
-          {/* Cards Comparativos Resumidos */}
-          <motion.div className="lp-compare-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            {/* ZOMP */}
-            <motion.div className="lp-compare-zomp" variants={fadeUp}>
-              <div className="lp-compare-brand zomp-brand">ZOMP MOBILIDADE</div>
-              <ul className="lp-compare-list">
-                {[
-                  'Taxa Operacional Fixa e Transparente (R$ 1,50)',
-                  `Royalties de Rede (R$ ${systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')} por viagem)`,
-                  'Mínimo de 65 corridas/semana para manter Royalties',
-                  `Patrimônio Digital Vinculado (${bindingYearsText})`,
-                  'Saque de Royalties a cada 30 dias via PIX',
-                  'Sistema Anti-Concorrência (Preço Imbatível)',
-                  'Suporte Corporativo Humanizado Prioritário',
-                ].map((item, i) => (
-                  <li key={i}><CheckCircle size={16} className="lp-check" /><span>{item}</span></li>
-                ))}
-              </ul>
-              <div className="lp-compare-footer-zomp">💎 O Modelo mais Lucrativo do Brasil</div>
+      {/* ── COMO FUNCIONA O ONBOARDING ── */}
+      <section className="lp-how-section" id="royalties-sec">
+        <motion.div className="lp-section-tag" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+          📋 Como Ativar seus Royalties
+        </motion.div>
+        <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          Somos a única que permite ganhar<br /><span className="lp-accent">mesmo sem estar dirigindo.</span>
+        </motion.h2>
+        <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          Nosso objetivo é ter os melhores parceiros. O processo é simples e direto.
+          Siga os passos abaixo para garantir sua Renda Passiva vinda de passageiros. 
+          <br/><strong>* Requisito: Completar no mínimo 65 corridas por semana para manter o direito aos Royalties.</strong>
+          <br/><span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Os pagamentos de royalties são realizados mensalmente (a cada 30 dias) via PIX. O valor recebido depende da quantidade de clientes vinculados à sua carteira e da frequência de corridas deles.</span>
+        </motion.p>
+        <motion.div className="lp-how-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          {[
+            { n: '01', title: 'Pré-Cadastro Rápido', desc: 'Crie sua conta na plataforma utilizando seu e-mail e crie uma senha segura de acesso.' },
+            { n: '02', title: 'Envio de Documentação', desc: 'Acesse o aplicativo (via navegador) e envie fotos nítidas da sua CNH, CRLV do veículo e uma foto de perfil.' },
+            { n: '03', title: 'Aprovação Administrativa', desc: 'Nossa equipe irá verificar seus documentos no painel de controle. Após a liberação, você estará apto a dirigir e lucrar.' },
+          ].map((s, i) => (
+            <motion.div key={i} className="lp-how-step" variants={fadeUp}>
+              <div className="lp-how-num">{s.n}</div>
+              <h4>{s.title}</h4>
+              <p>{s.desc}</p>
             </motion.div>
-
-            {/* OUTROS */}
-            <motion.div className="lp-compare-other" variants={fadeUp}>
-              <div className="lp-compare-brand other-brand">MODELO TRADICIONAL (UBER / 99)</div>
-              <ul className="lp-compare-list">
-                {[
-                  'Taxas Variáveis e Abusivas sem prévio aviso',
-                  'Sem Participação nos Ganhos de Rede',
-                  'Renda Interrompida ao Parar o Veículo',
-                  'Sem Vínculo com a Base de Clientes',
-                  'Preços Arbitrários e Desfavoráveis',
-                  'Suporte Automatizado e Ineficiente por Robôs',
-                ].map((item, i) => (
-                  <li key={i}><XCircle size={16} className="lp-x" /><span>{item}</span></li>
-                ))}
-              </ul>
-              <div className="lp-compare-footer-other">⏳ Tempo trocado por dinheiro</div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── ARGUMENTOS DE VENDAS PARA O MOTORISTA ── */}
-      <section className="lp-sales-pitch-section">
-        <div className="lp-container">
-          <motion.div className="lp-section-tag lp-tag-gold" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-            💡 Ferramentas de Atração & Fidelização
-          </motion.div>
-          <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            UMA PLATAFORMA PARA VOCÊ CONQUISTAR UMA CARTEIRA DE CLIENTES
-          </motion.h2>
-          <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            Veja por que o sistema é imbatível. Use isso para expandir sua rede de passageiros e gerar a sua renda passiva recorrente!
-          </motion.p>
-          
-          <motion.div className="lp-price-match-banner" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <h3>PREÇO IMBATÍVEL! SEMPRE O MAIS BARATO.</h3>
-            <p>Comparamos e cobrimos qualquer preço! Se o passageiro encontrar mais barato na concorrência, nós cobrimos e ainda damos desconto!</p>
-            
-            <div className="lp-price-comp-cards">
-              <div className="lp-price-card lp-price-zomp">
-                <span>ZOMP</span>
-                <h4>R$ 23,50</h4>
-                <p>Nós cobrimos o preço!</p>
-              </div>
-              <div className="lp-price-card lp-price-uber">
-                <span>UBER</span>
-                <h4 className="lp-line-through">R$ 28,90</h4>
-              </div>
-              <div className="lp-price-card lp-price-99">
-                <span>99</span>
-                <h4 className="lp-line-through">R$ 27,80</h4>
-              </div>
-            </div>
-            
-            <div className="lp-pitch-highlight">
-              <h4>O CLIENTE PAGA MENOS E VOCÊ LUCRA MAIS!</h4>
-              <p>Parte dos lucros volta para os motoristas parceiros todos os dias em forma de <strong>ROYALTIES</strong>. ISSO NENHUM OUTRO APP FAZ!</p>
-            </div>
-          </motion.div>
-          
-          <motion.div className="lp-passenger-features" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <motion.div className="lp-p-feat-card" variants={fadeUp}>
-              <div className="lp-feat-icon-box"><CalendarCheck size={28} /></div>
-              <h4>Agendamento de Corridas</h4>
-              <p>O cliente programa corridas com antecedência garantindo sua agenda cheia.</p>
-            </motion.div>
-            <motion.div className="lp-p-feat-card" variants={fadeUp}>
-              <div className="lp-feat-icon-box"><Heart size={28} /></div>
-              <h4>Motoristas Favoritos</h4>
-              <p>O cliente salva você como preferido gerando fidelização real na sua rede.</p>
-            </motion.div>
-            <motion.div className="lp-p-feat-card" variants={fadeUp}>
-              <div className="lp-feat-icon-box"><MapPin size={28} /></div>
-              <h4>Corridas Intermunicipais</h4>
-              <p>Viagens de longa distância e rotas metropolitanas muito mais lucrativas.</p>
-            </motion.div>
-            <motion.div className="lp-p-feat-card" variants={fadeUp}>
-              <div className="lp-feat-icon-box"><PackageOpen size={28} /></div>
-              <h4>Entregas Rápidas e Seguras</h4>
-              <p>Mais oportunidades e chamadas para você rodar com eficiência o dia todo.</p>
-            </motion.div>
-          </motion.div>
-        </div>
+          ))}
+        </motion.div>
       </section>
 
       {/* ── ESTRATÉGIA DE VINCULAÇÃO DE PASSAGEIROS ── */}
-      <section className="lp-capture-section" id="captacao-sec">
+      <section className="lp-capture-section">
         <div className="lp-capture-wrap">
           <motion.div className="lp-section-tag lp-tag-gold" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
             🚀 Estratégia de Captação & Fidelização
@@ -607,7 +398,7 @@ export default function LandingPage() {
               <div className="lp-cap-step">01</div>
               <div className="lp-cap-icon-box"><Sparkles size={26} /></div>
               <h4>Apresente o Desconto Imbatível</h4>
-              <p>Durante a corrida na outra plataforma, mostre que a Zomp é até 25% mais em conta para o passageiro, sem preços dinâmicos abusivos e com suporte humanizado.</p>
+              <p>Durante a corrida na outra plataforma, mostre que a Zomp é até 25% mais em conta para o passageiro, sem preços dinâmicos abusivos e com suporte humano.</p>
             </motion.div>
 
             <motion.div className="lp-capture-card" variants={fadeUp}>
@@ -648,7 +439,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── SIMULADOR ── */}
-      <section className="lp-sim-section" id="simulador-sec">
+      <section className="lp-sim-section">
         <div className="lp-sim-wrap">
           <div className="lp-sim-left">
             <motion.div className="lp-section-tag lp-tag-vibrant" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
@@ -696,7 +487,7 @@ export default function LandingPage() {
               <div className="lp-calc-header"><span>Métrica Operacional</span><span>Valor Estimado</span></div>
               <div className="lp-calc-row"><span>Clientes Ativos na Rede</span><strong>{passengers.toLocaleString('pt-BR')}</strong></div>
               <div className="lp-calc-row"><span>Frequência Semanal Média</span><strong>3 viagens / semana</strong></div>
-              <div className="lp-calc-row"><span>Royalty por Operação</span><strong className="lp-accent">R$ {systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')}</strong></div>
+              <div className="lp-calc-row"><span>Royalty por Operação</span><strong className="lp-accent">R$ 0,30</strong></div>
               <div className="lp-calc-divider" />
               <div className="lp-calc-row"><span>Volume de Viagens / Mês</span><strong>{(passengers * 3 * 4).toLocaleString('pt-BR')} corridas</strong></div>
               <div className="lp-calc-row lp-calc-sub"><span>Rendimento Mensal Passivo</span><strong className="lp-accent">R$ {monthlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
@@ -731,7 +522,266 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CARTEIRA ZOMP ── */}
+      {/* ── PROGRAMA DE TORNEIOS ZOMP (ESTILO CORPORATIVO TOTVS / ENTERPRISE) ── */}
+      <section className="lp-tournament-section" id="torneios-sec">
+        <div className="lp-tournament-wrap">
+          {/* Header da Seção */}
+          <div className="lp-tourn-header">
+            <motion.div className="lp-section-tag lp-tag-tourn" initial={{ opacity: 0, y: -10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              🏆 Programa Oficial de Torneios Zomp
+            </motion.div>
+            <motion.h2 className="lp-section-title" initial={{ opacity: 1, y: 0 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              Na Zomp, dirigir pode levar você <span className="lp-accent lp-accent-glow">muito mais longe</span>
+            </motion.h2>
+            <motion.p className="lp-section-sub lp-tourn-sub" initial={{ opacity: 1 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+              Todos os meses, os motoristas da Zomp terão a oportunidade de participar do <strong>Programa de Torneios Zomp</strong> e disputar grandes prêmios. O caminho começa na fase classificatória.
+            </motion.p>
+          </div>
+
+          {/* PIPELINE VISUAL ESTRATÉGICO: 3 ETAPAS */}
+          <div className="lp-tourn-pipeline">
+            {/* ETAPA 1 */}
+            <div className="lp-pipeline-step">
+              <div className="lp-step-badge">
+                <Calendar size={13} />
+                <span>01 A 15 DE CADA MÊS</span>
+              </div>
+              <div className="lp-step-icon-wrap step-classificatoria">
+                <Target size={28} />
+              </div>
+              <div className="lp-step-content">
+                <span className="lp-step-tag">1ª ETAPA</span>
+                <h3 className="lp-step-title">Fase Classificatória</h3>
+                <div className="lp-step-meta-box">
+                  <strong>🚗 Meta Obrigatória:</strong>
+                  <p>Realizar pelo menos <strong>15 corridas por dia em 7 dias diferentes</strong>, dentro do período classificatório (do dia 1º ao dia 15).</p>
+                </div>
+                <div className="lp-step-result">
+                  <CheckCircle size={15} color="#97E900" />
+                  <span>Atingiu a meta? <strong>Avança para a disputa!</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="lp-pipeline-arrow">
+              <ArrowRight size={22} className="lp-arrow-icon" />
+            </div>
+
+            {/* ETAPA 2 */}
+            <div className="lp-pipeline-step">
+              <div className="lp-step-badge step-badge-hot">
+                <Flame size={13} />
+                <span>A DISPUTA COMEÇA</span>
+              </div>
+              <div className="lp-step-icon-wrap step-eliminatoria">
+                <Flame size={28} />
+              </div>
+              <div className="lp-step-content">
+                <span className="lp-step-tag">2ª ETAPA</span>
+                <h3 className="lp-step-title">Fase Eliminatória</h3>
+                <div className="lp-step-meta-box">
+                  <strong>🔥 Disputa de Ranking:</strong>
+                  <p>Os motoristas classificados seguem para a fase eliminatória, onde disputarão posições no <strong>Ranking do Torneio Zomp</strong>.</p>
+                </div>
+                <div className="lp-step-result">
+                  <Crown size={15} color="#facc15" />
+                  <span>Objetivo: <strong>Ficar entre os 30 melhores!</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="lp-pipeline-arrow">
+              <ArrowRight size={22} className="lp-arrow-icon" />
+            </div>
+
+            {/* ETAPA 3 */}
+            <div className="lp-pipeline-step step-featured">
+              <div className="lp-step-badge step-badge-gold">
+                <Trophy size={13} />
+                <span>30 PREMIADOS / MÊS</span>
+              </div>
+              <div className="lp-step-icon-wrap step-premiacao">
+                <Trophy size={28} />
+              </div>
+              <div className="lp-step-content">
+                <span className="lp-step-tag">3ª ETAPA</span>
+                <h3 className="lp-step-title">Premiação Mensal</h3>
+                <div className="lp-step-meta-box">
+                  <strong>🎁 Grandes Prêmios:</strong>
+                  <p>E os melhores colocados conquistam: <strong>3 Carros</strong>, <strong>17 Prêmios de R$ 3.000 via PIX</strong> e <strong>10 Smartphones Samsung</strong>!</p>
+                </div>
+                <div className="lp-step-result">
+                  <Sparkles size={15} color="#97E900" />
+                  <span>Distribuição <strong>todos os meses!</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* GRID DE PREMIAÇÕES DETALHADAS */}
+          <div className="lp-tourn-prizes-grid">
+            {/* 1º, 2º e 3º LUGAR */}
+            <div className="lp-prize-card lp-prize-gold">
+              <div className="lp-prize-glow"></div>
+              <div className="lp-prize-header">
+                <span className="lp-prize-badge-rank rank-gold">🥇🥈🥉 1º, 2º e 3º LUGAR</span>
+                <div className="lp-prize-icon-circle gold"><Car size={32} /></div>
+              </div>
+              <div className="lp-prize-main">
+                <span className="lp-prize-sub">3 MOTORISTAS PREMIADOS</span>
+                <h3 className="lp-prize-title">3 CARROS TODOS OS MESES</h3>
+                <p className="lp-prize-desc">
+                  Os três primeiros colocados do Torneio Zomp poderão receber <strong>um carro cada</strong>. O ápice do reconhecimento pelo seu desempenho e dedicação.
+                </p>
+              </div>
+              <div className="lp-prize-footer">
+                <span className="lp-prize-feat">✓ 1 Carro para cada um dos 3 primeiros colocados</span>
+              </div>
+            </div>
+
+            {/* 4º AO 20º LUGAR */}
+            <div className="lp-prize-card lp-prize-silver">
+              <div className="lp-prize-header">
+                <span className="lp-prize-badge-rank rank-silver">🏅 DO 4º AO 20º LUGAR</span>
+                <div className="lp-prize-icon-circle silver"><TrendingUp size={32} /></div>
+              </div>
+              <div className="lp-prize-main">
+                <span className="lp-prize-sub">17 MOTORISTAS PREMIADOS</span>
+                <h3 className="lp-prize-title">R$ 3.000,00 VIA PIX</h3>
+                <p className="lp-prize-desc">
+                  Cada motorista classificado entre o 4º e o 20º lugar receberá <strong>R$ 3.000,00 via PIX</strong> direto na conta, somando-se aos seus ganhos diários e royalties.
+                </p>
+              </div>
+              <div className="lp-prize-footer">
+                <span className="lp-prize-feat">✓ Total de R$ 51.000,00 distribuídos via PIX todo mês</span>
+              </div>
+            </div>
+
+            {/* 21º AO 30º LUGAR */}
+            <div className="lp-prize-card lp-prize-bronze">
+              <div className="lp-prize-header">
+                <span className="lp-prize-badge-rank rank-bronze">📱 DO 21º AO 30º LUGAR</span>
+                <div className="lp-prize-icon-circle bronze"><Smartphone size={32} /></div>
+              </div>
+              <div className="lp-prize-main">
+                <span className="lp-prize-sub">10 MOTORISTAS PREMIADOS</span>
+                <h3 className="lp-prize-title">SMARTPHONES SAMSUNG</h3>
+                <p className="lp-prize-desc">
+                  Os motoristas classificados entre o 21º e o 30º lugar receberão <strong>um smartphone Samsung</strong> no valor aproximado de R$ 1.000 cada.
+                </p>
+              </div>
+              <div className="lp-prize-footer">
+                <span className="lp-prize-feat">✓ 10 aparelhos Samsung novos entregues todo mês</span>
+              </div>
+            </div>
+          </div>
+
+          {/* BANNER TOTALIZADOR: 30 MOTORISTAS PREMIADOS */}
+          <div className="lp-tourn-summary-bar">
+            <div className="lp-summary-item">
+              <span className="lp-sum-icon">🚗</span>
+              <div>
+                <strong>3 CARROS</strong>
+                <small>1º, 2º e 3º Lugar</small>
+              </div>
+            </div>
+            <div className="lp-summary-divider"></div>
+            <div className="lp-summary-item">
+              <span className="lp-sum-icon">💰</span>
+              <div>
+                <strong>17 PRÊMIOS DE R$ 3.000 PIX</strong>
+                <small>Do 4º ao 20º Lugar</small>
+              </div>
+            </div>
+            <div className="lp-summary-divider"></div>
+            <div className="lp-summary-item">
+              <span className="lp-sum-icon">📱</span>
+              <div>
+                <strong>10 SMARTPHONES SAMSUNG</strong>
+                <small>Do 21º ao 30º Lugar</small>
+              </div>
+            </div>
+            <div className="lp-summary-divider"></div>
+            <div className="lp-summary-item highlight">
+              <span className="lp-sum-icon">🏆</span>
+              <div>
+                <strong className="lp-accent">30 MOTORISTAS PREMIADOS</strong>
+                <small>Todos os meses na Zomp</small>
+              </div>
+            </div>
+          </div>
+
+          {/* CARD DE CONVERSÃO / CHAMADA FINAL DA SEÇÃO */}
+          <div className="lp-tourn-cta-box">
+            <div className="lp-tourn-cta-content">
+              <div className="lp-tourn-cta-badge">⚡ Oportunidade Exclusiva para Parceiros Zomp</div>
+              <h3 className="lp-tourn-cta-title">
+                A Zomp não foi criada apenas para oferecer corridas.
+              </h3>
+              <p className="lp-tourn-cta-desc">
+                Ela foi criada para <strong>transformar desempenho, dedicação e participação em novas oportunidades</strong>. Entre na plataforma, conquiste sua classificação e dispute seu lugar entre os melhores motoristas da Zomp.
+              </p>
+              <div className="lp-tourn-cta-actions">
+                <button className="lp-cta-btn lp-cta-xl lp-tourn-btn-gold" onClick={handleCta}>
+                  QUERO PARTICIPAR DO TORNEIO ZOMP →
+                </button>
+                <button className="lp-ghost-btn" onClick={handleCta}>
+                  🚀 Entre para a Zomp e participe da próxima classificatória
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── POR QUE A ZOMP É DIFERENTE ── */}
+      <section className="lp-why-section">
+        <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          Vantagem Competitiva Zomp
+        </motion.h2>
+        <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          Diferente das plataformas convencionais de gig economy, a Zomp opera em um modelo de ganho real, transformando você em um ponto de lucro central.
+        </motion.p>
+
+        <motion.div className="lp-compare-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+          {/* ZOMP */}
+          <motion.div className="lp-compare-zomp" variants={fadeUp}>
+            <div className="lp-compare-brand zomp-brand">ZOMP MOBILIDADE</div>
+            <ul className="lp-compare-list">
+              {[
+                'Taxa Operacional Fixa e Transparente',
+                `Royalties de Rede (R$ ${systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')} por viagem)`,
+                'Mínimo de 65 corridas/semana para manter Royalties',
+                `Patrimônio Digital Vinculado (${bindingYearsText})`,
+                'Saque de Royalties a cada 30 dias via PIX',
+                'Sistema Anti-Concorrência (Preço Imbatível)',
+                'Suporte Corporativo Prioritário',
+              ].map((item, i) => (
+                <li key={i}><CheckCircle size={16} className="lp-check" /><span>{item}</span></li>
+              ))}
+            </ul>
+            <div className="lp-compare-footer-zomp">💎 O Modelo mais Lucrativo do Brasil</div>
+          </motion.div>
+
+          {/* OUTROS */}
+          <motion.div className="lp-compare-other" variants={fadeUp}>
+            <div className="lp-compare-brand other-brand">MODELO TRADICIONAL</div>
+            <ul className="lp-compare-list">
+              {[
+                'Taxas Variáveis e Abusivas',
+                'Sem Participação nos Ganhos de Rede',
+                'Renda Interrompida ao Parar o Veículo',
+                'Sem Vínculo com a Base de Clientes',
+                'Preços Arbitrários e Desfavoráveis',
+                'Suporte Automatizado e Ineficiente',
+              ].map((item, i) => (
+                <li key={i}><XCircle size={16} className="lp-x" /><span>{item}</span></li>
+              ))}
+            </ul>
+          </motion.div>
+        </motion.div>
+      </section>
+
       <section className="lp-wallet-section">
         <div className="lp-wallet-wrap">
           <motion.div className="lp-wallet-img-wrap" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
@@ -760,43 +810,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── COMO FUNCIONA O ONBOARDING ── */}
-      <section className="lp-how-section" id="como-funciona-sec">
-        <motion.div className="lp-section-tag" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-          📋 Como Ativar seus Royalties
-        </motion.div>
-        <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          Somos a única que permite ganhar<br /><span className="lp-accent">mesmo sem estar dirigindo.</span>
-        </motion.h2>
-        <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          Nosso objetivo é ter os melhores parceiros no Rio de Janeiro. O processo é simples e direto.
-          Siga os passos abaixo para garantir sua Renda Passiva vinda de passageiros. 
-          <br/><strong>* Requisito: Completar no mínimo 65 corridas por semana para manter o direito aos Royalties.</strong>
-          <br/><span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Os pagamentos de royalties são realizados mensalmente (a cada 30 dias) via PIX. O valor recebido depende da quantidade de clientes vinculados à sua carteira e da frequência de corridas deles.</span>
-        </motion.p>
-        <motion.div className="lp-how-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          {[
-            { n: '01', title: 'Pré-Cadastro Rápido', desc: 'Crie sua conta na plataforma utilizando seu e-mail e crie uma senha segura de acesso.' },
-            { n: '02', title: 'Envio de Documentação', desc: 'Acesse o aplicativo (via navegador) e envie fotos nítidas da sua CNH, CRLV do veículo e uma foto de perfil.' },
-            { n: '03', title: 'Aprovação Administrativa', desc: 'Nossa equipe irá verificar seus documentos no painel de controle. Após a liberação, você estará apto a dirigir e lucrar.' },
-          ].map((s, i) => (
-            <motion.div key={i} className="lp-how-step" variants={fadeUp}>
-              <div className="lp-how-num">{s.n}</div>
-              <h4>{s.title}</h4>
-              <p>{s.desc}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
-
       {/* ── FEATURES ── */}
       <section className="lp-features-section">
         <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>Por que escolher a Zomp?</motion.h2>
         <motion.div className="lp-features-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {[
-            { icon: <Gift size={26} />, title: 'Royalties Reais', desc: `R$ ${systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')} por corrida de cada cliente indicado. Acumula 24h por dia, 7 dias por semana.` },
-            { icon: <Shield size={26} />, title: 'Segurança Total', desc: 'Monitoramento em tempo real e suporte humanizado prioritário.' },
-            { icon: <Zap size={26} />, title: 'Preço Imbatível', desc: 'Cobrimos qualquer preço da concorrência e ainda damos desconto adicional ao cliente.' },
+            { icon: <Gift size={26} />, title: 'Royalties Reais', desc: 'R$ 0,30 por corrida de cada cliente indicado. Acumula 24h por dia, 7 dias por semana.' },
+            { icon: <Shield size={26} />, title: 'Segurança Total', desc: 'Monitoramento em tempo real e suporte humanizado 24h por dia.' },
+            { icon: <Zap size={26} />, title: 'Preço Imbatível', desc: 'Cobrimos qualquer preço da concorrência e ainda damos desconto adicional.' },
             { icon: <Smartphone size={26} />, title: 'App Premium', desc: 'Interface fluida, GPS em tempo real e experiência mobile de alto nível.' },
           ].map((f, i) => (
             <motion.div key={i} className="lp-feat-card" variants={fadeUp}>
@@ -808,58 +829,126 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── STATS OFICIAIS ── */}
+      {/* ── STATS ── */}
       <section className="lp-stats-section">
         <motion.div className="lp-stats-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          <motion.div className="lp-stat" variants={fadeUp}>
-            <span className="lp-stat-val"><CountUp target={systemConfig.driverSlots} suffix="+" /></span>
-            <span className="lp-stat-lbl">Vagas no RJ</span>
-          </motion.div>
-          <motion.div className="lp-stat" variants={fadeUp}>
-            <span className="lp-stat-val">R$ {systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')}</span>
-            <span className="lp-stat-lbl">Royalty por Corrida</span>
-          </motion.div>
-          <motion.div className="lp-stat" variants={fadeUp}>
-            <span className="lp-stat-val">~R$ 3.600</span>
-            <span className="lp-stat-lbl">Saque Mensal Est.</span>
-          </motion.div>
-          <motion.div className="lp-stat" variants={fadeUp}>
-            <span className="lp-stat-val">{bindingYearsText}</span>
-            <span className="lp-stat-lbl">Vínculo Garantido</span>
-          </motion.div>
+          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val"><CountUp target={systemConfig.driverSlots} suffix="+" /></span><span className="lp-stat-lbl">Vagas no RJ</span></motion.div>
+          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">R$ {systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')}</span><span className="lp-stat-lbl">Royalty por Corrida</span></motion.div>
+          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">~R$ 3.600</span><span className="lp-stat-lbl">Saque Mensal Est.</span></motion.div>
+          <motion.div className="lp-stat" variants={fadeUp}><span className="lp-stat-val">{bindingYearsText}</span><span className="lp-stat-lbl">Vínculo Garantido</span></motion.div>
         </motion.div>
       </section>
 
-      {/* ── EXCLUSIVIDADE & ATENÇÃO MOTORISTA RJ (CTA FINAL) ── */}
+      {/* ── CTA FINAL ── */}
       <section className="lp-final-cta">
-        <motion.div className="lp-final-wrap" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          <div className="lp-exclusivity-badge">
-            <Target size={20} />
-            <span>EXCLUSIVO PARA O RIO DE JANEIRO • TOTAL DE {systemConfig.driverSlots.toLocaleString('pt-BR')} MOTORISTAS</span>
+        <motion.div className="lp-final-wrap" initial={{ opacity: 1, y: 0 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+          <div className="lp-vagas-badge">
+            <span className="lp-vagas-badge-dot"></span>
+            🔥 VAGAS LIMITADAS PARA MOTORISTAS NO RJ
           </div>
-          <motion.h2 variants={fadeUp}>Vagas limitadas.<br /><span className="lp-accent">Garanta a sua agora.</span></motion.h2>
-          <motion.p variants={fadeUp}>Seja um dos pioneiros a garantir Royalties na Zomp no Rio de Janeiro e construa sua renda passiva enquanto outros continuam apenas trocando tempo por dinheiro.</motion.p>
+          <h2 className="lp-vagas-heading">
+            <span className="lp-text-vagas-bright">Vagas Limitadas.</span><br />
+            <span className="lp-accent lp-accent-glow">Garanta a sua agora!</span>
+          </h2>
+          <p className="lp-vagas-desc">
+            Seja um dos pioneiros a garantir Royalties na Zomp no Rio de Janeiro e construa sua renda passiva todos os dias.
+          </p>
           <Countdown targetDate={systemConfig.launchDate} />
-          <motion.button className="lp-cta-btn lp-cta-xl pulse-glow-btn" variants={fadeUp} onClick={handleCta}>
+          <motion.button className="lp-cta-btn lp-cta-xl lp-cta-glow" onClick={handleCta} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             🚀 Fazer meu Pré-Cadastro Gratuito
           </motion.button>
         </motion.div>
       </section>
 
-      {/* ── FOOTER PROFISSIONAL TOTVS COM SELOS ── */}
+      {/* ── FOOTER PREMIUM E ATRAENTE ── */}
       <footer className="lp-footer">
-        <div className="lp-footer-trust-row">
-          <div className="lp-trust-pill"><ShieldCheck size={18} /> SEGURO E CONFIÁVEL</div>
-          <div className="lp-trust-pill"><Star size={18} /> VALORIZA O MOTORISTA</div>
-          <div className="lp-trust-pill"><Award size={18} /> PLATAFORMA DE PARCERIA</div>
-          <div className="lp-trust-pill"><TrendingUp size={18} /> CONSTRUA SUA RENDA PASSIVA</div>
-        </div>
+        <div className="lp-footer-glow-line"></div>
+        <div className="lp-footer-container">
+          <div className="lp-footer-grid">
+            {/* Bloco Institucional / Marca */}
+            <div className="lp-footer-brand-box">
+              <div className="lp-footer-logo-row">
+                <img src="/logo.svg" alt="Zomp" className="lp-footer-logo" />
+                <span className="lp-footer-tag-pioneiro">RIO DE JANEIRO</span>
+              </div>
+              <p className="lp-footer-tagline">
+                Infraestrutura tecnológica de ponta para mobilidade urbana com <strong>taxa fixa</strong> e <strong>royalties diários</strong> para motoristas parceiros.
+              </p>
+              
+              <div className="lp-footer-cnpj-card">
+                <div className="lp-cnpj-header">
+                  <span className="lp-cnpj-dot"></span>
+                  <span className="lp-cnpj-label">REGISTRO EMPRESARIAL OFICIAL</span>
+                </div>
+                <div className="lp-cnpj-body">
+                  <p className="lp-cnpj-company">ZOMP MOBILIDADE TECNOLÓGICA</p>
+                  <p className="lp-cnpj-val">CNPJ: <strong>65.628.833/0001-47</strong></p>
+                  <p className="lp-cnpj-city">📍 Rio de Janeiro - RJ | Brasil</p>
+                </div>
+              </div>
+            </div>
 
-        <div className="lp-footer-content">
-          <img src="/logo.svg" alt="Zomp" className="lp-footer-logo" />
-          <div className="lp-footer-info">
-            <p>© 2026 Zomp Mobilidade Tecnológica. Todos os direitos reservados.</p>
-            <p className="lp-footer-tagline">Infraestrutura Tecnológica para Mobilidade de Alto Impacto • Rio de Janeiro, Brasil.</p>
+            {/* Coluna de Links de Navegação */}
+            <div className="lp-footer-col">
+              <h4 className="lp-footer-heading">Navegação</h4>
+              <ul className="lp-footer-list">
+                <li><button type="button" onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button></li>
+                <li><button type="button" onClick={() => document.getElementById('torneios-sec')?.scrollIntoView({ behavior: 'smooth' })}>🏆 Torneios Zomp & Prêmios</button></li>
+                <li><button type="button" onClick={() => document.querySelector('.lp-sim-section')?.scrollIntoView({ behavior: 'smooth' })}>Simulador de Ganhos</button></li>
+                <li><button type="button" onClick={() => document.querySelector('.lp-why-section')?.scrollIntoView({ behavior: 'smooth' })}>Vantagens do Modelo</button></li>
+                <li><button type="button" onClick={handleCta}>Pré-Cadastro Pioneiro</button></li>
+              </ul>
+            </div>
+
+            {/* Coluna para Motoristas */}
+            <div className="lp-footer-col">
+              <h4 className="lp-footer-heading">Motorista Parceiro</h4>
+              <ul className="lp-footer-list">
+                <li><button type="button" onClick={() => navigate('/motorista')} className="lp-footer-highlight-link">🚗 App do Motorista</button></li>
+                <li><button type="button" onClick={openPreRegister}>Credenciamento Online</button></li>
+                <li><span className="lp-footer-info-pill">Taxa Fixa R$ 1,50/corrida</span></li>
+                <li><span className="lp-footer-info-pill">R$ 0,30 Royalty/passageiro</span></li>
+                <li><span className="lp-footer-info-pill">Mínimo 65 corridas/semana</span></li>
+              </ul>
+            </div>
+
+            {/* Coluna Segurança e Confiabilidade */}
+            <div className="lp-footer-col">
+              <h4 className="lp-footer-heading">Segurança & Garantias</h4>
+              <div className="lp-footer-trust-badges">
+                <div className="lp-trust-badge">
+                  <Shield size={18} className="lp-trust-icon" />
+                  <div>
+                    <strong>Criptografia SSL 256-bit</strong>
+                    <span>Ambiente 100% Seguro</span>
+                  </div>
+                </div>
+                <div className="lp-trust-badge">
+                  <CreditCard size={18} className="lp-trust-icon" />
+                  <div>
+                    <strong>Repasses Mensais via PIX</strong>
+                    <span>Pagamento a cada 30 dias</span>
+                  </div>
+                </div>
+                <div className="lp-trust-badge">
+                  <CheckCircle size={18} className="lp-trust-icon" />
+                  <div>
+                    <strong>Proteção de Dados LGPD</strong>
+                    <span>Privacidade Garantida</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Linha inferior de copyright e data oficial */}
+          <div className="lp-footer-bottom-bar">
+            <div className="lp-footer-copy">
+              © 2026 Zomp Mobilidade Tecnológica. Todos os direitos reservados. • CNPJ: <strong>65.628.833/0001-47</strong>
+            </div>
+            <div className="lp-footer-launch-alert">
+              🚀 <span>Estreia Oficial do App: <strong>01/11/2026</strong></span>
+            </div>
           </div>
         </div>
       </footer>
@@ -881,7 +970,7 @@ export default function LandingPage() {
                 <div>
                   <div className="lp-modal-badge">
                     <Sparkles size={13} />
-                    <span>Pré-Cadastro Pioneiro RJ ({systemConfig.driverSlots.toLocaleString('pt-BR')} Vagas)</span>
+                    <span>Pré-Cadastro Pioneiro RJ</span>
                   </div>
                   <h3 className="lp-modal-title">Credenciamento de Motorista</h3>
                 </div>
@@ -914,7 +1003,7 @@ export default function LandingPage() {
                     </div>
                     <div className="lp-s-row">
                       <span>Vaga Garantida:</span>
-                      <strong style={{ color: '#00E676' }}>Rio de Janeiro (Pioneiro RJ)</strong>
+                      <strong style={{ color: '#00E676' }}>Rio de Janeiro (Pioneiro)</strong>
                     </div>
                     <div className="lp-s-row">
                       <span>Veículo / Placa:</span>
@@ -922,7 +1011,7 @@ export default function LandingPage() {
                     </div>
                     <div className="lp-s-row">
                       <span>Royalties por Corrida:</span>
-                      <strong style={{ color: '#00E676' }}>R$ {systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')} por passageiro indicado</strong>
+                      <strong style={{ color: '#00E676' }}>R$ 0,30 por passageiro indicado</strong>
                     </div>
                   </div>
 
