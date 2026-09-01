@@ -224,7 +224,7 @@ export default function LandingPage() {
       {/* ── NAVBAR ── */}
       <nav className="lp-nav">
         <div className="lp-nav-brand" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ cursor: 'pointer' }}>
-          <img src="/logo.svg" alt="Zomp" className="lp-nav-logo" />
+          <img src="/logo.svg" alt="Zomp" className="lp-nav-logo" width="120" height="34" loading="eager" />
           <span className="lp-nav-driver-badge">PARCEIRO OFICIAL</span>
         </div>
         <div className="lp-nav-links">
@@ -237,7 +237,7 @@ export default function LandingPage() {
       {/* ── HERO BANNER ── */}
       <section className="lp-hero">
         <div className="lp-hero-bg">
-          <img src="/zomp_driver_realistic.png" alt="" className="lp-hero-photo" />
+          <img src="/zomp_driver_realistic.png" alt="Motorista Zomp" className="lp-hero-photo" width="1920" height="1080" loading="eager" decoding="async" />
           <div className="lp-hero-overlay" />
         </div>
 
@@ -383,60 +383,47 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── ESTRATÉGIA DE VINCULAÇÃO DE PASSAGEIROS ── */}
+      {/* ── COMO FUNCIONA A VINCULAÇÃO (1 AO 4 - MODELO TOTVS / OBJETIVO) ── */}
       <section className="lp-capture-section">
         <div className="lp-capture-wrap">
           <motion.div className="lp-section-tag lp-tag-gold" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-            🚀 Estratégia de Captação & Fidelização
+            ⚡ Vinculação de Passageiros
           </motion.div>
           <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            Traga seus passageiros das outras plataformas<br /><span className="lp-accent">com Desconto Imbatível e garanta até 1.000 clientes</span>
+            Como Funciona em 4 Passos
           </motion.h2>
           <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            Você já transporta dezenas de passageiros todos os dias pela Uber, 99 ou Táxi. Na Zomp, você pode oferecer a eles a primeira viagem com um desconto imbatível. Ao realizarem a corrida com o seu QR Code/link, eles ficam vinculados a você por até {bindingYearsText}!
+            Processo simples e automatizado para transformar passageiros em renda passiva recorrente.
           </motion.p>
 
           <motion.div className="lp-capture-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
             <motion.div className="lp-capture-card" variants={fadeUp}>
               <div className="lp-cap-step">01</div>
-              <div className="lp-cap-icon-box"><Sparkles size={26} /></div>
-              <h4>Apresente o Desconto Imbatível</h4>
-              <p>Durante a corrida na outra plataforma, mostre que a Zomp é até 25% mais em conta para o passageiro, sem preços dinâmicos abusivos e com suporte humano.</p>
+              <div className="lp-cap-icon-box"><Sparkles size={24} /></div>
+              <h4>1. Apresentação</h4>
+              <p>Apresente a tarifa com desconto imbatível da Zomp ao passageiro durante a corrida.</p>
             </motion.div>
 
             <motion.div className="lp-capture-card" variants={fadeUp}>
               <div className="lp-cap-step">02</div>
-              <div className="lp-cap-icon-box"><Smartphone size={26} /></div>
-              <h4>Realize a 1ª Corrida pela Zomp</h4>
-              <p>O passageiro escaneia seu QR Code no veículo ou acessa seu link de indicação, cria sua conta em segundos e chama a primeira corrida com super desconto.</p>
+              <div className="lp-cap-icon-box"><Smartphone size={24} /></div>
+              <h4>2. QR Code</h4>
+              <p>O passageiro escaneia seu QR Code no carro e realiza a 1ª viagem com desconto exclusivo.</p>
             </motion.div>
 
             <motion.div className="lp-capture-card" variants={fadeUp}>
               <div className="lp-cap-step">03</div>
-              <div className="lp-cap-icon-box"><Lock size={26} /></div>
-              <h4>Passageiro Vinculado por {bindingYearsText}</h4>
-              <p>A partir dessa primeira viagem, o cliente está vinculado à sua rede. Toda corrida futura que ele fizer — com você ou qualquer outro motorista — gera <strong>R$ {systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')}</strong> pra você!</p>
+              <div className="lp-cap-icon-box"><Lock size={24} /></div>
+              <h4>3. Vínculo de {bindingYearsText}</h4>
+              <p>O cliente fica vinculado à sua carteira em todas as próximas viagens dele na plataforma.</p>
             </motion.div>
 
             <motion.div className="lp-capture-card" variants={fadeUp}>
               <div className="lp-cap-step">04</div>
-              <div className="lp-cap-icon-box"><TrendingUp size={26} /></div>
-              <h4>Meta: 1.000 Passageiros</h4>
-              <p>Indicando de 3 a 5 passageiros por dia, você atinge a meta de <strong>1.000 clientes vinculados</strong>. Com eles realizando em média <strong>3 pedidos por semana</strong> pela Zomp, você alcança até <strong>R$ 3.600,00/mês</strong> em royalties via PIX.</p>
+              <div className="lp-cap-icon-box"><TrendingUp size={24} /></div>
+              <h4>4. Royalties PIX</h4>
+              <p>Receba R$ {systemConfig.royaltyPerRide.toFixed(2).replace('.', ',')} por corrida da sua base, creditado a cada 30 dias via PIX.</p>
             </motion.div>
-          </motion.div>
-
-          <motion.div className="lp-capture-highlight-box" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <div className="lp-cap-hl-content">
-              <div>
-                <span className="lp-cap-badge">⚡ A Revolução do Motorista Parceiro</span>
-                <h3>Transforme cada corrida passageira em um ativo que paga royalties</h3>
-                <p>Nas outras plataformas o cliente desembarca e você volta à estaca zero. Na Zomp, cada passageiro fidelizado se transforma em renda passiva recorrente depositada na sua conta.</p>
-              </div>
-              <button className="lp-cta-btn lp-cta-lg" onClick={handleCta}>
-                Garantir Minha Vaga de Motorista →
-              </button>
-            </div>
           </motion.div>
         </div>
       </section>
@@ -516,7 +503,7 @@ export default function LandingPage() {
           </div>
 
           <motion.div className="lp-sim-right" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <img src="/zomp_network_v5.png" alt="Modelo de Negócios Zomp" className="lp-sim-img" />
+            <img src="/zomp_network_v5.png" alt="Modelo de Negócios Zomp" className="lp-sim-img" width="800" height="600" loading="lazy" decoding="async" />
             <div className="lp-sim-pill">
               <span className="lp-sim-pill-val">+R$ {yearlyPassive.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / ano</span>
               <span className="lp-sim-pill-lbl">Renda Extra Passiva Estimada ({passengers} passageiros)</span>
@@ -537,7 +524,7 @@ export default function LandingPage() {
               Na Zomp, dirigir pode levar você <span className="lp-accent lp-accent-glow">muito mais longe</span>
             </motion.h2>
             <motion.p className="lp-section-sub lp-tourn-sub" initial={{ opacity: 1 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-              Todos os meses, os motoristas da Zomp terão a oportunidade de participar do <strong>Programa de Torneios Zomp</strong> e disputar grandes prêmios. O caminho começa na fase classificatória.
+              Todos os meses, os motoristas da Zomp terão a oportunidade de participar do <strong>Programa de Torneios Zomp</strong> e disputar grandes prêmios. O caminho começa na fase classificatória, com <strong>10 dias</strong> para completar no mínimo <strong>15 corridas</strong>. E o melhor: você pode <strong>convidar passageiros da Uber, 99 e InDriver</strong> durante suas corridas atuais para usar a Zomp — mostrando que o preço é geralmente mais barato — e assim somar pontos no torneio!
             </motion.p>
           </div>
 
@@ -547,7 +534,7 @@ export default function LandingPage() {
             <div className="lp-pipeline-step">
               <div className="lp-step-badge">
                 <Calendar size={13} />
-                <span>01 A 15 DE CADA MÊS</span>
+                <span>10 DIAS DE CLASSIFICAÇÃO</span>
               </div>
               <div className="lp-step-icon-wrap step-classificatoria">
                 <Target size={28} />
@@ -557,7 +544,11 @@ export default function LandingPage() {
                 <h3 className="lp-step-title">Fase Classificatória</h3>
                 <div className="lp-step-meta-box">
                   <strong>🚗 Meta Obrigatória:</strong>
-                  <p>Realizar pelo menos <strong>15 corridas por dia em 7 dias diferentes</strong>, dentro do período classificatório (do dia 1º ao dia 15).</p>
+                  <p>Completar no mínimo <strong>15 corridas em 10 dias</strong> durante o período classificatório. Quanto mais corridas, melhor sua posição!</p>
+                </div>
+                <div className="lp-step-meta-box" style={{ marginTop: '8px', background: 'rgba(151, 233, 0, 0.06)', borderColor: 'rgba(151, 233, 0, 0.2)' }}>
+                  <strong>💡 Dica: Convide passageiros durante a corrida!</strong>
+                  <p>Está em uma corrida pela Uber, 99 ou InDriver? <strong>Convide o passageiro para usar a Zomp!</strong> Mostre que a corrida geralmente é <strong>mais barata pela Zomp</strong>, faça a viagem pelo app e ganhe pontos no Torneio. Cada passageiro que você traz fortalece sua posição e sua rede de royalties.</p>
                 </div>
                 <div className="lp-step-result">
                   <CheckCircle size={15} color="#97E900" />
@@ -785,34 +776,6 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      <section className="lp-wallet-section">
-        <div className="lp-wallet-wrap">
-          <motion.div className="lp-wallet-img-wrap" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <img src="/zomp_driver_realistic.png" alt="Motorista Zomp" className="lp-wallet-img" />
-          </motion.div>
-          <motion.div className="lp-wallet-text" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <motion.div className="lp-section-tag" variants={fadeUp}>💳 Carteira Zomp — Exemplo Estimado</motion.div>
-            <motion.h2 className="lp-section-title lp-left-title" variants={fadeUp}>
-              Até R$ 3.600 na conta<br /><span className="lp-accent">todo mês (a cada 30 dias)</span>
-            </motion.h2>
-            <motion.p className="lp-section-sub lp-left-sub" variants={fadeUp}>
-              Com 1.000 clientes vinculados fazendo 3 corridas por semana, R$ 0,30 por corrida vai direto pra sua carteira Zomp. O saque é liberado a cada 30 dias via PIX.
-            </motion.p>
-            <motion.div className="lp-wallet-stats" variants={fadeUp}>
-              <div className="lp-wstat"><span className="lp-wstat-val">~R$ 3.600</span><span className="lp-wstat-lbl">por mês</span></div>
-              <div className="lp-wstat"><span className="lp-wstat-val">~R$ 43.200</span><span className="lp-wstat-lbl">ao ano</span></div>
-              <div className="lp-wstat"><span className="lp-wstat-val">65</span><span className="lp-wstat-lbl">corridas/semana mín.</span></div>
-            </motion.div>
-            <motion.p className="lp-sim-disclaimer" variants={fadeUp}>
-              * Valores aproximados. O valor real depende da quantidade de clientes vinculados à sua carteira e da frequência de viagens deles. Mínimo de 65 corridas/semana para ativar o recebimento dos Royalties.
-            </motion.p>
-            <motion.button className="lp-cta-btn lp-cta-lg" variants={fadeUp} onClick={handleCta}>
-              Abrir minha Carteira Zomp →
-            </motion.button>
-          </motion.div>
-        </div>
-      </section>
-
       {/* ── FEATURES ── */}
       <section className="lp-features-section">
         <motion.h2 className="lp-section-title" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>Por que escolher a Zomp?</motion.h2>
@@ -863,96 +826,19 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── FOOTER PREMIUM E ATRAENTE ── */}
-      <footer className="lp-footer">
-        <div className="lp-footer-glow-line"></div>
-        <div className="lp-footer-container">
-          <div className="lp-footer-grid">
-            {/* Bloco Institucional / Marca */}
-            <div className="lp-footer-brand-box">
-              <div className="lp-footer-logo-row">
-                <img src="/logo.svg" alt="Zomp" className="lp-footer-logo" />
-                <span className="lp-footer-tag-pioneiro">RIO DE JANEIRO</span>
-              </div>
-              <p className="lp-footer-tagline">
-                Infraestrutura tecnológica de ponta para mobilidade urbana com <strong>taxa fixa</strong> e <strong>royalties diários</strong> para motoristas parceiros.
-              </p>
-              
-              <div className="lp-footer-cnpj-card">
-                <div className="lp-cnpj-header">
-                  <span className="lp-cnpj-dot"></span>
-                  <span className="lp-cnpj-label">REGISTRO EMPRESARIAL OFICIAL</span>
-                </div>
-                <div className="lp-cnpj-body">
-                  <p className="lp-cnpj-company">ZOMP MOBILIDADE TECNOLÓGICA</p>
-                  <p className="lp-cnpj-val">CNPJ: <strong>65.628.833/0001-47</strong></p>
-                  <p className="lp-cnpj-city">📍 Rio de Janeiro - RJ | Brasil</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Coluna de Links de Navegação */}
-            <div className="lp-footer-col">
-              <h4 className="lp-footer-heading">Navegação</h4>
-              <ul className="lp-footer-list">
-                <li><button type="button" onClick={() => document.getElementById('royalties-sec')?.scrollIntoView({ behavior: 'smooth' })}>Renda Passiva</button></li>
-                <li><button type="button" onClick={() => document.getElementById('torneios-sec')?.scrollIntoView({ behavior: 'smooth' })}>🏆 Torneios Zomp & Prêmios</button></li>
-                <li><button type="button" onClick={() => document.querySelector('.lp-sim-section')?.scrollIntoView({ behavior: 'smooth' })}>Simulador de Ganhos</button></li>
-                <li><button type="button" onClick={() => document.querySelector('.lp-why-section')?.scrollIntoView({ behavior: 'smooth' })}>Vantagens do Modelo</button></li>
-                <li><button type="button" onClick={handleCta}>Pré-Cadastro Pioneiro</button></li>
-              </ul>
-            </div>
-
-            {/* Coluna para Motoristas */}
-            <div className="lp-footer-col">
-              <h4 className="lp-footer-heading">Motorista Parceiro</h4>
-              <ul className="lp-footer-list">
-                <li><button type="button" onClick={() => navigate('/motorista')} className="lp-footer-highlight-link">🚗 App do Motorista</button></li>
-                <li><button type="button" onClick={openPreRegister}>Credenciamento Online</button></li>
-                <li><span className="lp-footer-info-pill">Taxa Fixa R$ 1,50/corrida</span></li>
-                <li><span className="lp-footer-info-pill">R$ 0,30 Royalty/passageiro</span></li>
-                <li><span className="lp-footer-info-pill">Mínimo 65 corridas/semana</span></li>
-              </ul>
-            </div>
-
-            {/* Coluna Segurança e Confiabilidade */}
-            <div className="lp-footer-col">
-              <h4 className="lp-footer-heading">Segurança & Garantias</h4>
-              <div className="lp-footer-trust-badges">
-                <div className="lp-trust-badge">
-                  <Shield size={18} className="lp-trust-icon" />
-                  <div>
-                    <strong>Criptografia SSL 256-bit</strong>
-                    <span>Ambiente 100% Seguro</span>
-                  </div>
-                </div>
-                <div className="lp-trust-badge">
-                  <CreditCard size={18} className="lp-trust-icon" />
-                  <div>
-                    <strong>Repasses Mensais via PIX</strong>
-                    <span>Pagamento a cada 30 dias</span>
-                  </div>
-                </div>
-                <div className="lp-trust-badge">
-                  <CheckCircle size={18} className="lp-trust-icon" />
-                  <div>
-                    <strong>Proteção de Dados LGPD</strong>
-                    <span>Privacidade Garantida</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* ── FOOTER SIMPLIFICADO & OBJETIVO ── */}
+      <footer className="lp-footer-simple">
+        <div className="lp-footer-simple-content">
+          <div className="lp-footer-simple-brand">
+            <img src="/logo.svg" alt="Zomp" className="lp-footer-logo" width="120" height="32" loading="lazy" />
+            <span className="lp-footer-simple-name">Zomp Mobilidade</span>
           </div>
-
-          {/* Linha inferior de copyright e data oficial */}
-          <div className="lp-footer-bottom-bar">
-            <div className="lp-footer-copy">
-              © 2026 Zomp Mobilidade Tecnológica. Todos os direitos reservados. • CNPJ: <strong>65.628.833/0001-47</strong>
-            </div>
-            <div className="lp-footer-launch-alert">
-              🚀 <span>Estreia Oficial do App: <strong>01/11/2026</strong></span>
-            </div>
-          </div>
+          <p className="lp-footer-simple-cnpj">
+            CNPJ: <strong>65.628.833/0001-47</strong> • Rio de Janeiro - RJ
+          </p>
+          <p className="lp-footer-simple-copy">
+            © {new Date().getFullYear()} Zomp Mobilidade Urbana. Todos os direitos reservados.
+          </p>
         </div>
       </footer>
 

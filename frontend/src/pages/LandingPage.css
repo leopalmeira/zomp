@@ -3171,11 +3171,64 @@
     padding: 6px 12px;
   }
 
-  .lp-prize-card {
-    padding: 22px 18px;
-  }
-
   .lp-prize-title {
     font-size: 1.25rem;
   }
+}
+
+/* ── RODAPÉ SIMPLIFICADO & OBJETIVO ── */
+.lp-footer-simple {
+  background: #060d1a;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 48px 20px 40px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.lp-footer-simple-content {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.lp-footer-simple-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.lp-footer-simple-brand .lp-footer-logo {
+  height: 34px;
+  width: auto;
+}
+
+.lp-footer-simple-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: -0.3px;
+}
+
+.lp-footer-simple-cnpj {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.lp-footer-simple-cnpj strong {
+  color: #e2e8f0;
+}
+
+.lp-footer-simple-copy {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
 }
