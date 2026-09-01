@@ -306,17 +306,17 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ── ACESSO RÁPIDO MOTORISTA ── */}
+      {/* ── ACESSO RÁPIDO & MODELO DO MOTORISTA (MODO TOTVS ENTERPRISE) ── */}
       <section className="lp-entry-section">
         <div className="lp-entry-wrapper">
           <motion.div className="lp-section-tag lp-tag-vibrant" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
             🚗 Plataforma do Motorista Zomp
           </motion.div>
           <motion.h2 className="lp-entry-title" initial={{ opacity: 1, y: 0 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.1 }}>
-            Comece a dirigir e <span className="lp-accent lp-accent-glow">lucrar agora</span>
+            Modelo de Negócios Zomp: <span className="lp-accent lp-accent-glow">Lucro Real & Renda Passiva</span>
           </motion.h2>
           <motion.p className="lp-entry-subtitle" initial={{ opacity: 1 }} whileInView={{ opacity: 1 }} viewport={{ once: true, amount: 0.1 }}>
-            Chega de trabalhar apenas para enriquecer plataformas convencionais. Acesse o aplicativo do motorista parceiro, valide seus dados e comece a acumular royalties diários com a sua própria rede.
+            Entenda ponto a ponto por que a Zomp é o ecossistema mais rentável do Brasil para motoristas parceiros. Tudo transparente, sem comissões abusivas e com royalties vitalícios na sua carteira.
           </motion.p>
 
           <motion.div
@@ -326,29 +326,84 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {/* Card Motorista Principal */}
+            {/* Card Executivo Principal */}
             <motion.div
-              className="lp-entry-card lp-entry-driver"
+              className="lp-entry-card"
               variants={fadeUp}
-              onClick={() => navigate('/motorista')}
             >
               <div className="lp-entry-header">
-                <div className="lp-entry-badge">💎 Renda Passiva + Taxa Fixa</div>
+                <div className="lp-entry-badge">💎 Taxa Fixa + Royalties Diários</div>
                 <div className="lp-entry-icon"><TrendingUp size={28} /></div>
               </div>
-              <h3 className="lp-entry-card-title">App do Motorista Parceiro</h3>
+
+              <h3 className="lp-entry-card-title">Regras e Funcionamento da Plataforma</h3>
               <p className="lp-entry-card-desc">
-                Dirija com taxa fixa de apenas <strong>R$ 1,50 por corrida</strong> e receba <strong>R$ 0,30 de royalties</strong> em todas as viagens dos passageiros vinculados à sua rede.
+                Enquanto Uber e 99 cobram de <strong>20% a 40%</strong> de comissão sobre o seu trabalho, a Zomp opera com <strong>taxa operacional fixa de R$ 1,50</strong> e repassa <strong>R$ 0,30 de royalties</strong> para você em cada viagem feita pelos seus clientes indicados.
               </p>
-              <div className="lp-entry-features">
-                <div className="lp-entry-feat-item">✓ Pagamento mensal via PIX</div>
-                <div className="lp-entry-feat-item">✓ Mínimo de 65 corridas/semana</div>
-                <div className="lp-entry-feat-item">✓ Sem taxas variáveis abusivas</div>
+
+              {/* 4 Pilares Explicados com Clareza Absoluta (Estilo TOTVS) */}
+              <div className="lp-entry-pillars">
+                {/* Pilar 1 */}
+                <div className="lp-pillar-item">
+                  <div className="lp-pillar-head">
+                    <span className="lp-pillar-title">💳 1. Taxa Fixa Operacional</span>
+                    <span className="lp-pillar-tag tag-green">R$ 1,50 / Corrida</span>
+                  </div>
+                  <p className="lp-pillar-desc">
+                    Você paga apenas <strong>R$ 1,50 fixo por corrida concluída</strong>. O restante de todo o valor da corrida é <strong>100% seu</strong>, não importa se a viagem foi de R$ 15 ou R$ 90.
+                  </p>
+                </div>
+
+                {/* Pilar 2 */}
+                <div className="lp-pillar-item">
+                  <div className="lp-pillar-head">
+                    <span className="lp-pillar-title">💎 2. Renda Passiva de Royalties</span>
+                    <span className="lp-pillar-tag tag-gold">+R$ 0,30 / Viagem</span>
+                  </div>
+                  <p className="lp-pillar-desc">
+                    Traga passageiros escaneando seu QR Code no carro. Durante <strong>12 meses ({bindingYearsText})</strong>, você ganha <strong>R$ 0,30 em todas as corridas</strong> que esse cliente fizer na Zomp, com você ou com outro motorista.
+                  </p>
+                </div>
+
+                {/* Pilar 3 */}
+                <div className="lp-pillar-item">
+                  <div className="lp-pillar-head">
+                    <span className="lp-pillar-title">⏱️ 3. Meta de Manutenção</span>
+                    <span className="lp-pillar-tag tag-blue">65 Corridas / Semana</span>
+                  </div>
+                  <p className="lp-pillar-desc">
+                    Para estar apto a sacar os royalties mensais gerados pela sua carteira de passageiros, o motorista precisa se manter ativo realizando no mínimo <strong>65 corridas por semana</strong> na plataforma.
+                  </p>
+                </div>
+
+                {/* Pilar 4 */}
+                <div className="lp-pillar-item">
+                  <div className="lp-pillar-head">
+                    <span className="lp-pillar-title">💸 4. Repasse Mensal via PIX</span>
+                    <span className="lp-pillar-tag tag-purple">A Cada 30 Dias</span>
+                  </div>
+                  <p className="lp-pillar-desc">
+                    Os royalties acumulados pela sua rede de clientes são calculados mensalmente e <strong>transferidos automaticamente via PIX</strong> direto para a sua conta cadastrada.
+                  </p>
+                </div>
               </div>
-              <div className="lp-entry-btn">
-                <span>Acessar App do Motorista</span>
-                <ArrowRight size={18} />
+
+              {/* Caixa de Vantagem Competitiva: Preço Mais Barato */}
+              <div className="lp-entry-alert-box">
+                <span className="lp-entry-alert-icon">⚡</span>
+                <div className="lp-entry-alert-txt">
+                  <strong>Estratégia de Captação Rápida:</strong> A corrida pela Zomp é geralmente <strong>mais barata para o passageiro</strong> do que na Uber, 99 ou InDriver. Mostre a tarifa no seu celular durante a viagem e faça o cliente migrar para a Zomp na hora, aumentando seus pontos no Torneio e seus Royalties recorrentes!
+                </div>
               </div>
+
+              <button
+                type="button"
+                className="lp-entry-btn"
+                onClick={() => navigate('/motorista')}
+              >
+                <span>Acessar App do Motorista Parceiro</span>
+                <ArrowRight size={20} />
+              </button>
             </motion.div>
           </motion.div>
         </div>
