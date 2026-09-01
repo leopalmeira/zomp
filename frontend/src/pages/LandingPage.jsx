@@ -524,7 +524,7 @@ export default function LandingPage() {
               Na Zomp, dirigir pode levar você <span className="lp-accent lp-accent-glow">muito mais longe</span>
             </motion.h2>
             <motion.p className="lp-section-sub lp-tourn-sub" initial={{ opacity: 1 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-              Todos os meses, os motoristas da Zomp terão a oportunidade de participar do <strong>Programa de Torneios Zomp</strong> e disputar grandes prêmios. O caminho começa na fase classificatória, com <strong>10 dias</strong> para completar no mínimo <strong>15 corridas</strong>. E o melhor: você pode <strong>convidar passageiros da Uber, 99 e InDriver</strong> durante suas corridas atuais para usar a Zomp — mostrando que o preço é geralmente mais barato — e assim somar pontos no torneio!
+              Todos os meses, os motoristas da Zomp terão a oportunidade de participar do <strong>Programa de Torneios Zomp</strong> e disputar grandes prêmios. A fase classificatória vai <strong>do dia 1 ao dia 15</strong> de cada mês: faça no mínimo <strong>15 corridas por dia</strong> durante esses 15 dias e garanta sua vaga no torneio. Os <strong>30 primeiros colocados</strong> são premiados! E o melhor: durante suas corridas atuais, você pode <strong>convidar passageiros da Uber, 99 e InDriver</strong> para usar a Zomp — mostrando que o preço é geralmente mais barato — e assim aumentar suas corridas e subir no ranking!
             </motion.p>
           </div>
 
@@ -534,7 +534,7 @@ export default function LandingPage() {
             <div className="lp-pipeline-step">
               <div className="lp-step-badge">
                 <Calendar size={13} />
-                <span>10 DIAS DE CLASSIFICAÇÃO</span>
+                <span>01 A 15 DE CADA MÊS</span>
               </div>
               <div className="lp-step-icon-wrap step-classificatoria">
                 <Target size={28} />
@@ -544,7 +544,7 @@ export default function LandingPage() {
                 <h3 className="lp-step-title">Fase Classificatória</h3>
                 <div className="lp-step-meta-box">
                   <strong>🚗 Meta Obrigatória:</strong>
-                  <p>Completar no mínimo <strong>15 corridas em 10 dias</strong> durante o período classificatório. Quanto mais corridas, melhor sua posição!</p>
+                  <p>Realizar pelo menos <strong>15 corridas por dia</strong> durante os <strong>15 dias</strong> da fase classificatória (do dia 1º ao dia 15). Quem bater essa meta se classifica e entra no <strong>Torneio Zomp</strong>!</p>
                 </div>
                 <div className="lp-step-meta-box" style={{ marginTop: '8px', background: 'rgba(151, 233, 0, 0.06)', borderColor: 'rgba(151, 233, 0, 0.2)' }}>
                   <strong>💡 Dica: Convide passageiros durante a corrida!</strong>
