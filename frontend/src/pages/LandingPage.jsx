@@ -524,8 +524,22 @@ export default function LandingPage() {
               Na Zomp, dirigir pode levar você <span className="lp-accent lp-accent-glow">muito mais longe</span>
             </motion.h2>
             <motion.p className="lp-section-sub lp-tourn-sub" initial={{ opacity: 1 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-              Todos os meses, os motoristas da Zomp terão a oportunidade de participar do <strong>Programa de Torneios Zomp</strong> e disputar grandes prêmios. O caminho começa na fase classificatória, com <strong>10 dias</strong> para completar no mínimo <strong>15 corridas</strong>. E o melhor: você pode <strong>convidar passageiros da Uber, 99 e InDriver</strong> durante suas corridas atuais para usar a Zomp — mostrando que o preço é geralmente mais barato — e assim somar pontos no torneio!
+              Todo mês, os motoristas da Zomp disputam o <strong>Torneio Zomp</strong> com premiações reais. O processo é simples e transparente:
             </motion.p>
+          </div>
+
+          {/* RESUMO DAS REGRAS — DESTAQUE CLARO */}
+          <div className="lp-step-meta-box" style={{ maxWidth: '860px', margin: '0 auto 40px', padding: '22px 28px', background: 'rgba(151, 233, 0, 0.06)', border: '1.5px solid rgba(151, 233, 0, 0.3)', borderRadius: '16px' }}>
+            <strong style={{ fontSize: '1rem', color: '#97E900', display: 'block', marginBottom: '10px' }}>📋 Como funciona o Torneio — Regras Claras:</strong>
+            <p style={{ fontSize: '0.95rem', lineHeight: '1.7', color: '#cbd5e1' }}>
+              <strong style={{ color: '#fff' }}>1.</strong> O período classificatório vai <strong style={{ color: '#fff' }}>do dia 1 ao dia 15</strong> de cada mês (15 dias).<br/>
+              <strong style={{ color: '#fff' }}>2.</strong> Nesse período, você precisa fazer no mínimo <strong style={{ color: '#facc15' }}>15 corridas por dia</strong> em pelo menos <strong style={{ color: '#facc15' }}>10 dias diferentes</strong>.<br/>
+              <strong style={{ color: '#fff' }}>3.</strong> Bateu a meta? Você <strong style={{ color: '#97E900' }}>se classifica e entra no Torneio Zomp</strong>.<br/>
+              <strong style={{ color: '#fff' }}>4.</strong> Os <strong style={{ color: '#facc15' }}>30 primeiros colocados</strong> do ranking recebem os prêmios todo mês.
+            </p>
+            <p style={{ fontSize: '0.88rem', lineHeight: '1.6', color: '#94a3b8', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              💡 <strong style={{ color: '#97E900' }}>Dica:</strong> Está fazendo uma corrida pela <strong style={{ color: '#fff' }}>Uber, 99 ou InDriver</strong>? Convide o passageiro para usar a Zomp! Mostre que a corrida é geralmente <strong style={{ color: '#fff' }}>mais barata pela Zomp</strong> e faça a viagem pelo nosso app. Você soma corridas no torneio e ainda conquista um novo passageiro para sua rede de royalties!
+            </p>
           </div>
 
           {/* PIPELINE VISUAL ESTRATÉGICO: 3 ETAPAS */}
@@ -534,7 +548,7 @@ export default function LandingPage() {
             <div className="lp-pipeline-step">
               <div className="lp-step-badge">
                 <Calendar size={13} />
-                <span>10 DIAS DE CLASSIFICAÇÃO</span>
+                <span>DIA 1 AO 15 DE CADA MÊS</span>
               </div>
               <div className="lp-step-icon-wrap step-classificatoria">
                 <Target size={28} />
@@ -544,15 +558,11 @@ export default function LandingPage() {
                 <h3 className="lp-step-title">Fase Classificatória</h3>
                 <div className="lp-step-meta-box">
                   <strong>🚗 Meta Obrigatória:</strong>
-                  <p>Completar no mínimo <strong>15 corridas em 10 dias</strong> durante o período classificatório. Quanto mais corridas, melhor sua posição!</p>
-                </div>
-                <div className="lp-step-meta-box" style={{ marginTop: '8px', background: 'rgba(151, 233, 0, 0.06)', borderColor: 'rgba(151, 233, 0, 0.2)' }}>
-                  <strong>💡 Dica: Convide passageiros durante a corrida!</strong>
-                  <p>Está em uma corrida pela Uber, 99 ou InDriver? <strong>Convide o passageiro para usar a Zomp!</strong> Mostre que a corrida geralmente é <strong>mais barata pela Zomp</strong>, faça a viagem pelo app e ganhe pontos no Torneio. Cada passageiro que você traz fortalece sua posição e sua rede de royalties.</p>
+                  <p>Fazer pelo menos <strong>15 corridas por dia</strong> em no mínimo <strong>10 dos 15 dias</strong> do período classificatório (dia 1º ao dia 15).</p>
                 </div>
                 <div className="lp-step-result">
                   <CheckCircle size={15} color="#97E900" />
-                  <span>Atingiu a meta? <strong>Avança para a disputa!</strong></span>
+                  <span>Bateu a meta? <strong>Você se classifica e entra no Torneio!</strong></span>
                 </div>
               </div>
             </div>
@@ -572,10 +582,10 @@ export default function LandingPage() {
               </div>
               <div className="lp-step-content">
                 <span className="lp-step-tag">2ª ETAPA</span>
-                <h3 className="lp-step-title">Fase Eliminatória</h3>
+                <h3 className="lp-step-title">Ranking do Torneio</h3>
                 <div className="lp-step-meta-box">
                   <strong>🔥 Disputa de Ranking:</strong>
-                  <p>Os motoristas classificados seguem para a fase eliminatória, onde disputarão posições no <strong>Ranking do Torneio Zomp</strong>.</p>
+                  <p>Todos os classificados entram no <strong>Ranking do Torneio Zomp</strong>. Quanto mais corridas você fizer, melhor sua posição!</p>
                 </div>
                 <div className="lp-step-result">
                   <Crown size={15} color="#facc15" />
@@ -602,7 +612,7 @@ export default function LandingPage() {
                 <h3 className="lp-step-title">Premiação Mensal</h3>
                 <div className="lp-step-meta-box">
                   <strong>🎁 Grandes Prêmios:</strong>
-                  <p>E os melhores colocados conquistam: <strong>3 Carros</strong>, <strong>17 Prêmios de R$ 3.000 via PIX</strong> e <strong>10 Smartphones Samsung</strong>!</p>
+                  <p>Os <strong>30 melhores colocados</strong> do ranking conquistam: <strong>3 Carros</strong>, <strong>17 Prêmios de R$ 3.000 via PIX</strong> e <strong>10 Smartphones Samsung</strong>!</p>
                 </div>
                 <div className="lp-step-result">
                   <Sparkles size={15} color="#97E900" />
