@@ -667,7 +667,7 @@ export default function LandingPage() {
                 <h3 className="lp-step-title">Premiação Mensal</h3>
                 <div className="lp-step-meta-box">
                   <strong>🎁 Grandes Prêmios:</strong>
-                  <p>Os <strong>30 melhores colocados</strong> do ranking conquistam: <strong>3 Carros</strong>, <strong>17 Prêmios de R$ 3.000 via PIX</strong> e <strong>10 Smartphones Samsung</strong>!</p>
+                  <p>Os <strong>30 melhores colocados</strong> do ranking conquistam: <strong>3 Carros (no valor de R$ 100 mil cada)</strong>, <strong>17 Prêmios de R$ 3.000 via PIX</strong> e <strong>10 Smartphones Samsung</strong>!</p>
                 </div>
                 <div className="lp-step-result">
                   <Sparkles size={15} color="#97E900" />
@@ -687,14 +687,14 @@ export default function LandingPage() {
                 <div className="lp-prize-icon-circle gold"><Car size={32} /></div>
               </div>
               <div className="lp-prize-main">
-                <span className="lp-prize-sub">3 MOTORISTAS PREMIADOS</span>
-                <h3 className="lp-prize-title">3 CARROS TODOS OS MESES</h3>
+                <span className="lp-prize-sub">3 MOTORISTAS PREMIADOS • R$ 100 MIL CADA</span>
+                <h3 className="lp-prize-title">3 CARROS DE R$ 100 MIL TODOS OS MESES</h3>
                 <p className="lp-prize-desc">
-                  Os três primeiros colocados do Torneio Zomp poderão receber <strong>um carro cada</strong>. O ápice do reconhecimento pelo seu desempenho e dedicação.
+                  Os três primeiros colocados do Torneio Zomp receberão <strong>um carro no valor de R$ 100.000,00 (100 mil reais) cada</strong>. O ápice do reconhecimento pelo seu desempenho e dedicação.
                 </p>
               </div>
               <div className="lp-prize-footer">
-                <span className="lp-prize-feat">✓ 1 Carro para cada um dos 3 primeiros colocados</span>
+                <span className="lp-prize-feat">✓ 1 Carro de R$ 100 mil para cada um dos 3 primeiros colocados</span>
               </div>
             </div>
 
@@ -740,7 +740,7 @@ export default function LandingPage() {
             <div className="lp-summary-item">
               <span className="lp-sum-icon">🚗</span>
               <div>
-                <strong>3 CARROS</strong>
+                <strong>3 CARROS (R$ 100 MIL CADA)</strong>
                 <small>1º, 2º e 3º Lugar</small>
               </div>
             </div>
