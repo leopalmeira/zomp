@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
-import { 
-  TrendingUp, User, Shield, Zap, Gift, Smartphone, CheckCircle, 
-  XCircle, ChevronDown, ArrowRight, Car, Bike, FileText, Camera, 
+import {
+  TrendingUp, User, Shield, Zap, Gift, Smartphone, CheckCircle,
+  XCircle, ChevronDown, ArrowRight, Car, Bike, FileText, Camera,
   Check, X, Lock, Phone, CreditCard, AlertCircle, Sparkles,
   Trophy, Flame, Award, Calendar, Target, Crown
 } from 'lucide-react'
@@ -249,32 +249,32 @@ export default function LandingPage() {
           <motion.h1 className="lp-hero-h1" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, delay: 0.2 }}>
             <span className="lp-text-white">POR QUE VOCÊ AINDA VAI FICAR</span><br />
             <span className="lp-text-green">FAZENDO CORRIDAS PELOS CONCORRENTES,</span><br />
-            <span className="lp-text-red">QUE NÃO TE DÁ</span> <br/>
-            <span className="lp-text-yellow">RENDA PASSIVA</span> <br/>
+            <span className="lp-text-red">QUE NÃO TE DÁ</span> <br />
+            <span className="lp-text-yellow">RENDA PASSIVA</span> <br />
             <span className="lp-text-white">DE ROYALTIES TODOS OS DIAS?</span>
           </motion.h1>
 
           <motion.p className="lp-hero-sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }}>
-            No final do dia, você se cansa, o aplicativo lucra, e você começa do zero no dia seguinte.<br/>
+            No final do dia, você se cansa, o aplicativo lucra, e você começa do zero no dia seguinte.<br />
             <strong className="lp-text-mude">MUDE ISSO. MUDE PARA A ZOMP!</strong>
           </motion.p>
 
-          <motion.div 
+          <motion.div
             className="lp-reflection-box"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.7 }}
           >
             <p className="lp-reflection-text">
-              "Para que rodar na Uber ou 99 se ao chegar em casa seus ganhos param? 
-              <motion.span 
+              "Para que rodar na Uber ou 99 se ao chegar em casa seus ganhos param?
+              <motion.span
                 className="lp-reflection-highlight"
-                animate={{ 
+                animate={{
                   scale: [1, 1.05, 1],
                   opacity: [0.8, 1, 0.8],
                 }}
-                transition={{ 
-                  duration: 2, 
+                transition={{
+                  duration: 2,
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
@@ -318,18 +318,18 @@ export default function LandingPage() {
           <motion.p className="lp-entry-subtitle" initial={{ opacity: 1 }} whileInView={{ opacity: 1 }} viewport={{ once: true, amount: 0.1 }}>
             Chega de trabalhar apenas para enriquecer plataformas convencionais. Acesse o aplicativo do motorista parceiro, valide seus dados e comece a acumular royalties diários com a sua própria rede.
           </motion.p>
-          
-          <motion.div 
+
+          <motion.div
             className="lp-entry-grid"
-            variants={stagger} 
-            initial="hidden" 
-            whileInView="visible" 
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
           >
             {/* Card Motorista Principal */}
-            <motion.div 
-              className="lp-entry-card lp-entry-driver" 
-              variants={fadeUp} 
+            <motion.div
+              className="lp-entry-card lp-entry-driver"
+              variants={fadeUp}
               onClick={() => navigate('/motorista')}
             >
               <div className="lp-entry-header">
@@ -364,9 +364,9 @@ export default function LandingPage() {
         </motion.h2>
         <motion.p className="lp-section-sub" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           Nosso objetivo é ter os melhores parceiros. O processo é simples e direto.
-          Siga os passos abaixo para garantir sua Renda Passiva vinda de passageiros. 
-          <br/><strong>* Requisito: Completar no mínimo 65 corridas por semana para manter o direito aos Royalties.</strong>
-          <br/><span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Os pagamentos de royalties são realizados mensalmente (a cada 30 dias) via PIX. O valor recebido depende da quantidade de clientes vinculados à sua carteira e da frequência de corridas deles.</span>
+          Siga os passos abaixo para garantir sua Renda Passiva vinda de passageiros.
+          <br /><strong>* Requisito: Completar no mínimo 65 corridas por semana para manter o direito aos Royalties.</strong>
+          <br /><span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Os pagamentos de royalties são realizados mensalmente (a cada 30 dias) via PIX. O valor recebido depende da quantidade de clientes vinculados à sua carteira e da frequência de corridas deles.</span>
         </motion.p>
         <motion.div className="lp-how-grid" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}>
           {[
@@ -524,7 +524,7 @@ export default function LandingPage() {
               Na Zomp, dirigir pode levar você <span className="lp-accent lp-accent-glow">muito mais longe</span>
             </motion.h2>
             <motion.p className="lp-section-sub lp-tourn-sub" initial={{ opacity: 1 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-              Todos os meses, os motoristas da Zomp terão a oportunidade de participar do <strong>Programa de Torneios Zomp</strong> e disputar grandes prêmios. A fase classificatória vai <strong>do dia 1 ao dia 15</strong> de cada mês: faça no mínimo <strong>15 corridas por dia</strong> durante esses 15 dias e garanta sua vaga no torneio. Os <strong>30 primeiros colocados</strong> são premiados! E o melhor: durante suas corridas atuais, você pode <strong>convidar passageiros da Uber, 99 e InDriver</strong> para usar a Zomp — mostrando que o preço é geralmente mais barato — e assim aumentar suas corridas e subir no ranking!
+              Todos os meses, os motoristas da Zomp terão a oportunidade de participar do <strong>Programa de Torneios Zomp</strong> e disputar grandes prêmios. O caminho começa na fase classificatória, com <strong>10 dias</strong> para completar no mínimo <strong>15 corridas</strong>. E o melhor: você pode <strong>convidar passageiros da Uber, 99 e InDriver</strong> durante suas corridas atuais para usar a Zomp — mostrando que o preço é geralmente mais barato — e assim somar pontos no torneio!
             </motion.p>
           </div>
 
@@ -534,7 +534,7 @@ export default function LandingPage() {
             <div className="lp-pipeline-step">
               <div className="lp-step-badge">
                 <Calendar size={13} />
-                <span>01 A 15 DE CADA MÊS</span>
+                <span>10 DIAS DE CLASSIFICAÇÃO</span>
               </div>
               <div className="lp-step-icon-wrap step-classificatoria">
                 <Target size={28} />
@@ -544,7 +544,7 @@ export default function LandingPage() {
                 <h3 className="lp-step-title">Fase Classificatória</h3>
                 <div className="lp-step-meta-box">
                   <strong>🚗 Meta Obrigatória:</strong>
-                  <p>Realizar pelo menos <strong>15 corridas por dia</strong> durante os <strong>15 dias</strong> da fase classificatória (do dia 1º ao dia 15). Quem bater essa meta se classifica e entra no <strong>Torneio Zomp</strong>!</p>
+                  <p>Completar no mínimo <strong>15 corridas em 10 dias</strong> durante o período classificatório. Quanto mais corridas, melhor sua posição!</p>
                 </div>
                 <div className="lp-step-meta-box" style={{ marginTop: '8px', background: 'rgba(151, 233, 0, 0.06)', borderColor: 'rgba(151, 233, 0, 0.2)' }}>
                   <strong>💡 Dica: Convide passageiros durante a corrida!</strong>
