@@ -715,8 +715,29 @@ zomp-db          → PostgreSQL 16 (plano free)        — Banco de dados intern
   - **Sistema de 4 Abas**: `🎯 Minha Classificação`, `💡 Estratégia de Ouro`, `🏆 Ranking & Prêmios` e `📖 3 Etapas`.
 
 ---
+
+### 🚀 v17.2.1 - Ajuste Fino do Torneio: Meta de 150 Corridas (10/dia), Exibição da Posição e CSS sem Esbarros (2026-09-02)
+
+* 🎯 **Nova Meta Classificatória: 150 Corridas em 15 Dias (10 Corridas/Dia)**:
+  - Atualizada a meta da 1ª Etapa (dia 1º ao dia 15 de cada mês) para **150 corridas no total**, representando uma média de **10 corridas por dia**.
+  - O motorista que concluir as 150 corridas até o dia 15 carimba vaga direta no Torneio Oficial a partir do dia 16 (disputando Carro de R$ 100 Mil, PIX de R$ 3.000 e Smartphones Samsung).
+
+* 🥇 **Exibição Destacada da Posição no Ranking**:
+  - Mesmo na fase classificatória, o painel do motorista agora exibe com destaque a **Sua Posição no Ranking Geral** (`#1º`, `#5º`, etc.) e se está na Zona de Premiação (Top 30) ou no Geral.
+  - Exibição de cards paralelos: **Sua Posição** e **Corridas Feitas** (ex: `42 de 150 no total`).
+
+* 📊 **Barra de Progresso com Contagem até o Dia 15**:
+  - Barra de progresso responsiva indicando a porcentagem de conclusão das 150 corridas.
+  - Indicador de status dinâmico: *"Meta: 10 corridas/dia"* e *"Faltam X corridas até dia 15"*.
+
+* 🎨 **Refinamento de CSS & Tipografia**:
+  - Ajustados os espaçamentos, line-heights e paddings dos cards (`DriverTournament.css` e `DriverTournament.jsx`).
+  - Resolvido o problema de letras esbarrando ou encostando nas bordas dos cards no celular.
+  - Tags do topo com layout em `flex-wrap` e margens de respiro confortáveis.
+
+---
 **Status Atual**: ✅ Todas as funcionalidades implementadas e testadas com build 100% aprovado.
-**Versão**: 17.2.0
+**Versão**: 17.2.1
 **Responsável**: Antigravity AI & Leandro Palmeira
 
 

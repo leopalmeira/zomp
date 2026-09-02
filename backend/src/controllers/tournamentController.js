@@ -29,17 +29,18 @@ function getTournamentPhase(now) {
   const year = now.getFullYear();
 
   if (day <= 15) {
-    // Fase Classificatória Individual (1 a 15)
+    // Fase Classificatória (Dia 1 ao 15) - Meta: 150 corridas no total (10 corridas/dia)
     const endClassif = new Date(year, month, 15, 23, 59, 59);
     const daysLeft = Math.max(0, Math.ceil((endClassif - now) / (1000 * 60 * 60 * 24)));
     return {
       phase: 'CLASSIFICATORIA',
-      phaseLabel: '1ª Etapa — Classificatória Individual',
-      phaseDescription: 'Você não disputa com ninguém nesta etapa! Disputa apenas consigo mesmo: cumpra 15 corridas pela Zomp até o dia 15 para garantir sua vaga no chaveamento oficial dos prêmios.',
+      phaseLabel: '1ª Etapa — Fase Classificatória (Dia 1 ao 15)',
+      phaseDescription: 'Cumpra a meta de 150 corridas no total até o dia 15 (média de 10 corridas por dia) para concluir a classificação e entrar na disputa dos prêmios no Torneio Oficial!',
       startDay: 1,
       endDay: 15,
       daysLeft,
-      goalRides: 15,
+      goalRides: 150,
+      dailyAvgGoal: 10,
       tournamentStartDay: 16,
       tournamentEndDay: 25
     };
@@ -191,8 +192,8 @@ async function getTournamentData(req, res) {
     // Gerar leaderboard
     const leaderboard = generateLeaderboard(userId, driverName, driverRidesThisMonth);
 
-    // Calcular status da fase classificatória (Meta: 15 corridas individuais)
-    const classificationGoal = 15;
+    // Calcular status da fase classificatória (Meta: 150 corridas totais / 10 por dia em 15 dias)
+    const classificationGoal = 150;
     const isClassified = driverRidesThisMonth >= classificationGoal;
     const ridesRemainingToClassify = Math.max(0, classificationGoal - driverRidesThisMonth);
 
@@ -200,9 +201,9 @@ async function getTournamentData(req, res) {
     let smartTip = '';
     if (phase.phase === 'CLASSIFICATORIA') {
       if (isClassified) {
-        smartTip = `🎉 Incrível! Você atingiu a meta de ${driverRidesThisMonth}/${classificationGoal} corridas e já está CLASSIFICADO para o Torneio Oficial a partir do dia 16!`;
+        smartTip = `🎉 Incrível! Você atingiu ${driverRidesThisMonth} de ${classificationGoal} corridas e está 100% CLASSIFICADO para o Torneio Oficial a partir do dia 16! Posição atual: #${leaderboard.driverPosition}º no ranking geral!`;
       } else {
-        smartTip = `📋 Fase Classificatória: Faltam apenas ${ridesRemainingToClassify} corrida(s) para você garantir sua vaga no Torneio Oficial! Dica: traga passageiros da concorrência oferecendo o preço menor da Zomp!`;
+        smartTip = `📋 Fase Classificatória: Você está em #${leaderboard.driverPosition}º com ${driverRidesThisMonth} corridas. Faltam ${ridesRemainingToClassify} corridas para bater a meta de 150 e entrar no Torneio!`;
       }
     } else if (leaderboard.driverEntry) {
       const pos = leaderboard.driverPosition;
