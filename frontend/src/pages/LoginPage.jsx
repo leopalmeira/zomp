@@ -20,6 +20,30 @@ export default function LoginPage({ forceRole }) {
   const isDriver = forceRole === 'DRIVER'
   const isAdmin = forceRole === 'ADMIN'
 
+  const handleDemoLogin = () => {
+    // Cria sessão de demonstração sem precisar do backend
+    const demoToken = 'demo_' + Date.now();
+    const demoUser = {
+      id: 'demo-driver-001',
+      name: 'Motorista Demo',
+      email: form.email || 'motorista@zomp.com',
+      role: 'DRIVER',
+      qrCode: 'ZOMP-DEMO-DRIVER',
+      isApproved: true,
+      carPlate: 'ZMP-2026',
+      carModel: 'Toyota Corolla',
+      carColor: 'Preto',
+      cnh: '12345678900',
+      credits: 1000,
+      rating: 4.9,
+      ridesCompleted: 27,
+      photo: null
+    };
+    localStorage.setItem('zomp_token', demoToken);
+    localStorage.setItem('zomp_user', JSON.stringify(demoUser));
+    navigate('/motorista/dashboard');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
@@ -35,7 +59,12 @@ export default function LoginPage({ forceRole }) {
         navigate('/passageiro/dashboard')
       }
     } catch (err) {
-      setError(err.message)
+      // Se o backend estiver offline e for motorista, oferece modo demo
+      if (isDriver) {
+        setError('Servidor offline. Use o botão "Acesso Demo" abaixo para testar.')
+      } else {
+        setError(err.message)
+      }
     } finally {
       setLoading(false)
     }
@@ -171,6 +200,27 @@ export default function LoginPage({ forceRole }) {
 
           {!isAdmin && (
             <div className="auth-extra-actions">
+              {isDriver && (
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  style={{
+                    width: '100%',
+                    padding: '13px',
+                    borderRadius: '14px',
+                    border: '1.5px dashed rgba(0, 230, 118, 0.4)',
+                    background: 'rgba(0, 230, 118, 0.06)',
+                    color: '#00E676',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    marginBottom: '12px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  🚀 Acesso Demo (Sem Servidor)
+                </button>
+              )}
               <div className="auth-footer-links">
                 <p className="auth-footer-prompt">
                   {isDriver ? 'Ainda não é parceiro?' : 'Novo no Zomp?'}

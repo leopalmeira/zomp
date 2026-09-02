@@ -13,6 +13,7 @@ const creditsRoutes = require('./src/routes/creditsRoutes');
 const configRoutes = require('./src/routes/configRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const supportRoutes = require('./src/routes/supportRoutes');
+const tournamentRoutes = require('./src/routes/tournamentRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -32,6 +33,7 @@ app.use('/api/credits', creditsRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/tournament', tournamentRoutes);
 
 // ============================================
 // HEALTH CHECK

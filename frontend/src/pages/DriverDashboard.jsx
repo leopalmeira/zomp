@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, getWallet, getPendingRides, acceptRide, completeRide, rateRide, getProfile, updateProfile, getRideMessages, sendRideMessage, createSupportTicket, getUserSupportTickets, getSupportMessages, sendSupportMessage, getTrafficNews } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Circle } from 'react-leaflet'
-import { User, FileText, Clock, Ticket, Gem, UserPlus, Users, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders, Camera, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, X, Rocket, ShieldCheck, Gift, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, Send, Newspaper } from 'lucide-react'
+import { User, FileText, Clock, Ticket, Gem, UserPlus, Users, RefreshCw, Headset, HelpCircle, Moon, Sun, LogOut, Wallet, CloudSun, Radio, Compass, Navigation, Eye, EyeOff, Sliders, Camera, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, X, Rocket, ShieldCheck, Gift, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, Send, Newspaper, Trophy } from 'lucide-react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './Driver.css'
+import DriverTournament from '../components/DriverTournament'
 
 function MapController({ center }) {
   const map = useMap()
@@ -145,6 +146,32 @@ const playLongRideSound = () => {
   } catch(e) { console.error('Audio longa falhou', e) }
 }
 
+// --- Som especial alegre de dinheiro / PIX para Royalties (+R$ 0,30) ---
+const playRoyaltyCashSound = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const playTone = (freq, start, dur, type = 'sine') => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, start);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.2, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+      osc.start(start);
+      osc.stop(start + dur);
+    };
+    const now = ctx.currentTime;
+    playTone(587.33, now, 0.12, 'triangle'); // D5
+    playTone(880.00, now + 0.1, 0.15, 'triangle'); // A5
+    playTone(1174.66, now + 0.2, 0.35, 'sine'); // D6 (high joyful coin chime)
+  } catch (e) {
+    console.error('Audio royalty falhou', e);
+  }
+}
+
+
 // Detecta se a corrida é longa (>=15km) ou agendada/frete
 const isLongOrScheduledRide = (ride) => {
   if (!ride) return false;
@@ -253,6 +280,33 @@ export default function DriverDashboard() {
   const [trafficNews, setTrafficNews] = useState([]);
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [showTrafficNews, setShowTrafficNews] = useState(() => localStorage.getItem('zomp_driver_show_news') !== 'false');
+
+  // ── 4.1 AVISO DE ROYALTIES (+0,30) ──
+  const [royaltyAlertsEnabled, setRoyaltyAlertsEnabled] = useState(() => localStorage.getItem('zomp_royalty_alerts') !== 'false');
+  const [showRoyaltyBubble, setShowRoyaltyBubble] = useState(false);
+  const royaltyTimerRef = useRef(null);
+
+  const triggerRoyaltyNotification = useCallback(() => {
+    if (!royaltyAlertsEnabled) return;
+
+    // Tocar som de moeda/cash
+    playRoyaltyCashSound();
+
+    // Atualizar saldo da carteira na hora (+0.30)
+    setWallet(prev => ({
+      ...prev,
+      balance: Number((parseFloat(prev.balance || 0) + 0.30).toFixed(2))
+    }));
+
+    // Exibir balãozinho redondo por 5 segundos com aura
+    setShowRoyaltyBubble(true);
+
+    if (royaltyTimerRef.current) clearTimeout(royaltyTimerRef.current);
+    royaltyTimerRef.current = setTimeout(() => {
+      setShowRoyaltyBubble(false);
+    }, 5000);
+  }, [royaltyAlertsEnabled]);
+
 
   // ── 5. SONAR & POSIÇÃO GPS ──
   const [myPos, setMyPos] = useState([-22.9068, -43.1729]);
@@ -883,6 +937,10 @@ export default function DriverDashboard() {
         setActiveRide(null);
         fetchWallet();
         fetchCredits();
+        // 🟢 Disparar balãozinho redondo com aura de 5 segundos ao finalizar corrida!
+        if (royaltyAlertsEnabled) {
+          triggerRoyaltyNotification();
+        }
       }
     } catch (err) { alert(err.message || 'Erro ao finalizar.'); }
   };
@@ -1044,6 +1102,31 @@ export default function DriverDashboard() {
             </button>
           )}
         </div>
+
+        {/* 🟢 BALÃO FLUTUANTE REDONDO DE ROYALTIES (+0,30) COM AURA DE 5 SEGUNDOS — LADO DIREITO */}
+        {showRoyaltyBubble && royaltyAlertsEnabled && (
+          <div
+            className="royalty-floating-circle-right"
+            onClick={() => setShowRoyaltyBubble(false)}
+            title="Royalty de R$ 0,30 creditado"
+          >
+            {/* Aura Circular SVG de 5 Segundos dando a volta pelo perímetro */}
+            <svg className="royalty-circle-aura-svg" viewBox="0 0 66 66">
+              <circle className="royalty-aura-track" cx="33" cy="33" r="30" />
+              <circle className="royalty-aura-progress" cx="33" cy="33" r="30" />
+            </svg>
+
+            {/* Ponto verde piscante */}
+            <span className="royalty-circle-dot"></span>
+
+            {/* Texto central "+0,30" */}
+            <span className="royalty-circle-text">+0,30</span>
+            <span className="royalty-circle-sub">Royalty</span>
+          </div>
+        )}
+
+
+
 
         {/* OVERLAY WIDGET: CLIMA & TRÂNSITO */}
         {showWeatherTraffic && (
@@ -1517,6 +1600,48 @@ export default function DriverDashboard() {
                 <span className="nav-icon"><UserPlus size={18} /></span>
                 <span className="nav-text">Indicar Passageiros</span>
                 <span className="nav-badge-passengers">{linkedPassengers} vinculados</span>
+              </button>
+
+              {/* Card de Controle e Simulação de Royalties */}
+              <div className="drawer-royalty-control-card">
+                <div className="drc-header">
+                  <div className="drc-title-row">
+                    <span style={{ fontSize: '1.1rem' }}>🔔</span>
+                    <div>
+                      <span>Aviso de Royalty (+0,30)</span>
+                      <p style={{ margin: 0, fontSize: '0.68rem', color: '#94a3b8' }}>Aura de 5s ao finalizar corrida</p>
+                    </div>
+                  </div>
+                  <button
+                    className={`drc-toggle-btn ${royaltyAlertsEnabled ? 'active' : 'inactive'}`}
+                    onClick={() => {
+                      const next = !royaltyAlertsEnabled;
+                      setRoyaltyAlertsEnabled(next);
+                      localStorage.setItem('zomp_royalty_alerts', String(next));
+                    }}
+                  >
+                    {royaltyAlertsEnabled ? 'ATIVO' : 'DESATIVADO'}
+                  </button>
+                </div>
+                <button
+                  className="drc-sim-btn"
+                  onClick={() => {
+                    triggerRoyaltyNotification();
+                    setMenuOpen(false);
+                  }}
+                  title="Testar o balãozinho redondo de +0,30 com aura de 5 segundos"
+                >
+                  <span>⚡</span> Testar Balãozinho (+0,30)
+                </button>
+              </div>
+
+
+
+              <div className="drawer-section-label">Competição & Prêmios</div>
+              <button className={`drawer-nav-item tournament-item ${activeScreen === 'TOURNAMENT' ? 'active' : ''}`} onClick={() => openScreen('TOURNAMENT')}>
+                <span className="nav-icon"><Trophy size={18} /></span>
+                <span className="nav-text">🏆 Torneio Zomp</span>
+                <span className="nav-badge-tournament">AO VIVO</span>
               </button>
 
               <div className="drawer-section-label">Suporte & Ajuda</div>
@@ -2611,6 +2736,11 @@ export default function DriverDashboard() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* ===== TORNEIO ZOMP ===== */}
+      {activeScreen === 'TOURNAMENT' && (
+        <DriverTournament onClose={() => setActiveScreen(null)} />
       )}
     
       {/* Modal de Recarga de Créditos */}

@@ -1507,3 +1507,258 @@
 .dark-map .leaflet-tile-pane {
   filter: invert(1) hue-rotate(180deg) brightness(0.7) contrast(1.1);
 }
+
+/* ── TORNEIO ZOMP — Drawer Button Styles ── */
+.drawer-nav-item.tournament-item {
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.08), rgba(0, 230, 118, 0.06));
+  border: 1px solid rgba(250, 204, 21, 0.25) !important;
+  border-radius: 12px !important;
+  margin: 2px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.drawer-nav-item.tournament-item::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(250, 204, 21, 0.06), transparent);
+  animation: tournShimmer 3s ease-in-out infinite;
+}
+
+@keyframes tournShimmer {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+
+.drawer-nav-item.tournament-item .nav-icon {
+  color: #facc15 !important;
+}
+
+.drawer-nav-item.tournament-item .nav-text {
+  color: #fde047 !important;
+  font-weight: 800 !important;
+}
+
+.drawer-nav-item.tournament-item:hover {
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.15), rgba(0, 230, 118, 0.12));
+  border-color: rgba(250, 204, 21, 0.5) !important;
+  transform: translateX(4px);
+}
+
+.drawer-nav-item.tournament-item.active {
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(0, 230, 118, 0.15));
+  border-color: #facc15 !important;
+}
+
+.nav-badge-tournament {
+  font-size: 0.58rem;
+  font-weight: 900;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  padding: 3px 8px;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: tournPulse 2s ease-in-out infinite;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes tournPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   BALÃO FLUTUANTE REDONDO (+0,30) COM AURA DE 5 SEGUNDOS
+   ═════════════════════════════════════════════════════════════ */
+
+.royalty-floating-circle-right {
+  position: absolute;
+  right: 14px;
+  top: 118px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #090d16 0%, #064e3b 100%);
+  border: 1.5px solid rgba(0, 230, 118, 0.4);
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.5), 0 8px 24px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  cursor: pointer;
+  animation: royaltyPopIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, royaltyFadeOut 0.5s ease 4.7s forwards;
+  user-select: none;
+}
+
+@keyframes royaltyPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.3) rotate(-30deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes royaltyFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.4);
+    pointer-events: none;
+  }
+}
+
+/* Aura Circular SVG de 5 Segundos dando a volta pelo perímetro */
+.royalty-circle-aura-svg {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 66px;
+  height: 66px;
+  transform: rotate(-90deg);
+  pointer-events: none;
+  overflow: visible;
+}
+
+.royalty-aura-track {
+  fill: none;
+  stroke: rgba(0, 230, 118, 0.15);
+  stroke-width: 3;
+}
+
+.royalty-aura-progress {
+  fill: none;
+  stroke: #00E676;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 188.5; /* 2 * PI * 30 ≈ 188.5 */
+  stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 6px #00E676);
+  animation: auraCircuit5s 5s linear forwards;
+}
+
+@keyframes auraCircuit5s {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 188.5;
+  }
+}
+
+/* Ponto verde neon piscante */
+.royalty-circle-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00E676;
+  box-shadow: 0 0 8px #00E676;
+  margin-bottom: 2px;
+  animation: dotBlink 0.8s ease-in-out infinite;
+}
+
+.royalty-circle-text {
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #00E676;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(0, 230, 118, 0.8);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.royalty-circle-sub {
+  font-size: 0.5rem;
+  font-weight: 800;
+  color: #a7f3d0;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 1px;
+}
+
+/* Card de Controle de Royalties no Drawer */
+.drawer-royalty-control-card {
+  background: linear-gradient(135deg, rgba(0, 230, 118, 0.08), rgba(9, 13, 22, 0.6));
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  border-radius: 14px;
+  padding: 14px;
+  margin: 8px 0 12px;
+}
+
+.drc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.drc-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drc-title-row span {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.drc-toggle-btn {
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s;
+}
+
+.drc-toggle-btn.active {
+  background: #00E676;
+  border-color: #00E676;
+  color: #090d16;
+}
+
+.drc-toggle-btn.inactive {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+}
+
+.drc-sim-btn {
+  width: 100%;
+  padding: 9px 12px;
+  background: linear-gradient(135deg, #059669, #047857);
+  border: 1px solid #10b981;
+  color: #ffffff;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+}
+
+.drc-sim-btn:hover {
+  background: #10b981;
+  transform: translateY(-1px);
+}
+
+.drc-sim-btn:active {
+  transform: scale(0.97);
+}
+
+

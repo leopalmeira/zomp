@@ -419,5 +419,120 @@ export async function getTrafficNews() {
   return data;
 }
 
+export async function getTournamentData() {
+  try {
+    const res = await fetch(`${API_BASE}/tournament/data`, {
+      headers: getHeaders(),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.tournament) return data.tournament;
+    }
+  } catch {
+    // API indisponível — fallback local abaixo
+  }
 
+  // ─── FALLBACK LOCAL (sem backend) ───
+  const user = getCurrentUser();
+  const now = new Date();
+  const day = now.getDate();
+  const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  // Determinar fase
+  let phase;
+  if (day <= 15) {
+    phase = { phase: 'CLASSIFICATORIA', phaseLabel: 'Fase Classificatória', phaseDescription: 'Faça no mínimo 15 corridas/dia em pelo menos 10 dos 15 dias para se classificar ao Torneio.', daysLeft: 15 - day };
+  } else if (day <= 22) {
+    phase = { phase: 'TORNEIO', phaseLabel: 'Torneio Zomp — AO VIVO 🔴', phaseDescription: 'O Torneio está acontecendo agora! Faça o máximo de corridas para subir no ranking e conquistar os prêmios.', daysLeft: 22 - day };
+  } else {
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    phase = { phase: 'AGUARDANDO', phaseLabel: 'Aguardando Próximo Torneio', phaseDescription: 'O torneio deste mês já foi encerrado. A próxima fase classificatória começa no dia 1º do próximo mês.', daysLeft: lastDay - day };
+  }
+
+  // Nomes simulados
+  const names = [
+    'Ricardo S.','Fernando M.','Carlos E.','André L.','Marcos V.','Rafael T.','Lucas P.','Bruno C.','Diego R.','Thiago A.',
+    'Gustavo H.','Eduardo N.','Rodrigo F.','Leandro B.','Felipe G.','Alexandre D.','João P.','Pedro H.','Matheus S.','Vinícius R.',
+    'Daniel O.','Fabiano L.','Wagner M.','Cristiano A.','Marcelo J.','Roberto K.','Paulo C.','Henrique F.','Sérgio N.','Gabriel T.',
+    'Renato V.','Júlio S.','Adriano P.','Leonardo M.','Caio R.'
+  ];
+  const baseRides = [142,135,128,118,112,105,99,94,88,83,79,75,71,67,64,61,58,55,52,49,46,44,42,40,38,36,34,32,30,28,26,24,22,20,18];
+
+  // Seed determinístico baseado no mês para não mudar a cada refresh
+  const seed = now.getMonth() * 31 + now.getFullYear();
+  const pseudoRandom = (i) => ((seed * 9301 + i * 49297) % 233280) / 233280;
+
+  const entries = baseRides.map((r, i) => ({
+    id: `sim-${i}`,
+    name: names[i] || `Motorista ${i+1}`,
+    rides: Math.max(1, r + Math.floor(pseudoRandom(i) * 5) - 2),
+    isSimulated: true,
+    isCurrentUser: false
+  }));
+
+  // Motorista real
+  const driverRides = user?.ridesCompleted || Math.floor(pseudoRandom(99) * 40 + 15);
+  entries.push({
+    id: user?.id || 'local-driver',
+    name: user?.name || 'Você',
+    rides: driverRides,
+    isSimulated: false,
+    isCurrentUser: true
+  });
+
+  entries.sort((a, b) => b.rides - a.rides);
+  entries.forEach((e, idx) => { e.position = idx + 1; });
+
+  const top30 = entries.slice(0, 30);
+  const driverEntry = entries.find(e => e.isCurrentUser);
+  const pos30 = entries[29];
+  const pos20 = entries[19];
+  const pos3 = entries[2];
+  const pos1 = entries[0];
+
+  const gaps = {
+    toTop30: Math.max(0, (pos30?.rides || 0) - driverEntry.rides + 1),
+    toTop20: Math.max(0, (pos20?.rides || 0) - driverEntry.rides + 1),
+    toTop3: Math.max(0, (pos3?.rides || 0) - driverEntry.rides + 1),
+    toTop1: Math.max(0, (pos1?.rides || 0) - driverEntry.rides + 1),
+    rides30th: pos30?.rides || 0,
+    rides20th: pos20?.rides || 0,
+    rides3rd: pos3?.rides || 0,
+    rides1st: pos1?.rides || 0
+  };
+
+  let smartTip = '';
+  const pos = driverEntry.position;
+  if (pos <= 3) {
+    smartTip = `🏆 Parabéns! Você está no TOP 3 (#${pos}º)! Continue assim para garantir o Carro de R$ 100 Mil!`;
+  } else if (pos <= 20) {
+    smartTip = `🔥 Você está em #${pos}º lugar (Faixa PIX R$ 3.000)! Faltam ${gaps.toTop3} corridas para o Top 3 e disputar o Carro de R$ 100 Mil!`;
+  } else if (pos <= 30) {
+    smartTip = `📱 Você está em #${pos}º lugar (Faixa Smartphone Samsung)! Faltam ${gaps.toTop20} corridas para subir para a faixa PIX R$ 3.000!`;
+  } else {
+    smartTip = `💪 Você está em #${pos}º lugar com ${driverEntry.rides} corridas. O 30º colocado tem ${gaps.rides30th} corridas. Faça mais ${gaps.toTop30} corridas para entrar na zona de premiação (Top 30)!`;
+  }
+
+  return {
+    month: monthNames[now.getMonth()],
+    year: now.getFullYear(),
+    phase,
+    leaderboard: top30,
+    driver: {
+      id: user?.id || 'local-driver',
+      name: user?.name || 'Motorista',
+      rides: driverRides,
+      position: driverEntry.position,
+      isInTop30: driverEntry.position <= 30,
+      gaps
+    },
+    smartTip,
+    prizes: [
+      { range: '1º ao 3º', prize: 'Carro de R$ 100.000,00', icon: '🚗', color: '#facc15' },
+      { range: '4º ao 20º', prize: 'R$ 3.000,00 via PIX', icon: '💰', color: '#00E676' },
+      { range: '21º ao 30º', prize: 'Smartphone Samsung', icon: '📱', color: '#38bdf8' }
+    ],
+    totalParticipants: entries.length
+  };
+}
 

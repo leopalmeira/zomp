@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'zomp_2026_production_secret';
@@ -15,14 +16,15 @@ exports.register = async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     const qrCode = role === 'DRIVER' ? `ZOMP-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}` : null;
     const initialCredits = role === 'DRIVER' ? 10 : 0;
+    const id = crypto.randomUUID();
 
     const { rows } = await pool.query(`
-      INSERT INTO "User" (name, email, password, role, "qrCode", "isApproved", credits)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO "User" (id, name, email, password, role, "qrCode", "isApproved", credits)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING id, name, email, role, "qrCode", "isApproved", credits
-    `, [name, email, hash, role.toUpperCase(), qrCode, true, initialCredits]);
+    `, [id, name, email, hash, role.toUpperCase(), qrCode, true, initialCredits]);
 
-    const user = rows[0];
+    const user = rows[0] || { id, name, email, role: role.toUpperCase(), qrCode, isApproved: true, credits: initialCredits };
 
     // Vincular referral se tiver qrCode do motorista
     if (referrerQrCode && role === 'PASSENGER') {
@@ -33,8 +35,8 @@ exports.register = async (req, res) => {
         const expiresAt = new Date();
         expiresAt.setMonth(expiresAt.getMonth() + months);
         await pool.query(
-          'INSERT INTO "Referral" ("referrerId", "referredId", "expiresAt") VALUES ($1, $2, $3)',
-          [driverRows[0].id, user.id, expiresAt]
+          'INSERT INTO "Referral" (id, "referrerId", "referredId", "expiresAt") VALUES ($1, $2, $3, $4)',
+          [crypto.randomUUID(), driverRows[0].id, user.id, expiresAt.toISOString()]
         );
       }
     }
@@ -42,7 +44,7 @@ exports.register = async (req, res) => {
     const authToken = jwt.sign({ id: user.id, role: user.role.toUpperCase() }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token: authToken, user: { id: user.id, name: user.name, role: user.role.toUpperCase(), email: user.email } });
   } catch (err) {
-    if (err.code === '23505') {
+    if (err.code === '23505' || (err.message && err.message.includes('UNIQUE constraint'))) {
       return res.status(409).json({ error: 'Este e-mail já está cadastrado!', details: 'Unique constraint failed on email' });
     }
     console.error('Erro no registro:', err.message);
