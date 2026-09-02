@@ -43,9 +43,26 @@ app.get('/api/health', (req, res) => {
 });
 
 // ============================================
-// START SERVER
+// START SERVER & ROBÔ ANTI-SLEEP (KEEP-ALIVE)
 // ============================================
 app.listen(PORT, async () => {
   console.log(`🚀 ZOMP API v12.6.4 ONLINE: http://localhost:${PORT}`);
   await initDB();
+
+  // Robô anti-sleep: faz auto-ping a cada 9 minutos para manter a instância do Render ativa 24/7
+  const serverUrl = process.env.RENDER_EXTERNAL_URL || process.env.SERVER_URL || `http://localhost:${PORT}`;
+  const PING_INTERVAL_MS = 9 * 60 * 1000;
+  setInterval(async () => {
+    try {
+      const pingUrl = `${serverUrl}/api/health`;
+      const res = await fetch(pingUrl);
+      if (res.ok) {
+        console.log(`🤖 [Anti-Sleep Bot] Ping realizado com sucesso em ${pingUrl} às ${new Date().toLocaleTimeString('pt-BR')}`);
+      }
+    } catch (e) {
+      console.warn('🤖 [Anti-Sleep Bot] Tentativa de ping:', e.message);
+    }
+  }, PING_INTERVAL_MS);
+  console.log('🤖 [Anti-Sleep Bot] Robô de vigília 24/7 ativado com sucesso.');
 });
+

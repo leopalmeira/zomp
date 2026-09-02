@@ -11,7 +11,9 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: DATABASE_URL
-        value: postgresql://zomp_db_whts_user:dsarX2dGuByNZah1tKMzrTb2bpcrEnsZ@dpg-d9njj3daeets73c365d0-a.oregon-postgres.render.com/zomp_db_whts
+        fromDatabase:
+          name: zomp-db
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN_EMAIL
@@ -38,4 +40,5 @@ services:
 databases:
   - name: zomp-db
     plan: free
+
 
