@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout, getCurrentUser, requestRide, getRideHistory, applyRideDiscount, cancelRide, rateRide, validateScreenshot, getUserDebt, getRideMessages, sendRideMessage, createSupportTicket, getUserSupportTickets, getSupportMessages, sendSupportMessage, getProfile, updateProfile } from '../services/api'
 import { MapContainer, TileLayer, useMap, Marker, Polyline, Popup } from 'react-leaflet'
-import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, X, Sparkles, HelpCircle } from 'lucide-react'
+import { User, Clock, Star, Calendar, LogOut, ChevronRight, MapPin, Send, Check, Camera, MessageSquare, MessageCircle, AlertTriangle, ShieldAlert, LifeBuoy, X, Sparkles, HelpCircle, ShieldCheck } from 'lucide-react'
+
 import L from 'leaflet'
 import Tesseract from 'tesseract.js'
 import 'leaflet/dist/leaflet.css'
@@ -2656,94 +2657,130 @@ const POPULAR_DESTINATIONS = [
       </div>
       )}
 
-      {/* ===== SIDE MENU ===== */}
+      {/* ===== SIDE MENU (PREMIUM TOTVS ENTERPRISE) ===== */}
       {isMenuOpen && (
         <div className="side-menu-overlay" onClick={() => { setIsMenuOpen(false); setMenuScreen('MAIN') }}>
           <div className="side-menu-drawer animate-slide-right" onClick={(e) => e.stopPropagation()}>
-            <div className="drawer-close" onClick={() => { setIsMenuOpen(false); setMenuScreen('MAIN') }}>✕</div>
-            <div className="menu-nav-list">
-
-              {/* Logo no topo */}
-              <div style={{padding: '48px 20px 0'}}>
-                <img src="/logo.svg" alt="Zomp" style={{height: '26px'}} />
+            
+            {/* Header com Branding & Perfil */}
+            <div className="passenger-drawer-header">
+              <div className="passenger-drawer-top-bar">
+                <div className="passenger-drawer-brand">
+                  <img src="/logo.svg" alt="Zomp" className="passenger-drawer-logo" />
+                  <span className="passenger-badge-pill">Passageiro</span>
+                </div>
+                <button
+                  className="passenger-drawer-close-btn"
+                  onClick={() => { setIsMenuOpen(false); setMenuScreen('MAIN') }}
+                  aria-label="Fechar menu"
+                >
+                  <X size={18} />
+                </button>
               </div>
 
+              {/* Card de Perfil do Passageiro */}
+              <div className="passenger-profile-card">
+                <div className="passenger-avatar-wrap">
+                  <div className="passenger-avatar-circle">
+                    {user?.name?.charAt(0) || 'P'}
+                  </div>
+                  <span className="passenger-status-dot"></span>
+                </div>
+                <div className="passenger-user-info">
+                  <div className="passenger-name-row">
+                    <h3>{user?.name || 'Passageiro Parceiro'}</h3>
+                    <ShieldCheck size={16} className="passenger-verified-icon" title="Passageiro Verificado" />
+                  </div>
+                  <div className="passenger-badges-row">
+                    <span className="passenger-rating-badge">⭐ {Number(user?.rating || 5.0).toFixed(1)}</span>
+                    <span className="passenger-trips-badge">• {rideHistory.length || 0} viagens</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Conteúdo Navegável do Menu */}
+            <div className="menu-nav-list">
               {menuScreen === 'MAIN' && (
                 <>
-                  {/* Header do usuário */}
-                  <div className="menu-user-header">
-                    <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                      <div className="user-avatar-large">
-                        {user?.name?.charAt(0) || 'P'}
-                      </div>
-                      <div>
-                        <h3 style={{margin:0, color:'#1a1a1a', fontSize:'0.95rem', fontWeight:700}}>
-                          {user?.name || 'Passageiro'}
-                        </h3>
-                        <div style={{
-                          fontSize:'0.65rem', color:'#059669', fontWeight:700,
-                          letterSpacing:'1px', marginTop:'3px', textTransform:'uppercase'
-                        }}>
-                          Passageiro Elite
-                        </div>
-                      </div>
+                  {/* Hero Banner: Preço Imbatível */}
+                  <div
+                    className="passenger-hero-challenge-card"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setShowCompetitionModal(true);
+                    }}
+                  >
+                    <span className="phc-icon">⚡</span>
+                    <div className="phc-info">
+                      <div className="phc-title">Preço Imbatível Zomp</div>
+                      <div className="phc-sub">Cobrimos qualquer print da concorrência</div>
                     </div>
+                    <ChevronRight size={16} color="#059669" />
                   </div>
 
                   {/* ── Seção: VIAGENS ── */}
-                  <div className="menu-section-label">Viagens</div>
+                  <div className="menu-section-label">Viagens & Rotas</div>
 
                   <button className="menu-nav-btn" onClick={() => { resetFlow(); setIsMenuOpen(false) }}>
                     <span className="nav-icon"><MapPin size={17} /></span>
-                    Nova Viagem
+                    <span>Nova Viagem</span>
+                    <span className="menu-nav-arrow">›</span>
+                  </button>
+
+                  <button className="menu-nav-btn" onClick={() => setMenuScreen('PROFILE')}>
+                    <span className="nav-icon"><User size={17} /></span>
+                    <span>Meu Perfil</span>
+                    <span className="menu-nav-arrow">›</span>
                   </button>
 
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('SCHEDULED')}>
                     <span className="nav-icon"><Calendar size={17} /></span>
-                    Agendamentos
+                    <span>Agendamentos</span>
                     {scheduledRides.length > 0 && (
-                      <span style={{
-                        marginLeft: 'auto',
-                        background: '#dcfce7',
-                        color: '#059669',
-                        borderRadius: '50%',
-                        width: '22px', height: '22px',
-                        display: 'inline-flex',
-                        alignItems: 'center', justifyContent: 'center',
-                        fontSize: '0.7rem', fontWeight: 800
-                      }}>{scheduledRides.length}</span>
+                      <span className="menu-nav-badge">{scheduledRides.length}</span>
                     )}
+                    <span className="menu-nav-arrow">›</span>
                   </button>
 
-                  {/* ── Seção: SERVIÇOS ── */}
-                  <div className="menu-section-label">Serviços Especiais</div>
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('LONG_TRIPS')}>
                     <span className="nav-icon"><Send size={17} /></span>
-                    Viagens Longas
+                    <span>Viagens Longas / Cidades</span>
+                    <span className="menu-nav-arrow">›</span>
                   </button>
 
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('HISTORY')}>
                     <span className="nav-icon"><Clock size={17} /></span>
-                    Histórico
+                    <span>Histórico de Corridas</span>
+                    <span className="menu-nav-arrow">›</span>
+                  </button>
+
+                  {/* ── Seção: ECONOMIA & VANTAGENS ── */}
+                  <div className="menu-section-label">Economia & Vantagens</div>
+
+                  <button
+                    className="menu-nav-btn"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setShowCompetitionModal(true);
+                    }}
+                  >
+                    <span className="nav-icon"><Sparkles size={17} /></span>
+                    <span>Desafio do Print</span>
+                    <span className="menu-nav-badge" style={{ background: '#ecfdf5', color: '#059669' }}>Desconto</span>
                   </button>
 
                   {/* ── Seção: AJUDA & SUPORTE ── */}
-                  <div className="menu-section-label">Ajuda & Suporte</div>
+                  <div className="menu-section-label">Ajuda & Atendimento</div>
 
-                  <button className="menu-nav-btn" style={{ color: '#059669', fontWeight: 700 }} onClick={() => setMenuScreen('SUPPORT')}>
+                  <button className="menu-nav-btn" style={{ color: '#059669', fontWeight: 800 }} onClick={() => setMenuScreen('SUPPORT')}>
                     <span className="nav-icon"><LifeBuoy size={17} color="#059669" /></span>
-                    Suporte & Reportar Problemas
-                  </button>
-
-                  <div className="menu-spacer"></div>
-
-                  {/* ── Logout ── */}
-                  <button className="menu-nav-btn text-danger" onClick={() => { logout(); navigate('/passageiro') }}>
-                    <span className="nav-icon"><LogOut size={17} /></span>
-                    Sair do App
+                    <span>Central de Suporte</span>
+                    <span className="menu-nav-arrow">›</span>
                   </button>
                 </>
               )}
+
 
               {/* ===== TELA DE SUPORTE & REPORTAR PROBLEMAS DO PASSAGEIRO ===== */}
               {menuScreen === 'SUPPORT' && (
@@ -3045,6 +3082,22 @@ const POPULAR_DESTINATIONS = [
                 </div>
               )}
 
+            </div>
+
+            {/* Rodapé Fixo com Botão Sair em Destaque */}
+            <div className="passenger-drawer-footer">
+              <button
+                className="passenger-logout-btn"
+                onClick={() => {
+                  if (confirm('Deseja realmente sair da sua conta de passageiro?')) {
+                    logout();
+                    navigate('/passageiro');
+                  }
+                }}
+              >
+                <LogOut size={18} />
+                <span>Sair da Conta</span>
+              </button>
             </div>
           </div>
         </div>
