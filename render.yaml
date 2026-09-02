@@ -35,7 +35,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://zomp-api-nb4x.onrender.com/api
+        value: https://zomp-api-nb4v.onrender.com/api
 
 
 databases:
