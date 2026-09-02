@@ -649,15 +649,32 @@ zomp-db          → PostgreSQL 16 (plano free)        — Banco de dados intern
 ```
 
 ---
+---
 **Status Atual**: ✅ Backend ONLINE (`zomp-api-nb4v`). Frontend redeployado. Login via API de produção ativado.
 **Versão**: 17.0.0
 **Responsável**: Antigravity AI & Leandro Palmeira
-**Último Commit**: [a66da2c](https://github.com/leopalmeira/zomp/commit/a66da2c)
+**Último Commit**: [77a9aff](https://github.com/leopalmeira/zomp/commit/77a9aff)
 
 ---
 
-### ⚠️ Próximos Passos (v17.1.0)
-1. **Testar login real** em `zomp.com.br/motorista` e `zomp.com.br/passageiro` com as credenciais de teste.
-2. **Verificar DNS** — confirmar que `zomp.com.br` está apontando para o serviço `zomp-app` na **nova conta** (`Só's workspace`), e não na conta antiga suspensa.
-3. **Testar upload de foto** — se der erro 413, configurar `express.json({ limit: '10mb' })`.
-4. **Configurar `body-parser` limit** no backend para suportar fotos grandes em base64.
+### 🚀 v17.1.0 - Redesenho das Notícias de Trânsito: Gaveta Expansível, Filtro Anti-Spam e Modo Mapa Livre (2026-09-02)
+
+* 🚦 **Redesenho Completo do Widget de Trânsito no App do Motorista**:
+  - **Pílula Compacta no Mapa**: Título limpo com status visual por cores (🔴 Alerta/Acidente, 🟡 Retenção/Obras, 🟢 Fluxo Livre), fonte e horário.
+  - **Botão Minimizar (`✕`)**: O motorista pode recolher a barra a qualquer momento para deixar o mapa 100% limpo e visível.
+  - **Botão Flutuante Discreto (`🚦 Alertas Trânsito`)**: Quando minimizado, permanece apenas uma pílula discreta com contagem de alertas, sem atrapalhar a visão do GPS e da rota.
+  - **Gaveta Inferior Expansível (Bottom Sheet)**:
+    - Ao tocar no widget ou no botão `▼`, abre uma gaveta inferior elegante e fluida com as 4 notícias completas.
+    - Cada informe exibe: Ícone e Tag de severidade, título completo sem nenhum corte, fonte oficial (G1, CET-Rio, COR, Ecoponte), horário de atualização e link direto para a matéria original.
+    - Botões rápidos de alternar: "Fixar Barra no Topo", "Ocultar do Mapa" e "✓ Entendido".
+
+* 🛡️ **Filtro Inteligente Anti-Spam no Backend (`configController.js`)**:
+  - Implementada lista de bloqueio (`IGNORED_TERMS`) para descartar notícias irrelevantes de concursos públicos, editais, vagas, aposentadoria, futebol e loterias.
+  - O feed do Google Notícias foca estritamente em **vias expressas (Av. Brasil, Linha Vermelha, Amarela), túneis, pontes, retenções e acidentes do Rio de Janeiro**.
+  - Classificação automática de severidade (`ALERT`, `MODERATE`, `FREE`) e extração do link da matéria.
+
+---
+**Status Atual**: ✅ Gaveta de notícias e filtro implementados. Build validado.
+**Versão**: 17.1.0
+**Responsável**: Antigravity AI & Leandro Palmeira
+

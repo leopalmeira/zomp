@@ -280,6 +280,8 @@ export default function DriverDashboard() {
   const [trafficNews, setTrafficNews] = useState([]);
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [showTrafficNews, setShowTrafficNews] = useState(() => localStorage.getItem('zomp_driver_show_news') !== 'false');
+  const [showNewsDrawer, setShowNewsDrawer] = useState(false);
+  const [isNewsMinimized, setIsNewsMinimized] = useState(() => localStorage.getItem('zomp_driver_news_minimized') === 'true');
 
   // ── 4.1 AVISO DE ROYALTIES (+0,30) & EXTRATO ACUMULADO ──
   const [royaltyAlertsEnabled, setRoyaltyAlertsEnabled] = useState(() => localStorage.getItem('zomp_royalty_alerts') !== 'false');
@@ -1181,49 +1183,166 @@ export default function DriverDashboard() {
           </div>
         )}
 
-        {/* OVERLAY WIDGET: NOTÍCIAS DE TRÂNSITO EM TEMPO REAL (G1 / GOOGLE NOTÍCIAS) */}
-        {showTrafficNews && trafficNews.length > 0 && (
+        {/* OVERLAY WIDGET: NOTÍCIAS DE TRÂNSITO EM TEMPO REAL */}
+        {showTrafficNews && trafficNews.length > 0 && !isNewsMinimized && (
           <div
             className="driver-widget-glass animate-fade-in"
             style={{
               marginTop: '6px',
-              padding: '7px 12px',
-              background: 'rgba(9, 13, 22, 0.92)',
-              border: '1px solid rgba(0, 230, 118, 0.25)',
-              borderRadius: '12px',
+              padding: '6px 10px',
+              background: 'rgba(9, 13, 22, 0.94)',
+              border: '1px solid rgba(0, 230, 118, 0.35)',
+              borderRadius: '14px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-              cursor: 'pointer'
+              boxShadow: '0 6px 20px rgba(0,0,0,0.45)',
+              position: 'relative',
+              zIndex: 2600
             }}
-            onClick={() => setCurrentNewsIndex(prev => (prev + 1) % trafficNews.length)}
-            title="Toque para alternar a notícia"
           >
-            <div style={{
-              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-              color: '#fff',
-              fontSize: '0.62rem',
-              fontWeight: 900,
-              padding: '2px 6px',
-              borderRadius: '6px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.4px',
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              <span>🚗</span> G1 / Google
+            {/* Tag / Badge de Severidade */}
+            <div
+              onClick={() => setShowNewsDrawer(true)}
+              style={{
+                background: trafficNews[currentNewsIndex]?.severity === 'ALERT'
+                  ? 'linear-gradient(135deg, #ef4444, #b91c1c)'
+                  : trafficNews[currentNewsIndex]?.severity === 'FREE'
+                  ? 'linear-gradient(135deg, #059669, #10b981)'
+                  : 'linear-gradient(135deg, #d97706, #b45309)',
+                color: '#fff',
+                fontSize: '0.65rem',
+                fontWeight: 900,
+                padding: '3px 7px',
+                borderRadius: '8px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.4px',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                cursor: 'pointer'
+              }}
+              title="Toque para ver todas as notícias completas"
+            >
+              <span>{trafficNews[currentNewsIndex]?.icon || '🚗'}</span>
+              <span>{trafficNews[currentNewsIndex]?.tag || 'Trânsito'}</span>
             </div>
-            <div style={{ flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', fontSize: '0.78rem', fontWeight: 700, color: '#f8fafc' }}>
-              <span style={{ color: '#00E676', marginRight: '5px' }}>●</span>
-              {trafficNews[currentNewsIndex]?.title}
+
+            {/* Texto da Notícia com clique para abrir */}
+            <div
+              onClick={() => setShowNewsDrawer(true)}
+              style={{
+                flex: 1,
+                overflow: 'hidden',
+                cursor: 'pointer',
+                minWidth: 0
+              }}
+              title="Toque para ler notícia completa"
+            >
+              <div style={{
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                color: '#f8fafc',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                lineHeight: 1.3
+              }}>
+                {trafficNews[currentNewsIndex]?.title}
+              </div>
+              <div style={{
+                fontSize: '0.62rem',
+                color: '#94a3b8',
+                fontWeight: 600,
+                display: 'flex',
+                gap: '6px'
+              }}>
+                <span>{trafficNews[currentNewsIndex]?.source || 'G1'}</span>
+                <span>•</span>
+                <span style={{ color: '#00E676' }}>{trafficNews[currentNewsIndex]?.time || 'Tempo Real'}</span>
+              </div>
             </div>
-            <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, flexShrink: 0, background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '100px' }}>
-              {currentNewsIndex + 1}/4
-            </div>
+
+            {/* Botão para alternar / abrir gaveta */}
+            <button
+              onClick={() => setShowNewsDrawer(true)}
+              style={{
+                background: 'rgba(0, 230, 118, 0.15)',
+                border: '1px solid rgba(0, 230, 118, 0.4)',
+                borderRadius: '8px',
+                color: '#00E676',
+                padding: '4px 8px',
+                fontSize: '0.68rem',
+                fontWeight: 900,
+                cursor: 'pointer',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px'
+              }}
+              title="Ver todas as 4 notícias completas"
+            >
+              <span>{currentNewsIndex + 1}/4</span>
+              <span>▼</span>
+            </button>
+
+            {/* Botão Minimizar (X) */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsNewsMinimized(true);
+                localStorage.setItem('zomp_driver_news_minimized', 'true');
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                color: '#94a3b8',
+                borderRadius: '50%',
+                width: '22px',
+                height: '22px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '0.72rem',
+                flexShrink: 0
+              }}
+              title="Minimizar barra para manter o mapa limpo"
+            >
+              ✕
+            </button>
           </div>
+        )}
+
+        {/* Botão flutuante quando minimizado */}
+        {showTrafficNews && trafficNews.length > 0 && isNewsMinimized && (
+          <button
+            onClick={() => setShowNewsDrawer(true)}
+            className="animate-fade-in"
+            style={{
+              marginTop: '6px',
+              alignSelf: 'flex-start',
+              background: 'rgba(9, 13, 22, 0.94)',
+              border: '1px solid #00E676',
+              borderRadius: '50px',
+              padding: '5px 12px',
+              color: '#fff',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
+              cursor: 'pointer',
+              fontSize: '0.74rem',
+              fontWeight: 800,
+              zIndex: 2600
+            }}
+            title="Toque para ver alertas de trânsito em tempo real"
+          >
+            <span style={{ fontSize: '0.85rem' }}>🚦</span>
+            <span style={{ color: '#00E676' }}>Alertas Trânsito ({trafficNews.length})</span>
+            <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>▲</span>
+          </button>
         )}
 
         {/* Seletor Rápido de Raio de Atuação */}
@@ -3163,6 +3282,234 @@ export default function DriverDashboard() {
                 }}
               >
                 ➤
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL / GAVETA INFERIOR: TODAS AS NOTÍCIAS DE TRÂNSITO RJ ── */}
+      {showNewsDrawer && (
+        <div
+          className="animate-fade-in"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.72)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            backdropFilter: 'blur(5px)'
+          }}
+          onClick={() => setShowNewsDrawer(false)}
+        >
+          <div
+            className="animate-slide-up"
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              background: '#0a101d',
+              borderTop: '2px solid #00E676',
+              borderRadius: '24px 24px 0 0',
+              padding: '18px 18px 28px',
+              boxShadow: '0 -10px 40px rgba(0,0,0,0.7)',
+              maxHeight: '84vh',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle visual do topo da gaveta */}
+            <div style={{ width: '42px', height: '4px', background: 'rgba(255,255,255,0.25)', borderRadius: '10px', margin: '0 auto 14px' }} />
+
+            {/* Cabeçalho da Gaveta */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.4rem' }}>🚦</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#f8fafc' }}>
+                    Trânsito & Vias em Tempo Real
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.74rem', color: '#94a3b8', fontWeight: 600 }}>
+                    Monitoramento contínuo das principais vias do Rio
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowNewsDrawer(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  color: '#f8fafc',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  fontSize: '0.9rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Lista com Rolagem dos 4 Informes Completos */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto', paddingRight: '4px', marginBottom: '16px' }}>
+              {trafficNews.map((item, idx) => {
+                const isAlert = item.severity === 'ALERT';
+                const isFree = item.severity === 'FREE';
+                const borderColor = isAlert ? '#ef4444' : isFree ? '#10b981' : '#f59e0b';
+                const bgColor = isAlert ? 'rgba(239, 68, 68, 0.1)' : isFree ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)';
+
+                return (
+                  <div
+                    key={item.id || idx}
+                    style={{
+                      background: bgColor,
+                      border: `1.5px solid ${borderColor}`,
+                      borderRadius: '16px',
+                      padding: '14px 14px 12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '1rem' }}>{item.icon || (isAlert ? '🔴' : isFree ? '🟢' : '🟡')}</span>
+                        <span style={{
+                          fontSize: '0.74rem',
+                          fontWeight: 900,
+                          color: borderColor,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.4px'
+                        }}>
+                          {item.tag || (isAlert ? 'Alerta de Retenção' : isFree ? 'Fluxo Livre' : 'Atenção')}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '0.7rem',
+                        color: '#94a3b8',
+                        background: 'rgba(0,0,0,0.3)',
+                        padding: '2px 8px',
+                        borderRadius: '100px',
+                        fontWeight: 700
+                      }}>
+                        {item.time || 'Tempo Real'}
+                      </span>
+                    </div>
+
+                    {/* Título completo sem nenhum corte */}
+                    <div style={{
+                      fontSize: '0.94rem',
+                      fontWeight: 800,
+                      color: '#ffffff',
+                      lineHeight: 1.45
+                    }}>
+                      {item.title}
+                    </div>
+
+                    {/* Rodapé do card: fonte e link */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginTop: '2px',
+                      paddingTop: '6px',
+                      borderTop: '1px solid rgba(255,255,255,0.08)',
+                      fontSize: '0.74rem',
+                      color: '#94a3b8'
+                    }}>
+                      <span>Fonte: <strong style={{ color: '#e2e8f0' }}>{item.source || 'G1 / CET-Rio'}</strong></span>
+                      {item.link ? (
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            color: '#00E676',
+                            fontWeight: 800,
+                            textDecoration: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px'
+                          }}
+                        >
+                          Ver matéria no G1 ↗
+                        </a>
+                      ) : (
+                        <span style={{ color: '#00E676', fontWeight: 700 }}>● Monitorado</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Ações inferiores da Gaveta */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {isNewsMinimized ? (
+                <button
+                  onClick={() => {
+                    setIsNewsMinimized(false);
+                    localStorage.setItem('zomp_driver_news_minimized', 'false');
+                    setShowNewsDrawer(false);
+                  }}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(0, 230, 118, 0.15)',
+                    border: '1.5px solid #00E676',
+                    borderRadius: '14px',
+                    color: '#00E676',
+                    padding: '12px',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📌 Fixar Barra no Topo
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setIsNewsMinimized(true);
+                    localStorage.setItem('zomp_driver_news_minimized', 'true');
+                    setShowNewsDrawer(false);
+                  }}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1.5px solid rgba(255,255,255,0.15)',
+                    borderRadius: '14px',
+                    color: '#cbd5e1',
+                    padding: '12px',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Ocultar Barra (Manter Ícone)
+                </button>
+              )}
+              <button
+                onClick={() => setShowNewsDrawer(false)}
+                style={{
+                  flex: 1,
+                  background: 'linear-gradient(135deg, #00E676, #00C853)',
+                  border: 'none',
+                  borderRadius: '14px',
+                  color: '#000',
+                  padding: '12px',
+                  fontWeight: 900,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer'
+                }}
+              >
+                ✓ Entendido
               </button>
             </div>
           </div>

@@ -53,9 +53,16 @@ exports.getTrafficNews = async (req, res) => {
 
     let parsedNews = [];
 
+    // Termos que NUNCA devem aparecer no feed de trânsito
+    const IGNORED_TERMS = [
+      'concurso', 'edital', 'vagas', 'inscriç', 'processo seletivo', 'salário',
+      'vestibular', 'aposentadoria', 'inss', 'bolsa', 'fgts', 'futebol', 'jogo',
+      'resultado', 'loteria', 'mega-sena', 'horóscopo', 'enem', 'eleição', 'eleições'
+    ];
+
     // Tenta buscar feed em tempo real do Google Notícias (Trânsito RJ/G1)
     try {
-      const gNewsUrl = 'https://news.google.com/rss/search?q=transito+rio+de+janeiro+when:1d&hl=pt-BR&gl=BR&ceid=BR:pt-419';
+      const gNewsUrl = 'https://news.google.com/rss/search?q=transito+vias+acidente+avenida+rio+de+janeiro+when:1d&hl=pt-BR&gl=BR&ceid=BR:pt-419';
       const response = await fetch(gNewsUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
         signal: AbortSignal.timeout(4000)
@@ -63,12 +70,17 @@ exports.getTrafficNews = async (req, res) => {
 
       if (response.ok) {
         const xmlText = await response.text();
-        const itemRegex = /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<source[^>]*>(.*?)<\/source>[\s\S]*?<\/item>/gi;
+        const itemRegex = /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<link>(.*?)<\/link>[\s\S]*?<source[^>]*>(.*?)<\/source>[\s\S]*?<\/item>/gi;
         let match;
         while ((match = itemRegex.exec(xmlText)) !== null && parsedNews.length < 4) {
           let title = match[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim();
-          let source = match[2] ? match[2].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : 'G1 / Google';
+          let link = match[2].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim();
+          let source = match[3] ? match[3].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : 'G1 / Google';
           
+          const lowerTitle = title.toLowerCase();
+          const isIrrelevant = IGNORED_TERMS.some(term => lowerTitle.includes(term));
+          if (isIrrelevant) continue;
+
           // Remove duplicação do nome da fonte no final do título se houver
           if (title.includes(' - ')) {
             const parts = title.split(' - ');
@@ -79,11 +91,24 @@ exports.getTrafficNews = async (req, res) => {
           }
 
           if (title.length > 15) {
+            let severity = 'MODERATE';
+            let icon = '🟡';
+            if (/acidente|batida|capotamento|interdi|bloqueio|alagamento|parado|paralisa|queda/i.test(title)) {
+              severity = 'ALERT';
+              icon = '🔴';
+            } else if (/livre|fluindo|liberad|normal|est[aá]vel/i.test(title)) {
+              severity = 'FREE';
+              icon = '🟢';
+            }
+
             parsedNews.push({
               id: parsedNews.length + 1,
               title: title.replace(/&amp;/g, '&').replace(/&quot;/g, '"'),
               source: source || 'G1 Notícias',
               tag: 'Trânsito RJ',
+              link: link || null,
+              severity,
+              icon,
               time: 'Atualizado agora'
             });
           }
@@ -99,33 +124,41 @@ exports.getTrafficNews = async (req, res) => {
       {
         id: 1,
         title: hour >= 7 && hour <= 10
-          ? 'Linha Vermelha e Av. Brasil com fluxo intenso sentido Centro/Zona Sul'
+          ? 'Linha Vermelha e Av. Brasil com trânsito intenso sentido Centro e Zona Sul'
           : hour >= 17 && hour <= 20
-          ? 'Linha Amarela e Linha Vermelha com retenção no sentido Baixada/Barra'
-          : 'Principais vias expressas da cidade operando com fluxo regular e sem retenções',
+          ? 'Linha Amarela e Linha Vermelha com retenção no sentido Baixada e Barra da Tijuca'
+          : 'Principais vias expressas da cidade (Av. Brasil, Linha Vermelha e Amarela) com fluxo regular',
         source: 'G1 Rio / CET-Rio',
         tag: 'Vias Expressas',
+        severity: hour >= 7 && hour <= 10 || hour >= 17 && hour <= 20 ? 'ALERT' : 'FREE',
+        icon: hour >= 7 && hour <= 10 || hour >= 17 && hour <= 20 ? '🔴' : '🟢',
         time: 'Tempo Real'
       },
       {
         id: 2,
-        title: 'Ponte Rio-Niterói com tempo de travessia estável e pistas liberadas nos dois sentidos',
+        title: 'Ponte Rio-Niterói operando normalmente nos dois sentidos com tempo de travessia estável',
         source: 'G1 Notícias / Ecoponte',
         tag: 'Ponte Rio-Niterói',
+        severity: 'FREE',
+        icon: '🟢',
         time: 'Tempo Real'
       },
       {
         id: 3,
-        title: 'Túneis Rebouças e Santa Bárbara com trânsito normal e monitoramento ativo',
-        source: 'COR / Google Notícias',
+        title: 'Túneis Rebouças e Santa Bárbara sem ocorrências e com tráfego dentro da média',
+        source: 'COR / CET-Rio',
         tag: 'Zona Sul',
+        severity: 'FREE',
+        icon: '🟢',
         time: 'Tempo Real'
       },
       {
         id: 4,
-        title: 'Linha Amarela com fluxo livre entre Barra da Tijuca e Linha Vermelha',
-        source: 'Lamsa / G1',
+        title: 'Av. das Américas e Ayrton Senna com fluxo contínuo na Barra da Tijuca e Recreio',
+        source: 'COR Rio / G1',
         tag: 'Barra da Tijuca',
+        severity: 'FREE',
+        icon: '🟢',
         time: 'Tempo Real'
       }
     ];
