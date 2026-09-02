@@ -815,7 +815,7 @@ const POPULAR_DESTINATIONS = [
     // Busca rápida instantânea no fallback local enquanto pesquisa na rede
     const queryClean = trimmed.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const quickLocal = POPULAR_DESTINATIONS.filter(addr => {
-      const nameClean = (addr.title + ' ' + addr.display_name + ' ' + (addr.category || '')).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const nameClean = (addr.title + ' ' + addr.display_name + ' ' + (addr.subtitle || '') + ' ' + (addr.category || '')).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       return nameClean.includes(queryClean);
     });
     
@@ -836,12 +836,13 @@ const POPULAR_DESTINATIONS = [
 
     debounceRef.current = setTimeout(async () => {
       let remoteResults = [];
+      const latRef = gpsCoords ? gpsCoords[0] : (mapCenter ? mapCenter[0] : -22.9068);
+      const lonRef = gpsCoords ? gpsCoords[1] : (mapCenter ? mapCenter[1] : -43.1729);
+
       try {
-        const latRef = gpsCoords ? gpsCoords[0] : mapCenter[0];
-        const lonRef = gpsCoords ? gpsCoords[1] : mapCenter[1];
-        // Tenta Photon ancorado no GPS do aparelho
+        // Tenta Photon ancorado na latitude/longitude da região atual
         const photonRes = await fetch(
-          `https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&limit=6&lat=${latRef}&lon=${lonRef}&lang=pt`
+          `https://photon.komoot.io/api/?q=${encodeURIComponent(trimmed)}&limit=8&lat=${latRef}&lon=${lonRef}&lang=pt`
         );
         if (photonRes.ok) {
           const photonData = await photonRes.json();
@@ -869,8 +870,9 @@ const POPULAR_DESTINATIONS = [
       // Fallback para Nominatim se Photon não retornar
       if (remoteResults.length === 0) {
         try {
+          const viewboxParam = `&viewbox=${lonRef - 0.45},${latRef - 0.45},${lonRef + 0.45},${latRef + 0.45}&bounded=0`;
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trimmed)}&countrycodes=br&limit=6`
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trimmed)}&countrycodes=br${viewboxParam}&limit=8`
           );
           if (res.ok) {
             const data = await res.json();
@@ -880,7 +882,7 @@ const POPULAR_DESTINATIONS = [
                 return {
                   display_name: d.display_name,
                   title: parts[0]?.trim() || d.display_name,
-                  subtitle: parts.slice(1, 3).join(',').trim() || 'Brasil',
+                  subtitle: parts.slice(1, 4).join(',').trim() || 'Brasil',
                   lat: parseFloat(d.lat),
                   lon: parseFloat(d.lon),
                   icon: '📍'
@@ -902,9 +904,10 @@ const POPULAR_DESTINATIONS = [
         }
       }
 
-      setSuggestions(unique.slice(0, 6));
-    }, 200);
+      setSuggestions(unique.slice(0, 8));
+    }, 180);
   }, [gpsCoords, gpsAddress, mapCenter, showOriginGpsSuggestions, showDestSuggestions]);
+
 
   // ============= Select suggestion =============
   const handleSelectSuggestion = async (s) => {
@@ -2743,17 +2746,12 @@ const POPULAR_DESTINATIONS = [
                     <span className="menu-nav-arrow">›</span>
                   </button>
 
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('LONG_TRIPS')}>
-                    <span className="nav-icon"><Send size={17} /></span>
-                    <span>Viagens Longas / Cidades</span>
-                    <span className="menu-nav-arrow">›</span>
-                  </button>
-
                   <button className="menu-nav-btn" onClick={() => setMenuScreen('HISTORY')}>
                     <span className="nav-icon"><Clock size={17} /></span>
                     <span>Histórico de Corridas</span>
                     <span className="menu-nav-arrow">›</span>
                   </button>
+
 
                   {/* ── Seção: ECONOMIA & VANTAGENS ── */}
                   <div className="menu-section-label">Economia & Vantagens</div>
@@ -2785,13 +2783,15 @@ const POPULAR_DESTINATIONS = [
               {/* ===== TELA DE SUPORTE & REPORTAR PROBLEMAS DO PASSAGEIRO ===== */}
               {menuScreen === 'SUPPORT' && (
                 <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{ color: 'var(--primary)', marginBottom: '8px', fontWeight: 700 }}>
-                    ← Voltar ao Menu
-                  </button>
+                  <div className="passenger-subscreen-header">
+                    <button className="passenger-subscreen-back-btn" onClick={() => setMenuScreen('MAIN')}>
+                      ← Voltar ao Menu
+                    </button>
+                    <h3 className="passenger-subscreen-title">Central de Suporte</h3>
+                  </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                     <div>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#090d16', margin: '0 0 2px' }}>Suporte Zomp</h3>
                       <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0, fontWeight: 600 }}>Atendimento Oficial & Resolução de Problemas</p>
                     </div>
                     <button
@@ -2990,90 +2990,137 @@ const POPULAR_DESTINATIONS = [
                 </div>
               )}
 
+              {/* ===== TELA: MEU PERFIL ===== */}
               {menuScreen === 'PROFILE' && (
                 <div className="animate-fade-in">
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
-                    ← Voltar
-                  </button>
-                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '24px'}}>Meu Perfil</h3>
+                  <div className="passenger-subscreen-header">
+                    <button className="passenger-subscreen-back-btn" onClick={() => setMenuScreen('MAIN')}>
+                      ← Voltar ao Menu
+                    </button>
+                    <h3 className="passenger-subscreen-title">Meu Perfil</h3>
+                  </div>
                   
-                  <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px'}}>
-                    <div style={{width: '90px', height: '90px', borderRadius: '50%', background: 'var(--primary)', color: '#000', fontSize: '2.5rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px'}}>
+                  <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px'}}>
+                    <div style={{width: '84px', height: '84px', borderRadius: '50%', background: 'linear-gradient(135deg, #059669, #00E676)', color: '#090d16', fontSize: '2.4rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px', boxShadow: '0 4px 15px rgba(0, 230, 118, 0.3)'}}>
                       {profileData.name.charAt(0)}
                     </div>
+                    <span style={{ fontSize: '0.78rem', color: '#059669', fontWeight: 800, background: '#ecfdf5', padding: '3px 10px', borderRadius: '100px' }}>
+                      ✓ Passageiro Verificado
+                    </span>
                   </div>
 
                   <div style={{marginBottom: '16px'}}>
-                    <label style={{display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#a1a1aa', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px'}}>Nome Completo</label>
+                    <label style={{display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.8px'}}>Nome Completo</label>
                     <input 
                       type="text" 
                       className="route-input" 
-                      style={{background: '#f4f4f5', padding: '12px', borderRadius: '8px', border: '1px solid #e4e4e7'}}
+                      style={{background: '#f8fafc', padding: '12px 14px', borderRadius: '12px', border: '1.5px solid #e2e8f0', color: '#090d16', fontWeight: 700}}
                       value={profileData.name} 
                       onChange={(e) => setProfileData({...profileData, name: e.target.value})} 
                     />
                   </div>
 
                   <div style={{marginBottom: '24px'}}>
-                    <label style={{display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#a1a1aa', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px'}}>E-mail</label>
+                    <label style={{display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#475569', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.8px'}}>E-mail</label>
                     <input 
                       type="email" 
                       className="route-input" 
-                      style={{background: '#f4f4f5', padding: '12px', borderRadius: '8px', border: '1px solid #e4e4e7'}}
+                      style={{background: '#f8fafc', padding: '12px 14px', borderRadius: '12px', border: '1.5px solid #e2e8f0', color: '#090d16', fontWeight: 700}}
                       value={profileData.email} 
                       onChange={(e) => setProfileData({...profileData, email: e.target.value})} 
                     />
                   </div>
 
-                  <button className="btn btn-primary" style={{width: '100%'}} onClick={() => {
-                    alert('Perfil atualizado localmente com sucesso!')
-                    setMenuScreen('MAIN')
+                  <button className="btn btn-primary" style={{width: '100%', padding: '14px', fontWeight: 900}} onClick={() => {
+                    alert('Perfil atualizado com sucesso!');
+                    setMenuScreen('MAIN');
                   }}>
                     Salvar Alterações
                   </button>
                 </div>
               )}
 
+              {/* ===== TELA: AGENDAMENTOS ===== */}
+              {menuScreen === 'SCHEDULED' && (
+                <div className="animate-fade-in">
+                  <div className="passenger-subscreen-header">
+                    <button className="passenger-subscreen-back-btn" onClick={() => setMenuScreen('MAIN')}>
+                      ← Voltar ao Menu
+                    </button>
+                    <h3 className="passenger-subscreen-title">Meus Agendamentos</h3>
+                  </div>
+
+                  {scheduledRides.length === 0 ? (
+                    <div style={{textAlign: 'center', padding: '36px 16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0'}}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📅</div>
+                      <h4 style={{ margin: '0 0 4px', color: '#090d16', fontWeight: 800 }}>Nenhum agendamento ativo</h4>
+                      <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '0.82rem', fontWeight: 600 }}>Você pode agendar uma viagem com antecedência para qualquer data e hora.</p>
+                      <button className="btn btn-primary" onClick={() => { setIsMenuOpen(false); resetFlow(); }} style={{ padding: '10px 18px', fontWeight: 800, fontSize: '0.85rem' }}>
+                        Agendar Nova Viagem
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {scheduledRides.map((ride, idx) => (
+                        <div key={ride.id || idx} style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '14px', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ fontSize: '0.84rem', fontWeight: 900, color: '#059669' }}>📅 {ride.date} às {ride.time}</span>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 900, color: '#090d16' }}>R$ {ride.price}</span>
+                          </div>
+                          <div style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700, marginBottom: '3px' }}>📍 {ride.origin}</div>
+                          <div style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>🏁 {ride.dest}</div>
+                          <button
+                            onClick={() => {
+                              if (confirm('Deseja cancelar este agendamento?')) {
+                                const updated = scheduledRides.filter((_, i) => i !== idx);
+                                setScheduledRides(updated);
+                                localStorage.setItem('zomp_scheduled_rides', JSON.stringify(updated));
+                              }
+                            }}
+                            style={{ marginTop: '10px', background: '#fee2e2', border: 'none', color: '#dc2626', padding: '6px 12px', borderRadius: '8px', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            ✕ Cancelar Agendamento
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ===== TELA: HISTÓRICO DE CORRIDAS ===== */}
               {menuScreen === 'HISTORY' && (
                 <div className="animate-fade-in">
-                  <button className="menu-nav-btn" onClick={() => setMenuScreen('MAIN')} style={{color: 'var(--primary)', marginBottom: '4px'}}>
-                    ← Voltar
-                  </button>
-                  <h3 style={{fontSize: '1.3rem', fontWeight: 800, marginBottom: '16px'}}>Histórico de Corridas</h3>
+                  <div className="passenger-subscreen-header">
+                    <button className="passenger-subscreen-back-btn" onClick={() => setMenuScreen('MAIN')}>
+                      ← Voltar ao Menu
+                    </button>
+                    <h3 className="passenger-subscreen-title">Histórico de Corridas</h3>
+                  </div>
                   
                   {rideHistory.length === 0 ? (
-                    <div style={{textAlign: 'center', padding: '32px 0'}}>
-                      <p style={{color: '#71717a', fontWeight: 600}}>Nenhum histórico encontrado.</p>
+                    <div style={{textAlign: 'center', padding: '36px 16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0'}}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🚗</div>
+                      <p style={{color: '#64748b', fontWeight: 600, fontSize: '0.88rem', margin: 0}}>Nenhuma corrida realizada ainda.</p>
                     </div>
                   ) : (
                     <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
                       {rideHistory.map(ride => (
-                        <div key={ride.id} className="scheduled-ride-card" style={{cursor: 'default', opacity: (ride.status === 'CANCELED_FEE' || ride.status === 'CANCELED_FREE') ? 0.75 : 1}}>
-                          
-                          {ride.status === 'CANCELED_FEE' && (
-                            <div style={{background: '#fef2f2', color: '#b91c1c', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, marginBottom: '12px', border: '1px solid #fecaca'}}>
-                              ⚠️ Cancelada (Taxa de deslocamento de R$ 2,80 a ser cobrada na próxima corrida)
-                            </div>
-                          )}
-                          {ride.status === 'CANCELED_FREE' && (
-                            <div style={{background: '#f4f4f5', color: '#52525b', padding: '6px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, marginBottom: '12px', border: '1px solid #e4e4e7'}}>
-                              ✕ Cancelada gratuitamente
-                            </div>
-                          )}
-
+                        <div key={ride.id} style={{background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '14px', boxShadow: '0 2px 6px rgba(0,0,0,0.02)'}}>
                           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
-                            <div style={{fontWeight: 800}}>📅 {ride.date}</div>
+                            <div style={{fontWeight: 800, color: '#090d16', fontSize: '0.85rem'}}>📅 {ride.date}</div>
                             <div style={{
-                              fontWeight: 800, 
-                              color: ride.status === 'CANCELED_FEE' ? '#b91c1c' : (ride.status === 'CANCELED_FREE' ? '#a1a1aa' : '#065f46')
+                              fontWeight: 900, 
+                              fontSize: '1rem',
+                              color: ride.status === 'CANCELED_FEE' ? '#b91c1c' : (ride.status === 'CANCELED_FREE' ? '#94a3b8' : '#059669')
                             }}>
                               R$ {ride.price}
                             </div>
                           </div>
-                          <div style={{fontSize: '0.85rem', color: '#71717a', marginBottom: '4px'}}>📍 <b>De:</b> {ride.origin}</div>
-                          <div style={{fontSize: '0.85rem', color: '#71717a'}}>🏁 <b>Para:</b> {ride.dest}</div>
-                          <div style={{marginTop: '12px', display: 'inline-block', padding: '4px 8px', background: '#e4e4e7', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase'}}>
-                            {ride.vehicle}
+                          <div style={{fontSize: '0.82rem', color: '#475569', marginBottom: '3px'}}>📍 <b>De:</b> {ride.origin}</div>
+                          <div style={{fontSize: '0.82rem', color: '#475569'}}>🏁 <b>Para:</b> {ride.dest}</div>
+                          <div style={{marginTop: '10px', display: 'inline-block', padding: '3px 8px', background: '#f1f5f9', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase'}}>
+                            {ride.vehicle} • {ride.status === 'CANCELED_FEE' || ride.status === 'CANCELED_FREE' ? 'Cancelada' : 'Concluída'}
                           </div>
                         </div>
                       ))}
@@ -3081,6 +3128,7 @@ const POPULAR_DESTINATIONS = [
                   )}
                 </div>
               )}
+
 
             </div>
 
@@ -3461,7 +3509,7 @@ const POPULAR_DESTINATIONS = [
       )}
 
       {/* ===== MODAL DE PREÇO IMBATÍVEL (CONSEGUIMOS BATER O PREÇO DA CONCORRÊNCIA) ===== */}
-      {showCompetitionModal && hasCompetitionDiscount && competitorPrintPrice > 0 && (
+      {showCompetitionModal && (
         <div className="competition-modal-overlay">
           <div className="competition-modal-card">
             {/* Botão Fechar X no canto superior direito */}
@@ -3480,85 +3528,200 @@ const POPULAR_DESTINATIONS = [
                 <span>Preço Imbatível Zomp</span>
               </div>
               <h2 className="competition-modal-title">
-                CONSEGUIMOS BATER O PREÇO DA CONCORRÊNCIA!
+                {competitorPrintPrice > 0 ? 'CONSEGUIMOS BATER O PREÇO!' : 'DESAFIO DO PRINT ZOMP'}
               </h2>
               <p className="competition-modal-subtitle">
-                Seu print da Uber / 99 foi lido com sucesso. Aplicamos o desconto diretamente em cima do valor da concorrência!
+                {competitorPrintPrice > 0
+                  ? 'Aplicamos o desconto diretamente em cima do valor da concorrência (Uber / 99)!'
+                  : 'Envie o print da tela de confirmação da Uber ou 99 ou digite o valor da corrida para cobrirmos com desconto garantido!'}
               </p>
             </div>
 
-            {/* Box Comparativo de Preços */}
-            <div className="competition-price-comparison-box">
-              <div className="price-item competitor">
-                <span className="price-label">📱 Print Uber/99</span>
-                <span className="price-val strikethrough">R$ {competitorPrintPrice.toFixed(2)}</span>
-              </div>
-
-              <div className="price-divider">
-                <span>VS</span>
-              </div>
-
-              <div className="price-item zomp-highlight">
-                <span className="price-label">⚡ Novo Preço Zomp</span>
-                <span className="price-val highlight">
-                  R$ {getPrice(routeKm, vehicleType, false)}
-                </span>
-              </div>
-            </div>
-
-            {/* Banner de Economia */}
-            <div className="competition-savings-banner">
-              <Sparkles size={18} />
-              <span>Você economiza <strong>R$ {calculatedDiscountAmount.toFixed(2)}</strong> sobre o preço do print!</span>
-            </div>
-
-            {/* Seletor de Veículo: Escolher Carro ou Moto */}
-            <div className="competition-vehicle-selector">
-              <label className="selector-title">Escolha seu Veículo:</label>
-              <div className="selector-options">
-                <div 
-                  className={`vehicle-card ${vehicleType === 'car' ? 'selected' : ''}`}
-                  onClick={() => setVehicleType('car')}
-                >
-                  <div className="veh-top">
-                    <span className="veh-icon">🚗</span>
-                    {vehicleType === 'car' && <span className="veh-check">✓</span>}
+            {competitorPrintPrice > 0 ? (
+              <>
+                {/* Box Comparativo de Preços */}
+                <div className="competition-price-comparison-box">
+                  <div className="price-item competitor">
+                    <span className="price-label">📱 Print Uber/99</span>
+                    <span className="price-val strikethrough">R$ {competitorPrintPrice.toFixed(2)}</span>
                   </div>
-                  <span className="veh-name">Carro</span>
-                  <span className="veh-sub">Conforto & Mais Seguro</span>
-                  <span className="veh-price">R$ {getPrice(routeKm, 'car', false)}</span>
+
+                  <div className="price-divider">
+                    <span>VS</span>
+                  </div>
+
+                  <div className="price-item zomp-highlight">
+                    <span className="price-label">⚡ Novo Preço Zomp</span>
+                    <span className="price-val highlight">
+                      R$ {getPrice(routeKm, vehicleType, false)}
+                    </span>
+                  </div>
                 </div>
 
-                <div 
-                  className={`vehicle-card ${vehicleType === 'moto' ? 'selected' : ''}`}
-                  onClick={() => setVehicleType('moto')}
-                >
-                  <div className="veh-top">
-                    <span className="veh-icon">🏍️</span>
-                    {vehicleType === 'moto' && <span className="veh-check">✓</span>}
+                {/* Banner de Economia */}
+                <div className="competition-savings-banner">
+                  <Sparkles size={18} />
+                  <span>Você economiza <strong>R$ {calculatedDiscountAmount.toFixed(2)}</strong> sobre o preço do print!</span>
+                </div>
+
+                {/* Seletor de Veículo: Escolher Carro ou Moto */}
+                <div className="competition-vehicle-selector">
+                  <label className="selector-title">Escolha seu Veículo:</label>
+                  <div className="selector-options">
+                    <div 
+                      className={`vehicle-card ${vehicleType === 'car' ? 'selected' : ''}`}
+                      onClick={() => setVehicleType('car')}
+                    >
+                      <div className="veh-top">
+                        <span className="veh-icon">🚗</span>
+                        {vehicleType === 'car' && <span className="veh-check">✓</span>}
+                      </div>
+                      <span className="veh-name">Carro</span>
+                      <span className="veh-sub">Conforto & Mais Seguro</span>
+                      <span className="veh-price">R$ {getPrice(routeKm, 'car', false)}</span>
+                    </div>
+
+                    <div 
+                      className={`vehicle-card ${vehicleType === 'moto' ? 'selected' : ''}`}
+                      onClick={() => setVehicleType('moto')}
+                    >
+                      <div className="veh-top">
+                        <span className="veh-icon">🏍️</span>
+                        {vehicleType === 'moto' && <span className="veh-check">✓</span>}
+                      </div>
+                      <span className="veh-name">Moto</span>
+                      <span className="veh-sub">Rápida & Mais Barata</span>
+                      <span className="veh-price">R$ {getPrice(routeKm, 'moto', false)}</span>
+                    </div>
                   </div>
-                  <span className="veh-name">Moto</span>
-                  <span className="veh-sub">Rápida & Mais Barata</span>
-                  <span className="veh-price">R$ {getPrice(routeKm, 'moto', false)}</span>
+                </div>
+
+                {/* Botão de Chamar Agora */}
+                <button 
+                  className="competition-call-btn"
+                  disabled={isLoading}
+                  onClick={async () => {
+                    setShowCompetitionModal(false);
+                    if (rideState === 'IDLE') {
+                      setRideState('PRICED');
+                    } else {
+                      await handleCallNow();
+                    }
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem' }}>⚡</span>
+                  {isLoading 
+                    ? 'Chamando Motorista...' 
+                    : `USAR DESCONTO (${vehicleType === 'car' ? 'CARRO' : 'MOTO'} POR R$ ${getPrice(routeKm, vehicleType, false)})`
+                  }
+                </button>
+              </>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
+                {/* Botão de Upload de Print com OCR */}
+                <label
+                  htmlFor="imbativel-modal-upload"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    padding: '16px',
+                    background: '#f0fdf4',
+                    border: '2px dashed #059669',
+                    borderRadius: '16px',
+                    color: '#065f46',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    fontSize: '0.92rem',
+                    textAlign: 'center'
+                  }}
+                >
+                  <Camera size={22} color="#059669" />
+                  <span>{isAnalyzingScreenshot ? 'Lendo print com IA...' : '📷 Anexar Print da Uber / 99'}</span>
+                  <input
+                    id="imbativel-modal-upload"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setIsAnalyzingScreenshot(true);
+                      const reader = new FileReader();
+                      reader.onload = async (ev) => {
+                        const imageSrc = ev.target.result;
+                        try {
+                          const ocrPromise = Tesseract.recognize(imageSrc, 'por+eng');
+                          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000));
+                          const ocrResult = await Promise.race([ocrPromise, timeoutPromise]);
+                          const detected = extractPriceFromOcrText(ocrResult?.data?.text || '');
+                          const finalVal = detected || 25.00;
+                          setCompetitorPrintPrice(finalVal);
+                          setCalculatedDiscountAmount(calculateDiscountForPrintPrice(finalVal));
+                          setHasCompetitionDiscount(true);
+                        } catch {
+                          setCompetitorPrintPrice(25.00);
+                          setCalculatedDiscountAmount(2.00);
+                          setHasCompetitionDiscount(true);
+                        } finally {
+                          setIsAnalyzingScreenshot(false);
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+
+                <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.78rem', fontWeight: 800 }}>
+                  OU DIGITE O VALOR DA CONCORRÊNCIA:
+                </div>
+
+                {/* Digitação Manual do Valor */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: '#64748b' }}>R$</span>
+                    <input
+                      type="number"
+                      step="0.50"
+                      placeholder="25,00"
+                      value={manualPriceInput}
+                      onChange={(e) => setManualPriceInput(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '12px 12px 12px 38px',
+                        borderRadius: '12px',
+                        border: '1.5px solid #cbd5e1',
+                        fontSize: '0.95rem',
+                        fontWeight: 800,
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      const val = parseFloat(manualPriceInput) || 25.00;
+                      setCompetitorPrintPrice(val);
+                      setCalculatedDiscountAmount(calculateDiscountForPrintPrice(val));
+                      setHasCompetitionDiscount(true);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '12px 18px',
+                      fontWeight: 900,
+                      cursor: 'pointer',
+                      fontSize: '0.88rem'
+                    }}
+                  >
+                    Calcular Desconto
+                  </button>
                 </div>
               </div>
-            </div>
-
-            {/* Botão de Chamar Agora */}
-            <button 
-              className="competition-call-btn"
-              disabled={isLoading}
-              onClick={async () => {
-                setShowCompetitionModal(false);
-                await handleCallNow();
-              }}
-            >
-              <span style={{ fontSize: '1.2rem' }}>⚡</span>
-              {isLoading 
-                ? 'Chamando Motorista...' 
-                : `CHAMAR ${vehicleType === 'car' ? 'CARRO' : 'MOTO'} POR R$ ${getPrice(routeKm, vehicleType, false)}`
-              }
-            </button>
+            )}
 
             <p className="competition-footer-hint">
               💡 Cancele a corrida no app concorrente e chame o Zomp com economia garantida!
@@ -3578,4 +3741,5 @@ const POPULAR_DESTINATIONS = [
       )}
     </div>
   )
+
 }

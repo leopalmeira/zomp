@@ -11,18 +11,20 @@
   background-color: #f3f4f6;
 }
 
-/* Fixed Address Bar - Compact Clean */
+/* Fixed Address Bar - Compact Clean com espaçamento de ~0.5cm do botão menu */
 .fixed-address-bar {
   position: absolute;
-  top: 60px;
+  top: 78px;
   left: 16px;
   right: 16px;
   z-index: 1100;
   background: #ffffff;
   border-radius: 14px;
   padding: 4px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.06);
 }
+
 
 .route-inputs {
   display: flex;
@@ -988,6 +990,45 @@ input:checked + .slider:before { transform: translateX(22px); }
 .passenger-logout-btn:active {
   transform: scale(0.98);
 }
+
+/* Cabeçalho Padronizado de Sub-telas do Menu com Botão Voltar */
+.passenger-subscreen-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 16px;
+  border-bottom: 1.5px solid #f1f5f9;
+  margin-bottom: 16px;
+}
+
+.passenger-subscreen-back-btn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #059669;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.passenger-subscreen-back-btn:hover {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  transform: translateX(-2px);
+}
+
+.passenger-subscreen-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #090d16;
+  margin: 0;
+}
+
 
 
 /* Scheduled Ride Cards Refined */
