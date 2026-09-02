@@ -213,65 +213,63 @@ export default function DriverTournament({ onClose }) {
             
             {/* CARD MASTER DA REGRA CLASSIFICATÓRIA */}
             <div style={{
-              background: isClassified
-                ? 'linear-gradient(135deg, rgba(0, 230, 118, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%)'
-                : 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+              background: '#0d1526',
               border: isClassified ? '2px solid #00E676' : '2px solid #3b82f6',
               borderRadius: '20px',
-              padding: '22px 20px',
-              boxShadow: isClassified ? '0 10px 30px rgba(0, 230, 118, 0.2)' : '0 10px 30px rgba(0,0,0,0.3)',
+              padding: '24px 20px',
+              boxShadow: isClassified ? '0 10px 30px rgba(0, 230, 118, 0.25)' : '0 10px 30px rgba(0,0,0,0.6)',
               position: 'relative',
               overflow: 'hidden'
             }}>
               {/* Selo Topo */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                 <span style={{
                   background: isClassified ? '#00E676' : '#3b82f6',
-                  color: '#000',
+                  color: '#000000',
                   fontWeight: 900,
-                  fontSize: '0.72rem',
-                  padding: '4px 10px',
+                  fontSize: '0.75rem',
+                  padding: '5px 12px',
                   borderRadius: '100px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.6px'
                 }}>
                   {isClassified ? '✓ VAGA GARANTIDA NO TORNEIO' : '📋 1ª ETAPA — CLASSIFICATÓRIA INDIVIDUAL'}
                 </span>
-                <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 700 }}>
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 800 }}>
                   Etapa 1: até dia 15
                 </span>
               </div>
 
               {/* Título & Mensagem Didática */}
-              <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#fff', margin: '0 0 8px' }}>
-                {isClassified ? '🎉 Parabéns! Você Está Classificado!' : 'Você Não Disputa com Ninguém Nesta Fase!'}
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#ffffff', margin: '0 0 10px', lineHeight: '1.3' }}>
+                {isClassified ? '🎉 Parabéns! Você Está Classificado!' : '🎯 Você Não Disputa com Ninguém Nesta Fase!'}
               </h3>
 
-              <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: '1.55', margin: '0 0 18px', fontWeight: 600 }}>
+              <p style={{ fontSize: '0.94rem', color: '#cbd5e1', lineHeight: '1.6', margin: '0 0 20px', fontWeight: 600 }}>
                 {isClassified
-                  ? 'Você já atingiu o total de 15 corridas pela Zomp e carimbou sua vaga oficial para a Etapa 2 (Mata-Mata / Chaveamento dos Prêmios)! Continue fazendo corridas para acumular créditos e royalties.'
+                  ? 'Você já atingiu as 15 corridas pela Zomp e carimbou sua vaga oficial para a Etapa 2 (Mata-Mata / Chaveamento dos Prêmios)! Continue acelerando para acumular mais bônus e royalties.'
                   : 'Nesta fase classificatória você disputa apenas contra você mesmo! Não há concorrência com outros motoristas: basta completar 15 corridas concluídas pela Zomp até o dia 15 para carimbar sua vaga no Torneio Oficial.'}
               </p>
 
               {/* Progresso de Corridas */}
               <div style={{
-                background: 'rgba(0,0,0,0.35)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: '#070b14',
+                border: '1.5px solid #1e293b',
                 borderRadius: '16px',
-                padding: '16px',
-                marginBottom: '16px'
+                padding: '18px 16px',
+                marginBottom: '18px'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff' }}>
-                    Seu Progresso: <strong style={{ color: '#00E676', fontSize: '1.1rem' }}>{rides}</strong> de 15 corridas
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#ffffff' }}>
+                    Seu Progresso: <strong style={{ color: '#00E676', fontSize: '1.25rem' }}>{rides}</strong> de 15 corridas
                   </span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: isClassified ? '#00E676' : '#60a5fa' }}>
+                  <span style={{ fontSize: '1rem', fontWeight: 900, color: isClassified ? '#00E676' : '#60a5fa' }}>
                     {progressPercent}%
                   </span>
                 </div>
 
                 {/* Barra de Progresso */}
-                <div style={{ width: '100%', height: '14px', background: 'rgba(255,255,255,0.1)', borderRadius: '100px', overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '16px', background: '#1e293b', borderRadius: '100px', overflow: 'hidden', padding: '2px' }}>
                   <div style={{
                     width: `${progressPercent}%`,
                     height: '100%',
@@ -284,7 +282,7 @@ export default function DriverTournament({ onClose }) {
                 </div>
 
                 {/* Texto de Status */}
-                <div style={{ marginTop: '10px', fontSize: '0.82rem', color: isClassified ? '#00E676' : '#f59e0b', fontWeight: 800, textAlign: 'center' }}>
+                <div style={{ marginTop: '12px', fontSize: '0.88rem', color: isClassified ? '#00E676' : '#f59e0b', fontWeight: 800, textAlign: 'center' }}>
                   {isClassified 
                     ? '🏆 Meta Batida! Você já está no chaveamento dos R$ 100 Mil!' 
                     : `⚠️ Faltam apenas ${ridesRemaining} corrida(s) para carimbar sua vaga!`}
