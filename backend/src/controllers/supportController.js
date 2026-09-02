@@ -99,3 +99,61 @@ exports.sendTicketMessage = async (req, res) => {
     res.status(500).json({ error: 'Erro ao enviar mensagem de suporte' });
   }
 };
+
+// ── MÉTODOS DE SUPORTE PARA O PAINEL ADMIN ──
+
+exports.getAllTicketsAdmin = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Acesso negado' });
+    const { rows } = await pool.query(`
+      SELECT * FROM "SupportTicket"
+      ORDER BY "updatedAt" DESC, "createdAt" DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro ao listar todos os tickets (admin):', err.message);
+    res.status(500).json({ error: 'Erro ao buscar chamados' });
+  }
+};
+
+exports.replyTicketAdmin = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Acesso negado' });
+    const { ticketId } = req.params;
+    const { text, status } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'A resposta não pode ser vazia' });
+    }
+
+    const { rows } = await pool.query(`
+      INSERT INTO "SupportMessage" ("ticketId", "senderRole", "senderName", "text")
+      VALUES ($1, 'SUPPORT', 'Suporte Central Zomp', $2)
+      RETURNING *
+    `, [ticketId, text.trim()]);
+
+    const updateStatusSql = status ? ', status = $2' : '';
+    const params = status ? [ticketId, status] : [ticketId];
+    await pool.query(`UPDATE "SupportTicket" SET "updatedAt" = NOW() ${updateStatusSql} WHERE id = $1`, params);
+
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error('Erro ao responder ticket (admin):', err.message);
+    res.status(500).json({ error: 'Erro ao responder chamado' });
+  }
+};
+
+exports.updateTicketStatusAdmin = async (req, res) => {
+  try {
+    if (req.user.role !== 'ADMIN') return res.status(403).json({ error: 'Acesso negado' });
+    const { ticketId } = req.params;
+    const { status } = req.body;
+    const { rows } = await pool.query(
+      'UPDATE "SupportTicket" SET status = $1, "updatedAt" = NOW() WHERE id = $2 RETURNING *',
+      [status, ticketId]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Erro ao atualizar status do ticket:', err.message);
+    res.status(500).json({ error: 'Erro ao atualizar status' });
+  }
+};

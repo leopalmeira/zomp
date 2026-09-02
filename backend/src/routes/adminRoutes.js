@@ -33,4 +33,11 @@ router.get('/royalty-fund', authMiddleware, adminController.getRoyaltyFund);
 router.get('/withdrawals', authMiddleware, adminController.getWithdrawals);
 router.put('/withdrawals/:id', authMiddleware, adminController.handleWithdrawal);
 
+// Support Tickets & Real-Time Chat (Admin)
+const supportController = require('../controllers/supportController');
+router.get('/support/tickets', authMiddleware, supportController.getAllTicketsAdmin);
+router.get('/support/tickets/:ticketId/messages', authMiddleware, supportController.getTicketMessages);
+router.post('/support/tickets/:ticketId/reply', authMiddleware, supportController.replyTicketAdmin);
+router.put('/support/tickets/:ticketId/status', authMiddleware, supportController.updateTicketStatusAdmin);
+
 module.exports = router;

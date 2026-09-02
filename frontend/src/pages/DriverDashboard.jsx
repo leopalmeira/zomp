@@ -282,6 +282,7 @@ export default function DriverDashboard() {
   const [showTrafficNews, setShowTrafficNews] = useState(() => localStorage.getItem('zomp_driver_show_news') !== 'false');
   const [showNewsDrawer, setShowNewsDrawer] = useState(false);
   const [isNewsMinimized, setIsNewsMinimized] = useState(() => localStorage.getItem('zomp_driver_news_minimized') === 'true');
+  const [showPreLaunchModal, setShowPreLaunchModal] = useState(false);
 
   // ── 4.1 AVISO DE ROYALTIES (+0,30) & EXTRATO ACUMULADO ──
   const [royaltyAlertsEnabled, setRoyaltyAlertsEnabled] = useState(() => localStorage.getItem('zomp_royalty_alerts') !== 'false');
@@ -716,6 +717,19 @@ export default function DriverDashboard() {
 
   // ── CHECK CREDITS & GO ONLINE ──
   const checkCreditsAndGoOnline = async () => {
+    // 1. Checar se a Chave Geral de Ficar Online (Estreia do App) está liberada no painel admin
+    try {
+      const res = await fetch(`${API}/config`);
+      const cfg = await res.json();
+      const isLive = cfg && (cfg.isAppLive === true || cfg.isAppLive === 1 || cfg.launchStatus === 'LIVE');
+      if (!isLive) {
+        setShowPreLaunchModal(true);
+        return;
+      }
+    } catch (e) {
+      console.warn('Erro ao consultar chave de estreia:', e);
+    }
+
     const isTestDriver = (user?.email === 'motorista@zomp.com' || user?.email === 'motorita@zomp.com');
 
     let currentCredits = Number(credits || 0);
@@ -3510,6 +3524,145 @@ export default function DriverDashboard() {
                 }}
               >
                 ✓ Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL OFICIAL: AGUARDE NOSSA ESTREIA (PRÉ-LANÇAMENTO) ── */}
+      {showPreLaunchModal && (
+        <div
+          className="animate-fade-in"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '18px',
+            backdropFilter: 'blur(8px)'
+          }}
+          onClick={() => setShowPreLaunchModal(false)}
+        >
+          <div
+            className="animate-slide-up"
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              background: '#0a101d',
+              border: '2px solid #00E676',
+              borderRadius: '24px',
+              padding: '28px 22px',
+              textAlign: 'center',
+              boxShadow: '0 20px 60px rgba(0, 230, 118, 0.3)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ fontSize: '3.2rem', marginBottom: '8px' }}>⏳</div>
+            
+            <div style={{
+              display: 'inline-block',
+              background: 'rgba(0, 230, 118, 0.15)',
+              border: '1px solid #00E676',
+              color: '#00E676',
+              padding: '4px 14px',
+              borderRadius: '100px',
+              fontSize: '0.78rem',
+              fontWeight: 900,
+              letterSpacing: '0.6px',
+              textTransform: 'uppercase',
+              marginBottom: '12px'
+            }}>
+              ESTREIA OFICIAL EM 01/11/2026
+            </div>
+
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#fff', margin: '0 0 12px' }}>
+              Aguarde Nossa Estreia!
+            </h3>
+
+            <p style={{ fontSize: '0.98rem', color: '#e2e8f0', lineHeight: 1.6, fontWeight: 600, margin: '0 0 20px' }}>
+              Aguarde, nossa estreia é <strong style={{ color: '#00E676' }}>01/11/2026</strong>! Enquanto isso, faça um tour pelo app para conhecer todas as ferramentas e indique para outros motoristas parceiros para garantir sua rede e royalties!
+            </p>
+
+            {/* Destaques Informativos */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '22px', textAlign: 'left' }}>
+              <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '12px' }}>
+                <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>🎁</div>
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 700 }}>Créditos Iniciais</div>
+                <div style={{ fontSize: '0.88rem', color: '#00E676', fontWeight: 900 }}>10 Viagens Grátis</div>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '12px' }}>
+                <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>💰</div>
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 700 }}>Rede de Royalties</div>
+                <div style={{ fontSize: '0.88rem', color: '#00E676', fontWeight: 900 }}>+R$ 0,30 por Corrida</div>
+              </div>
+            </div>
+
+            {/* Botões de Ação */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={() => {
+                  setShowPreLaunchModal(false);
+                  setShowDriverTour(true);
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #00E676, #00C853)',
+                  color: '#000',
+                  border: 'none',
+                  borderRadius: '16px',
+                  padding: '14px',
+                  fontSize: '0.96rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 18px rgba(0, 230, 118, 0.35)'
+                }}
+              >
+                🚀 Fazer Tour pelo App
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowPreLaunchModal(false);
+                  setActiveScreen('REFERRAL');
+                }}
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  color: '#fff',
+                  border: '1.5px solid rgba(255,255,255,0.2)',
+                  borderRadius: '16px',
+                  padding: '14px',
+                  fontSize: '0.92rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                👥 Indicar Motoristas Parceiros
+              </button>
+
+              <button
+                onClick={() => setShowPreLaunchModal(false)}
+                style={{
+                  background: 'transparent',
+                  color: '#94a3b8',
+                  border: 'none',
+                  padding: '10px',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                ✕ Fechar
               </button>
             </div>
           </div>

@@ -29,6 +29,7 @@ const tabs = [
   'Operações',
   'Motoristas',
   'Passageiros',
+  'Suporte',
   'Configurações',
   'Fundo',
   'Saques',
@@ -47,6 +48,14 @@ export default function AdminPanel() {
   const [withdrawals, setWithdrawals] = useState([])
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState(null)
+
+  // Suporte & Chat em Tempo Real
+  const [supportTickets, setSupportTickets] = useState([])
+  const [activeSupportTicket, setActiveSupportTicket] = useState(null)
+  const [supportMessages, setSupportMessages] = useState([])
+  const [adminReplyText, setAdminReplyText] = useState('')
+  const [isSendingReply, setIsSendingReply] = useState(false)
+  const [supportFilter, setSupportFilter] = useState('ALL')
 
   // Filtros & Buscas
   const [search, setSearch] = useState('')
@@ -93,6 +102,14 @@ export default function AdminPanel() {
       } else if (tab === 'Passageiros') {
         const psgs = await api('/admin/passengers')
         setPassengers(Array.isArray(psgs) ? psgs : [])
+      } else if (tab === 'Suporte') {
+        const tks = await api('/admin/support/tickets')
+        if (Array.isArray(tks)) {
+          setSupportTickets(tks)
+          if (tks.length > 0 && !activeSupportTicket) {
+            setActiveSupportTicket(tks[0])
+          }
+        }
       } else if (tab === 'Configurações') {
         setConfig(await api('/admin/config'))
       } else if (tab === 'Fundo') {
@@ -106,19 +123,71 @@ export default function AdminPanel() {
     } finally {
       setLoading(false)
     }
-  }, [tab])
+  }, [tab, activeSupportTicket])
 
   useEffect(() => {
     const initialLoad = setTimeout(load, 0)
     let interval
-    if (tab === 'Operações' || tab === 'Dashboard') {
-      interval = setInterval(load, 8000)
+    if (tab === 'Operações' || tab === 'Dashboard' || tab === 'Suporte') {
+      interval = setInterval(load, 6000)
     }
     return () => {
       clearTimeout(initialLoad)
       clearInterval(interval)
     }
   }, [load, tab])
+
+  // Polling em tempo real das mensagens do chamado ativo no chat
+  useEffect(() => {
+    let interval
+    if (tab === 'Suporte' && activeSupportTicket?.id) {
+      const fetchMsgs = async () => {
+        try {
+          const msgs = await api(`/admin/support/tickets/${activeSupportTicket.id}/messages`)
+          if (Array.isArray(msgs)) setSupportMessages(msgs)
+        } catch (e) {
+          console.warn('Erro ao buscar mensagens:', e)
+        }
+      }
+      fetchMsgs()
+      interval = setInterval(fetchMsgs, 3000)
+    }
+    return () => { if (interval) clearInterval(interval) }
+  }, [tab, activeSupportTicket?.id])
+
+  const handleSendAdminReply = async (textToSend) => {
+    const text = textToSend || adminReplyText
+    if (!activeSupportTicket || !text.trim()) return
+    setIsSendingReply(true)
+    try {
+      const r = await api(`/admin/support/tickets/${activeSupportTicket.id}/reply`, {
+        method: 'POST',
+        body: JSON.stringify({ text: text.trim() })
+      })
+      if (r.error) return showToast(r.error, 'error')
+      setAdminReplyText('')
+      const msgs = await api(`/admin/support/tickets/${activeSupportTicket.id}/messages`)
+      if (Array.isArray(msgs)) setSupportMessages(msgs)
+      showToast('Resposta enviada com sucesso!')
+    } catch (e) {
+      showToast('Erro ao enviar resposta', 'error')
+    } finally {
+      setIsSendingReply(false)
+    }
+  }
+
+  const handleUpdateTicketStatus = async (newStatus) => {
+    if (!activeSupportTicket) return
+    const r = await api(`/admin/support/tickets/${activeSupportTicket.id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: newStatus })
+    })
+    if (r.error) return showToast(r.error, 'error')
+    showToast(`Status alterado para ${newStatus}!`)
+    setActiveSupportTicket({ ...activeSupportTicket, status: newStatus })
+    const tks = await api('/admin/support/tickets')
+    if (Array.isArray(tks)) setSupportTickets(tks)
+  }
 
   // Ações de Motorista & Pré-Cadastro
   const approveDriver = async (id, val) => {
@@ -296,6 +365,7 @@ export default function AdminPanel() {
                 {t === 'Operações' && '📡'}
                 {t === 'Motoristas' && '🚗'}
                 {t === 'Passageiros' && '👤'}
+                {t === 'Suporte' && '🎧'}
                 {t === 'Configurações' && '⚙️'}
                 {t === 'Fundo' && '💎'}
                 {t === 'Saques' && '💳'}
@@ -324,6 +394,7 @@ export default function AdminPanel() {
               {tab === 'Operações' && 'Monitoramento ao vivo de todas as corridas'}
               {tab === 'Motoristas' && 'Gestão, aprovações, créditos e documentos'}
               {tab === 'Passageiros' && 'Base de clientes e vínculos de indicação'}
+              {tab === 'Suporte' && 'Atendimento ao vivo para motoristas e passageiros'}
               {tab === 'Configurações' && 'Parâmetros globais, taxas e regras do app'}
               {tab === 'Fundo' && 'Fundo acumulado de dividendos e top motoristas'}
               {tab === 'Saques' && 'Processamento e aprovação de resgates PIX'}
@@ -788,6 +859,288 @@ export default function AdminPanel() {
           </div>
         )}
 
+        {/* ── SUPORTE (CHAT & CHAMADOS EM TEMPO REAL) ── */}
+        {tab === 'Suporte' && (
+          <div className="ap-support-area" style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: '20px', minHeight: '680px' }}>
+            {/* COLUNA ESQUERDA: LISTA DE TICKETS */}
+            <div style={{ background: '#0d121c', border: '1.5px solid #1f293d', borderRadius: '18px', padding: '16px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#fff', fontWeight: 800 }}>
+                  Chamados ({supportTickets.length})
+                </h3>
+                <button
+                  onClick={load}
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid #1f293d', color: '#9ca3af', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', cursor: 'pointer' }}
+                >
+                  ↻ Atualizar
+                </button>
+              </div>
+
+              {/* Filtros de Status */}
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+                {['ALL', 'OPEN', 'RESOLVED'].map(st => (
+                  <button
+                    key={st}
+                    onClick={() => setSupportFilter(st)}
+                    style={{
+                      flex: 1,
+                      padding: '6px 4px',
+                      borderRadius: '8px',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      border: supportFilter === st ? '1.5px solid #00E676' : '1px solid #1f293d',
+                      background: supportFilter === st ? 'rgba(0,230,118,0.12)' : 'transparent',
+                      color: supportFilter === st ? '#00E676' : '#9ca3af'
+                    }}
+                  >
+                    {st === 'ALL' ? 'Todos' : st === 'OPEN' ? 'Abertos 🔴' : 'Resolvidos 🟢'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Lista dos Chamados */}
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '580px', paddingRight: '4px' }}>
+                {supportTickets
+                  .filter(t => {
+                    if (supportFilter === 'OPEN') return t.status !== 'RESOLVED';
+                    if (supportFilter === 'RESOLVED') return t.status === 'RESOLVED';
+                    return true;
+                  })
+                  .map(t => {
+                    const isSelected = activeSupportTicket?.id === t.id;
+                    const isDriver = t.userRole === 'DRIVER';
+                    const isResolved = t.status === 'RESOLVED';
+
+                    return (
+                      <div
+                        key={t.id}
+                        onClick={() => setActiveSupportTicket(t)}
+                        style={{
+                          padding: '12px 14px',
+                          borderRadius: '14px',
+                          cursor: 'pointer',
+                          background: isSelected ? 'rgba(0,230,118,0.08)' : 'rgba(255,255,255,0.02)',
+                          border: isSelected ? '1.5px solid #00E676' : '1px solid #1f293d',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                          <span style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 900,
+                            padding: '2px 8px',
+                            borderRadius: '100px',
+                            background: isDriver ? 'rgba(0,230,118,0.15)' : 'rgba(59,130,246,0.15)',
+                            color: isDriver ? '#00E676' : '#60a5fa',
+                            border: `1px solid ${isDriver ? 'rgba(0,230,118,0.3)' : 'rgba(59,130,246,0.3)'}`
+                          }}>
+                            {isDriver ? '🚗 MOTORISTA' : '👤 PASSAGEIRO'}
+                          </span>
+                          <span style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            color: isResolved ? '#10b981' : '#f59e0b'
+                          }}>
+                            {isResolved ? '✓ Resolvido' : '● Aberto'}
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#fff', marginBottom: '2px' }}>
+                          {t.userName}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#00E676', fontWeight: 700, marginBottom: '4px' }}>
+                          [{t.category}] {t.subject}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {t.message}
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '6px', textAlign: 'right' }}>
+                          {new Date(t.updatedAt || t.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {new Date(t.createdAt).toLocaleDateString('pt-BR')}
+                        </div>
+                      </div>
+                    );
+                  })}
+                {supportTickets.length === 0 && (
+                  <div style={{ textAlign: 'center', color: '#64748b', padding: '40px 10px', fontSize: '0.85rem' }}>
+                    Nenhum chamado de suporte aberto até o momento.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* COLUNA DIREITA: JANELA DO CHAT AO VIVO */}
+            {activeSupportTicket ? (
+              <div style={{ background: '#0d121c', border: '1.5px solid #1f293d', borderRadius: '18px', display: 'flex', flexDirection: 'column', height: '680px' }}>
+                {/* Header do Chat */}
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #1f293d', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      background: activeSupportTicket.userRole === 'DRIVER' ? '#00E676' : '#3b82f6',
+                      color: '#000',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 900,
+                      fontSize: '1.1rem'
+                    }}>
+                      {activeSupportTicket.userRole === 'DRIVER' ? '🚗' : '👤'}
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#fff', fontWeight: 800 }}>
+                          {activeSupportTicket.userName}
+                        </h4>
+                        <span style={{ fontSize: '0.72rem', color: '#9ca3af' }}>({activeSupportTicket.userEmail})</span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.78rem', color: '#00E676', fontWeight: 700 }}>
+                        Protocolo: #{activeSupportTicket.id.substring(0, 8).toUpperCase()} • Categoria: {activeSupportTicket.category}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {activeSupportTicket.status !== 'RESOLVED' ? (
+                      <button
+                        onClick={() => handleUpdateTicketStatus('RESOLVED')}
+                        style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', color: '#10b981', padding: '6px 14px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        ✓ Marcar como Resolvido
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleUpdateTicketStatus('OPEN')}
+                        style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid #f59e0b', color: '#f59e0b', padding: '6px 14px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        ↺ Reabrir Chamado
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Histórico das Mensagens */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {supportMessages.map((msg, idx) => {
+                    const isSupport = msg.senderRole === 'SUPPORT' || msg.senderName?.includes('Suporte');
+                    return (
+                      <div
+                        key={msg.id || idx}
+                        style={{
+                          alignSelf: isSupport ? 'flex-end' : 'flex-start',
+                          maxWidth: '75%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: isSupport ? 'flex-end' : 'flex-start'
+                        }}
+                      >
+                        <div style={{
+                          padding: '12px 16px',
+                          borderRadius: isSupport ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                          background: isSupport ? 'linear-gradient(135deg, #059669, #00E676)' : '#1a2333',
+                          color: isSupport ? '#000' : '#f8fafc',
+                          fontWeight: 600,
+                          fontSize: '0.9rem',
+                          lineHeight: 1.45,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                        }}>
+                          <div style={{ fontSize: '0.68rem', fontWeight: 900, marginBottom: '4px', opacity: isSupport ? 0.8 : 0.6 }}>
+                            {isSupport ? '🛡️ Equipe Zomp (Você)' : activeSupportTicket.userName}
+                          </div>
+                          {msg.text}
+                        </div>
+                        <span style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '4px' }}>
+                          {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {supportMessages.length === 0 && (
+                    <div style={{ textAlign: 'center', color: '#64748b', padding: '60px 20px' }}>
+                      Nenhuma mensagem trocada neste chamado ainda.
+                    </div>
+                  )}
+                </div>
+
+                {/* Respostas Rápidas */}
+                <div style={{ padding: '8px 16px', borderTop: '1px solid #1f293d', background: 'rgba(255,255,255,0.01)', display: 'flex', gap: '6px', overflowX: 'auto' }}>
+                  {[
+                    'Olá! Recebemos sua mensagem e já estamos verificando.',
+                    'Seu cadastro foi validado com sucesso! Seja bem-vindo à Zomp.',
+                    'Créditos concedidos em sua conta. Pode verificar na sua carteira.',
+                    'Chamado resolvido com sucesso! Qualquer dúvida conte conosco.'
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSendAdminReply(preset)}
+                      style={{
+                        whiteSpace: 'nowrap',
+                        padding: '6px 12px',
+                        borderRadius: '100px',
+                        border: '1px solid #27272a',
+                        background: '#111827',
+                        color: '#cbd5e1',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ⚡ {preset}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Caixa de Texto & Envio */}
+                <div style={{ padding: '14px 18px', borderTop: '1px solid #1f293d', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={adminReplyText}
+                    onChange={(e) => setAdminReplyText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSendAdminReply();
+                    }}
+                    placeholder="Digite sua resposta para o usuário..."
+                    style={{
+                      flex: 1,
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      border: '1px solid #27272a',
+                      background: '#111827',
+                      color: '#fff',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      outline: 'none'
+                    }}
+                  />
+                  <button
+                    disabled={isSendingReply || !adminReplyText.trim()}
+                    onClick={() => handleSendAdminReply()}
+                    style={{
+                      background: adminReplyText.trim() ? '#00E676' : '#27272a',
+                      color: adminReplyText.trim() ? '#000' : '#71717a',
+                      border: 'none',
+                      padding: '12px 20px',
+                      borderRadius: '12px',
+                      fontWeight: 900,
+                      fontSize: '0.9rem',
+                      cursor: adminReplyText.trim() ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {isSendingReply ? 'Enviando...' : '➤ Enviar'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ background: '#0d121c', border: '1.5px solid #1f293d', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.95rem' }}>
+                👈 Selecione um chamado na lista ao lado para abrir o chat ao vivo.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── CONFIGURAÇÕES ── */}
         {tab === 'Configurações' && config && (
           <div className="ap-config-area">
@@ -797,6 +1150,74 @@ export default function AdminPanel() {
                 <p style={{color:'#71717a',fontSize:'0.85rem'}}>Altere preços por km, regras de fidelidade, limites e parâmetros do sistema em tempo real.</p>
               </div>
               <button className="ap-btn ap-btn-primary" onClick={saveConfig}>💾 Salvar Todas as Alterações</button>
+            </div>
+
+            {/* CHAVE MASTER: LIBERAÇÃO DO MODO ONLINE / ESTREIA */}
+            <div style={{
+              background: config?.isAppLive 
+                ? 'linear-gradient(135deg, rgba(0, 230, 118, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%)' 
+                : 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.2) 100%)',
+              border: config?.isAppLive ? '2px solid #00E676' : '2px solid #f59e0b',
+              borderRadius: '20px',
+              padding: '22px 24px',
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '16px',
+              boxShadow: config?.isAppLive ? '0 8px 30px rgba(0, 230, 118, 0.25)' : '0 8px 30px rgba(245, 158, 11, 0.15)'
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '1.6rem' }}>{config?.isAppLive ? '🟢' : '🔒'}</span>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#fff', fontWeight: 900 }}>
+                    Chave Geral: Permitir Motoristas Ficarem Online
+                  </h3>
+                  <span style={{
+                    background: config?.isAppLive ? '#00E676' : '#f59e0b',
+                    color: '#000',
+                    fontWeight: 900,
+                    fontSize: '0.75rem',
+                    padding: '4px 10px',
+                    borderRadius: '100px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    {config?.isAppLive ? '● ONLINE LIBERADO (AO VIVO)' : '● BLOQUEADO (PRÉ-CADASTRO)'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.88rem', color: '#cbd5e1', maxWidth: '720px', lineHeight: '1.5' }}>
+                  {config?.isAppLive 
+                    ? '✓ Os motoristas podem deslizar / clicar em "Ficar Online" e receber solicitações de corridas dos passageiros em tempo real.'
+                    : `⚠️ Modo Pré-Cadastro ativo: Todos os motoristas que tentarem ficar online verão o aviso oficial: "Aguarde nossa estreia em ${config?.launchDate ? new Date(config.launchDate + 'T12:00:00').toLocaleDateString('pt-BR') : '01/11/2026'}. Enquanto isso, faça um tour pelo app para conhecer e indicar para outros motoristas parceiros."`}
+                </p>
+              </div>
+
+              {/* Botão Slide / Toggle Master */}
+              <button
+                type="button"
+                onClick={toggleAppLaunch}
+                style={{
+                  background: config?.isAppLive 
+                    ? 'linear-gradient(135deg, #ef4444, #dc2626)' 
+                    : 'linear-gradient(135deg, #00E676, #00C853)',
+                  color: config?.isAppLive ? '#fff' : '#000',
+                  fontWeight: 900,
+                  fontSize: '0.95rem',
+                  padding: '14px 24px',
+                  borderRadius: '14px',
+                  cursor: 'pointer',
+                  border: 'none',
+                  boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <span>{config?.isAppLive ? '🔒 Bloquear Modo Online (Pré-Cadastro)' : '🚀 LIGAR CHAVE: Liberar Modo Online'}</span>
+              </button>
             </div>
 
             {configGroups.map((group, gi) => (

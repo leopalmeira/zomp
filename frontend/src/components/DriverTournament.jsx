@@ -7,6 +7,7 @@ export default function DriverTournament({ onClose }) {
   const [loading, setLoading] = useState(true)
   const [simExtra, setSimExtra] = useState(0)
   const [filter, setFilter] = useState('ALL')
+  const [mainTab, setMainTab] = useState('CLASSIFICATORIA') // 'CLASSIFICATORIA' | 'ESTRATEGIA' | 'RANKING' | 'REGRAS'
 
   useEffect(() => {
     let mounted = true
@@ -21,6 +22,14 @@ export default function DriverTournament({ onClose }) {
     })
     return () => { mounted = false }
   }, [])
+
+  const driver = data?.driver || {}
+  const phase = data?.phase || {}
+  const rides = driver.rides || 0
+  const classificationGoal = 15
+  const isClassified = rides >= classificationGoal
+  const ridesRemaining = Math.max(0, classificationGoal - rides)
+  const progressPercent = Math.min(100, Math.round((rides / classificationGoal) * 100))
 
   // Simulação de corridas extras
   const simulated = useMemo(() => {
@@ -130,12 +139,6 @@ export default function DriverTournament({ onClose }) {
     )
   }
 
-  const phase = data.phase || {}
-  const driver = data.driver || {}
-  const phaseClass = phase.phase === 'CLASSIFICATORIA' ? 'classificatoria' : phase.phase === 'TORNEIO' ? 'torneio' : 'aguardando'
-  const progressTo30 = driver.gaps ? Math.min(100, Math.round((driver.rides / (driver.rides + driver.gaps.toTop30)) * 100)) : 0
-  const progressTo3 = driver.gaps ? Math.min(100, Math.round((driver.rides / (driver.rides + driver.gaps.toTop3)) * 100)) : 0
-
   return (
     <div className="tournament-screen">
       {/* HEADER */}
@@ -143,221 +146,478 @@ export default function DriverTournament({ onClose }) {
         <button className="tourn-back-btn" onClick={onClose}>←</button>
         <div className="tourn-header-info">
           <h2 className="tourn-header-title">🏆 Torneio Zomp</h2>
-          <p className="tourn-header-sub">{data.month} {data.year} • {data.totalParticipants} participantes</p>
+          <p className="tourn-header-sub">{data.month} {data.year} • Carro R$ 100 Mil, PIX e Celulares</p>
         </div>
-        <span className={`tourn-phase-badge ${phaseClass}`}>
-          {phase.phase === 'TORNEIO' ? '🔴 AO VIVO' : phase.phase === 'CLASSIFICATORIA' ? '📋 Classif.' : '⏳ Encerrado'}
+        <span className={`tourn-phase-badge ${isClassified ? 'torneio' : 'classificatoria'}`}>
+          {isClassified ? '✅ CLASSIFICADO' : '📋 CLASSIFICATÓRIA'}
         </span>
       </div>
 
+      {/* NAVEGAÇÃO DE ABAS SUPERIOR */}
+      <div style={{
+        display: 'flex',
+        background: '#090d16',
+        borderBottom: '1.5px solid rgba(255,255,255,0.08)',
+        padding: '6px 12px',
+        gap: '6px',
+        overflowX: 'auto'
+      }}>
+        {[
+          { key: 'CLASSIFICATORIA', label: '🎯 Minha Classificação', badge: isClassified ? '15/15' : `${rides}/15` },
+          { key: 'ESTRATEGIA', label: '💡 Estratégia de Ouro', highlight: true },
+          { key: 'RANKING', label: '🏆 Ranking & Prêmios' },
+          { key: 'REGRAS', label: '📖 3 Etapas' }
+        ].map(t => (
+          <button
+            key={t.key}
+            onClick={() => setMainTab(t.key)}
+            style={{
+              padding: '8px 14px',
+              borderRadius: '10px',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              border: mainTab === t.key ? '1.5px solid #00E676' : '1px solid transparent',
+              background: mainTab === t.key 
+                ? 'rgba(0, 230, 118, 0.15)' 
+                : t.highlight ? 'rgba(245, 158, 11, 0.12)' : 'rgba(255,255,255,0.04)',
+              color: mainTab === t.key ? '#00E676' : t.highlight ? '#f59e0b' : '#94a3b8',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <span>{t.label}</span>
+            {t.badge && (
+              <span style={{
+                background: isClassified ? '#00E676' : '#3b82f6',
+                color: '#000',
+                padding: '2px 6px',
+                borderRadius: '6px',
+                fontSize: '0.65rem',
+                fontWeight: 900
+              }}>
+                {t.badge}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="tourn-body">
-        {/* PHASE STATUS CARD */}
-        <div className="tourn-phase-card">
-          <div className="tourn-phase-label">
-            {phase.phase === 'TORNEIO' ? '⚡ FASE ATIVA' : phase.phase === 'CLASSIFICATORIA' ? '📋 CLASSIFICATÓRIA' : '⏳ AGUARDANDO'}
-          </div>
-          <h3 className="tourn-phase-title">{phase.phaseLabel}</h3>
-          <p className="tourn-phase-desc">{phase.phaseDescription}</p>
-          <div className="tourn-countdown">
-            <span className="tourn-countdown-num">{phase.daysLeft}</span>
-            <span className="tourn-countdown-label">{phase.daysLeft === 1 ? 'dia restante' : 'dias restantes'}</span>
-          </div>
-        </div>
 
-        {/* DRIVER POSITION CARD */}
-        <div className="tourn-driver-card">
-          <div className="tourn-driver-header">
-            <div>
-              <div className="tourn-driver-pos-big">
-                {simExtra > 0 ? `#${simulated.simPosition}` : `#${driver.position || '—'}`}
+        {/* ── ABA 1: CLASSIFICAÇÃO INDIVIDUAL (META DE 15 CORRIDAS) ── */}
+        {mainTab === 'CLASSIFICATORIA' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            
+            {/* CARD MASTER DA REGRA CLASSIFICATÓRIA */}
+            <div style={{
+              background: isClassified
+                ? 'linear-gradient(135deg, rgba(0, 230, 118, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%)'
+                : 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+              border: isClassified ? '2px solid #00E676' : '2px solid #3b82f6',
+              borderRadius: '20px',
+              padding: '22px 20px',
+              boxShadow: isClassified ? '0 10px 30px rgba(0, 230, 118, 0.2)' : '0 10px 30px rgba(0,0,0,0.3)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* Selo Topo */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{
+                  background: isClassified ? '#00E676' : '#3b82f6',
+                  color: '#000',
+                  fontWeight: 900,
+                  fontSize: '0.72rem',
+                  padding: '4px 10px',
+                  borderRadius: '100px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.6px'
+                }}>
+                  {isClassified ? '✓ VAGA GARANTIDA NO TORNEIO' : '📋 1ª ETAPA — CLASSIFICATÓRIA INDIVIDUAL'}
+                </span>
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 700 }}>
+                  Etapa 1: até dia 15
+                </span>
               </div>
-              <div className="tourn-driver-pos-label">Sua Posição no Ranking</div>
-            </div>
-            <div className="tourn-driver-rides-box">
-              <div className="tourn-driver-rides-num">
-                {simExtra > 0 ? simulated.myRides : driver.rides}
-              </div>
-              <div className="tourn-driver-rides-label">
-                Corridas {simExtra > 0 ? '(Simulação)' : ''}
-              </div>
-            </div>
-          </div>
 
-          {/* Progress to Top 30 */}
-          {((simExtra > 0 ? simulated.simPosition : driver.position) > 30) && (
-            <div className="tourn-progress-wrap">
-              <div className="tourn-progress-labels">
-                <span className="tourn-progress-left">Você: {simExtra > 0 ? simulated.myRides : driver.rides} corridas</span>
-                <span className="tourn-progress-right">Top 30: {driver.gaps?.rides30th || 0} corridas</span>
-              </div>
-              <div className="tourn-progress-bar">
-                <div className="tourn-progress-fill" style={{ width: `${Math.min(100, Math.round(((simExtra > 0 ? simulated.myRides : driver.rides) / (driver.gaps?.rides30th || 1)) * 100))}%` }} />
-              </div>
-            </div>
-          )}
+              {/* Título & Mensagem Didática */}
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#fff', margin: '0 0 8px' }}>
+                {isClassified ? '🎉 Parabéns! Você Está Classificado!' : 'Você Não Disputa com Ninguém Nesta Fase!'}
+              </h3>
 
-          {/* Progress to Top 3 (if already in top 30) */}
-          {((simExtra > 0 ? simulated.simPosition : driver.position) <= 30) && ((simExtra > 0 ? simulated.simPosition : driver.position) > 3) && (
-            <div className="tourn-progress-wrap">
-              <div className="tourn-progress-labels">
-                <span className="tourn-progress-left">Você: {simExtra > 0 ? simulated.myRides : driver.rides} corridas</span>
-                <span className="tourn-progress-right">Top 3: {driver.gaps?.rides3rd || 0} corridas</span>
-              </div>
-              <div className="tourn-progress-bar">
-                <div className="tourn-progress-fill gold" style={{ width: `${Math.min(100, Math.round(((simExtra > 0 ? simulated.myRides : driver.rides) / (driver.gaps?.rides3rd || 1)) * 100))}%` }} />
-              </div>
-            </div>
-          )}
-        </div>
+              <p style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: '1.55', margin: '0 0 18px', fontWeight: 600 }}>
+                {isClassified
+                  ? 'Você já atingiu o total de 15 corridas pela Zomp e carimbou sua vaga oficial para a Etapa 2 (Mata-Mata / Chaveamento dos Prêmios)! Continue fazendo corridas para acumular créditos e royalties.'
+                  : 'Nesta fase classificatória você disputa apenas contra você mesmo! Não há concorrência com outros motoristas: basta completar 15 corridas concluídas pela Zomp até o dia 15 para carimbar sua vaga no Torneio Oficial.'}
+              </p>
 
-        {/* SMART TIP */}
-        <div className={`tourn-smart-tip ${driver.position > 30 ? 'warning' : ''}`}>
-          <span className="tourn-smart-tip-icon">
-            {driver.position <= 3 ? '🏆' : driver.position <= 30 ? '💡' : '🎯'}
-          </span>
-          <div className="tourn-smart-tip-text">
-            {simExtra > 0 ? simulated.simTip : data.smartTip}
-          </div>
-        </div>
+              {/* Progresso de Corridas */}
+              <div style={{
+                background: 'rgba(0,0,0,0.35)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '16px',
+                padding: '16px',
+                marginBottom: '16px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff' }}>
+                    Seu Progresso: <strong style={{ color: '#00E676', fontSize: '1.1rem' }}>{rides}</strong> de 15 corridas
+                  </span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: isClassified ? '#00E676' : '#60a5fa' }}>
+                    {progressPercent}%
+                  </span>
+                </div>
 
-        {/* SIMULATOR */}
-        <div className="tourn-simulator">
-          <div className="tourn-sim-title">📊 Simulador de Projeção de Ranking</div>
-          <div className="tourn-sim-btns">
-            {[0, 5, 10, 15, 20, 30].map(n => (
+                {/* Barra de Progresso */}
+                <div style={{ width: '100%', height: '14px', background: 'rgba(255,255,255,0.1)', borderRadius: '100px', overflow: 'hidden' }}>
+                  <div style={{
+                    width: `${progressPercent}%`,
+                    height: '100%',
+                    background: isClassified 
+                      ? 'linear-gradient(90deg, #00E676, #00C853)' 
+                      : 'linear-gradient(90deg, #3b82f6, #00E676)',
+                    borderRadius: '100px',
+                    transition: 'width 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
+                  }} />
+                </div>
+
+                {/* Texto de Status */}
+                <div style={{ marginTop: '10px', fontSize: '0.82rem', color: isClassified ? '#00E676' : '#f59e0b', fontWeight: 800, textAlign: 'center' }}>
+                  {isClassified 
+                    ? '🏆 Meta Batida! Você já está no chaveamento dos R$ 100 Mil!' 
+                    : `⚠️ Faltam apenas ${ridesRemaining} corrida(s) para carimbar sua vaga!`}
+                </div>
+              </div>
+
+              {/* Botão de Atalho para Estratégia */}
               <button
-                key={n}
-                className={`tourn-sim-btn ${simExtra === n ? 'active' : ''}`}
-                onClick={() => setSimExtra(n)}
+                onClick={() => setMainTab('ESTRATEGIA')}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                  color: '#000',
+                  border: 'none',
+                  borderRadius: '14px',
+                  padding: '13px',
+                  fontSize: '0.92rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)'
+                }}
               >
-                {n === 0 ? 'Atual' : `+${n}`}
+                💡 Ver Dica de Ouro: Como Bater as 15 Corridas Rápido
               </button>
-            ))}
-          </div>
-          {simExtra > 0 && simulated && (
-            <div className="tourn-sim-result">
-              {simulated.simTip}
             </div>
-          )}
-        </div>
 
-        {/* DICA DE CAPTAÇÃO */}
-        <div className="tourn-captacao-tip">
-          <div className="tourn-captacao-text">
-            💡 <strong>Estratégia de Captação Rápida:</strong> Está fazendo uma corrida pela <strong>Uber, 99 ou InDriver</strong>? Convide o passageiro para usar a Zomp! Mostre que a corrida é geralmente <strong>mais barata pela Zomp</strong> e faça a viagem pelo nosso app. Você soma corridas no torneio e ainda conquista um novo passageiro para sua <strong>rede de royalties</strong>!
-          </div>
-        </div>
-
-        {/* FILTER TABS */}
-        <div className="tourn-filter-tabs">
-          {[
-            { key: 'ALL', label: `Todos (${data.leaderboard?.length || 30})` },
-            { key: 'CAR', label: '🚗 Carros (Top 3)' },
-            { key: 'PIX', label: '💰 PIX R$3k (4º-20º)' },
-            { key: 'PHONE', label: '📱 Samsung (21º-30º)' }
-          ].map(tab => (
-            <button
-              key={tab.key}
-              className={`tourn-filter-tab ${filter === tab.key ? 'active' : ''}`}
-              onClick={() => setFilter(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* LEADERBOARD TABLE */}
-        <div className="tourn-table-wrap">
-          <div className="tourn-table-header">
-            <span>#</span>
-            <span>Motorista</span>
-            <span style={{ textAlign: 'center' }}>Corridas</span>
-            <span style={{ textAlign: 'center' }}>Prêmio</span>
-          </div>
-          {filteredLeaderboard.map(entry => {
-            const prize = getPrizeTag(entry.position)
-            const isMe = entry.isCurrentUser
-            return (
-              <div
-                key={entry.id}
-                className={`tourn-table-row ${isMe ? 'highlight' : ''} ${entry.position <= 3 ? 'top3' : ''}`}
-              >
-                <span className={`tourn-pos ${getPosClass(entry.position)}`}>
-                  {getPosEmoji(entry.position)}
-                </span>
-                <span className={`tourn-name ${isMe ? 'is-me' : ''}`}>
-                  {isMe ? `⭐ ${entry.name} (Você)` : entry.name}
-                </span>
-                <span className="tourn-rides">{entry.rides}</span>
-                <span>
-                  {prize && (
-                    <span className={`tourn-prize-tag ${prize.className}`}>
-                      {prize.label}
-                    </span>
-                  )}
-                </span>
+            {/* RESUMO DAS 3 PREMIAÇÕES */}
+            <div className="tourn-prizes-grid">
+              <div className="tourn-prize-card gold">
+                <div className="tourn-prize-card-icon">🚗</div>
+                <div className="tourn-prize-card-range">1º ao 3º Lugar</div>
+                <div className="tourn-prize-card-value">Carro de R$ 100.000</div>
               </div>
-            )
-          })}
-        </div>
+              <div className="tourn-prize-card green">
+                <div className="tourn-prize-card-icon">💰</div>
+                <div className="tourn-prize-card-range">4º ao 20º Lugar</div>
+                <div className="tourn-prize-card-value">R$ 3.000 PIX</div>
+              </div>
+              <div className="tourn-prize-card blue">
+                <div className="tourn-prize-card-icon">📱</div>
+                <div className="tourn-prize-card-range">21º ao 30º Lugar</div>
+                <div className="tourn-prize-card-value">Smartphone Samsung</div>
+              </div>
+            </div>
 
-        {/* DRIVER OUTSIDE TOP 30 HIGHLIGHT */}
-        {driver.position > 30 && (
-          <div className="tourn-outside-card">
-            <div className="tourn-outside-pos">#{ driver.position }º</div>
-            <div className="tourn-outside-text">
-              Você está fora do Top 30. Faltam <strong>{driver.gaps?.toTop30}</strong> corridas para entrar na zona de premiação!
+          </div>
+        )}
+
+        {/* ── ABA 2: ESTRATÉGIA DE OURO (PUXAR PASSAGEIROS DA CONCORRÊNCIA) ── */}
+        {mainTab === 'ESTRATEGIA' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            
+            <div style={{
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+              border: '2px solid #f59e0b',
+              borderRadius: '20px',
+              padding: '22px 18px',
+              boxShadow: '0 10px 30px rgba(245, 158, 11, 0.15)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <span style={{ fontSize: '2rem' }}>💡</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: '#f59e0b' }}>
+                    Estratégia de Ouro aos Motoristas
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8', fontWeight: 700 }}>
+                    Como bater suas 15 corridas e multiplicar seus ganhos imediatamente
+                  </p>
+                </div>
+              </div>
+
+              <p style={{ fontSize: '0.92rem', color: '#e2e8f0', lineHeight: '1.6', fontWeight: 600, margin: '12px 0 18px' }}>
+                Você não precisa esperar corridas caírem do céu! Você pode usar a força da concorrência a seu favor trazendo clientes diários para a Zomp com vantagens reais para o passageiro e para você:
+              </p>
+
+              {/* 4 Passos Didáticos */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '14px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <div style={{ background: '#3b82f6', color: '#fff', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.85rem', flexShrink: 0 }}>
+                    1
+                  </div>
+                  <div>
+                    <h4 style={{ margin: '0 0 4px', fontSize: '0.92rem', color: '#fff', fontWeight: 800 }}>
+                      Aceite a corrida na concorrência (Uber, 99 ou InDrive)
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.45' }}>
+                      Vá até o passageiro normalmente como você já faz no seu dia a dia.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '14px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <div style={{ background: '#f59e0b', color: '#000', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.85rem', flexShrink: 0 }}>
+                    2
+                  </div>
+                  <div>
+                    <h4 style={{ margin: '0 0 4px', fontSize: '0.92rem', color: '#fff', fontWeight: 800 }}>
+                      Mostre que na Zomp o valor fica mais barato
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.45' }}>
+                      Abra o simulador da Zomp e mostre ao passageiro: como a Zomp não cobra 30% a 40% de comissão, a corrida para ele sai com preço mais justo e você ganha mais!
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '14px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <div style={{ background: '#00E676', color: '#000', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.85rem', flexShrink: 0 }}>
+                    3
+                  </div>
+                  <div>
+                    <h4 style={{ margin: '0 0 4px', fontSize: '0.92rem', color: '#fff', fontWeight: 800 }}>
+                      Convide o passageiro a cancelar lá e chamar pela Zomp
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8', lineHeight: '1.45' }}>
+                      Peça para ele cancelar a viagem no outro app e pedir direto pelo Zomp (ou ler seu QR Code de motorista parceiro).
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(0, 230, 118, 0.08)', border: '1.5px solid #00E676', borderRadius: '14px', padding: '14px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <div style={{ background: '#00E676', color: '#000', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.85rem', flexShrink: 0 }}>
+                    ★
+                  </div>
+                  <div>
+                    <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', color: '#00E676', fontWeight: 900 }}>
+                      Lucro Triplo para Você!
+                    </h4>
+                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: '1.6' }}>
+                      <li><strong>Taxa Fixa de R$ 1,50:</strong> Quase 100% do valor da corrida fica no seu bolso!</li>
+                      <li><strong>+R$ 0,30 de Royalties:</strong> O passageiro fica vinculado ao seu perfil para sempre. Toda viagem que ele fizer pela Zomp no futuro gera R$ 0,30 na sua conta!</li>
+                      <li><strong>+1 Corrida no Torneio:</strong> Você avança para bater as 15 da classificação e disputa o Carro de R$ 100 Mil!</li>
+                    </ul>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <button
+              onClick={() => setMainTab('CLASSIFICATORIA')}
+              style={{
+                width: '100%',
+                background: 'linear-gradient(135deg, #00E676, #00C853)',
+                color: '#000',
+                border: 'none',
+                borderRadius: '14px',
+                padding: '14px',
+                fontSize: '0.94rem',
+                fontWeight: 900,
+                cursor: 'pointer'
+              }}
+            >
+              ✓ Entendido! Voltar para Meu Progresso
+            </button>
+
+          </div>
+        )}
+
+        {/* ── ABA 3: RANKING & SIMULADOR (ETAPAS 2 E 3) ── */}
+        {mainTab === 'RANKING' && (
+          <div>
+            {/* DRIVER POSITION CARD */}
+            <div className="tourn-driver-card">
+              <div className="tourn-driver-header">
+                <div>
+                  <div className="tourn-driver-pos-big">
+                    {simExtra > 0 ? `#${simulated.simPosition}` : `#${driver.position || '—'}`}
+                  </div>
+                  <div className="tourn-driver-pos-label">Sua Posição no Ranking Geral</div>
+                </div>
+                <div className="tourn-driver-rides-box">
+                  <div className="tourn-driver-rides-num">
+                    {simExtra > 0 ? simulated.myRides : driver.rides}
+                  </div>
+                  <div className="tourn-driver-rides-label">
+                    Corridas {simExtra > 0 ? '(Simulação)' : ''}
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress to Top 30 */}
+              {((simExtra > 0 ? simulated.simPosition : driver.position) > 30) && (
+                <div className="tourn-progress-wrap">
+                  <div className="tourn-progress-labels">
+                    <span className="tourn-progress-left">Você: {simExtra > 0 ? simulated.myRides : driver.rides} corridas</span>
+                    <span className="tourn-progress-right">Top 30: {driver.gaps?.rides30th || 0} corridas</span>
+                  </div>
+                  <div className="tourn-progress-bar">
+                    <div className="tourn-progress-fill" style={{ width: `${Math.min(100, Math.round(((simExtra > 0 ? simulated.myRides : driver.rides) / (driver.gaps?.rides30th || 1)) * 100))}%` }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Progress to Top 3 */}
+              {((simExtra > 0 ? simulated.simPosition : driver.position) <= 30) && ((simExtra > 0 ? simulated.simPosition : driver.position) > 3) && (
+                <div className="tourn-progress-wrap">
+                  <div className="tourn-progress-labels">
+                    <span className="tourn-progress-left">Você: {simExtra > 0 ? simulated.myRides : driver.rides} corridas</span>
+                    <span className="tourn-progress-right">Top 3: {driver.gaps?.rides3rd || 0} corridas</span>
+                  </div>
+                  <div className="tourn-progress-bar">
+                    <div className="tourn-progress-fill gold" style={{ width: `${Math.min(100, Math.round(((simExtra > 0 ? simulated.myRides : driver.rides) / (driver.gaps?.rides3rd || 1)) * 100))}%` }} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* SMART TIP */}
+            <div className={`tourn-smart-tip ${driver.position > 30 ? 'warning' : ''}`} style={{ marginBottom: '16px' }}>
+              <span className="tourn-smart-tip-icon">
+                {driver.position <= 3 ? '🏆' : driver.position <= 30 ? '💡' : '🎯'}
+              </span>
+              <div className="tourn-smart-tip-text">
+                {simExtra > 0 ? simulated.simTip : data.smartTip}
+              </div>
+            </div>
+
+            {/* SIMULATOR */}
+            <div className="tourn-simulator" style={{ marginBottom: '16px' }}>
+              <div className="tourn-sim-title">📊 Simulador de Projeção de Ranking</div>
+              <div className="tourn-sim-btns">
+                {[0, 5, 10, 15, 20, 30].map(n => (
+                  <button
+                    key={n}
+                    className={`tourn-sim-btn ${simExtra === n ? 'active' : ''}`}
+                    onClick={() => setSimExtra(n)}
+                  >
+                    {n === 0 ? 'Atual' : `+${n}`}
+                  </button>
+                ))}
+              </div>
+              {simExtra > 0 && simulated && (
+                <div className="tourn-sim-result">
+                  {simulated.simTip}
+                </div>
+              )}
+            </div>
+
+            {/* FILTER TABS */}
+            <div className="tourn-filter-tabs">
+              {[
+                { key: 'ALL', label: `Todos (${data.leaderboard?.length || 30})` },
+                { key: 'CAR', label: '🚗 Carros (Top 3)' },
+                { key: 'PIX', label: '💰 PIX R$3k (4º-20º)' },
+                { key: 'PHONE', label: '📱 Samsung (21º-30º)' }
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  className={`tourn-filter-tab ${filter === tab.key ? 'active' : ''}`}
+                  onClick={() => setFilter(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* LEADERBOARD TABLE */}
+            <div className="tourn-table-wrap">
+              <div className="tourn-table-header">
+                <span>#</span>
+                <span>Motorista</span>
+                <span style={{ textAlign: 'center' }}>Corridas</span>
+                <span style={{ textAlign: 'center' }}>Prêmio</span>
+              </div>
+              {filteredLeaderboard.map(entry => {
+                const prize = getPrizeTag(entry.position)
+                const isMe = entry.isCurrentUser
+                return (
+                  <div
+                    key={entry.id}
+                    className={`tourn-table-row ${isMe ? 'highlight' : ''} ${entry.position <= 3 ? 'top3' : ''}`}
+                  >
+                    <span className={`tourn-pos ${getPosClass(entry.position)}`}>
+                      {getPosEmoji(entry.position)}
+                    </span>
+                    <span className={`tourn-name ${isMe ? 'is-me' : ''}`}>
+                      {isMe ? `⭐ ${entry.name} (Você)` : entry.name}
+                    </span>
+                    <span className="tourn-rides">{entry.rides}</span>
+                    <span>
+                      {prize && (
+                        <span className={`tourn-prize-tag ${prize.className}`}>
+                          {prize.label}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
 
-        {/* RULES SECTION */}
-        <div className="tourn-rules-section">
-          <div className="tourn-rules-title">📋 Regulamento do Torneio Zomp</div>
+        {/* ── ABA 4: REGULAMENTO & AS 3 ETAPAS ── */}
+        {mainTab === 'REGRAS' && (
+          <div className="tourn-rules-section">
+            <div className="tourn-rules-title">📋 Regulamento Oficial do Torneio Zomp</div>
 
-          <div className="tourn-rule-step">
-            <div className="tourn-rule-num step1">1</div>
-            <div className="tourn-rule-content">
-              <h4>Fase Classificatória (Dia 1 ao 15)</h4>
-              <p>Faça pelo menos <strong>15 corridas por dia</strong> em no mínimo <strong>10 dos 15 dias</strong> do período classificatório para garantir sua vaga no Torneio.</p>
+            <div className="tourn-rule-step">
+              <div className="tourn-rule-num step1">1</div>
+              <div className="tourn-rule-content">
+                <h4>1ª Etapa — Classificatória Individual (Dia 1 ao 15)</h4>
+                <p>Nesta etapa inicial você <strong>não disputa com nenhum motorista</strong>, apenas consigo mesmo! Basta concluir <strong>15 corridas pela Zomp</strong> para garantir automaticamente sua vaga no Torneio Oficial.</p>
+              </div>
+            </div>
+
+            <div className="tourn-rule-step">
+              <div className="tourn-rule-num step2">2</div>
+              <div className="tourn-rule-content">
+                <h4>2ª Etapa — Torneio Mata-Mata (Dia 16 ao 25)</h4>
+                <p>Todos os motoristas classificados entram na disputa ao vivo do ranking. Cada corrida concluída conta pontos para subir de posição rumo ao Top 30.</p>
+              </div>
+            </div>
+
+            <div className="tourn-rule-step">
+              <div className="tourn-rule-num step3">3</div>
+              <div className="tourn-rule-content">
+                <h4>3ª Etapa — A Grande Final & Premiação dos 30 Melhores</h4>
+                <p>Encerramento oficial e entrega das premiações aos 30 melhores motoristas do mês:</p>
+                <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#cbd5e1', lineHeight: '1.6' }}>
+                  <div>🥇 <strong>1º ao 3º Lugar:</strong> Carro 0km no valor de R$ 100.000,00!</div>
+                  <div>💰 <strong>4º ao 20º Lugar:</strong> R$ 3.000,00 via PIX direto na conta!</div>
+                  <div>📱 <strong>21º ao 30º Lugar:</strong> Smartphone Samsung novinho!</div>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div className="tourn-rule-step">
-            <div className="tourn-rule-num step2">2</div>
-            <div className="tourn-rule-content">
-              <h4>Torneio Principal (Dia 16 ao 22)</h4>
-              <p>Todos os classificados disputam o ranking durante <strong>7 dias</strong>. Quanto mais corridas concluídas, melhor sua posição!</p>
-            </div>
-          </div>
-
-          <div className="tourn-rule-step">
-            <div className="tourn-rule-num step3">3</div>
-            <div className="tourn-rule-content">
-              <h4>Premiação dos 30 Melhores — Todo Mês!</h4>
-              <p>Os <strong>30 melhores colocados</strong> do ranking conquistam premiações reais todos os meses na Zomp.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* PRIZES GRID */}
-        <div className="tourn-prizes-grid">
-          <div className="tourn-prize-card gold">
-            <div className="tourn-prize-card-icon">🚗</div>
-            <div className="tourn-prize-card-range">1º ao 3º Lugar</div>
-            <div className="tourn-prize-card-value">Carro de R$ 100.000</div>
-          </div>
-          <div className="tourn-prize-card green">
-            <div className="tourn-prize-card-icon">💰</div>
-            <div className="tourn-prize-card-range">4º ao 20º Lugar</div>
-            <div className="tourn-prize-card-value">R$ 3.000 PIX</div>
-          </div>
-          <div className="tourn-prize-card blue">
-            <div className="tourn-prize-card-icon">📱</div>
-            <div className="tourn-prize-card-range">21º ao 30º Lugar</div>
-            <div className="tourn-prize-card-value">Smartphone Samsung</div>
-          </div>
-        </div>
+        )}
 
       </div>
     </div>

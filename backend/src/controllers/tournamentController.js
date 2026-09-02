@@ -29,32 +29,33 @@ function getTournamentPhase(now) {
   const year = now.getFullYear();
 
   if (day <= 15) {
-    // Fase Classificatória
+    // Fase Classificatória Individual (1 a 15)
     const endClassif = new Date(year, month, 15, 23, 59, 59);
     const daysLeft = Math.max(0, Math.ceil((endClassif - now) / (1000 * 60 * 60 * 24)));
     return {
       phase: 'CLASSIFICATORIA',
-      phaseLabel: 'Fase Classificatória',
-      phaseDescription: 'Faça no mínimo 15 corridas/dia em pelo menos 10 dos 15 dias para se classificar ao Torneio.',
+      phaseLabel: '1ª Etapa — Classificatória Individual',
+      phaseDescription: 'Você não disputa com ninguém nesta etapa! Disputa apenas consigo mesmo: cumpra 15 corridas pela Zomp até o dia 15 para garantir sua vaga no chaveamento oficial dos prêmios.',
       startDay: 1,
       endDay: 15,
       daysLeft,
+      goalRides: 15,
       tournamentStartDay: 16,
-      tournamentEndDay: 22
+      tournamentEndDay: 25
     };
-  } else if (day <= 22) {
-    // Torneio Principal (7 dias de disputa)
-    const endTorneio = new Date(year, month, 22, 23, 59, 59);
+  } else if (day <= 25) {
+    // Torneio Mata-Mata / Principal (16 ao 25)
+    const endTorneio = new Date(year, month, 25, 23, 59, 59);
     const daysLeft = Math.max(0, Math.ceil((endTorneio - now) / (1000 * 60 * 60 * 24)));
     return {
       phase: 'TORNEIO',
-      phaseLabel: 'Torneio Zomp — AO VIVO 🔴',
-      phaseDescription: 'O Torneio está acontecendo agora! Faça o máximo de corridas para subir no ranking e conquistar os prêmios.',
+      phaseLabel: '2ª Etapa — Torneio Principal / Mata-Mata 🔴',
+      phaseDescription: 'Disputa acirrada ao vivo entre todos os classificados! Cada corrida conta para subir no ranking e conquistar o Carro 0km, PIX e Celulares.',
       startDay: 16,
-      endDay: 22,
+      endDay: 25,
       daysLeft,
       tournamentStartDay: 16,
-      tournamentEndDay: 22
+      tournamentEndDay: 25
     };
   } else {
     // Aguardando próximo mês
@@ -179,7 +180,9 @@ async function getTournamentData(req, res) {
            AND "createdAt" >= $2 AND "createdAt" <= $3`,
           [userId, startOfMonth, periodEnd]
         );
-        driverRidesThisMonth = parseInt(ridesResult.rows[0]?.count || '0', 10);
+        const countFromRides = parseInt(ridesResult.rows[0]?.count || '0', 10);
+        const countFromUser = parseInt(userResult.rows[0]?.ridesCompleted || '0', 10);
+        driverRidesThisMonth = Math.max(countFromRides, countFromUser);
       } catch (dbErr) {
         console.warn('[Tournament] Erro ao buscar dados do motorista:', dbErr.message);
       }
@@ -188,9 +191,20 @@ async function getTournamentData(req, res) {
     // Gerar leaderboard
     const leaderboard = generateLeaderboard(userId, driverName, driverRidesThisMonth);
 
+    // Calcular status da fase classificatória (Meta: 15 corridas individuais)
+    const classificationGoal = 15;
+    const isClassified = driverRidesThisMonth >= classificationGoal;
+    const ridesRemainingToClassify = Math.max(0, classificationGoal - driverRidesThisMonth);
+
     // Calcular dica inteligente
     let smartTip = '';
-    if (leaderboard.driverEntry) {
+    if (phase.phase === 'CLASSIFICATORIA') {
+      if (isClassified) {
+        smartTip = `🎉 Incrível! Você atingiu a meta de ${driverRidesThisMonth}/${classificationGoal} corridas e já está CLASSIFICADO para o Torneio Oficial a partir do dia 16!`;
+      } else {
+        smartTip = `📋 Fase Classificatória: Faltam apenas ${ridesRemainingToClassify} corrida(s) para você garantir sua vaga no Torneio Oficial! Dica: traga passageiros da concorrência oferecendo o preço menor da Zomp!`;
+      }
+    } else if (leaderboard.driverEntry) {
       const pos = leaderboard.driverPosition;
       const gaps = leaderboard.gaps;
 
@@ -219,6 +233,9 @@ async function getTournamentData(req, res) {
           id: userId,
           name: driverName,
           rides: driverRidesThisMonth,
+          isClassified,
+          classificationGoal,
+          ridesRemainingToClassify,
           position: leaderboard.driverPosition,
           isInTop30: leaderboard.driverPosition <= 30,
           gaps: leaderboard.gaps

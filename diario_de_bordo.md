@@ -678,3 +678,45 @@ zomp-db          → PostgreSQL 16 (plano free)        — Banco de dados intern
 **Versão**: 17.1.0
 **Responsável**: Antigravity AI & Leandro Palmeira
 
+---
+
+### 🚀 v17.2.0 - Chave Master de Estreia, Central de Suporte com Chat ao Vivo e Novo Painel do Torneio com Regra de 15 Corridas (2026-09-02)
+
+* 🔒 **Chave Geral de Liberação do Modo Online no Painel Admin (`AdminPanel.jsx`)**:
+  - Adicionado card interativo em destaque na aba **Configurações** (e Dashboard): **"Chave Geral: Permitir Motoristas Ficarem Online para Receber Pedidos"**.
+  - O administrador pode ligar/desligar com 1 clique (`isAppLive` e `launchStatus`), controlando se os motoristas podem aceitar corridas ou se o app está em modo pré-lançamento.
+
+* ⏳ **Trava de Pré-Estreia no App do Motorista (`DriverDashboard.jsx`)**:
+  - Ao deslizar ou clicar em "Ficar Online", o app valida o status da chave master.
+  - Se a estreia estiver bloqueada, o app impede o motorista de ficar online e abre o **Modal Oficial de Pré-Estreia**:
+    - Mensagem: *"Aguarde, nossa estreia é em **01/11/2026**! Enquanto isso, faça um tour pelo app para conhecer todas as ferramentas e indique para outros motoristas parceiros para garantir sua rede e royalties!"*
+    - Botões interativos:
+      - 🚀 **Fazer Tour pelo App**: Dispara o tour guiado do motorista.
+      - 👥 **Indicar Motoristas Parceiros**: Abre a tela com QR Code e link de indicação de parceiros.
+      - ✕ **Fechar**.
+
+* 🎧 **Nova Central de Suporte & Chat em Tempo Real no Painel Admin (`AdminPanel.jsx` & `supportController.js`)**:
+  - Nova aba no menu lateral do Admin: **🎧 Suporte (Chamados & Chat em Tempo Real)**.
+  - Coluna esquerda: Lista de chamados com filtros de status (`Todos`, `Abertos 🔴`, `Resolvidos 🟢`), identificação de papel (🚗 MOTORISTA / 👤 PASSAGEIRO), assunto, protocolo e data/hora.
+  - Coluna direita: Janela de chat ao vivo com histórico de mensagens em balões estilizados, respostas rápidas com 1 clique, caixa de texto com envio em tempo real e botão de status (`✓ Marcar como Resolvido` / `↺ Reabrir Chamado`).
+  - Atualização contínua a cada 3 segundos via polling.
+
+* 🏆 **Redesign Completo da Tela do Torneio (`DriverTournament.jsx` & `tournamentController.js`)**:
+  - **Regra Classificatória Individual (1ª Etapa: 1º ao dia 15)**:
+    - O motorista **não disputa com ninguém nesta fase! Disputa apenas consigo mesmo**.
+    - Meta clara: **completar 15 corridas pela Zomp**.
+    - Barra de progresso visual com porcentagem, total de corridas concluídas (`ridesCompleted`) e status dinâmico (`15/15 Classificado` ou `Faltam X corridas`).
+  - **Estratégia de Ouro aos Motoristas**:
+    - Guia didático ensinando o motorista a converter corridas de concorrentes (Uber, 99, InDrive) para a Zomp na hora:
+      1. Aceite a corrida no app concorrente normalmente;
+      2. Mostre ao passageiro que na Zomp a corrida fica mais barata para ele;
+      3. Convide o passageiro a cancelar lá e pedir pela Zomp (ou ler seu QR Code);
+      4. Lucro Triplo: Taxa fixa Zomp de R$ 1,50 (não perde 30-40%), ganha +R$ 0,30 de royalties para sempre nas futuras viagens do passageiro, e pontua +1 corrida rumo às 15 da classificação!
+  - **Sistema de 4 Abas**: `🎯 Minha Classificação`, `💡 Estratégia de Ouro`, `🏆 Ranking & Prêmios` e `📖 3 Etapas`.
+
+---
+**Status Atual**: ✅ Todas as funcionalidades implementadas e testadas com build 100% aprovado.
+**Versão**: 17.2.0
+**Responsável**: Antigravity AI & Leandro Palmeira
+
+
