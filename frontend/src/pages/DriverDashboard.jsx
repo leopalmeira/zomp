@@ -281,10 +281,23 @@ export default function DriverDashboard() {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [showTrafficNews, setShowTrafficNews] = useState(() => localStorage.getItem('zomp_driver_show_news') !== 'false');
 
-  // ── 4.1 AVISO DE ROYALTIES (+0,30) ──
+  // ── 4.1 AVISO DE ROYALTIES (+0,30) & EXTRATO ACUMULADO ──
   const [royaltyAlertsEnabled, setRoyaltyAlertsEnabled] = useState(() => localStorage.getItem('zomp_royalty_alerts') !== 'false');
   const [showRoyaltyBubble, setShowRoyaltyBubble] = useState(false);
   const royaltyTimerRef = useRef(null);
+
+  const [royaltyHistory, setRoyaltyHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('zomp_royalty_history');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      { id: 'roy-1', amount: 0.30, desc: 'Royalty • Corrida de passageiro vinculado', date: 'Hoje, 10:42', type: 'INCOME' },
+      { id: 'roy-2', amount: 0.30, desc: 'Royalty • Corrida de passageiro vinculado', date: 'Hoje, 09:15', type: 'INCOME' },
+      { id: 'roy-3', amount: 0.30, desc: 'Royalty • Corrida de passageiro vinculado', date: 'Ontem, 18:30', type: 'INCOME' },
+      { id: 'roy-4', amount: 0.30, desc: 'Royalty • Corrida de passageiro vinculado', date: 'Ontem, 14:12', type: 'INCOME' },
+    ];
+  });
 
   const triggerRoyaltyNotification = useCallback(() => {
     if (!royaltyAlertsEnabled) return;
@@ -298,6 +311,23 @@ export default function DriverDashboard() {
       balance: Number((parseFloat(prev.balance || 0) + 0.30).toFixed(2))
     }));
 
+    // Acumular novo lançamento no Extrato de Royalties
+    const now = new Date();
+    const timeStr = `Hoje, ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    const newEntry = {
+      id: 'roy-' + Date.now(),
+      amount: 0.30,
+      desc: 'Royalty • Corrida finalizada (+R$ 0,30)',
+      date: timeStr,
+      type: 'INCOME'
+    };
+
+    setRoyaltyHistory(prev => {
+      const updated = [newEntry, ...prev];
+      try { localStorage.setItem('zomp_royalty_history', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
     // Exibir balãozinho redondo por 5 segundos com aura
     setShowRoyaltyBubble(true);
 
@@ -306,6 +336,7 @@ export default function DriverDashboard() {
       setShowRoyaltyBubble(false);
     }, 5000);
   }, [royaltyAlertsEnabled]);
+
 
 
   // ── 5. SONAR & POSIÇÃO GPS ──
@@ -2366,6 +2397,60 @@ export default function DriverDashboard() {
             >
               {Number(wallet.balance || 0) >= 1 ? `💰 Solicitar Saque via PIX (R$ ${Number(wallet.balance || 0).toFixed(2)})` : 'Saldo Mínimo para Saque: R$ 1,00'}
             </button>
+
+            {/* 📋 LISTA DO EXTRATO DE ROYALTIES ACUMULADOS */}
+            <div style={{ color: '#090d16', fontSize: '0.95rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.6px', margin: '22px 0 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>📋 Lançamentos do Extrato ({royaltyHistory.length})</span>
+              <span style={{ fontSize: '0.74rem', color: '#059669', fontWeight: 800 }}>R$ 0,30 / corrida</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+              {royaltyHistory.map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  style={{
+                    background: '#ffffff',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: '14px',
+                    padding: '12px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: 'rgba(0, 230, 118, 0.12)',
+                      border: '1px solid rgba(0, 230, 118, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1rem'
+                    }}>
+                      💎
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0f172a' }}>
+                        {item.desc}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
+                        {item.date} • <span style={{ color: '#059669', fontWeight: 800 }}>Creditado</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#059669' }}>
+                      +R$ {Number(item.amount).toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <div className="tip-card" style={{marginTop:'16px', background:'#ecfdf5', border:'1.5px solid #6ee7b7', borderRadius: '16px', padding: '16px'}}>
               <span className="tip-icon" style={{ fontSize: '1.6rem' }}>👑</span>
