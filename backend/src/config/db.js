@@ -121,12 +121,11 @@ if (USE_SQLITE) {
   const { Pool } = require('pg');
   pool = new Pool({
     connectionString: DATABASE_URL,
-    ssl: DATABASE_URL?.includes('.render.com')
-      ? { rejectUnauthorized: false }
-      : false
+    ssl: { rejectUnauthorized: false }
   });
   console.log('🌐 [Sistema] Modo CLOUD ativado — PostgreSQL');
 }
+
 
 async function initDB() {
   console.log('🚀 [Sistema] Verificando integridade do banco...');

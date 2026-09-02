@@ -36,11 +36,18 @@ app.use('/api/support', supportRoutes);
 app.use('/api/tournament', tournamentRoutes);
 
 // ============================================
-// HEALTH CHECK
+// HEALTH CHECK & ROOT
 // ============================================
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', service: 'Zomp API', version: '12.6.4' });
+});
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', version: '12.6.4', timestamp: new Date().toISOString() });
+});
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '12.6.4', timestamp: new Date().toISOString() });
 });
+
 
 // ============================================
 // START SERVER & ROBÔ ANTI-SLEEP (KEEP-ALIVE)
