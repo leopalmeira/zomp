@@ -1654,35 +1654,26 @@
   }
 }
 
-/* Ponto verde neon piscante */
-.royalty-circle-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #00E676;
-  box-shadow: 0 0 8px #00E676;
-  margin-bottom: 2px;
-  animation: dotBlink 0.8s ease-in-out infinite;
-}
-
 .royalty-circle-text {
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   font-weight: 900;
   color: #00E676;
   letter-spacing: -0.5px;
   line-height: 1;
-  text-shadow: 0 0 10px rgba(0, 230, 118, 0.8);
+  text-shadow: 0 0 12px rgba(0, 230, 118, 0.9);
   font-family: system-ui, -apple-system, sans-serif;
+  margin-top: 2px;
 }
 
 .royalty-circle-sub {
-  font-size: 0.5rem;
+  font-size: 0.52rem;
   font-weight: 800;
   color: #a7f3d0;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin-top: 1px;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
 }
+
 
 /* Card de Controle de Royalties no Drawer */
 .drawer-royalty-control-card {

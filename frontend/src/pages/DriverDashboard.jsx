@@ -299,6 +299,11 @@ export default function DriverDashboard() {
     ];
   });
 
+  const totalRoyaltiesAccumulated = useMemo(() => {
+    return royaltyHistory.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+  }, [royaltyHistory]);
+
+
   const triggerRoyaltyNotification = useCallback(() => {
     if (!royaltyAlertsEnabled) return;
 
@@ -1147,14 +1152,12 @@ export default function DriverDashboard() {
               <circle className="royalty-aura-progress" cx="33" cy="33" r="30" />
             </svg>
 
-            {/* Ponto verde piscante */}
-            <span className="royalty-circle-dot"></span>
-
-            {/* Texto central "+0,30" */}
+            {/* Texto central "+0,30" sem ponto verde */}
             <span className="royalty-circle-text">+0,30</span>
             <span className="royalty-circle-sub">Royalty</span>
           </div>
         )}
+
 
 
 
@@ -1578,9 +1581,10 @@ export default function DriverDashboard() {
               <div className="drawer-stats-grid">
                 <div className="drawer-stat-box" onClick={() => openScreen('ROYALTIES')}>
                   <span className="stat-label">Royalties</span>
-                  <span className="stat-value neon-green">R$ {Number(wallet.balance || 0).toFixed(2)}</span>
+                  <span className="stat-value neon-green">R$ {totalRoyaltiesAccumulated.toFixed(2)}</span>
                   <span className="stat-sub">Ver Extrato ›</span>
                 </div>
+
 
                 <div className="drawer-stat-box" onClick={() => openScreen('CREDITS')}>
                   <span className="stat-label">Créditos</span>
@@ -1623,8 +1627,9 @@ export default function DriverDashboard() {
               <button className={`drawer-nav-item ${activeScreen === 'ROYALTIES' ? 'active' : ''}`} onClick={() => openScreen('ROYALTIES')}>
                 <span className="nav-icon"><Gem size={18} /></span>
                 <span className="nav-text">Extrato de Royalties</span>
-                <span className="nav-badge-gold">R$ {Number(wallet.balance || 0).toFixed(2)}</span>
+                <span className="nav-badge-gold">R$ {totalRoyaltiesAccumulated.toFixed(2)}</span>
               </button>
+
 
               <div className="drawer-section-label">Sua Rede & Indicação</div>
               <button className={`drawer-nav-item highlight-item ${activeScreen === 'REFERRAL' ? 'active' : ''}`} onClick={() => openScreen('REFERRAL')}>
@@ -2370,7 +2375,7 @@ export default function DriverDashboard() {
                 </div>
                 <div style={{display:'flex',alignItems:'baseline',gap:'6px',marginBottom:'6px'}}>
                   <span style={{fontSize:'1.4rem',color:'#6ee7b7',fontWeight:800}}>R$</span>
-                  <span style={{fontSize:'3.2rem',fontWeight:900,color:'#ffffff',lineHeight:1}}>{Number(wallet.balance || 0).toFixed(2)}</span>
+                  <span style={{fontSize:'3.2rem',fontWeight:900,color:'#ffffff',lineHeight:1}}>{totalRoyaltiesAccumulated.toFixed(2)}</span>
                 </div>
                 <div style={{fontSize:'0.82rem',color:'#d1fae5',fontWeight:700}}>
                   ✨ R$ 0,30 por corrida concluída de cada passageiro vinculado (válido por 1 ano)
@@ -2392,11 +2397,12 @@ export default function DriverDashboard() {
             <button
               className="btn-premium btn-green"
               style={{ width: '100%', padding: '16px', borderRadius: '14px', fontSize: '1rem', fontWeight: 900 }}
-              disabled={Number(wallet.balance || 0) < 1}
-              onClick={() => alert(`Solicitação de saque de R$ ${Number(wallet.balance || 0).toFixed(2)} enviada com sucesso! O pagamento será processado via PIX na sua chave cadastrada.`)}
+              disabled={totalRoyaltiesAccumulated < 1}
+              onClick={() => alert(`Solicitação de saque de R$ ${totalRoyaltiesAccumulated.toFixed(2)} enviada com sucesso! O pagamento será processado via PIX na sua chave cadastrada.`)}
             >
-              {Number(wallet.balance || 0) >= 1 ? `💰 Solicitar Saque via PIX (R$ ${Number(wallet.balance || 0).toFixed(2)})` : 'Saldo Mínimo para Saque: R$ 1,00'}
+              {totalRoyaltiesAccumulated >= 1 ? `💰 Solicitar Saque via PIX (R$ ${totalRoyaltiesAccumulated.toFixed(2)})` : 'Saldo Mínimo para Saque: R$ 1,00'}
             </button>
+
 
             {/* 📋 LISTA DO EXTRATO DE ROYALTIES ACUMULADOS */}
             <div style={{ color: '#090d16', fontSize: '0.95rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.6px', margin: '22px 0 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
