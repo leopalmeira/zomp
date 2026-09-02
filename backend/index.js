@@ -47,6 +47,14 @@ app.get('/health', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '12.6.4', timestamp: new Date().toISOString() });
 });
+app.get('/api/init-db', async (req, res) => {
+  try {
+    await initDB();
+    res.json({ status: 'ok', message: 'Tabelas criadas e usuários de teste sincronizados com sucesso!' });
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
+});
 
 
 // ============================================

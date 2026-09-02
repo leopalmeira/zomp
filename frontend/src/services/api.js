@@ -138,13 +138,60 @@ export function getCurrentUser() {
   return raw ? JSON.parse(raw) : null;
 }
 
+export async function compressImageBase64(base64Str, maxWidth = 480, maxHeight = 480, quality = 0.78) {
+  if (!base64Str || typeof base64Str !== 'string' || !base64Str.startsWith('data:image')) {
+    return base64Str;
+  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      if (width <= maxWidth && height <= maxHeight && base64Str.length < 150000) {
+        return resolve(base64Str);
+      }
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(base64Str);
+    img.src = base64Str;
+  });
+}
+
 export async function updateProfile(data) {
+  const payload = { ...data };
+  if (payload.photo && typeof window !== 'undefined') {
+    try {
+      payload.photo = await compressImageBase64(payload.photo);
+    } catch (e) {
+      console.warn('Erro ao comprimir foto:', e);
+    }
+  }
+
   const res = await fetch(`${API_BASE}/users/profile`, {
     method: 'PUT',
     headers: getHeaders(),
-    body: JSON.stringify(data)
+    body: JSON.stringify(payload)
   });
-  if (!res.ok) throw new Error('Erro ao atualizar perfil');
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || 'Erro ao atualizar perfil');
+  }
   const d = await res.json();
   const c = getCurrentUser();
   const { photo, ...userWithoutPhoto } = d;

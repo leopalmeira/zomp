@@ -133,59 +133,123 @@ async function initDB() {
   try {
     client = await pool.connect();
 
-    // Criar tabelas
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS "User" (
-        "id" TEXT PRIMARY KEY,
-        "name" TEXT NOT NULL,
-        "email" TEXT UNIQUE NOT NULL,
-        "password" TEXT,
-        "role" TEXT NOT NULL DEFAULT 'PASSENGER',
-        "qrCode" TEXT UNIQUE,
-        "credits" REAL DEFAULT 0,
-        "balance" REAL DEFAULT 0,
-        "rating" REAL DEFAULT 5,
-        "totalRatings" INTEGER DEFAULT 0,
-        "ridesAccepted" INTEGER DEFAULT 0,
-        "ridesMissed" INTEGER DEFAULT 0,
-        "ridesCompleted" INTEGER DEFAULT 0,
-        "isApproved" INTEGER DEFAULT 1,
-        "photo" TEXT,
-        "cnh" TEXT,
-        "crlv" TEXT,
-        "carPlate" TEXT,
-        "carModel" TEXT,
-        "carColor" TEXT,
-        "phone" TEXT,
-        "pixKey" TEXT,
-        "vehicleType" TEXT DEFAULT 'car',
-        "createdAt" TEXT DEFAULT (datetime('now')),
-        "updatedAt" TEXT DEFAULT (datetime('now'))
-      );
-    `);
+    if (USE_SQLITE) {
+      // ══════════ SQLite DDL ══════════
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS "User" (
+          "id" TEXT PRIMARY KEY,
+          "name" TEXT NOT NULL,
+          "email" TEXT UNIQUE NOT NULL,
+          "password" TEXT,
+          "role" TEXT NOT NULL DEFAULT 'PASSENGER',
+          "qrCode" TEXT UNIQUE,
+          "credits" REAL DEFAULT 0,
+          "balance" REAL DEFAULT 0,
+          "rating" REAL DEFAULT 5,
+          "totalRatings" INTEGER DEFAULT 0,
+          "ridesAccepted" INTEGER DEFAULT 0,
+          "ridesMissed" INTEGER DEFAULT 0,
+          "ridesCompleted" INTEGER DEFAULT 0,
+          "isApproved" INTEGER DEFAULT 1,
+          "photo" TEXT,
+          "cnh" TEXT,
+          "crlv" TEXT,
+          "carPlate" TEXT,
+          "carModel" TEXT,
+          "carColor" TEXT,
+          "phone" TEXT,
+          "pixKey" TEXT,
+          "vehicleType" TEXT DEFAULT 'car',
+          "createdAt" TEXT DEFAULT (datetime('now')),
+          "updatedAt" TEXT DEFAULT (datetime('now'))
+        );
+      `);
+    } else {
+      // ══════════ PostgreSQL DDL ══════════
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS "User" (
+          "id" TEXT PRIMARY KEY,
+          "name" TEXT NOT NULL,
+          "email" TEXT UNIQUE NOT NULL,
+          "password" TEXT,
+          "role" TEXT NOT NULL DEFAULT 'PASSENGER',
+          "qrCode" TEXT,
+          "credits" DOUBLE PRECISION DEFAULT 0,
+          "balance" DOUBLE PRECISION DEFAULT 0,
+          "rating" DOUBLE PRECISION DEFAULT 5,
+          "totalRatings" INTEGER DEFAULT 0,
+          "ridesAccepted" INTEGER DEFAULT 0,
+          "ridesMissed" INTEGER DEFAULT 0,
+          "ridesCompleted" INTEGER DEFAULT 0,
+          "isApproved" BOOLEAN DEFAULT true,
+          "photo" TEXT,
+          "cnh" TEXT,
+          "crlv" TEXT,
+          "carPlate" TEXT,
+          "carModel" TEXT,
+          "carColor" TEXT,
+          "phone" TEXT,
+          "pixKey" TEXT,
+          "vehicleType" TEXT DEFAULT 'car',
+          "createdAt" TIMESTAMP DEFAULT NOW(),
+          "updatedAt" TIMESTAMP DEFAULT NOW()
+        );
+      `);
+      // Add UNIQUE constraint on qrCode separately (allows NULL duplicates in PG)
+      await client.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS "User_qrCode_key" ON "User" ("qrCode") WHERE "qrCode" IS NOT NULL;
+      `);
+    }
 
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS "AdminConfig" (
-        "id" TEXT PRIMARY KEY DEFAULT 'singleton',
-        "pricePerKmCar" REAL DEFAULT 2.00,
-        "pricePerKmMoto" REAL DEFAULT 1.50,
-        "minFareCar" REAL DEFAULT 8.40,
-        "minFareMoto" REAL DEFAULT 7.20,
-        "royaltyPerRide" REAL DEFAULT 0.30,
-        "royaltyMonthlyLimit" INTEGER DEFAULT 8,
-        "maxPassengersPerDriver" INTEGER DEFAULT 700,
-        "bindingMonthsFirst" INTEGER DEFAULT 12,
-        "bindingMonthsRenew" INTEGER DEFAULT 12,
-        "autoSuspendMinAcceptance" INTEGER DEFAULT 70,
-        "autoSuspendMinRating" REAL DEFAULT 4.5,
-        "launchDate" TEXT DEFAULT '2026-11-01',
-        "pricePerCredit" REAL DEFAULT 1.50,
-        "driverSlots" INTEGER DEFAULT 3300,
-        "preRegisterEndDate" TEXT DEFAULT '2026-11-01T23:59:59-03:00',
-        "isAppLive" INTEGER DEFAULT 0,
-        "launchStatus" TEXT DEFAULT 'PRE_LAUNCH'
-      );
-    `);
+    if (USE_SQLITE) {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS "AdminConfig" (
+          "id" TEXT PRIMARY KEY DEFAULT 'singleton',
+          "pricePerKmCar" REAL DEFAULT 2.00,
+          "pricePerKmMoto" REAL DEFAULT 1.50,
+          "minFareCar" REAL DEFAULT 8.40,
+          "minFareMoto" REAL DEFAULT 7.20,
+          "royaltyPerRide" REAL DEFAULT 0.30,
+          "royaltyMonthlyLimit" INTEGER DEFAULT 8,
+          "maxPassengersPerDriver" INTEGER DEFAULT 700,
+          "bindingMonthsFirst" INTEGER DEFAULT 12,
+          "bindingMonthsRenew" INTEGER DEFAULT 12,
+          "autoSuspendMinAcceptance" INTEGER DEFAULT 70,
+          "autoSuspendMinRating" REAL DEFAULT 4.5,
+          "launchDate" TEXT DEFAULT '2026-11-01',
+          "pricePerCredit" REAL DEFAULT 1.50,
+          "driverSlots" INTEGER DEFAULT 3300,
+          "preRegisterEndDate" TEXT DEFAULT '2026-11-01T23:59:59-03:00',
+          "isAppLive" INTEGER DEFAULT 0,
+          "launchStatus" TEXT DEFAULT 'PRE_LAUNCH'
+        );
+      `);
+    } else {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS "AdminConfig" (
+          "id" TEXT PRIMARY KEY DEFAULT 'singleton',
+          "pricePerKmCar" DOUBLE PRECISION DEFAULT 2.00,
+          "pricePerKmMoto" DOUBLE PRECISION DEFAULT 1.50,
+          "minFareCar" DOUBLE PRECISION DEFAULT 8.40,
+          "minFareMoto" DOUBLE PRECISION DEFAULT 7.20,
+          "royaltyPerRide" DOUBLE PRECISION DEFAULT 0.30,
+          "royaltyMonthlyLimit" INTEGER DEFAULT 8,
+          "maxPassengersPerDriver" INTEGER DEFAULT 700,
+          "bindingMonthsFirst" INTEGER DEFAULT 12,
+          "bindingMonthsRenew" INTEGER DEFAULT 12,
+          "autoSuspendMinAcceptance" INTEGER DEFAULT 70,
+          "autoSuspendMinRating" DOUBLE PRECISION DEFAULT 4.5,
+          "launchDate" TEXT DEFAULT '2026-11-01',
+          "pricePerCredit" DOUBLE PRECISION DEFAULT 1.50,
+          "driverSlots" INTEGER DEFAULT 3300,
+          "preRegisterEndDate" TEXT DEFAULT '2026-11-01T23:59:59-03:00',
+          "isAppLive" BOOLEAN DEFAULT false,
+          "launchStatus" TEXT DEFAULT 'PRE_LAUNCH'
+        );
+      `);
+    }
+
+    const tsDefault = USE_SQLITE ? "(datetime('now'))" : "NOW()";
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS "Referral" (
@@ -193,7 +257,7 @@ async function initDB() {
         "referrerId" TEXT,
         "referredId" TEXT,
         "expiresAt" TEXT,
-        "createdAt" TEXT DEFAULT (datetime('now'))
+        "createdAt" ${USE_SQLITE ? 'TEXT' : 'TIMESTAMP'} DEFAULT ${tsDefault}
       );
     `);
 
@@ -204,12 +268,16 @@ async function initDB() {
         "driverId" TEXT,
         "origin" TEXT NOT NULL,
         "destination" TEXT NOT NULL,
-        "price" REAL NOT NULL,
-        "distanceKm" REAL NOT NULL,
+        "price" ${USE_SQLITE ? 'REAL' : 'DOUBLE PRECISION'} NOT NULL,
+        "distanceKm" ${USE_SQLITE ? 'REAL' : 'DOUBLE PRECISION'} NOT NULL,
         "vehicleType" TEXT NOT NULL,
         "status" TEXT NOT NULL DEFAULT 'PENDING',
-        "createdAt" TEXT DEFAULT (datetime('now')),
-        "updatedAt" TEXT DEFAULT (datetime('now'))
+        "originLat" ${USE_SQLITE ? 'REAL' : 'DOUBLE PRECISION'},
+        "originLng" ${USE_SQLITE ? 'REAL' : 'DOUBLE PRECISION'},
+        "destLat" ${USE_SQLITE ? 'REAL' : 'DOUBLE PRECISION'},
+        "destLng" ${USE_SQLITE ? 'REAL' : 'DOUBLE PRECISION'},
+        "createdAt" ${USE_SQLITE ? 'TEXT' : 'TIMESTAMP'} DEFAULT ${tsDefault},
+        "updatedAt" ${USE_SQLITE ? 'TEXT' : 'TIMESTAMP'} DEFAULT ${tsDefault}
       );
     `);
 
@@ -221,7 +289,7 @@ async function initDB() {
         "senderRole" TEXT NOT NULL,
         "senderName" TEXT NOT NULL,
         "text" TEXT NOT NULL,
-        "createdAt" TEXT DEFAULT (datetime('now'))
+        "createdAt" ${USE_SQLITE ? 'TEXT' : 'TIMESTAMP'} DEFAULT ${tsDefault}
       );
     `);
 
@@ -236,8 +304,8 @@ async function initDB() {
         "subject" TEXT NOT NULL,
         "message" TEXT NOT NULL,
         "status" TEXT NOT NULL DEFAULT 'OPEN',
-        "createdAt" TEXT DEFAULT (datetime('now')),
-        "updatedAt" TEXT DEFAULT (datetime('now'))
+        "createdAt" ${USE_SQLITE ? 'TEXT' : 'TIMESTAMP'} DEFAULT ${tsDefault},
+        "updatedAt" ${USE_SQLITE ? 'TEXT' : 'TIMESTAMP'} DEFAULT ${tsDefault}
       );
     `);
 
@@ -248,7 +316,17 @@ async function initDB() {
         "senderRole" TEXT NOT NULL,
         "senderName" TEXT NOT NULL,
         "text" TEXT NOT NULL,
-        "createdAt" TEXT DEFAULT (datetime('now'))
+        "createdAt" ${USE_SQLITE ? 'TEXT' : 'TIMESTAMP'} DEFAULT ${tsDefault}
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "DiscountLog" (
+        "id" TEXT PRIMARY KEY,
+        "passengerId" TEXT NOT NULL,
+        "discount" ${USE_SQLITE ? 'REAL' : 'DOUBLE PRECISION'} NOT NULL,
+        "originalPrice" ${USE_SQLITE ? 'REAL' : 'DOUBLE PRECISION'},
+        "createdAt" ${USE_SQLITE ? 'TEXT' : 'TIMESTAMP'} DEFAULT ${tsDefault}
       );
     `);
 
@@ -262,26 +340,28 @@ async function initDB() {
     const hash = await bcrypt.hash(adminPass, 10);
     const testPasswordHash = await bcrypt.hash('teste123', 10);
 
+    const isApprovedVal = USE_SQLITE ? 1 : true;
+
     // Admin
     await client.query(`
       INSERT INTO "User" (id, name, email, password, role, "isApproved")
-      VALUES ($1, $2, $3, $4, 'ADMIN', 1)
-      ON CONFLICT (email) DO UPDATE SET password = $4, role = 'ADMIN';
-    `, [uuid(), adminName, adminEmail, hash]);
+      VALUES ($1, $2, $3, $4, 'ADMIN', $5)
+      ON CONFLICT (email) DO UPDATE SET password = $4, role = 'ADMIN', "isApproved" = $5;
+    `, [uuid(), adminName, adminEmail, hash, isApprovedVal]);
 
     // Cliente
     await client.query(`
       INSERT INTO "User" (id, name, email, password, role, "isApproved")
-      VALUES ($1, $2, $3, $4, 'PASSENGER', 1)
-      ON CONFLICT (email) DO UPDATE SET password = $4, role = 'PASSENGER';
-    `, [uuid(), 'Cliente Teste', 'cliente@zomp.com', testPasswordHash]);
+      VALUES ($1, $2, $3, $4, 'PASSENGER', $5)
+      ON CONFLICT (email) DO UPDATE SET password = $4, role = 'PASSENGER', "isApproved" = $5;
+    `, [uuid(), 'Cliente Teste', 'cliente@zomp.com', testPasswordHash, isApprovedVal]);
 
     // Motorista
     await client.query(`
       INSERT INTO "User" (id, name, email, password, role, "isApproved", "qrCode", "carPlate", "carModel", "carColor", "cnh", credits, "ridesCompleted")
-      VALUES ($1, $2, $3, $4, 'DRIVER', 1, 'ZOMP-TEST-DRIVER', 'ZMP-2026', 'Toyota Corolla', 'Preto', '12345678900', 1000, 42)
-      ON CONFLICT (email) DO UPDATE SET password = $4, role = 'DRIVER', "isApproved" = 1, "qrCode" = 'ZOMP-TEST-DRIVER', credits = 1000;
-    `, [uuid(), 'Motorista Teste', 'motorista@zomp.com', testPasswordHash]);
+      VALUES ($1, $2, $3, $4, 'DRIVER', $5, 'ZOMP-TEST-DRIVER', 'ZMP-2026', 'Toyota Corolla', 'Preto', '12345678900', 1000, 42)
+      ON CONFLICT (email) DO UPDATE SET password = $4, role = 'DRIVER', "isApproved" = $5, "qrCode" = 'ZOMP-TEST-DRIVER', credits = 1000;
+    `, [uuid(), 'Motorista Teste', 'motorista@zomp.com', testPasswordHash, isApprovedVal]);
 
     // AdminConfig singleton
     await client.query(`
@@ -292,6 +372,7 @@ async function initDB() {
     console.log('✅ [Sistema] Banco de dados e Admin prontos.');
   } catch (err) {
     console.error('❌ [Sistema] Erro no banco:', err.message);
+    console.error(err.stack);
   } finally {
     if (client) {
       client.release();

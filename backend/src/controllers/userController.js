@@ -17,6 +17,7 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const { name, phone, pixKey, photo, cnh, crlv, carPlate, carModel, carColor } = req.body;
+    const n = (v) => (v === undefined ? null : v);
     const { rows } = await pool.query(`
       UPDATE "User" SET
         name = COALESCE($2, name),
@@ -31,11 +32,11 @@ exports.updateProfile = async (req, res) => {
         "updatedAt" = NOW()
       WHERE id = $1
       RETURNING id, name, email, role, phone, "pixKey", photo, cnh, crlv, "carPlate", "carModel", "carColor", "isApproved", "qrCode"
-    `, [req.user.id, name, phone, pixKey, photo, cnh, crlv, carPlate, carModel, carColor]);
+    `, [req.user.id, n(name), n(phone), n(pixKey), n(photo), n(cnh), n(crlv), n(carPlate), n(carModel), n(carColor)]);
     res.json(rows[0]);
   } catch (err) {
     console.error('Erro ao atualizar perfil:', err.message);
-    res.status(500).json({ error: 'Erro ao atualizar perfil' });
+    res.status(500).json({ error: `Erro ao atualizar perfil: ${err.message}` });
   }
 };
 

@@ -582,3 +582,82 @@ Este diário registra a transformação da Zomp em uma plataforma de mobilidade 
 **Status Atual**: ✅ Landing Page 100% restaurada, testada e commitada.
 **Versão**: 16.1.0
 **Responsável**: Antigravity AI & Leandro Palmeira
+
+---
+### 🚀 v17.0.0 - Migração para Nova Conta Render, Correção de Login e Infraestrutura de Produção (2026-09-02)
+
+* 🏗️ **Migração Completa para Nova Conta Render (`Só's workspace`)**:
+  - Criada nova conta no Render com e-mail `shop.informaticaweb@gmail.com` (workspace `Só's workspace`).
+  - Blueprint sincronizado com o repositório GitHub [leopalmeira/zomp](https://github.com/leopalmeira/zomp), branch `master`.
+  - Nova infraestrutura com 3 serviços essenciais:
+    - `zomp-app` → Static SPA (frontend/dist) — Global CDN
+    - `zomp-api` → Node.js (backend/index.js) — Oregon
+    - `zomp-db` → PostgreSQL 16 — Oregon
+  - Conta antiga (`LEANDRO's workspace`) com 6 serviços suspensa por falta de pagamento.
+
+* 🔗 **Correção Crítica da URL da API**:
+  - O Render gerou a URL `https://zomp-api-nb4v.onrender.com` (com `v`, não `x`).
+  - Corrigido `frontend/src/services/api.js` com a URL real: `https://zomp-api-nb4v.onrender.com/api`.
+  - Corrigido `render.yaml` com `VITE_API_URL: https://zomp-api-nb4v.onrender.com/api`.
+  - Lógica dinâmica em `api.js`: detecta `localhost` → usa `http://localhost:3001/api`, senão → usa URL do Render.
+
+* 🔒 **Correção de SSL do PostgreSQL**:
+  - Ajustado `backend/src/config/db.js` para usar `ssl: { rejectUnauthorized: false }` quando `DATABASE_URL` está presente (produção no Render).
+
+* 🤖 **Robô Anti-Sleep (Keep-Alive) 24/7**:
+  - Implementado ping automático a cada **14 minutos** em `backend/index.js` para evitar que o Render suspenda o serviço gratuito por inatividade.
+  - O robô faz `fetch` na própria URL do serviço e loga `[KEEP-ALIVE]` no console.
+
+* 🚫 **Remoção do Modo Demo (Acesso Offline)**:
+  - Removido completamente o botão e a lógica de "Acesso Demo" de `frontend/src/pages/LoginPage.jsx`.
+  - Login agora é **exclusivamente via API de produção** — sem bypass local.
+
+* 🩺 **Rotas de Saúde (Health Check)**:
+  - Adicionadas rotas `/`, `/health` e `/api/health` no `backend/index.js` retornando `{ status: "ok", service: "Zomp API", version: "12.6.4" }`.
+  - Essas rotas permitem monitoramento automático do Render e verificação rápida de disponibilidade.
+
+* 📸 **Foto de Perfil do Motorista**:
+  - Backend `updateProfile` em `userController.js` aceita campo `photo` (base64) via `PUT /api/users/profile`.
+  - Verificado que a coluna `photo` no banco é do tipo `TEXT`, compatível com base64.
+  - Frontend `DriverDashboard.jsx` chama `updateProfile({ photo: base64 })` ao salvar a selfie.
+  - ⚠️ **Pendência**: Se a imagem for muito grande (>1MB base64), pode ocorrer erro `413 Payload Too Large` — configurar `express.json({ limit: '10mb' })` no backend se necessário.
+
+* 📤 **Deploy e Push para GitHub**:
+  - Commits relevantes nesta sessão:
+    - `3780dae` — Configuração da nova conta Render, robô anti-sleep, SSL fix
+    - `f53b87e` — Remoção do modo demo, URL dinâmica da API
+    - `a66da2c` — Correção da URL de `nb4x` para `nb4v` (URL real do Render)
+  - Manual Deploy disparado com sucesso em `zomp-api` e `zomp-app` na conta `Só's workspace`.
+
+---
+
+### 🔗 Links de Produção Atualizados (Nova Conta Render)
+
+| App | Link | Descrição |
+|-----|------|-----------|
+| 🌐 **Site Principal** | [zomp.com.br](https://zomp.com.br) | Landing Page institucional |
+| 📱 **App Passageiro** | [zomp.com.br/passageiro](https://zomp.com.br/passageiro) | Solicitar corridas |
+| 🚗 **App Motorista** | [zomp.com.br/motorista](https://zomp.com.br/motorista) | Aceitar corridas e renda passiva |
+| 🖥️ **Painel Admin** | [zomp.com.br/admin/login](https://zomp.com.br/admin/login) | Gerenciar plataforma |
+| ⚡ **API Backend** | [zomp-api-nb4v.onrender.com/api/health](https://zomp-api-nb4v.onrender.com/api/health) | Health check da API |
+
+### 🏗️ Arquitetura Render (Só's workspace)
+```
+zomp-app         → Static SPA (frontend/dist)        — zomp.com.br / www.zomp.com.br
+zomp-api         → Node.js (backend/index.js)       — zomp-api-nb4v.onrender.com
+zomp-db          → PostgreSQL 16 (plano free)        — Banco de dados interno Render
+```
+
+---
+**Status Atual**: ✅ Backend ONLINE (`zomp-api-nb4v`). Frontend redeployado. Login via API de produção ativado.
+**Versão**: 17.0.0
+**Responsável**: Antigravity AI & Leandro Palmeira
+**Último Commit**: [a66da2c](https://github.com/leopalmeira/zomp/commit/a66da2c)
+
+---
+
+### ⚠️ Próximos Passos (v17.1.0)
+1. **Testar login real** em `zomp.com.br/motorista` e `zomp.com.br/passageiro` com as credenciais de teste.
+2. **Verificar DNS** — confirmar que `zomp.com.br` está apontando para o serviço `zomp-app` na **nova conta** (`Só's workspace`), e não na conta antiga suspensa.
+3. **Testar upload de foto** — se der erro 413, configurar `express.json({ limit: '10mb' })`.
+4. **Configurar `body-parser` limit** no backend para suportar fotos grandes em base64.
